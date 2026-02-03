@@ -141,5 +141,12 @@
     },
     "hash": "01ee7eac75b628b47eb7ec103ef7980580ff40832633d43aa9517af9209145ad",
     "signature": "22tADSaA9Xmk6P44irSkA2SjB11HwRKetrPTatTqULWHzCn2XxxhePE91DJDQ5vmgMLsuyqZw6eogLQhvq8wc4JF"
+  },
+  {
+    "timestamp": "2026-02-03T08:44:05.689Z",
+    "type": "commit",
+    "description": "feat(cycle6): add cumulative on-chain proof count chart",
+    "hash": "813f1ef286b1bf76f659865c95fbb8cb3ee760d5f10f00acfa0d72921ea6162d",
+    "signature": "2bPKLJVmSyE6C4NTxg5h4dbTRnhNwZ4H9FX69NJQYEecnxDiZz6GZJiv8bapyii6LMPEkVGAeDGn9BiJhPQH55cD"
   }
 ]
