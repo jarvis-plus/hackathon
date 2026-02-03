@@ -110,5 +110,36 @@
     "description": "chore: sign cycle4 activities (9 & 10 on-chain)",
     "hash": "38c844c0be6b39b66b610eafd381ac68bb2a5a918d13c9dabdbf6057c8814fd2",
     "signature": "3dCwA4GNV7LMss7kb5vicxD8ZCF2fvFhNjphftmD9rEaKuF8PE7P2iCvfpagumzTp8eo5QhASKMvyGhpqbHD7GSR"
+  },
+  {
+    "timestamp": "2026-02-03T08:37:53.684Z",
+    "type": "commit",
+    "description": "chore: sign commit 11 on-chain",
+    "hash": "4edd9a6e373d04d5d98907a260df0fd75df6a86a2e3ce590ae4165e7d617a652",
+    "signature": "5CjNHMoVwoC3HDFpQLZeRFwtCYhMy61ecCvKhWoXYKx1L3ubwabnqKAycNdAxAzR1DSHcBSEZLKSNbyjFTyW8KK2"
+  },
+  {
+    "timestamp": "2026-02-03T08:39:15.279Z",
+    "type": "build",
+    "description": "Cycle 5: Added Chart.js analytics - timeline chart and activity breakdown doughnut chart",
+    "hash": "79468ad12dce40e84fdac155600bbb8482ff2cc0e63f0e25a4e03ebac8a4355c",
+    "signature": "5KMgYTdkxqA3sw3c5K5bUgCtSUJaA6XGQuC4MXK6TB3AqukzoNiqUghuByBF2VgjXxaGgSGytmfyvUo5BV54KDDT"
+  },
+  {
+    "timestamp": "2026-02-03T08:40:31.089Z",
+    "type": "commit",
+    "description": "feat(cycle5): add Chart.js analytics - timeline and breakdown charts",
+    "hash": "e47adbeda2d10731f2b1b306570a24b23dcef0433a79afcf1321ccd475edb8a1",
+    "signature": "4D4gna9VR75HpSiJk8cyAuQ51eGZgx9GQomfuqNeHXx5oLc3FJ15nCbSe4GU2mgGZ33UdaGnSfdkxyz3mPUSesKz"
+  },
+  {
+    "timestamp": "2026-02-03T08:43:05.001Z",
+    "type": "build",
+    "description": "Cycle 6: Added cumulative on-chain proof count chart showing growth over time",
+    "metadata": {
+      "cycle": 6
+    },
+    "hash": "01ee7eac75b628b47eb7ec103ef7980580ff40832633d43aa9517af9209145ad",
+    "signature": "22tADSaA9Xmk6P44irSkA2SjB11HwRKetrPTatTqULWHzCn2XxxhePE91DJDQ5vmgMLsuyqZw6eogLQhvq8wc4JF"
   }
 ]

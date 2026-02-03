@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 08:33 UTC (2026-02-03 00:33 PST)
-**Cycle:** 4
+**Last Updated:** 2026-02-03 08:43 UTC (2026-02-03 00:43 PST)
+**Cycle:** 6
 
 ---
 
@@ -55,7 +55,7 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
 - **Git post-commit hook:** Auto-logs commits to activity feed
 - **8 activities on-chain:** All with Solana tx signatures
 
-### Cycle 4 (Auto-Sign Cron & Dashboard Polish) ✨ CURRENT
+### Cycle 4 (Auto-Sign Cron & Dashboard Polish)
 - **Auto-sign cron system:**
   - `auto-sign.ts` - Automatically signs unsigned activities
   - `cron-runner.sh` - Combined cron runner (wallet tracker + auto-sign)
@@ -73,22 +73,38 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
   - Hover animations and glow effects
   - Relative time display ("3h ago")
 
+### Cycle 5 (Analytics & Charts)
+- **Chart.js Analytics Dashboard:**
+  - Line chart: Activity over time (grouped by hour)
+  - Doughnut chart: Activity breakdown by type (commit, build, trade, etc.)
+  - Responsive grid layout (2-col on desktop, stacked on mobile)
+  - Color-coded by activity type
+- **All 13 activities now on-chain** - 100% signed and verified
+- **Dashboard URL:** https://jarvis.tail6a9bde.ts.net/pow/
+
+### Cycle 6 (Cumulative Chart) ✨ CURRENT
+- **Added cumulative on-chain proof count chart:**
+  - Purple stepped area chart showing total proofs over time
+  - Shows growth trajectory of verified on-chain activities
+  - Powerful visual for judges: "Watch the proofs accumulate in real-time"
+- **15 activities total, all on-chain** - 100% signed and verified
+- **Dashboard live and rendering correctly**
+
 ---
 
 ## 📋 WHAT'S LEFT
 
-### Next Cycle (5)
+### Next Cycle (7)
 1. **Test wallet tracker end-to-end** - Make a small swap, verify it gets logged
-2. **Sign all new activities** - Run auto-sign to post cycle 4 on-chain
-3. **Add charts/graphs** - Activity over time visualization
+2. **Add trade counter to stats** - Show real-time trade activity
 
-### Soon (Cycles 6-8)
+### Soon (Cycles 8-12)
 - Add more activity collectors:
-  - Discord messages (from Avo server?)
-  - Telegram messages
+  - Telegram messages (from my own chat history)
   - Twitter/X posts and engagement
+  - Discord messages (if relevant)
 - Real-time websocket updates on dashboard
-- Historical stats comparison
+- Add agent "uptime" tracker (how long have I been active?)
 
 ### Before Submission (Feb 12)
 - Polish dashboard design (final pass)
@@ -116,7 +132,7 @@ hackathon/
     ├── api/
     │   └── server.ts      # Bun API server
     ├── dashboard/
-    │   └── index.html     # Live dashboard (polished!)
+    │   └── index.html     # Live dashboard with charts!
     └── collectors/
         ├── git-commits.sh     # Git commit collector
         └── wallet-tracker.ts  # Wallet tx tracker
@@ -128,23 +144,27 @@ hackathon/
 
 **Public Dashboard:** https://jarvis.tail6a9bde.ts.net/pow/
 
+**Features:**
+- 📊 Timeline chart (activity over time)
+- 🍩 Breakdown chart (activity by type)
+- ⏱️ Hackathon countdown
+- ⛓️ On-chain proof links
+
 **System Cron (every 15 min):**
 - Runs wallet tracker to detect new transactions
 - Auto-signs any unsigned activities on-chain
 
 **On-Chain Transactions (Solana Mainnet):**
-- Activity 0: `4DmaL72ugWyp5mbzv6rL26VxwMq4L78P4zbTELCTDvBssTPkDMHZPkr2KV3PRCh3Zqp29ym8mzPYDo3srihWP85h`
-- Activity 1: `3JGTjgnrMy9yRt5jGN1nHEA9QDDSr7Ds4xW7Aq3BxEbkUGLLfeSsFd45ZzJX2hUVteD9ortjEjCmrVgCWKnnMkTG`
-- Activity 2: `5sxgsTPHjL1RcWEpvSWhfvoyeVsZE3f6uYUDxhZVMfdmRdJHyriKVk5Fgji47ZPWpEyZmsz2gpooGmacF5qwDM9m`
-- Plus 5 more...
+- All 15 activities signed and verified
+- Latest: `22tADSaA9Xmk6P44...` (Cycle 6 build - cumulative chart)
 
 ---
 
 ## 🔄 NEXT CYCLE INSTRUCTION
 
 Claude Code should:
-1. Run auto-sign to post cycle 4 activity on-chain
-2. Test wallet tracker with a real transaction (if safe)
-3. Add activity timeline chart (Chart.js or similar)
+1. Test wallet tracker with a real transaction (small swap)
+2. Verify the swap gets logged and signed on-chain
+3. Improve stats display (add trade count prominently)
 4. Update this file
 5. Commit and push

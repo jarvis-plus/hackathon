@@ -408,7 +408,58 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        /* Charts Section */
+        .charts-section {
+            margin-bottom: 2rem;
+        }
+
+        .charts-section h2 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--accent-yellow);
+            font-size: 1.1rem;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 800px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+
+        .chart-card h3 {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 200px;
+        }
+
+        .chart-container.small {
+            height: 180px;
+        }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container">
@@ -455,6 +506,30 @@
             </div>
         </div>
 
+        <div class="charts-section">
+            <h2>📊 Activity Analytics</h2>
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <h3>Activity Over Time</h3>
+                    <div class="chart-container">
+                        <canvas id="timelineChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h3>Activity Breakdown</h3>
+                    <div class="chart-container small">
+                        <canvas id="breakdownChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="chart-card" style="margin-top: 1.5rem;">
+                <h3>⛓️ Cumulative On-Chain Proofs</h3>
+                <div class="chart-container">
+                    <canvas id="cumulativeChart"></canvas>
+                </div>
+            </div>
+        </div>
+
         <div class="activity-feed">
             <h2><span class="live-indicator"></span> Live Activity Feed</h2>
             <div id="feed" class="timeline">
@@ -494,25 +569,6 @@
         
         updateCountdown();
         setInterval(updateCountdown, 60000);
-
-        async function loadActivities() {
-            try {
-                const res = await fetch('/api/activities');
-                const activities = await res.json();
-                renderActivities(activities);
-                updateStats(activities);
-            } catch (e) {
-                try {
-                    const res = await fetch('/activity.json');
-                    const activities = await res.json();
-                    renderActivities(activities);
-                    updateStats(activities);
-                } catch (e2) {
-                    document.getElementById('feed').innerHTML = 
-                        '<div class="empty-state">No activities yet. The agent is warming up... 🤖</div>';
-                }
-            }
-        }
 
         function getProofBadge(activity) {
             if (activity.signature) {
@@ -607,6 +663,249 @@
             document.getElementById('trades').textContent = activities.filter(a => 
                 a.type === 'trade' || a.type === 'transfer'
             ).length;
+        }
+
+        // Chart instances
+        let timelineChart = null;
+        let breakdownChart = null;
+        let cumulativeChart = null;
+
+        function renderCharts(activities) {
+            // Activity over time (by hour)
+            const hourCounts = {};
+            const typeColors = {
+                'commit': '#ffaa00',
+                'build': '#00aaff',
+                'decision': '#ff0055',
+                'deploy': '#00aaff',
+                'trade': '#ff6b6b',
+                'transfer': '#ff6b6b'
+            };
+            
+            activities.forEach(a => {
+                const date = new Date(a.timestamp);
+                // Round to nearest hour
+                date.setMinutes(0, 0, 0);
+                const key = date.toISOString();
+                hourCounts[key] = (hourCounts[key] || 0) + 1;
+            });
+
+            // Sort by time
+            const sortedHours = Object.keys(hourCounts).sort();
+            const labels = sortedHours.map(h => {
+                const d = new Date(h);
+                return d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric' });
+            });
+            const data = sortedHours.map(h => hourCounts[h]);
+
+            // Timeline Chart
+            const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+            
+            if (timelineChart) {
+                timelineChart.destroy();
+            }
+
+            timelineChart = new Chart(timelineCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Activities',
+                        data: data,
+                        borderColor: '#00ffaa',
+                        backgroundColor: 'rgba(0, 255, 170, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#00ffaa',
+                        pointBorderColor: '#00ffaa',
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#888',
+                                stepSize: 1
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.05)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#888',
+                                maxRotation: 45,
+                                font: { size: 10 }
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Activity breakdown by type
+            const typeCounts = {};
+            activities.forEach(a => {
+                const type = a.type || 'other';
+                typeCounts[type] = (typeCounts[type] || 0) + 1;
+            });
+
+            const breakdownLabels = Object.keys(typeCounts);
+            const breakdownData = Object.values(typeCounts);
+            const breakdownColors = breakdownLabels.map(t => typeColors[t] || '#00ffaa');
+
+            const breakdownCtx = document.getElementById('breakdownChart').getContext('2d');
+            
+            if (breakdownChart) {
+                breakdownChart.destroy();
+            }
+
+            breakdownChart = new Chart(breakdownCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: breakdownLabels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
+                    datasets: [{
+                        data: breakdownData,
+                        backgroundColor: breakdownColors,
+                        borderColor: '#0a0a0f',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                color: '#888',
+                                padding: 10,
+                                font: { size: 11 }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Cumulative on-chain proofs over time
+            const onChainActivities = activities
+                .filter(a => a.signature || a.proof?.txSignature)
+                .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            
+            const cumulativeLabels = [];
+            const cumulativeData = [];
+            let cumulative = 0;
+            
+            onChainActivities.forEach((a, i) => {
+                cumulative++;
+                const date = new Date(a.timestamp);
+                cumulativeLabels.push(date.toLocaleString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric',
+                    hour: 'numeric'
+                }));
+                cumulativeData.push(cumulative);
+            });
+
+            const cumulativeCtx = document.getElementById('cumulativeChart').getContext('2d');
+            
+            if (cumulativeChart) {
+                cumulativeChart.destroy();
+            }
+
+            cumulativeChart = new Chart(cumulativeCtx, {
+                type: 'line',
+                data: {
+                    labels: cumulativeLabels,
+                    datasets: [{
+                        label: 'On-Chain Proofs',
+                        data: cumulativeData,
+                        borderColor: '#aa00ff',
+                        backgroundColor: 'rgba(170, 0, 255, 0.15)',
+                        fill: true,
+                        tension: 0.3,
+                        pointBackgroundColor: '#aa00ff',
+                        pointBorderColor: '#aa00ff',
+                        pointRadius: 5,
+                        pointHoverRadius: 8,
+                        stepped: 'after'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => `${ctx.raw} proofs on-chain`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#888',
+                                stepSize: 2
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.05)'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Total Proofs',
+                                color: '#888'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#888',
+                                maxRotation: 45,
+                                font: { size: 10 }
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        async function loadActivities() {
+            try {
+                const res = await fetch('/api/activities');
+                const activities = await res.json();
+                renderActivities(activities);
+                updateStats(activities);
+                renderCharts(activities);
+            } catch (e) {
+                try {
+                    const res = await fetch('/activity.json');
+                    const activities = await res.json();
+                    renderActivities(activities);
+                    updateStats(activities);
+                    renderCharts(activities);
+                } catch (e2) {
+                    document.getElementById('feed').innerHTML = 
+                        '<div class="empty-state">No activities yet. The agent is warming up... 🤖</div>';
+                }
+            }
         }
 
         // Initial load
