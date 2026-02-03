@@ -185,7 +185,10 @@
 
         .stat-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3),
+                        0 0 20px rgba(0, 255, 170, 0.15),
+                        inset 0 0 1px rgba(0, 255, 170, 0.1);
+            border-color: rgba(0, 255, 170, 0.3);
         }
 
         .stat-value {
@@ -652,7 +655,9 @@
 
         .decision-item:hover {
             transform: translateX(4px);
-            box-shadow: 0 8px 30px rgba(255, 0, 85, 0.2);
+            box-shadow: 0 8px 30px rgba(255, 0, 85, 0.2),
+                        0 0 20px rgba(255, 0, 85, 0.15);
+            border-color: rgba(255, 0, 85, 0.4);
         }
 
         @keyframes fadeSlideIn {
@@ -998,8 +1003,10 @@
 
         .milestone-item:hover {
             transform: translateX(4px);
-            box-shadow: 0 8px 30px rgba(255, 215, 0, 0.15);
+            box-shadow: 0 8px 30px rgba(255, 215, 0, 0.15),
+                        0 0 20px rgba(255, 215, 0, 0.12);
             border-left-color: #ffea00;
+            border-color: rgba(255, 215, 0, 0.3);
         }
 
         .milestone-item.completed {
@@ -1187,11 +1194,16 @@
 
         .activity-item:hover {
             transform: translateX(4px);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3),
+                        0 0 15px rgba(0, 255, 170, 0.2);
         }
 
         .activity-item.commit { border-left-color: var(--accent-yellow); }
         .activity-item.commit::before { border-color: var(--accent-yellow); }
+        .activity-item.commit:hover {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3),
+                        0 0 15px rgba(255, 170, 0, 0.25);
+        }
         
         .activity-item.trade, .activity-item.transfer { 
             border-left-color: var(--accent-red); 
@@ -1199,15 +1211,27 @@
         .activity-item.trade::before, .activity-item.transfer::before { 
             border-color: var(--accent-red); 
         }
+        .activity-item.trade:hover, .activity-item.transfer:hover {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3),
+                        0 0 15px rgba(255, 107, 107, 0.25);
+        }
         
         .activity-item.decision { border-left-color: #ff0055; }
         .activity-item.decision::before { border-color: #ff0055; }
+        .activity-item.decision:hover {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3),
+                        0 0 15px rgba(255, 0, 85, 0.25);
+        }
         
         .activity-item.build, .activity-item.deploy { 
             border-left-color: var(--accent-blue); 
         }
         .activity-item.build::before, .activity-item.deploy::before { 
             border-color: var(--accent-blue); 
+        }
+        .activity-item.build:hover, .activity-item.deploy:hover {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3),
+                        0 0 15px rgba(0, 170, 255, 0.25);
         }
 
         .activity-item.heartbeat { 
@@ -1217,12 +1241,20 @@
             border-color: #ff69b4;
             animation: pulse 2s infinite;
         }
+        .activity-item.heartbeat:hover {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3),
+                        0 0 15px rgba(255, 105, 180, 0.25);
+        }
 
         .activity-item.session { 
             border-left-color: #00ffcc; 
         }
         .activity-item.session::before { 
             border-color: #00ffcc; 
+        }
+        .activity-item.session:hover {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3),
+                        0 0 15px rgba(0, 255, 204, 0.25);
         }
 
         .activity-item.message { 
@@ -1231,12 +1263,20 @@
         .activity-item.message::before { 
             border-color: #00ff88; 
         }
+        .activity-item.message:hover {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3),
+                        0 0 15px rgba(0, 255, 136, 0.25);
+        }
 
         .activity-item.tweet { 
             border-left-color: #1DA1F2; 
         }
         .activity-item.tweet::before { 
             border-color: #1DA1F2; 
+        }
+        .activity-item.tweet:hover {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3),
+                        0 0 15px rgba(29, 161, 242, 0.25);
         }
 
         .activity-header {
@@ -2050,8 +2090,9 @@
         
         .chart-card:hover {
             transform: translateY(-3px);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
-            border-color: rgba(255, 170, 0, 0.3);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3),
+                        0 0 20px rgba(0, 170, 255, 0.15);
+            border-color: rgba(0, 170, 255, 0.3);
         }
         
         /* Proof banner enhanced hover */

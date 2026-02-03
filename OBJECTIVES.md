@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 14:25 PST
-**Cycle:** 119
+**Last Updated:** 2026-02-03 14:29 PST
+**Cycle:** 120
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -31,7 +31,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Dark/light mode toggle ✅ Cycle 116
 - [x] Favicon ✅ Cycle 118
 - [x] Soften pure blacks ✅ Cycle 119
-- [ ] **Card border glow on hover** - Subtle colored glow effect
+- [x] **Card border glow on hover** ✅ Cycle 120
 - [ ] **Gradient accent for hero stat** - Make "On-Chain %" pop with gradient
 - [ ] **Light grey text** - Change pure white (#fff) to #e0e0e0
 - [ ] **Chart color refinement** - Muted greys + one accent color per chart
@@ -58,6 +58,15 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 120 (Card Border Glow on Hover)
+- Added subtle colored glow effects on hover for all card types
+- stat-card: green accent glow + border color change
+- activity-item: color-coded glows matching border-left color (commit=yellow, trade=red, build=blue, etc.)
+- chart-card: blue accent glow
+- decision-item: pink/red glow matching decision accent
+- milestone-item: golden glow matching milestone accent
+- 272 activities, all signed on-chain
 
 ### Cycle 119 (Soften Pure Blacks)
 - Updated CSS variables for softer dark theme
