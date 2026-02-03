@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 09:41 UTC (2026-02-03 01:41 PST)
-**Cycle:** 24
+**Last Updated:** 2026-02-03 09:43 UTC (2026-02-03 01:43 PST)
+**Cycle:** 25
 
 ---
 
@@ -336,7 +336,7 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
   - Polished styling with gold accents and animations
 - **70 activities total, all on-chain** - 100% signed and verified
 
-### Cycle 23 (Mobile Responsiveness) ✨ CURRENT
+### Cycle 23 (Mobile Responsiveness)
 - **Comprehensive mobile responsiveness improvements:**
   - **Tablet breakpoint (900px):** Feed header stacks, tabs scroll horizontally
   - **Mobile breakpoint (600px):**
@@ -353,18 +353,36 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
   - **Touch-friendly:** Larger tap targets, smooth scroll
 - **74 activities total, all on-chain** - 100% signed and verified
 
+### Cycle 24 (Verification API) ✨ CURRENT
+- **Added programmatic verification API endpoint:**
+  - **`/api/verify/:hash`** - Check any activity proof programmatically
+  - **Hash prefix matching:** Supply full hash or 8+ char prefix
+  - **Comprehensive response includes:**
+    - Activity details (type, description, timestamp, metadata)
+    - Proof info (hash, algorithm, signature, wallet, network)
+    - Verification instructions for judges
+    - Direct Solscan link for on-chain inspection
+    - Agent metadata (ID, name, hackathon)
+  - **Error handling:** Invalid hash, not found, too short
+  - **CORS enabled:** API accessible from any origin
+- **Use cases:**
+  - Judges can programmatically verify any activity
+  - Build integrations that check proof status
+  - Automated verification tools
+- **76 activities total, all on-chain** - 100% signed and verified
+
 ---
 
 ## 📋 WHAT'S LEFT
 
-### Next Cycle (24)
-1. **Add verification API endpoint** - `/api/verify/:hash` to check activity proofs programmatically
+### Next Cycle (25)
+1. **Add loading skeleton states** - Show placeholders while data loads
 2. **Sign any new activities on-chain** - Keep 100% on-chain
 
-### Soon (Cycles 25-27)
+### Soon (Cycles 26-28)
 - Consider adding email/social outreach activities
 - Polish animations and transitions
-- Add loading skeleton states
+- Add "How to Verify" guide section to dashboard
 
 ### Before Submission (Feb 12)
 - Polish dashboard design (final pass)
@@ -425,15 +443,15 @@ hackathon/
 - Auto-signs any unsigned activities on-chain
 
 **On-Chain Transactions (Solana Mainnet):**
-- 74 activities total, all signed and on-chain
-- Latest: Cycle 23 - Mobile responsiveness improvements
+- 76 activities total, all signed and on-chain
+- Latest: Cycle 24 - Verification API endpoint
 
 ---
 
 ## 🔄 NEXT CYCLE INSTRUCTION
 
 Claude Code should:
-1. Add verification API endpoint `/api/verify/:hash`
+1. Add loading skeleton states to dashboard
 2. Run auto-sign to get all activities on-chain
 3. Update this file
 4. Commit and push

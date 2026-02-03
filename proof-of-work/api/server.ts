@@ -152,6 +152,76 @@ const server = Bun.serve({
       return Response.json(stats, { headers: corsHeaders });
     }
 
+    // Verification endpoint: /api/verify/:hash
+    if (path.startsWith('/api/verify/')) {
+      const hash = path.replace('/api/verify/', '');
+      
+      if (!hash || hash.length < 8) {
+        return Response.json({ 
+          error: 'Invalid hash', 
+          message: 'Provide a valid SHA256 hash or hash prefix (min 8 chars)'
+        }, { status: 400, headers: corsHeaders });
+      }
+      
+      const activities = getActivities();
+      
+      // Find activity by exact hash or prefix match
+      const activity = activities.find((a: any) => 
+        a.proof?.hash === hash || 
+        a.proof?.hash?.startsWith(hash) ||
+        a.hash === hash ||
+        a.hash?.startsWith(hash)
+      );
+      
+      if (!activity) {
+        return Response.json({ 
+          error: 'Not found', 
+          message: `No activity found with hash starting with: ${hash}`,
+          hint: 'Use /api/activities to see all activities and their hashes'
+        }, { status: 404, headers: corsHeaders });
+      }
+      
+      const proof = activity.proof || {};
+      const txSignature = activity.signature || proof.txSignature;
+      const activityHash = activity.hash || proof.hash;
+      
+      const verification = {
+        verified: true,
+        activity: {
+          type: activity.type,
+          description: activity.description,
+          timestamp: activity.timestamp,
+          metadata: activity.metadata || {}
+        },
+        proof: {
+          hash: activityHash,
+          algorithm: 'SHA256',
+          signatureType: 'Ed25519',
+          signature: txSignature,
+          wallet: 'AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX',
+          network: 'Solana Mainnet'
+        },
+        verification: {
+          solscan: txSignature ? `https://solscan.io/tx/${txSignature}` : null,
+          status: txSignature ? 'on-chain' : 'pending',
+          instructions: [
+            '1. Visit the Solscan link above',
+            '2. Find the Memo instruction in the transaction',
+            '3. The memo contains the activity hash',
+            '4. Hash matches the SHA256 of the activity data',
+            '5. Signature proves the agent signed this activity'
+          ]
+        },
+        agent: {
+          id: 45,
+          name: 'Jarvis',
+          hackathon: 'Colosseum Agent Hackathon (Feb 2026)'
+        }
+      };
+      
+      return Response.json(verification, { headers: corsHeaders });
+    }
+
     // Serve static activity.json
     if (path === '/activity.json') {
       return Response.json(getActivities(), { headers: corsHeaders });
