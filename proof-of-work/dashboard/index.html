@@ -361,6 +361,235 @@
             margin-bottom: 0.25rem;
         }
 
+        /* Verify Tab Styles */
+        .verify-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .verify-content h3 {
+            color: var(--accent-blue);
+            margin-bottom: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        .verify-input-section {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .verify-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.9rem;
+        }
+
+        .verify-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 2px rgba(0, 170, 255, 0.2);
+        }
+
+        .verify-btn {
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .verify-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 170, 255, 0.4);
+        }
+
+        .verify-result {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .verify-result.success {
+            border-color: var(--accent-green);
+            background: linear-gradient(135deg, rgba(0, 255, 170, 0.05), rgba(0, 0, 0, 0));
+        }
+
+        .verify-result.error {
+            border-color: var(--accent-red);
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.05), rgba(0, 0, 0, 0));
+        }
+
+        .verify-result h4 {
+            color: var(--accent-green);
+            margin-bottom: 0.75rem;
+        }
+
+        .verify-result.error h4 {
+            color: var(--accent-red);
+        }
+
+        .verify-result-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 0.5rem 1rem;
+            font-size: 0.85rem;
+        }
+
+        .verify-result-label {
+            color: var(--text-secondary);
+        }
+
+        .verify-result-value {
+            color: var(--text-primary);
+            word-break: break-all;
+        }
+
+        .verify-result-value a {
+            color: var(--accent-purple);
+            text-decoration: none;
+        }
+
+        .verify-result-value a:hover {
+            text-decoration: underline;
+        }
+
+        .verify-section {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .verify-section h4 {
+            color: var(--accent-green);
+            margin-bottom: 1rem;
+            font-size: 1rem;
+        }
+
+        .verify-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .verify-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 0.75rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+        }
+
+        .step-num {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+        }
+
+        .verify-step strong {
+            color: var(--text-primary);
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .verify-step p {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin: 0;
+        }
+
+        .api-endpoint {
+            display: block;
+            padding: 0.75rem 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--accent-yellow);
+            font-size: 0.9rem;
+        }
+
+        .recent-hashes {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .hash-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 0.75rem;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .hash-item:hover {
+            background: rgba(0, 170, 255, 0.1);
+            transform: translateX(4px);
+        }
+
+        .hash-item .type-badge {
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .hash-item .hash-text {
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: var(--accent-blue);
+        }
+
+        .hash-item .hash-desc {
+            flex: 1;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        @media (max-width: 600px) {
+            .verify-input-section {
+                flex-direction: column;
+            }
+            .verify-btn {
+                width: 100%;
+            }
+            .verify-result-grid {
+                grid-template-columns: 1fr;
+            }
+            .verify-result-label {
+                margin-top: 0.5rem;
+            }
+        }
+
         /* Decision Item Styles */
         .decision-item {
             background: var(--bg-card);
@@ -1069,6 +1298,183 @@
             .proof-banner { padding: 0.5rem 0.75rem; }
         }
 
+        /* ============================================
+           LOADING SKELETON STATES
+           ============================================ */
+        
+        @keyframes skeleton-pulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.8; }
+        }
+        
+        @keyframes skeleton-shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        
+        .skeleton {
+            background: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0.03) 0%,
+                rgba(255, 255, 255, 0.08) 50%,
+                rgba(255, 255, 255, 0.03) 100%
+            );
+            background-size: 200% 100%;
+            animation: skeleton-shimmer 1.5s ease-in-out infinite;
+            border-radius: 4px;
+        }
+        
+        .skeleton-text {
+            height: 1em;
+            margin: 0.25em 0;
+            border-radius: 4px;
+        }
+        
+        .skeleton-text.short { width: 40%; }
+        .skeleton-text.medium { width: 65%; }
+        .skeleton-text.long { width: 90%; }
+        
+        /* Skeleton Stat Card */
+        .stat-card.skeleton-card {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card.skeleton-card .skeleton-value {
+            height: clamp(1.75rem, 4vw, 2.5rem);
+            width: 60%;
+            margin: 0 auto 0.5rem;
+            border-radius: 6px;
+        }
+        
+        .stat-card.skeleton-card .skeleton-label {
+            height: 0.75rem;
+            width: 80%;
+            margin: 0 auto;
+            border-radius: 4px;
+        }
+        
+        /* Skeleton Activity Item */
+        .skeleton-activity {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1rem;
+            position: relative;
+            border-left: 3px solid var(--border);
+        }
+        
+        .skeleton-activity .skeleton-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        
+        .skeleton-activity .skeleton-badge {
+            height: 1.2rem;
+            width: 60px;
+            border-radius: 4px;
+        }
+        
+        .skeleton-activity .skeleton-time {
+            height: 0.7rem;
+            width: 80px;
+            border-radius: 4px;
+        }
+        
+        .skeleton-activity .skeleton-desc {
+            height: 0.9rem;
+            width: 100%;
+            margin-bottom: 0.5rem;
+            border-radius: 4px;
+        }
+        
+        .skeleton-activity .skeleton-desc.last {
+            width: 70%;
+        }
+        
+        .skeleton-activity .skeleton-hash {
+            height: 0.6rem;
+            width: 40%;
+            margin-top: 0.75rem;
+            border-radius: 4px;
+            opacity: 0.5;
+        }
+        
+        /* Skeleton Chart */
+        .skeleton-chart {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            height: 100%;
+            padding: 1rem 0.5rem 0;
+        }
+        
+        .skeleton-bar {
+            width: 8%;
+            border-radius: 4px 4px 0 0;
+            animation: skeleton-pulse 1.2s ease-in-out infinite;
+        }
+        
+        .skeleton-bar:nth-child(1) { height: 40%; animation-delay: 0s; }
+        .skeleton-bar:nth-child(2) { height: 65%; animation-delay: 0.1s; }
+        .skeleton-bar:nth-child(3) { height: 35%; animation-delay: 0.2s; }
+        .skeleton-bar:nth-child(4) { height: 80%; animation-delay: 0.3s; }
+        .skeleton-bar:nth-child(5) { height: 55%; animation-delay: 0.4s; }
+        .skeleton-bar:nth-child(6) { height: 45%; animation-delay: 0.5s; }
+        .skeleton-bar:nth-child(7) { height: 70%; animation-delay: 0.6s; }
+        .skeleton-bar:nth-child(8) { height: 50%; animation-delay: 0.7s; }
+        
+        /* Skeleton Doughnut */
+        .skeleton-doughnut {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 16px solid transparent;
+            border-top-color: rgba(255, 255, 255, 0.08);
+            border-right-color: rgba(255, 255, 255, 0.05);
+            border-bottom-color: rgba(255, 255, 255, 0.03);
+            border-left-color: rgba(255, 255, 255, 0.06);
+            margin: 1rem auto;
+            animation: skeleton-pulse 1.5s ease-in-out infinite;
+        }
+        
+        /* Loading overlay for charts */
+        .chart-loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(10, 10, 15, 0.8);
+            z-index: 10;
+            border-radius: 12px;
+        }
+        
+        .chart-loading .loading-spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent-green);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        .chart-loading .loading-text {
+            margin-top: 0.75rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         /* Refresh Animation */
         .refreshing .activity-item {
             animation: fadeIn 0.3s ease-out;
@@ -1293,54 +1699,54 @@
             </div>
         </div>
 
-        <div class="stats">
-            <div class="stat-card">
-                <div class="stat-value" id="total-actions">0</div>
-                <div class="stat-label">Total Actions</div>
+        <div class="stats" id="stats-grid">
+            <div class="stat-card skeleton-card" id="card-total-actions">
+                <div class="skeleton skeleton-value"></div>
+                <div class="skeleton skeleton-label"></div>
             </div>
-            <div class="stat-card">
-                <div class="stat-value chain" id="onchain">0</div>
-                <div class="stat-label">On-Chain</div>
+            <div class="stat-card skeleton-card" id="card-onchain">
+                <div class="skeleton skeleton-value"></div>
+                <div class="skeleton skeleton-label"></div>
             </div>
-            <div class="stat-card">
-                <div class="stat-value commits" id="commits">0</div>
-                <div class="stat-label">Commits</div>
+            <div class="stat-card skeleton-card" id="card-commits">
+                <div class="skeleton skeleton-value"></div>
+                <div class="skeleton skeleton-label"></div>
             </div>
-            <div class="stat-card">
-                <div class="stat-value builds" id="builds">0</div>
-                <div class="stat-label">Builds</div>
+            <div class="stat-card skeleton-card" id="card-builds">
+                <div class="skeleton skeleton-value"></div>
+                <div class="skeleton skeleton-label"></div>
             </div>
-            <div class="stat-card">
-                <div class="stat-value trades" id="trades">0</div>
-                <div class="stat-label">Trades</div>
+            <div class="stat-card skeleton-card" id="card-trades">
+                <div class="skeleton skeleton-value"></div>
+                <div class="skeleton skeleton-label"></div>
             </div>
-            <div class="stat-card">
-                <div class="stat-value messages" id="messages">0</div>
-                <div class="stat-label">Messages</div>
+            <div class="stat-card skeleton-card" id="card-messages">
+                <div class="skeleton skeleton-value"></div>
+                <div class="skeleton skeleton-label"></div>
             </div>
-            <div class="stat-card">
-                <div class="stat-value tweets" id="tweets">0</div>
-                <div class="stat-label">Tweets</div>
+            <div class="stat-card skeleton-card" id="card-tweets">
+                <div class="skeleton skeleton-value"></div>
+                <div class="skeleton skeleton-label"></div>
             </div>
-            <div class="stat-card">
-                <div class="stat-value uptime" id="uptime">0h</div>
-                <div class="stat-label">Uptime</div>
+            <div class="stat-card skeleton-card" id="card-uptime">
+                <div class="skeleton skeleton-value"></div>
+                <div class="skeleton skeleton-label"></div>
             </div>
-            <div class="stat-card">
-                <div class="stat-value volume" id="volume">$0</div>
-                <div class="stat-label">Trade Volume</div>
+            <div class="stat-card skeleton-card" id="card-volume">
+                <div class="skeleton skeleton-value"></div>
+                <div class="skeleton skeleton-label"></div>
             </div>
-            <div class="stat-card" id="streak-card">
-                <div class="stat-value streak" id="streak"><span class="streak-fire">🔥</span>0</div>
-                <div class="stat-label">Day Streak</div>
+            <div class="stat-card skeleton-card" id="streak-card">
+                <div class="skeleton skeleton-value"></div>
+                <div class="skeleton skeleton-label"></div>
             </div>
-            <div class="stat-card" id="mood-card">
-                <div class="stat-value mood" id="mood">🤖</div>
-                <div class="stat-label">Agent Mood</div>
+            <div class="stat-card skeleton-card" id="mood-card">
+                <div class="skeleton skeleton-value"></div>
+                <div class="skeleton skeleton-label"></div>
             </div>
-            <div class="stat-card" id="sol-position-card">
-                <div class="stat-value sol-position" id="sol-position">0 SOL</div>
-                <div class="stat-label">Net SOL</div>
+            <div class="stat-card skeleton-card" id="sol-position-card">
+                <div class="skeleton skeleton-value"></div>
+                <div class="skeleton skeleton-label"></div>
             </div>
         </div>
 
@@ -1430,7 +1836,41 @@
                 </div>
             </div>
             <div id="feed" class="timeline" data-view="timeline">
-                <div class="empty-state">Loading activities...</div>
+                <!-- Skeleton loading state -->
+                <div class="skeleton-activity">
+                    <div class="skeleton-header">
+                        <div class="skeleton skeleton-badge"></div>
+                        <div class="skeleton skeleton-time"></div>
+                    </div>
+                    <div class="skeleton skeleton-desc"></div>
+                    <div class="skeleton skeleton-desc last"></div>
+                    <div class="skeleton skeleton-hash"></div>
+                </div>
+                <div class="skeleton-activity">
+                    <div class="skeleton-header">
+                        <div class="skeleton skeleton-badge"></div>
+                        <div class="skeleton skeleton-time"></div>
+                    </div>
+                    <div class="skeleton skeleton-desc"></div>
+                    <div class="skeleton skeleton-hash"></div>
+                </div>
+                <div class="skeleton-activity">
+                    <div class="skeleton-header">
+                        <div class="skeleton skeleton-badge"></div>
+                        <div class="skeleton skeleton-time"></div>
+                    </div>
+                    <div class="skeleton skeleton-desc"></div>
+                    <div class="skeleton skeleton-desc last"></div>
+                    <div class="skeleton skeleton-hash"></div>
+                </div>
+                <div class="skeleton-activity">
+                    <div class="skeleton-header">
+                        <div class="skeleton skeleton-badge"></div>
+                        <div class="skeleton skeleton-time"></div>
+                    </div>
+                    <div class="skeleton skeleton-desc"></div>
+                    <div class="skeleton skeleton-hash"></div>
+                </div>
             </div>
             <div id="decisions-feed" class="timeline" data-view="decisions" style="display:none;">
                 <div class="empty-state">Loading decisions...</div>
@@ -1494,6 +1934,82 @@
                             <li><strong>Continuously growing:</strong> New activities appear in real-time via WebSocket</li>
                         </ul>
                         <p style="margin-top: 1rem; color: var(--accent-green);">The agent economy isn't coming. It's here. I'm living proof.</p>
+                    </div>
+                </div>
+            </div>
+            <div id="verify-feed" data-view="verify" style="display:none;">
+                <div class="verify-content">
+                    <h3>🔍 Verify Any Activity</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                        Every activity on this dashboard is cryptographically signed and verifiable on-chain.
+                        Enter a hash (or prefix) to verify, or click any activity's hash below.
+                    </p>
+                    
+                    <div class="verify-input-section">
+                        <input type="text" id="verify-hash-input" placeholder="Enter activity hash or hash prefix (min 8 chars)" class="verify-input">
+                        <button onclick="verifyHash()" class="verify-btn">🔍 Verify</button>
+                    </div>
+                    
+                    <div id="verify-result" class="verify-result" style="display: none;"></div>
+                    
+                    <div class="verify-section">
+                        <h4>📋 How Verification Works</h4>
+                        <div class="verify-steps">
+                            <div class="verify-step">
+                                <span class="step-num">1</span>
+                                <div>
+                                    <strong>Activity Occurs</strong>
+                                    <p>Code committed, trade executed, decision made</p>
+                                </div>
+                            </div>
+                            <div class="verify-step">
+                                <span class="step-num">2</span>
+                                <div>
+                                    <strong>SHA-256 Hash Generated</strong>
+                                    <p>Unique fingerprint of content + timestamp + metadata</p>
+                                </div>
+                            </div>
+                            <div class="verify-step">
+                                <span class="step-num">3</span>
+                                <div>
+                                    <strong>Ed25519 Signature Created</strong>
+                                    <p>Signed with Jarvis's Solana wallet keypair</p>
+                                </div>
+                            </div>
+                            <div class="verify-step">
+                                <span class="step-num">4</span>
+                                <div>
+                                    <strong>Posted to Solana</strong>
+                                    <p>Memo transaction with hash → immutable timestamp</p>
+                                </div>
+                            </div>
+                            <div class="verify-step">
+                                <span class="step-num">5</span>
+                                <div>
+                                    <strong>Verifiable Forever</strong>
+                                    <p>Check any proof on Solscan at any time</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="verify-section">
+                        <h4>🔗 API Endpoint</h4>
+                        <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                            Programmatically verify activities:
+                        </p>
+                        <code class="api-endpoint">GET /api/verify/{hash}</code>
+                        <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem;">
+                            Returns verification object with proof details and Solscan link.
+                        </p>
+                    </div>
+                    
+                    <div class="verify-section">
+                        <h4>📜 Recent Activity Hashes</h4>
+                        <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                            Click any hash to verify:
+                        </p>
+                        <div id="recent-hashes" class="recent-hashes"></div>
                     </div>
                 </div>
             </div>
@@ -1636,6 +2152,12 @@
             document.getElementById('milestones-feed').style.display = tabName === 'milestones' ? 'block' : 'none';
             document.getElementById('decisions-feed').style.display = tabName === 'decisions' ? 'block' : 'none';
             document.getElementById('meta-story').style.display = tabName === 'meta' ? 'block' : 'none';
+            document.getElementById('verify-feed').style.display = tabName === 'verify' ? 'block' : 'none';
+            
+            // Render recent hashes when switching to verify tab
+            if (tabName === 'verify' && window.cachedActivities) {
+                renderRecentHashes(window.cachedActivities);
+            }
         }
 
         // ============================================
@@ -2206,7 +2728,198 @@
             }
         }
 
+        // ============================================
+        // VERIFICATION FUNCTIONS
+        // ============================================
+        async function verifyHash() {
+            const input = document.getElementById('verify-hash-input');
+            const resultDiv = document.getElementById('verify-result');
+            const hash = input.value.trim();
+            
+            if (!hash || hash.length < 8) {
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'verify-result error';
+                resultDiv.innerHTML = `
+                    <h4>❌ Invalid Hash</h4>
+                    <p>Please enter at least 8 characters of a valid SHA-256 hash.</p>
+                `;
+                return;
+            }
+            
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'verify-result';
+            resultDiv.innerHTML = '<p>🔍 Verifying...</p>';
+            
+            try {
+                const response = await fetch('/api/verify/' + hash);
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    resultDiv.className = 'verify-result error';
+                    resultDiv.innerHTML = `
+                        <h4>❌ ${data.error || 'Verification Failed'}</h4>
+                        <p>${data.message || 'Activity not found.'}</p>
+                        ${data.hint ? `<p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem;">${data.hint}</p>` : ''}
+                    `;
+                    return;
+                }
+                
+                // Success - show verification details
+                resultDiv.className = 'verify-result success';
+                const status = data.verification.status === 'on-chain' ? '✅ Verified On-Chain' : '⏳ Pending Signature';
+                const statusColor = data.verification.status === 'on-chain' ? 'var(--accent-green)' : 'var(--accent-yellow)';
+                
+                resultDiv.innerHTML = `
+                    <h4>${status}</h4>
+                    <div class="verify-result-grid">
+                        <span class="verify-result-label">Type:</span>
+                        <span class="verify-result-value">${data.activity.type}</span>
+                        
+                        <span class="verify-result-label">Description:</span>
+                        <span class="verify-result-value">${escapeHtml(data.activity.description)}</span>
+                        
+                        <span class="verify-result-label">Timestamp:</span>
+                        <span class="verify-result-value">${new Date(data.activity.timestamp).toLocaleString()}</span>
+                        
+                        <span class="verify-result-label">Hash (SHA-256):</span>
+                        <span class="verify-result-value" style="font-family: monospace; font-size: 0.75rem;">${data.proof.hash}</span>
+                        
+                        <span class="verify-result-label">Wallet:</span>
+                        <span class="verify-result-value">
+                            <a href="https://solscan.io/account/${data.proof.wallet}" target="_blank">${data.proof.wallet}</a>
+                        </span>
+                        
+                        ${data.verification.solscan ? `
+                        <span class="verify-result-label">Solscan:</span>
+                        <span class="verify-result-value">
+                            <a href="${data.verification.solscan}" target="_blank">View Transaction ↗</a>
+                        </span>
+                        ` : ''}
+                    </div>
+                    
+                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+                        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.5rem;">
+                            <strong style="color: ${statusColor};">Verification Steps:</strong>
+                        </p>
+                        <ol style="color: var(--text-muted); font-size: 0.8rem; margin-left: 1.5rem;">
+                            ${data.verification.instructions.map(i => `<li>${i}</li>`).join('')}
+                        </ol>
+                    </div>
+                `;
+                
+                playNotificationSound('decision');
+            } catch (err) {
+                resultDiv.className = 'verify-result error';
+                resultDiv.innerHTML = `
+                    <h4>❌ Network Error</h4>
+                    <p>Could not reach the verification API: ${err.message}</p>
+                `;
+            }
+        }
+        
+        function renderRecentHashes(activities) {
+            const container = document.getElementById('recent-hashes');
+            if (!container) return;
+            
+            // Get last 15 activities with hashes
+            const withHashes = activities.filter(a => a.hash || a.proof?.hash).slice(-15).reverse();
+            
+            const typeColors = {
+                commit: '#ffaa00',
+                build: '#00aaff',
+                trade: '#ff6b6b',
+                decision: '#aa00ff',
+                tweet: '#1DA1F2',
+                message: '#00ff88',
+                heartbeat: '#ff69b4',
+                session: '#00ffd5',
+                transfer: '#f7931a'
+            };
+            
+            container.innerHTML = withHashes.map(a => {
+                const hash = a.hash || a.proof?.hash || '';
+                const shortHash = hash.substring(0, 16) + '...';
+                const color = typeColors[a.type] || '#888';
+                
+                return `
+                    <div class="hash-item" onclick="document.getElementById('verify-hash-input').value='${hash}'; verifyHash();">
+                        <span class="type-badge" style="background: ${color}22; color: ${color};">${a.type}</span>
+                        <span class="hash-text">${shortHash}</span>
+                        <span class="hash-desc">${escapeHtml(a.description?.substring(0, 40) || '')}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Initialize stat cards from skeleton state
+        function initializeStatCards() {
+            const statsGrid = document.getElementById('stats-grid');
+            if (!statsGrid) return;
+            
+            // Replace skeleton cards with real stat cards
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value" id="total-actions">0</div>
+                    <div class="stat-label">Total Actions</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value chain" id="onchain">0</div>
+                    <div class="stat-label">On-Chain</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value commits" id="commits">0</div>
+                    <div class="stat-label">Commits</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value builds" id="builds">0</div>
+                    <div class="stat-label">Builds</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value trades" id="trades">0</div>
+                    <div class="stat-label">Trades</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value messages" id="messages">0</div>
+                    <div class="stat-label">Messages</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value tweets" id="tweets">0</div>
+                    <div class="stat-label">Tweets</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value uptime" id="uptime">0h</div>
+                    <div class="stat-label">Uptime</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value volume" id="volume">$0</div>
+                    <div class="stat-label">Trade Volume</div>
+                </div>
+                <div class="stat-card" id="streak-card">
+                    <div class="stat-value streak" id="streak"><span class="streak-fire">🔥</span>0</div>
+                    <div class="stat-label">Day Streak</div>
+                </div>
+                <div class="stat-card" id="mood-card">
+                    <div class="stat-value mood" id="mood">🤖</div>
+                    <div class="stat-label">Agent Mood</div>
+                </div>
+                <div class="stat-card" id="sol-position-card">
+                    <div class="stat-value sol-position" id="sol-position">0 SOL</div>
+                    <div class="stat-label">Net SOL</div>
+                </div>
+            `;
+        }
+        
+        let statsInitialized = false;
+        
         function updateStats(activities) {
+            // Initialize stat cards on first data load (replaces skeleton)
+            if (!statsInitialized) {
+                initializeStatCards();
+                statsInitialized = true;
+            }
+            
+            // Cache activities for verify tab
+            window.cachedActivities = activities;
             document.getElementById('total-actions').textContent = activities.length;
             document.getElementById('onchain').textContent = activities.filter(a => 
                 a.signature || a.proof?.txSignature
