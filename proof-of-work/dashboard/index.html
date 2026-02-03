@@ -733,6 +733,134 @@
         .chart-container.small {
             height: 180px;
         }
+
+        /* Heatmap Styles */
+        .heatmap-container {
+            padding: 0.5rem 0;
+        }
+
+        .heatmap-months {
+            display: flex;
+            padding-left: 32px;
+            margin-bottom: 4px;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+
+        .heatmap-month {
+            flex: 1;
+            text-align: left;
+        }
+
+        .heatmap-wrapper {
+            display: flex;
+            gap: 4px;
+        }
+
+        .heatmap-days {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            width: 28px;
+            padding-right: 4px;
+        }
+
+        .heatmap-day-label {
+            height: 12px;
+            line-height: 12px;
+            text-align: right;
+        }
+
+        .heatmap-grid {
+            display: grid;
+            grid-template-rows: repeat(7, 12px);
+            grid-auto-flow: column;
+            gap: 2px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .heatmap-cell {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            cursor: default;
+            transition: transform 0.1s, outline 0.1s;
+        }
+
+        .heatmap-cell:hover {
+            transform: scale(1.2);
+            outline: 2px solid var(--accent-blue);
+            outline-offset: 1px;
+            z-index: 10;
+        }
+
+        .heatmap-cell.level-0 { background: #161b22; }
+        .heatmap-cell.level-1 { background: #0e4429; }
+        .heatmap-cell.level-2 { background: #006d32; }
+        .heatmap-cell.level-3 { background: #26a641; }
+        .heatmap-cell.level-4 { background: #39d353; }
+
+        .heatmap-cell.future {
+            background: #0d1117;
+            opacity: 0.3;
+        }
+
+        .heatmap-legend {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 4px;
+            margin-top: 8px;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .heatmap-legend .heatmap-cell {
+            cursor: default;
+        }
+
+        .heatmap-legend .heatmap-cell:hover {
+            transform: none;
+            outline: none;
+        }
+
+        .heatmap-legend-label {
+            padding: 0 4px;
+        }
+
+        .heatmap-tooltip {
+            position: fixed;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 0.75rem;
+            color: var(--text-primary);
+            pointer-events: none;
+            z-index: 1000;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .heatmap-tooltip strong {
+            color: var(--accent-green);
+        }
+
+        @media (max-width: 600px) {
+            .heatmap-grid {
+                max-width: 100%;
+            }
+            .heatmap-cell {
+                width: 10px;
+                height: 10px;
+            }
+            .heatmap-days {
+                font-size: 0.55rem;
+            }
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -834,6 +962,33 @@
                 <h3>📅 Actions Per Day</h3>
                 <div class="chart-container" style="height: 250px;">
                     <canvas id="dailyChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card" style="margin-top: 1.5rem;">
+                <h3>🗓️ Activity Heatmap</h3>
+                <div class="heatmap-container" id="heatmapContainer">
+                    <div class="heatmap-months" id="heatmapMonths"></div>
+                    <div class="heatmap-wrapper">
+                        <div class="heatmap-days">
+                            <div class="heatmap-day-label">Mon</div>
+                            <div class="heatmap-day-label"></div>
+                            <div class="heatmap-day-label">Wed</div>
+                            <div class="heatmap-day-label"></div>
+                            <div class="heatmap-day-label">Fri</div>
+                            <div class="heatmap-day-label"></div>
+                            <div class="heatmap-day-label">Sun</div>
+                        </div>
+                        <div class="heatmap-grid" id="heatmapGrid"></div>
+                    </div>
+                    <div class="heatmap-legend">
+                        <span class="heatmap-legend-label">Less</span>
+                        <div class="heatmap-cell level-0"></div>
+                        <div class="heatmap-cell level-1"></div>
+                        <div class="heatmap-cell level-2"></div>
+                        <div class="heatmap-cell level-3"></div>
+                        <div class="heatmap-cell level-4"></div>
+                        <span class="heatmap-legend-label">More</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1803,6 +1958,141 @@
             });
         }
 
+        // Render GitHub-style activity heatmap
+        function renderHeatmap(activities) {
+            const grid = document.getElementById('heatmapGrid');
+            const monthsContainer = document.getElementById('heatmapMonths');
+            if (!grid || !monthsContainer) return;
+            
+            // Count activities per day
+            const dayCounts = {};
+            activities.forEach(a => {
+                const date = new Date(a.timestamp);
+                const dayKey = date.toISOString().split('T')[0]; // YYYY-MM-DD
+                dayCounts[dayKey] = (dayCounts[dayKey] || 0) + 1;
+            });
+            
+            // Determine date range (show last 16 weeks ~ 4 months)
+            const today = new Date();
+            const endDate = new Date(today);
+            endDate.setDate(endDate.getDate() + (6 - endDate.getDay())); // End on Saturday
+            
+            const weeksToShow = 16;
+            const startDate = new Date(endDate);
+            startDate.setDate(startDate.getDate() - (weeksToShow * 7) + 1);
+            
+            // Find max count for scaling
+            const maxCount = Math.max(1, ...Object.values(dayCounts));
+            
+            // Generate cells
+            grid.innerHTML = '';
+            const cells = [];
+            const currentDate = new Date(startDate);
+            const monthLabels = new Map();
+            
+            while (currentDate <= endDate) {
+                const dayKey = currentDate.toISOString().split('T')[0];
+                const count = dayCounts[dayKey] || 0;
+                const isFuture = currentDate > today;
+                
+                // Determine level (0-4)
+                let level = 0;
+                if (count > 0) {
+                    if (count >= maxCount * 0.75) level = 4;
+                    else if (count >= maxCount * 0.5) level = 3;
+                    else if (count >= maxCount * 0.25) level = 2;
+                    else level = 1;
+                }
+                
+                // Track month labels (first day of week with new month)
+                const weekNum = Math.floor((currentDate - startDate) / (7 * 24 * 60 * 60 * 1000));
+                if (currentDate.getDay() === 0) { // Sunday (first of week in our grid)
+                    const monthName = currentDate.toLocaleDateString('en-US', { month: 'short' });
+                    if (!monthLabels.has(monthName) || monthLabels.get(monthName).week > weekNum) {
+                        monthLabels.set(monthName, { week: weekNum, date: new Date(currentDate) });
+                    }
+                }
+                
+                const cell = document.createElement('div');
+                cell.className = `heatmap-cell level-${level}${isFuture ? ' future' : ''}`;
+                cell.dataset.date = dayKey;
+                cell.dataset.count = count;
+                cell.title = `${currentDate.toLocaleDateString('en-US', { 
+                    weekday: 'short',
+                    month: 'short', 
+                    day: 'numeric',
+                    year: 'numeric'
+                })}: ${count} action${count !== 1 ? 's' : ''}`;
+                
+                // Tooltip on hover
+                cell.addEventListener('mouseenter', showHeatmapTooltip);
+                cell.addEventListener('mouseleave', hideHeatmapTooltip);
+                
+                grid.appendChild(cell);
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+            
+            // Render month labels
+            const sortedMonths = [...monthLabels.entries()].sort((a, b) => a[1].week - b[1].week);
+            monthsContainer.innerHTML = '';
+            
+            let lastWeek = -1;
+            sortedMonths.forEach(([month, { week }], idx) => {
+                if (idx > 0) {
+                    // Add spacer for weeks without label
+                    const spacer = document.createElement('div');
+                    spacer.className = 'heatmap-month';
+                    spacer.style.flex = `${week - lastWeek - 1}`;
+                    if (week - lastWeek > 1) monthsContainer.appendChild(spacer);
+                }
+                
+                const label = document.createElement('div');
+                label.className = 'heatmap-month';
+                label.textContent = month;
+                label.style.flex = '1';
+                monthsContainer.appendChild(label);
+                
+                lastWeek = week;
+            });
+        }
+        
+        // Heatmap tooltip
+        let heatmapTooltip = null;
+        
+        function showHeatmapTooltip(e) {
+            const cell = e.target;
+            const date = cell.dataset.date;
+            const count = parseInt(cell.dataset.count, 10);
+            
+            if (!heatmapTooltip) {
+                heatmapTooltip = document.createElement('div');
+                heatmapTooltip.className = 'heatmap-tooltip';
+                document.body.appendChild(heatmapTooltip);
+            }
+            
+            const dateObj = new Date(date + 'T12:00:00');
+            const formattedDate = dateObj.toLocaleDateString('en-US', {
+                weekday: 'long',
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric'
+            });
+            
+            heatmapTooltip.innerHTML = `<strong>${count}</strong> action${count !== 1 ? 's' : ''} on ${formattedDate}`;
+            heatmapTooltip.style.display = 'block';
+            
+            // Position tooltip above the cell
+            const rect = cell.getBoundingClientRect();
+            heatmapTooltip.style.left = `${rect.left + rect.width / 2 - heatmapTooltip.offsetWidth / 2}px`;
+            heatmapTooltip.style.top = `${rect.top - heatmapTooltip.offsetHeight - 8}px`;
+        }
+        
+        function hideHeatmapTooltip() {
+            if (heatmapTooltip) {
+                heatmapTooltip.style.display = 'none';
+            }
+        }
+
         async function loadActivities() {
             try {
                 const res = await fetch('/api/activities');
@@ -1811,6 +2101,7 @@
                 renderDecisions(activities);
                 updateStats(activities);
                 renderCharts(activities);
+                renderHeatmap(activities);
             } catch (e) {
                 try {
                     const res = await fetch('/activity.json');
@@ -1819,6 +2110,7 @@
                     renderDecisions(activities);
                     updateStats(activities);
                     renderCharts(activities);
+                    renderHeatmap(activities);
                 } catch (e2) {
                     document.getElementById('feed').innerHTML = 
                         '<div class="empty-state">No activities yet. The agent is warming up... 🤖</div>';
@@ -1861,6 +2153,7 @@
                             renderDecisions(msg.data.activities);
                             updateStats(msg.data.activities);
                             renderCharts(msg.data.activities);
+                            renderHeatmap(msg.data.activities);
                             
                             // Flash notification + sound for new activities
                             if (msg.type === 'new_activities' && msg.data.newItems?.length > 0) {

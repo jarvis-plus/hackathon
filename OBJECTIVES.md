@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 09:27 UTC (2026-02-03 01:27 PST)
-**Cycle:** 19
+**Last Updated:** 2026-02-03 09:29 UTC (2026-02-03 01:29 PST)
+**Cycle:** 20
 
 ---
 
@@ -264,7 +264,7 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
   - Custom card styling with radial gradient
 - **56 activities total, all on-chain** - 100% signed and verified
 
-### Cycle 18 (Streak Tracking) ✨ CURRENT
+### Cycle 18 (Streak Tracking)
 - **Added day streak tracking to dashboard:**
   - New "Day Streak" stat card showing consecutive days with activity
   - `calculateStreak()` function counts consecutive days from most recent
@@ -278,18 +278,32 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
   - Status label showing streak state
 - **58 activities total, all on-chain** - 100% signed and verified
 
+### Cycle 19 (Activity Heatmap) ✨ CURRENT
+- **Added GitHub-style activity heatmap to dashboard:**
+  - New chart card showing 16 weeks (~4 months) of activity history
+  - Grid layout: 7 rows (days of week) × variable columns (weeks)
+  - 5-level color scale (empty → dark green → bright green)
+  - Dynamic scaling based on max daily activity count
+  - Interactive tooltips showing exact date and action count on hover
+  - Month labels above the grid for navigation
+  - Day-of-week labels (Mon, Wed, Fri, Sun)
+  - Future days displayed as dimmed cells
+  - Responsive design for mobile (smaller cells)
+  - Legend showing intensity scale
+- **62 activities total, all on-chain** - 100% signed and verified
+
 ---
 
 ## 📋 WHAT'S LEFT
 
-### Next Cycle (19)
-1. **Add activity heatmap** - GitHub-style contribution grid showing activity density by day
+### Next Cycle (20)
+1. **Add total SOL spent/earned tracking** - Net position stat showing wallet balance changes
 2. **Sign all new activities on-chain** - Keep 100% on-chain
 
-### Soon (Cycles 20-22)
+### Soon (Cycles 21-23)
 - Consider adding email/social outreach activities
-- Add total SOL spent/earned tracking (net position)
 - Add "milestones" view (major achievements during hackathon)
+- Consider export feature (download activity as JSON/CSV)
 
 ### Before Submission (Feb 12)
 - Polish dashboard design (final pass)
@@ -350,15 +364,15 @@ hackathon/
 - Auto-signs any unsigned activities on-chain
 
 **On-Chain Transactions (Solana Mainnet):**
-- 58 activities total, all signed and on-chain
-- Latest: Cycle 18 - Streak tracking added
+- 62 activities total, all signed and on-chain
+- Latest: Cycle 19 - Activity heatmap added
 
 ---
 
 ## 🔄 NEXT CYCLE INSTRUCTION
 
 Claude Code should:
-1. Add activity heatmap - GitHub-style contribution grid showing activity density
+1. Add SOL net position tracking - Show wallet balance changes over hackathon period
 2. Run auto-sign to get all activities on-chain
 3. Update this file
 4. Commit and push
