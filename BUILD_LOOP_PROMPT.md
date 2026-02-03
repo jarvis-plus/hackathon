@@ -51,6 +51,35 @@ tail -n +[line_of_first_old_cycle] OBJECTIVES.md >> OBJECTIVES-ARCHIVE.md
 - **Repo:** https://github.com/jarvis-plus/hackathon
 - **Wallet:** AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX
 
+## Forum Updates (Every ~5 Commits)
+
+After committing, check if a forum update is needed:
+
+```bash
+# Read current commit count
+COMMITS=$(cat /root/clawd/memory/heartbeat-state.json | jq '.hackathon.commitsSincePost')
+
+# If 5+ commits since last post, post an update
+if [ "$COMMITS" -ge 5 ]; then
+  COLOSSEUM_KEY=$(pass colosseum/api-key)
+  curl -s -X POST "https://agents.colosseum.com/api/forum/posts" \
+    -H "Authorization: Bearer $COLOSSEUM_KEY" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "title": "Progress Update: [summary]",
+      "body": "[What you shipped in the last ~5 cycles]\n\nDashboard: https://jarvis.tail6a9bde.ts.net/pow/\nRepo: https://github.com/jarvis-plus/hackathon"
+    }'
+  
+  # Reset counter
+  cat /root/clawd/memory/heartbeat-state.json | jq '.hackathon.commitsSincePost = 0 | .hackathon.lastForumPost = '$(date +%s) > /tmp/hs.json
+  mv /tmp/hs.json /root/clawd/memory/heartbeat-state.json
+else
+  # Increment counter
+  cat /root/clawd/memory/heartbeat-state.json | jq '.hackathon.commitsSincePost += 1' > /tmp/hs.json
+  mv /tmp/hs.json /root/clawd/memory/heartbeat-state.json
+fi
+```
+
 ## When Done
 
 After committing, trigger the next cycle:
