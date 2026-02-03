@@ -3914,16 +3914,17 @@
             // Get last 15 activities with hashes
             const withHashes = activities.filter(a => a.hash || a.proof?.hash).slice(-15).reverse();
             
+            // Muted color palette for verification badges
             const typeColors = {
-                commit: '#ffaa00',
-                build: '#00aaff',
-                trade: '#ff6b6b',
-                decision: '#aa00ff',
-                tweet: '#1DA1F2',
-                message: '#00ff88',
-                heartbeat: '#ff69b4',
-                session: '#00ffd5',
-                transfer: '#f7931a'
+                commit: '#c9a227',
+                build: '#5a9fd4',
+                trade: '#d47a7a',
+                decision: '#9b87f5',
+                tweet: '#5a9fd4',
+                message: '#5abd8c',
+                heartbeat: '#c47ab8',
+                session: '#5ac4b8',
+                transfer: '#d47a7a'
             };
             
             container.innerHTML = withHashes.map(a => {
@@ -4212,17 +4213,18 @@
         function renderCharts(activities) {
             // Activity over time (by hour)
             const hourCounts = {};
+            // Muted color palette for charts - one accent shade per type
             const typeColors = {
-                'commit': '#ffaa00',
-                'build': '#00aaff',
-                'decision': '#ff0055',
-                'deploy': '#00aaff',
-                'trade': '#ff6b6b',
-                'transfer': '#ff6b6b',
-                'heartbeat': '#ff69b4',
-                'session': '#00ffcc',
-                'message': '#00ff88',
-                'tweet': '#1DA1F2'
+                'commit': '#c9a227',     // muted gold
+                'build': '#5a9fd4',      // muted blue
+                'decision': '#d45a84',   // muted rose
+                'deploy': '#5a9fd4',     // muted blue
+                'trade': '#d47a7a',      // muted coral
+                'transfer': '#d47a7a',   // muted coral
+                'heartbeat': '#c47ab8',  // muted magenta
+                'session': '#5ac4b8',    // muted teal
+                'message': '#5abd8c',    // muted green
+                'tweet': '#5a9fd4'       // muted blue
             };
             
             activities.forEach(a => {
@@ -4255,14 +4257,14 @@
                     datasets: [{
                         label: 'Activities',
                         data: data,
-                        borderColor: '#00ffaa',
-                        backgroundColor: 'rgba(0, 255, 170, 0.1)',
+                        borderColor: '#4ecdc4',
+                        backgroundColor: 'rgba(78, 205, 196, 0.08)',
                         fill: true,
                         tension: 0.4,
-                        pointBackgroundColor: '#00ffaa',
-                        pointBorderColor: '#00ffaa',
-                        pointRadius: 4,
-                        pointHoverRadius: 6
+                        pointBackgroundColor: '#4ecdc4',
+                        pointBorderColor: '#4ecdc4',
+                        pointRadius: 3,
+                        pointHoverRadius: 5
                     }]
                 },
                 options: {
@@ -4277,16 +4279,16 @@
                         y: {
                             beginAtZero: true,
                             ticks: {
-                                color: '#888',
+                                color: '#6b6b6b',
                                 stepSize: 1
                             },
                             grid: {
-                                color: 'rgba(255, 255, 255, 0.05)'
+                                color: 'rgba(255, 255, 255, 0.03)'
                             }
                         },
                         x: {
                             ticks: {
-                                color: '#888',
+                                color: '#6b6b6b',
                                 maxRotation: 45,
                                 font: { size: 10 }
                             },
@@ -4307,7 +4309,20 @@
 
             const breakdownLabels = Object.keys(typeCounts);
             const breakdownData = Object.values(typeCounts);
-            const breakdownColors = breakdownLabels.map(t => typeColors[t] || '#00ffaa');
+            // Muted color palette for doughnut chart
+            const mutedTypeColors = {
+                'commit': '#c9a227',     // muted gold
+                'build': '#5a9fd4',      // muted blue
+                'decision': '#d45a84',   // muted pink
+                'deploy': '#5a9fd4',     // muted blue
+                'trade': '#d47a7a',      // muted coral
+                'transfer': '#d47a7a',   // muted coral
+                'heartbeat': '#c47ab8',  // muted pink
+                'session': '#5ac4b8',    // muted teal
+                'message': '#5abd8c',    // muted green
+                'tweet': '#5a9fd4'       // muted blue
+            };
+            const breakdownColors = breakdownLabels.map(t => mutedTypeColors[t] || '#5abd8c');
 
             const breakdownCtx = document.getElementById('breakdownChart').getContext('2d');
             
@@ -4322,7 +4337,7 @@
                     datasets: [{
                         data: breakdownData,
                         backgroundColor: breakdownColors,
-                        borderColor: '#0a0a0f',
+                        borderColor: '#0d0d12',
                         borderWidth: 2
                     }]
                 },
@@ -4375,14 +4390,14 @@
                     datasets: [{
                         label: 'On-Chain Proofs',
                         data: cumulativeData,
-                        borderColor: '#aa00ff',
-                        backgroundColor: 'rgba(170, 0, 255, 0.15)',
+                        borderColor: '#9b87f5',
+                        backgroundColor: 'rgba(155, 135, 245, 0.08)',
                         fill: true,
                         tension: 0.3,
-                        pointBackgroundColor: '#aa00ff',
-                        pointBorderColor: '#aa00ff',
-                        pointRadius: 5,
-                        pointHoverRadius: 8,
+                        pointBackgroundColor: '#9b87f5',
+                        pointBorderColor: '#9b87f5',
+                        pointRadius: 3,
+                        pointHoverRadius: 6,
                         stepped: 'after'
                     }]
                 },
@@ -4403,21 +4418,21 @@
                         y: {
                             beginAtZero: true,
                             ticks: {
-                                color: '#888',
+                                color: '#6b6b6b',
                                 stepSize: 2
                             },
                             grid: {
-                                color: 'rgba(255, 255, 255, 0.05)'
+                                color: 'rgba(255, 255, 255, 0.03)'
                             },
                             title: {
                                 display: true,
                                 text: 'Total Proofs',
-                                color: '#888'
+                                color: '#6b6b6b'
                             }
                         },
                         x: {
                             ticks: {
-                                color: '#888',
+                                color: '#6b6b6b',
                                 maxRotation: 45,
                                 font: { size: 10 }
                             },
@@ -4493,7 +4508,7 @@
                         legend: {
                             position: 'top',
                             labels: {
-                                color: '#888',
+                                color: '#6b6b6b',
                                 padding: 15,
                                 font: { size: 11 },
                                 usePointStyle: true,
@@ -4517,22 +4532,22 @@
                             beginAtZero: true,
                             stacked: true,
                             ticks: {
-                                color: '#888',
+                                color: '#6b6b6b',
                                 stepSize: 5
                             },
                             grid: {
-                                color: 'rgba(255, 255, 255, 0.05)'
+                                color: 'rgba(255, 255, 255, 0.03)'
                             },
                             title: {
                                 display: true,
                                 text: 'Actions',
-                                color: '#888'
+                                color: '#6b6b6b'
                             }
                         },
                         x: {
                             stacked: true,
                             ticks: {
-                                color: '#888',
+                                color: '#6b6b6b',
                                 font: { size: 11 }
                             },
                             grid: {
