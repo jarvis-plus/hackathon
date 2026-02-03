@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 13:58 PST
-**Cycle:** 118
+**Last Updated:** 2026-02-03 14:25 PST
+**Cycle:** 119
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -30,7 +30,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ### 🎨 Design (see docs/DESIGN-INSPIRATION.md)
 - [x] Dark/light mode toggle ✅ Cycle 116
 - [x] Favicon ✅ Cycle 118
-- [ ] **Soften pure blacks** - Use #0f0f0f/#1a1a1a instead of #000
+- [x] Soften pure blacks ✅ Cycle 119
 - [ ] **Card border glow on hover** - Subtle colored glow effect
 - [ ] **Gradient accent for hero stat** - Make "On-Chain %" pop with gradient
 - [ ] **Light grey text** - Change pure white (#fff) to #e0e0e0
@@ -59,6 +59,17 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
 
+### Cycle 119 (Soften Pure Blacks)
+- Updated CSS variables for softer dark theme
+- --bg-primary: #0a0a0f → #0d0d12 (slightly lighter, keeps blue tint)
+- --bg-secondary: #12121a → #14141c (same treatment)
+- --text-secondary: #888 → #9a9a9a (better readability)
+- --text-muted: #444 → #505050 (more visible)
+- --border: #2a2a4a → #2d2d4d (slightly brighter)
+- Updated hardcoded gradients (proof banner, milestone items, hackathon badge)
+- Changed milestone badge text #000 → #0a0a0a
+- 270 activities, all signed on-chain
+
 ### Cycle 118 (Favicon)
 - Added custom favicon with robot + checkmark badge design
 - SVG + PNG versions (16x16, 32x32, 180x180 apple-touch-icon)
@@ -76,15 +87,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - IP detection: x-forwarded-for, x-real-ip, or socket address
 - Automatic cleanup of expired entries every 5 minutes
 - 263 activities, all signed on-chain
-
-### Cycle 115 (Error Handling & Retry Logic)
-- Added production-grade retry logic to auto-sign.ts
-- Features: max 3 retries, exponential backoff (1-10s), jitter
-- Error classification: transient (retry) vs permanent (fail fast)
-- Tracks signError/signAttempts in activity.json
-- Logs permanent failures to failed-signatures.log
-- --retry-failed flag prioritizes previous failures
-- 257 activities, all signed on-chain
 
 ### Cycle 116 (Dark/Light Mode Toggle)
 - Added dark/light mode toggle to dashboard
