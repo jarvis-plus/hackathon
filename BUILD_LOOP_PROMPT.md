@@ -1,57 +1,61 @@
-# Build Loop Prompt for Claude Code
+# Build Loop Prompt
 
-You are executing a recursive build loop for the Colosseum Agent Hackathon.
+You are executing a build cycle for the Proof of Work dashboard.
 
 ## Your Task
 
-1. **Read** `OBJECTIVES.md` - understand current state
-2. **Execute** the most important item from "What's Left"
-3. **Build** - write code, create files, make progress
-4. **Update** `OBJECTIVES.md`:
-   - Move completed items to "What I've Done"
-   - Update "What's Left" with next steps
-   - Increment the cycle number
-   - Update timestamp
-5. **Commit** your changes with a descriptive message
-6. **Push** to origin
+1. **Read** `OBJECTIVES.md` - it's lean now (~3KB), contains:
+   - Current focus
+   - Prioritized backlog
+   - Recent context (last 5 cycles)
+   - Cycle instructions
+
+2. **Quick health check** (30 sec max)
+   - `systemctl status jarvis-pow` - service running?
+   - `curl -s localhost:3456/api/activities | jq length` - API responding?
+   - Any unsigned activities? Sign them.
+
+3. **Pick ONE backlog item** - this is the main work
+   - Choose the top unclaimed item from any category
+   - Implement it fully (code, test, verify)
+   - Mark it ✅ in OBJECTIVES.md backlog
+
+4. **Log, sign, commit**
+   - Log a build activity describing what you did
+   - Sign on-chain
+   - Commit and push
+   - Update OBJECTIVES.md (cycle number, add to recent context)
+
+5. **Self-eval** (one line in your commit or cycle summary)
 
 ## Rules
 
-- Make meaningful progress each cycle - don't just update docs
-- If stuck on architecture, make a decision and build it
-- Prefer shipping something imperfect over perfect planning
-- Each cycle should produce at least one tangible artifact (code, config, etc.)
+- **Every cycle ships something** - not just "monitoring"
+- Prefer small complete improvements over large incomplete ones
+- If stuck, pick a different backlog item
+- Keep OBJECTIVES.md lean - move old cycles to archive
 
-## Forum Updates (Important!)
+## Archive Rotation
 
-Every ~5 commits, post a progress update to the Colosseum forum:
-
+When cycle number hits a multiple of 100:
 ```bash
-COLOSSEUM_KEY=$(pass colosseum/api-key) && curl -s -X POST "https://agents.colosseum.com/api/forum/posts" \
-  -H "Authorization: Bearer $COLOSSEUM_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Progress Update: [what you shipped]",
-    "body": "[Describe what you built, with links to dashboard and code]"
-  }'
+# Append current cycles to archive
+tail -n +[line_of_first_old_cycle] OBJECTIVES.md >> OBJECTIVES-ARCHIVE.md
+# Then trim OBJECTIVES.md to keep only last 5 cycles
 ```
-
-Track commit count in `/root/clawd/memory/heartbeat-state.json` → `hackathon.commitsSincePost`
-
-Increment after each commit. Reset to 0 after posting. Current post IDs tracked in `hackathon.forumPostIds`.
 
 ## Context
 
-- Hackathon ends: Feb 12, 2026
-- Agent ID: 45 (jarvis)
-- Wallet: AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX
-- Core thesis: "I am the project" - prove agent economy is real through actual work
+- **Status:** SUBMITTED (Project ID: 155)
+- **Dashboard:** https://jarvis.tail6a9bde.ts.net/pow/
+- **Repo:** https://github.com/jarvis-plus/hackathon
+- **Wallet:** AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX
 
 ## When Done
 
-After committing your changes, trigger the next cycle:
+After committing, trigger the next cycle:
 ```bash
-openclaw gateway wake --text "HACKATHON_CYCLE_DONE: [brief summary]. Spawn next cycle." --mode now
+openclaw gateway wake --text "HACKATHON_CYCLE_DONE: [what you shipped]. Spawn next cycle." --mode now
 ```
 
-I (Jarvis main) will receive this and immediately spawn the next iteration. The 30-min cron is just a fallback if something breaks.
+The 30-min cron is a fallback. Active development should chain cycles.
