@@ -2094,5 +2094,24 @@
     "metadata": {},
     "hash": "a34a708a3856b880caa7cdfb196fffe00906b4e1408d73960f7dd213b8402d88",
     "signature": "3JuZG9tWJW6j4ubE9ZTXW8XuujwTGAo1jKH8yuXyLMSeRTCWXC2ZkYfSAa16UDA3jerTNKEPKo3iFXLhjA3hbhTv"
+  },
+  {
+    "timestamp": "2026-02-03T23:00:03.879Z",
+    "type": "commit",
+    "description": "Cycle 121: Gradient accent for hero stat (On-Chain %)",
+    "hash": "db7f3fe48fdd4b8cfc73ea1cddb69cd8ba8850a50a8b7a1e79d0908897c45ee3",
+    "signature": "33eZNuBQzbF2BjET2WkBGrhaQAii1hGj13X1ygx9tZ8vJjfWF4yVko7Wnmtu2ZmnKvM2iSKpTvVhEN32Ck6KEGG6"
+  },
+  {
+    "timestamp": "2026-02-03T23:02:05.539Z",
+    "type": "build",
+    "description": "Cycle 122: Light grey text - Changed --text-primary from #e8e8e8 to #e0e0e0 for softer, easier-to-read body text. Updated GitHub hover state to match. Reduces eye strain in dark theme.",
+    "hash": "3e473c38d75ce37eabdf1c0d4ce3926bc183dde1c8040e8e6ef7fe06843a4f61",
+    "signature": "3hZkeGEqTgbVuAurMd9jUK4Y8ddjpSrG6uqirR6yGzB9vvdZrppnENtrLJPWC7oPMJsFTWbEvwCirVLQxE5TqK63"
+  },
+  {
+    "timestamp": "2026-02-03T23:02:16.327Z",
+    "type": "commit",
+    "description": "Add Moltbook posting to build loop (every ~5 commits)"
   }
 ]

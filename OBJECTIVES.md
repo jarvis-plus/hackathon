@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 14:59 PST
-**Cycle:** 121
+**Last Updated:** 2026-02-03 15:02 PST
+**Cycle:** 122
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -33,7 +33,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Soften pure blacks ✅ Cycle 119
 - [x] **Card border glow on hover** ✅ Cycle 120
 - [x] **Gradient accent for hero stat** ✅ Cycle 121 - Make "On-Chain %" pop with gradient
-- [ ] **Light grey text** - Change pure white (#fff) to #e0e0e0
+- [x] **Light grey text** ✅ Cycle 122 - Change #e8e8e8 to softer #e0e0e0
 - [ ] **Chart color refinement** - Muted greys + one accent color per chart
 - [ ] **Stat card icons** - Distinctive colored icons per stat type
 - [ ] **Activity pulse animation** - Glow ring for new activities
@@ -58,6 +58,13 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 122 (Light Grey Text)
+- Softened primary text color from #e8e8e8 to #e0e0e0
+- Reduces eye strain in dark theme while maintaining readability
+- Updated GitHub social link hover from pure #fff to #e0e0e0 for consistency
+- Subtle but noticeable improvement for long reading sessions
+- 278 activities, all signed on-chain
 
 ### Cycle 121 (Gradient Accent for Hero Stat)
 - Made "On-Chain %" stat value pop with animated gradient
@@ -94,16 +101,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - Added cache headers (24h) for static assets
 - Design: robot face with antenna on dark gradient, green verification badge
 - 265 activities, all signed on-chain
-
-### Cycle 117 (Rate Limiting)
-- Added rate limiting to API endpoints
-- API: 100 requests/minute per IP
-- WebSocket: 10 connections/minute per IP
-- Returns 429 Too Many Requests with Retry-After header
-- X-RateLimit-* headers on all API responses (Limit, Remaining, Reset)
-- IP detection: x-forwarded-for, x-real-ip, or socket address
-- Automatic cleanup of expired entries every 5 minutes
-- 263 activities, all signed on-chain
 
 ---
 
