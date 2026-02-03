@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 13:54 PST
-**Cycle:** 117
+**Last Updated:** 2026-02-03 13:58 PST
+**Cycle:** 118
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -32,7 +32,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [ ] Improve mobile chart readability
 - [ ] Add loading states for charts
 - [ ] Better empty states for tabs with no data
-- [ ] Favicon
+- [x] Favicon ✅ Cycle 118
 
 ### ⚡ Capability
 - [ ] Email activity tracking (log emails sent)
@@ -52,6 +52,14 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
 
+### Cycle 118 (Favicon)
+- Added custom favicon with robot + checkmark badge design
+- SVG + PNG versions (16x16, 32x32, 180x180 apple-touch-icon)
+- Server updated to serve image files (svg, png, ico, jpg, gif, webp)
+- Added cache headers (24h) for static assets
+- Design: robot face with antenna on dark gradient, green verification badge
+- 265 activities, all signed on-chain
+
 ### Cycle 117 (Rate Limiting)
 - Added rate limiting to API endpoints
 - API: 100 requests/minute per IP
@@ -61,13 +69,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - IP detection: x-forwarded-for, x-real-ip, or socket address
 - Automatic cleanup of expired entries every 5 minutes
 - 263 activities, all signed on-chain
-
-### Cycle 114 (Unit Tests)
-- Added unit tests for sign-activity.ts (10 tests, all passing)
-- Tests: hash determinism, field exclusion, metadata handling, hex format validation
-- Exported `hashActivity` function and `Activity` interface for testability
-- Added `bun run test` script to package.json
-- 254 activities, all signed on-chain
 
 ### Cycle 115 (Error Handling & Retry Logic)
 - Added production-grade retry logic to auto-sign.ts

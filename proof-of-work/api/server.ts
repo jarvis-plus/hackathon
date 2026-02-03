@@ -140,10 +140,25 @@ function serveDashboard(path: string): Response {
     css: 'text/css',
     js: 'application/javascript',
     json: 'application/json',
+    svg: 'image/svg+xml',
+    png: 'image/png',
+    ico: 'image/x-icon',
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    gif: 'image/gif',
+    webp: 'image/webp',
   };
   
+  // Add cache headers for static assets (images, CSS, JS)
+  const cacheControl = ['svg', 'png', 'ico', 'jpg', 'jpeg', 'gif', 'webp', 'css', 'js'].includes(ext || '') 
+    ? 'public, max-age=86400' // 24 hours
+    : 'no-cache';
+  
   return new Response(content, {
-    headers: { 'Content-Type': contentTypes[ext || 'html'] || 'text/plain' }
+    headers: { 
+      'Content-Type': contentTypes[ext || 'html'] || 'text/plain',
+      'Cache-Control': cacheControl
+    }
   });
 }
 
