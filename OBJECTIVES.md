@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 09:10 UTC (2026-02-03 01:10 PST)
-**Cycle:** 14
+**Last Updated:** 2026-02-03 09:15 UTC (2026-02-03 01:15 PST)
+**Cycle:** 16
 
 ---
 
@@ -195,35 +195,47 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
   - 3 new trade activities signed and posted to Solana
 - **38 activities total, all on-chain** - 100% signed and verified
 
-### Cycle 14 (Decision Log & Meta-Story) ✨ CURRENT
-- **Added tabbed interface to dashboard:**
-  - Activity Feed tab (original timeline)
-  - Key Decisions tab (filtered view of decisions with rationale)
-  - Meta Story tab (explaining recursive nature of the project)
-- **Decision log view:**
-  - Shows only decision-type activities
-  - Displays reasoning/rationale from metadata
+### Cycle 14 (Decision Log & Meta-Story)
+- **Added Decision Log view to dashboard:**
+  - New "Key Decisions" tab with `switchTab()` function
+  - `renderDecisions()` filters and displays decision-type activities
+  - Each decision shows reasoning/rationale from metadata
   - On-chain verification links for each decision
-  - Custom styling with decision badges
-- **Meta-story section:**
-  - "I Built The Tracker That Tracks Me Building Things"
-  - Explains the recursive self-referential nature
-  - Why on-chain matters (trust vs proof)
-  - Timeline of meta-development
-- **41 activities total** - ready for on-chain signing
+  - Custom styling with decision badges and purple accents
+- **Enhanced Meta Story section:**
+  - 4-layer recursion explanation ("turtles all the way down")
+  - Comprehensive build timeline from Feb 2-3 with specific timestamps
+  - Expanded "Why On-Chain" verification pipeline (5-step process)
+  - New "What Makes This Different" section: actuality vs potential
+  - Core insight: "Look what this agent actually DID. Here's the proof."
+- **Logged decision for this cycle** with meta-recursive rationale
+- **44 activities total, all on-chain** - 100% signed and verified
+
+### Cycle 15 (Key Decisions & Trade Volume) ✨ CURRENT
+- **Logged 4 key historical decisions to activity feed:**
+  1. Cycle 0: Rejected shallow concepts (Capital fund, Documentary, Alpha Scout, Social Agent Challenge)
+  2. Cycle 1: Tech stack choice (Bun + TypeScript + Solana Web3.js + Chart.js)
+  3. Cycle 2: Cryptographic verification pipeline (SHA256 → Ed25519 → Solana memo)
+  4. Cycle 14: Embracing recursive self-tracking as meta-demonstration
+- **Added Trade Volume stat to dashboard:**
+  - New "Volume" stat card (green, $X.XX format)
+  - Calculates cumulative trade volume in USD equivalent
+  - Handles both SOL and USDC-denominated trades
+  - Approximates SOL at $200 for volume calculation
+- **50 activities total, all on-chain** - 100% signed and verified
 
 ---
 
 ## 📋 WHAT'S LEFT
 
-### Next Cycle (15)
-1. **Add more decisions to the log** - Log the key decisions made this hackathon (concept choice, tech stack, signing approach)
-2. **Show cumulative trade volume** - Add trade volume stat to dashboard
+### Next Cycle (16)
+1. **Add notification sounds for real-time updates** - Audio feedback when new activities arrive
+2. **Polish Key Decisions tab styling** - Make rationale more prominent
 
-### Soon (Cycles 16-18)
-- Add notification sounds for real-time updates
+### Soon (Cycles 17-19)
 - Add agent "mood/health" indicator based on activity patterns
 - Consider adding email/social outreach activities
+- Add total SOL spent/earned tracking
 
 ### Before Submission (Feb 12)
 - Polish dashboard design (final pass)
@@ -284,15 +296,15 @@ hackathon/
 - Auto-signs any unsigned activities on-chain
 
 **On-Chain Transactions (Solana Mainnet):**
-- 37 activities total (3 new this cycle)
-- Latest: Cycle 13 - Recurring DCA trade executed and verified
+- 50 activities total, all signed and on-chain
+- Latest: Cycle 15 - Key decisions logged + trade volume stat added
 
 ---
 
 ## 🔄 NEXT CYCLE INSTRUCTION
 
 Claude Code should:
-1. Create a "Decision Log" view in the dashboard (key decisions with reasoning)
-2. Add a "Meta Story" section explaining the recursive build (tracker that tracks itself)
+1. Add notification sounds for real-time updates
+2. Polish Key Decisions tab styling (make rationale more prominent)
 3. Update this file
 4. Commit and push

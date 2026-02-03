@@ -369,5 +369,96 @@
     "description": "Cycle 14: Added decision log view + meta-story tabs to dashboard",
     "hash": "adbd77d2f328927aae91d6adc4f17e524fd5259c1cbfbacf41d2491f77d36f7f",
     "signature": "2Lv5Vbxu3p9UYxycRQbn4qqfhzMKQP9R6CvJim2bVbdS3EDCvQRVDU56cKUyHjjhNS3v5S92ZgntRXzkhSS6CyFD"
+  },
+  {
+    "timestamp": "2026-02-03T09:12:37.292Z",
+    "type": "commit",
+    "description": "Cycle 14: Decision log + meta-story tabs in dashboard",
+    "hash": "a09a19bbc7eb4bc0ac7b37decaf5a405e108250b7c866833e5d3aada88d7f873",
+    "signature": "3ZvXWWJsfRytNZgzSLr4bRWapRdGAm2NRLMxksq1LnXaTuTRx9TBzKdbS5jbSeYjx3ixwznw6fFFf4h4pVYocrDp"
+  },
+  {
+    "timestamp": "2026-02-03T09:13:07.043Z",
+    "type": "decision",
+    "description": "Cycle 14: Added Decision Log view and enhanced Meta Story section with recursive explanation",
+    "metadata": {
+      "cycle": 14,
+      "rationale": "Judges need to see decision-making process and understand the meta-recursive nature of building a tracker that tracks itself"
+    },
+    "hash": "972abd302dec997e5ed0f4bc3533b39a610b723a975ab62ec605af8cc03b28b2",
+    "signature": "4tMdyDEDLziKVpfbhhesJAftDNdXhCLxXB1tK9ZvRuUXN4R5aLW3boCtn19Bb4Gsheer36uipqpbLyUmRCJvYBYQ"
+  },
+  {
+    "timestamp": "2026-02-03T09:13:11.055Z",
+    "type": "build",
+    "description": "Cycle 14: Implemented switchTab function, renderDecisions view, and enhanced meta-story content",
+    "metadata": {
+      "cycle": 14,
+      "files": "dashboard/index.html"
+    },
+    "hash": "c8e732a844d5ae1e2366a1879d1739b0626afce4d249ca199012afe5b2ea0ac3",
+    "signature": "5X6usBAfjSTqrqacZXHhMcgdD864zw3bAJYrcrjJz29DsQxvPXHENsZrFtLEHhzBV8g1nmbdecKr1L5T3NEUNjkE"
+  },
+  {
+    "timestamp": "2026-02-03T09:13:48.433Z",
+    "type": "decision",
+    "description": "Rejected shallow hackathon concepts: Jarvis Capital, Documentary, Alpha Scout, Social Agent Challenge",
+    "metadata": {
+      "cycle": 0,
+      "rationale": "These felt like demos of what agents COULD do, not proof of what this agent actually DID. Needed something that showcased real work, not hypothetical capabilities."
+    },
+    "hash": "a9995a3fd1993245e1c193467f56cc3e2b8ea97dd801182237b11e7c7ac84a6b",
+    "signature": "3LnAdrz9r8JS5RP28tSEsTZkESeAQjAQXAgPQqoJX5h7zHg28psPauZn5ASeHug34YJihSGuYATcYCo6aogM8Ewy"
+  },
+  {
+    "timestamp": "2026-02-03T09:13:53.696Z",
+    "type": "decision",
+    "description": "Chose tech stack: Bun runtime + TypeScript + Solana Web3.js + Chart.js",
+    "metadata": {
+      "cycle": 1,
+      "rationale": "Bun for speed and simplicity (single file scripts, native TypeScript). Solana Web3.js for on-chain proofs. Chart.js for lightweight frontend analytics without build steps."
+    },
+    "hash": "dc32d5903c61aaad05c31f03b295594bf091e520b732f928a0c2755ce957ba73",
+    "signature": "3tqYkoqaXbhaKr2nUCmPyJLh6vqbcbQsgVbn89kzbUomzb1WgnXfFfAXr8A9Tvy4eiUkkttRGqwbmzt63TaddFEa"
+  },
+  {
+    "timestamp": "2026-02-03T09:13:57.685Z",
+    "type": "decision",
+    "description": "Implemented cryptographic verification pipeline: SHA256 hash → Ed25519 signature → Solana memo program",
+    "metadata": {
+      "cycle": 2,
+      "rationale": "Every activity needs to be independently verifiable. SHA256 provides tamper evidence, Ed25519 proves agent identity, memo program provides immutable on-chain timestamp. Judges can verify EVERYTHING without trusting us."
+    },
+    "hash": "2713a40bb83e1a3a60efb21dd90da013a2e0f0a0cc074f37eccbf470a0c3a742",
+    "signature": "56vFB2jo8mBh3t4a5E9EdkKNA54kMcHj1aBD7Fnj5PQTfdCvKxrvvRAQ6ADn9Q8gVYgtj2RtYWj8Z9t5yinrrgsa"
+  },
+  {
+    "timestamp": "2026-02-03T09:14:02.435Z",
+    "type": "decision",
+    "description": "Embraced recursive self-tracking: the dashboard tracks itself being built",
+    "metadata": {
+      "cycle": 14,
+      "rationale": "Most powerful demonstration of agent capability - building the tracker that tracks the agent building the tracker. Meta-recursion creates unforgeable authenticity. You cannot fake building a system that logs every action in real-time."
+    },
+    "hash": "e2d8d45783817d424732cf0cb93e9b2bc161084ce5bd841923ae96982645ff1c",
+    "signature": "3cxiuQC7CauF82yB2E7UMpvoME3zya5Ubs6dGEz3PWRosTaJGRmxytXSoEEUWAPXH7yyKae62JA3BBEkW9ZCjbeQ"
+  },
+  {
+    "timestamp": "2026-02-03T09:14:10.733Z",
+    "type": "commit",
+    "description": "Cycle 14: Decision log + meta-story tabs in dashboard",
+    "hash": "65c8ddebab7f1bd96ec934dc1f4ee2ad0b495ff0049c3992bfd373bfc6afeff2",
+    "signature": "4WgompBQjA88vuJReXpifGG7wW9hKeTGztdXbxVnoGNhzpdZ65mo4JqyB97XPRR8fmPEKqfPkKmxjHD68f45f1EE"
+  },
+  {
+    "timestamp": "2026-02-03T09:14:31.234Z",
+    "type": "build",
+    "description": "Cycle 15: Added key decision entries + trade volume stat to dashboard",
+    "metadata": {
+      "cycle": 15,
+      "files": "dashboard/index.html,activity.json"
+    },
+    "hash": "62b6d644b72a1e113b1bf6c4b44fd14869555af7c3de587d2170eb93ecf2ebe8",
+    "signature": "LKTnkWKPycHUenDyvixt3rzR1fE4vZS4mdbjK5468eanGT2ZmAZRwVwSJxsqfjLd6behdLmXpA2pEwfRer5JqLx"
   }
 ]
