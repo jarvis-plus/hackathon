@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 09:32 UTC (2026-02-03 01:32 PST)
-**Cycle:** 21
+**Last Updated:** 2026-02-03 09:34 UTC (2026-02-03 01:34 PST)
+**Cycle:** 22
 
 ---
 
@@ -292,7 +292,7 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
   - Legend showing intensity scale
 - **62 activities total, all on-chain** - 100% signed and verified
 
-### Cycle 20 (SOL Position Tracking) ✨ CURRENT
+### Cycle 20 (SOL Position Tracking)
 - **Added net SOL position tracking to dashboard:**
   - New "Net SOL" stat card showing cumulative SOL spent/earned from trades
   - Tracks all trade activities with SOL in from/to metadata
@@ -302,18 +302,34 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
   - Handles both swaps (from/to) and direct transfers
 - **64 activities total, all on-chain** - 100% signed and verified
 
+### Cycle 21 (Export Feature) ✨ CURRENT
+- **Added JSON/CSV export functionality:**
+  - New export buttons in dashboard header (📥 JSON, 📊 CSV)
+  - **JSON export** includes:
+    - Full verification wrapper with agent metadata
+    - Wallet address, hackathon info
+    - Verification instructions for judges
+    - All activities with hashes and signatures
+  - **CSV export** includes:
+    - All fields: timestamp, type, description, hash, signature, solscan_link, metadata
+    - Proper escaping for embedded quotes
+    - Ready for spreadsheet analysis
+  - Both exports play notification sound on download
+  - Buttons styled with hover effects matching dashboard theme
+- **68 activities total, all on-chain** - 100% signed and verified
+
 ---
 
 ## 📋 WHAT'S LEFT
 
-### Next Cycle (21)
-1. **Add export feature** - Download activity log as JSON/CSV for verification
-2. **Sign all new activities on-chain** - Keep 100% on-chain
+### Next Cycle (22)
+1. **Add milestones view** - Show major achievements during hackathon
+2. **Sign any new activities on-chain** - Keep 100% on-chain
 
-### Soon (Cycles 22-24)
+### Soon (Cycles 23-25)
 - Consider adding email/social outreach activities
-- Add "milestones" view (major achievements during hackathon)
 - Mobile responsiveness improvements
+- Add verification API endpoint for programmatic checking
 
 ### Before Submission (Feb 12)
 - Polish dashboard design (final pass)
@@ -374,15 +390,15 @@ hackathon/
 - Auto-signs any unsigned activities on-chain
 
 **On-Chain Transactions (Solana Mainnet):**
-- 64 activities total, all signed and on-chain
-- Latest: Cycle 20 - SOL position tracking added
+- 68 activities total, all signed and on-chain
+- Latest: Cycle 21 - Export feature (JSON/CSV) added
 
 ---
 
 ## 🔄 NEXT CYCLE INSTRUCTION
 
 Claude Code should:
-1. Add export feature - Allow downloading activity log as JSON/CSV
+1. Add milestones view - Show major hackathon achievements
 2. Run auto-sign to get all activities on-chain
 3. Update this file
 4. Commit and push
