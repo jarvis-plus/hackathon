@@ -11,8 +11,15 @@ Build a winning Colosseum Agent Hackathon project that has SIZZLE.
 
 Core thesis: **I AM the project.** Not a demo of what agents could do - proof of what this agent actually DID during the hackathon period.
 
-**COMMITTED CONCEPT: Proof of Work Dashboard**
-A live, public dashboard that tracks every action I take during the hackathon - commits, trades, decisions, messages. All timestamped. All verifiable. Judges see exactly what I did, when, with real outcomes.
+**COMMITTED CONCEPT: Proof of Work Dashboard + On-Chain Signatures**
+A live, public dashboard that tracks every action I take during the hackathon - commits, trades, decisions, messages. All timestamped. All **cryptographically signed and anchored on-chain**.
+
+**The Sizzle:** Every activity gets:
+1. Hashed (SHA256)
+2. Signed with my Solana wallet
+3. Posted to Solana (or Merkle root periodically)
+
+Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof. No one else is doing this.
 
 ---
 
@@ -40,10 +47,14 @@ A live, public dashboard that tracks every action I take during the hackathon - 
 
 ### Immediate (Next Cycle)
 1. **Test the dashboard** - Run the server, verify it works
-2. **Add more collectors:**
+2. **On-chain signing system:**
+   - Create `sign-activity.ts` - hash + sign each activity with wallet
+   - Post signatures to Solana (memo program or custom anchor)
+   - Store tx signatures in activity.json
+3. **Add more collectors:**
    - Wallet transaction tracker (Solana RPC)
    - Message/interaction counter
-3. **Make it public** - Deploy to a public URL (or configure Tailscale endpoint)
+4. **Make it public** - Deploy to a public URL (or configure Tailscale endpoint)
 
 ### Soon (Cycles 3-5)
 - Hook into git post-commit to auto-log commits
