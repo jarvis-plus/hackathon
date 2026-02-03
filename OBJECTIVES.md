@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 09:15 UTC (2026-02-03 01:15 PST)
-**Cycle:** 16
+**Last Updated:** 2026-02-03 09:16 UTC (2026-02-03 01:16 PST)
+**Cycle:** 17
 
 ---
 
@@ -211,7 +211,7 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
 - **Logged decision for this cycle** with meta-recursive rationale
 - **44 activities total, all on-chain** - 100% signed and verified
 
-### Cycle 15 (Key Decisions & Trade Volume) ✨ CURRENT
+### Cycle 15 (Key Decisions & Trade Volume)
 - **Logged 4 key historical decisions to activity feed:**
   1. Cycle 0: Rejected shallow concepts (Capital fund, Documentary, Alpha Scout, Social Agent Challenge)
   2. Cycle 1: Tech stack choice (Bun + TypeScript + Solana Web3.js + Chart.js)
@@ -224,18 +224,36 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
   - Approximates SOL at $200 for volume calculation
 - **50 activities total, all on-chain** - 100% signed and verified
 
+### Cycle 16 (Notification Sounds & Decision Polish) ✨ CURRENT
+- **Added notification sounds for real-time updates:**
+  - Web Audio API integration (no external files)
+  - Pleasant ascending chime for new activities (C major chord)
+  - Special coin-like sound for trades/transfers
+  - Deeper 4-note arpeggio for key decisions
+  - Sound toggle button in header (🔔/🔕)
+  - Auto-initializes on first user interaction (browser policy)
+- **Polished Key Decisions tab styling:**
+  - Enhanced `.decision-item` with hover effects and glow
+  - New gradient background for rationale section
+  - 💡 Lightbulb icon badge on rationale
+  - "Rationale" label in purple uppercase
+  - Smoother fade-in animations
+  - Larger, bolder decision descriptions
+- **Cleaned up duplicate functions** in dashboard code
+- **52 activities total, all on-chain** - 100% signed and verified
+
 ---
 
 ## 📋 WHAT'S LEFT
 
-### Next Cycle (16)
-1. **Add notification sounds for real-time updates** - Audio feedback when new activities arrive
-2. **Polish Key Decisions tab styling** - Make rationale more prominent
+### Next Cycle (17)
+1. **Add agent "mood/health" indicator** - Based on activity patterns (high activity = energetic, low = resting)
+2. **Sign all new activities on-chain** - Bring total verified count up
 
-### Soon (Cycles 17-19)
-- Add agent "mood/health" indicator based on activity patterns
+### Soon (Cycles 18-20)
 - Consider adding email/social outreach activities
 - Add total SOL spent/earned tracking
+- Add "streak" tracking (consecutive days of activity)
 
 ### Before Submission (Feb 12)
 - Polish dashboard design (final pass)
@@ -304,7 +322,7 @@ hackathon/
 ## 🔄 NEXT CYCLE INSTRUCTION
 
 Claude Code should:
-1. Add notification sounds for real-time updates
-2. Polish Key Decisions tab styling (make rationale more prominent)
+1. Add agent "mood/health" indicator based on activity patterns
+2. Run auto-sign to get all activities on-chain
 3. Update this file
 4. Commit and push

@@ -276,26 +276,47 @@
         .decision-item {
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-left: 3px solid #ff0055;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 1rem;
+            border-left: 4px solid #ff0055;
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1.25rem;
+            transition: all 0.3s ease;
+            animation: fadeSlideIn 0.4s ease-out;
+        }
+
+        .decision-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 8px 30px rgba(255, 0, 85, 0.2);
+        }
+
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
 
         .decision-item .decision-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
         }
 
         .decision-item .decision-type {
             background: linear-gradient(135deg, #ff0055, #ff6b6b);
             color: white;
-            padding: 0.2rem 0.6rem;
-            border-radius: 12px;
+            padding: 0.3rem 0.8rem;
+            border-radius: 16px;
             font-size: 0.7rem;
             text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 10px rgba(255, 0, 85, 0.3);
         }
 
         .decision-item .decision-time {
@@ -304,16 +325,43 @@
         }
 
         .decision-item .decision-desc {
-            font-weight: 600;
-            margin-bottom: 0.5rem;
+            font-weight: 700;
+            font-size: 1.05rem;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+            line-height: 1.4;
         }
 
         .decision-item .decision-rationale {
+            background: linear-gradient(135deg, rgba(170, 0, 255, 0.08), rgba(255, 0, 85, 0.05));
+            border: 1px solid rgba(170, 0, 255, 0.2);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
             color: var(--text-secondary);
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             font-style: italic;
-            padding-left: 1rem;
-            border-left: 2px solid var(--accent-purple);
+            line-height: 1.6;
+            position: relative;
+        }
+
+        .decision-item .decision-rationale::before {
+            content: '💡';
+            position: absolute;
+            top: -10px;
+            left: 10px;
+            background: var(--bg-primary);
+            padding: 0 5px;
+            font-size: 0.9rem;
+        }
+
+        .decision-item .decision-rationale-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent-purple);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-style: normal;
         }
 
         /* Timeline View */
@@ -543,6 +591,29 @@
             font-weight: bold;
         }
 
+        /* Sound Toggle Button */
+        .sound-toggle {
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 0.4rem 1rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.75rem;
+            margin-top: 0.75rem;
+            transition: all 0.2s;
+        }
+
+        .sound-toggle:hover {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+        }
+
+        .sound-toggle.muted {
+            opacity: 0.5;
+        }
+
         /* Mobile Optimizations */
         @media (max-width: 600px) {
             .container { padding: 1rem; }
@@ -636,6 +707,9 @@
             <div class="hackathon-badge">
                 ⏱️ Hackathon ends: <span class="countdown" id="countdown">loading...</span>
             </div>
+            <button class="sound-toggle" id="soundToggle" onclick="toggleSound()" title="Toggle notification sounds">
+                🔔 Sounds On
+            </button>
         </header>
 
         <div class="proof-banner">
@@ -807,7 +881,119 @@
     </div>
 
     <script>
-        // Tab switching
+        // ============================================
+        // NOTIFICATION SOUND SYSTEM
+        // ============================================
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+        let soundEnabled = true;
+        
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+            return audioCtx;
+        }
+        
+        // Play a pleasant notification sound using Web Audio API
+        function playNotificationSound(type = 'new') {
+            if (!soundEnabled) return;
+            
+            try {
+                const ctx = initAudio();
+                if (ctx.state === 'suspended') {
+                    ctx.resume();
+                }
+                
+                const now = ctx.currentTime;
+                
+                if (type === 'new') {
+                    // Pleasant ascending chime for new activities
+                    const frequencies = [523.25, 659.25, 783.99]; // C5, E5, G5 (C major chord)
+                    
+                    frequencies.forEach((freq, i) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        
+                        osc.type = 'sine';
+                        osc.frequency.value = freq;
+                        
+                        const startTime = now + (i * 0.08);
+                        gain.gain.setValueAtTime(0, startTime);
+                        gain.gain.linearRampToValueAtTime(0.15, startTime + 0.02);
+                        gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.4);
+                        
+                        osc.start(startTime);
+                        osc.stop(startTime + 0.5);
+                    });
+                } else if (type === 'trade') {
+                    // Special sound for trades - coin-like
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(1200, now);
+                    osc.frequency.exponentialRampToValueAtTime(600, now + 0.15);
+                    
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                    
+                    osc.start(now);
+                    osc.stop(now + 0.35);
+                } else if (type === 'decision') {
+                    // Special sound for decisions - deeper, more significant
+                    const frequencies = [261.63, 329.63, 392.00, 523.25]; // C4, E4, G4, C5
+                    
+                    frequencies.forEach((freq, i) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        
+                        osc.type = 'sine';
+                        osc.frequency.value = freq;
+                        
+                        const startTime = now + (i * 0.1);
+                        gain.gain.setValueAtTime(0, startTime);
+                        gain.gain.linearRampToValueAtTime(0.12, startTime + 0.03);
+                        gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.6);
+                        
+                        osc.start(startTime);
+                        osc.stop(startTime + 0.7);
+                    });
+                }
+            } catch (e) {
+                console.log('Audio notification failed:', e);
+            }
+        }
+        
+        // Initialize audio on first user interaction (required by browsers)
+        document.addEventListener('click', () => initAudio(), { once: true });
+        
+        // Toggle sound on/off
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById('soundToggle');
+            if (btn) {
+                btn.textContent = soundEnabled ? '🔔 Sounds On' : '🔕 Sounds Off';
+                btn.classList.toggle('muted', !soundEnabled);
+            }
+            // Play a test sound when enabling
+            if (soundEnabled) {
+                playNotificationSound('new');
+            }
+        }
+
+        // ============================================
+        // TAB SWITCHING
+        // ============================================
         function switchTab(tabName) {
             // Update tab buttons
             document.querySelectorAll('.feed-tab').forEach(tab => {
@@ -820,7 +1006,9 @@
             document.getElementById('meta-story').style.display = tabName === 'meta' ? 'block' : 'none';
         }
 
-        // Render decisions
+        // ============================================
+        // RENDER DECISIONS (POLISHED)
+        // ============================================
         function renderDecisions(activities) {
             const decisions = activities.filter(a => a.type === 'decision');
             const feed = document.getElementById('decisions-feed');
@@ -833,7 +1021,7 @@
             const sorted = [...decisions].reverse();
             
             feed.innerHTML = sorted.map((d, i) => {
-                const rationale = d.metadata?.rationale || 'No rationale recorded';
+                const rationale = d.metadata?.rationale || d.metadata?.reason || 'No rationale recorded';
                 const cycle = d.metadata?.cycle ? `Cycle ${d.metadata.cycle}` : '';
                 
                 return `
@@ -843,9 +1031,12 @@
                         <span class="decision-time">${formatTime(d.timestamp)}</span>
                     </div>
                     <div class="decision-desc">${escapeHtml(d.description)}</div>
-                    <div class="decision-rationale">${escapeHtml(rationale)}</div>
+                    <div class="decision-rationale">
+                        <div class="decision-rationale-label">Rationale</div>
+                        ${escapeHtml(rationale)}
+                    </div>
                     ${d.signature ? `
-                        <div style="margin-top: 0.75rem;">
+                        <div style="margin-top: 1rem;">
                             <a class="proof-link" href="https://solscan.io/tx/${d.signature}" target="_blank">
                                 <span class="proof-badge onchain">⛓️ Decision verified on-chain</span>
                             </a>
@@ -954,47 +1145,6 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
-        }
-
-        // Tab switching
-        function switchTab(tabName) {
-            // Update tab buttons
-            document.querySelectorAll('.feed-tab').forEach(tab => {
-                tab.classList.toggle('active', tab.dataset.tab === tabName);
-            });
-            
-            // Show/hide content
-            document.getElementById('feed').style.display = tabName === 'timeline' ? 'block' : 'none';
-            document.getElementById('decisions-feed').style.display = tabName === 'decisions' ? 'block' : 'none';
-            document.getElementById('meta-story').style.display = tabName === 'meta' ? 'block' : 'none';
-        }
-
-        // Render decisions view
-        function renderDecisions(activities) {
-            const feed = document.getElementById('decisions-feed');
-            const decisions = activities.filter(a => a.type === 'decision');
-            
-            if (!decisions.length) {
-                feed.innerHTML = '<div class="empty-state">No decisions logged yet.</div>';
-                return;
-            }
-            
-            const sorted = [...decisions].reverse();
-            feed.innerHTML = sorted.map((d, i) => {
-                const rationale = d.metadata?.rationale || d.metadata?.reason || 'No rationale provided';
-                const cycle = d.metadata?.cycle ? `Cycle ${d.metadata.cycle}` : '';
-                
-                return `
-                <div class="decision-item" style="animation-delay: ${i * 0.1}s">
-                    <div class="decision-header">
-                        <span class="decision-type">🧠 Decision ${cycle}</span>
-                        <span class="decision-time">${formatTime(d.timestamp)}</span>
-                    </div>
-                    <div class="decision-desc">${escapeHtml(d.description)}</div>
-                    <div class="decision-rationale">"${escapeHtml(rationale)}"</div>
-                    ${d.signature ? `<a class="proof-link" href="https://solscan.io/tx/${d.signature}" target="_blank" style="font-size:0.75rem;color:var(--accent-green);margin-top:0.5rem;display:inline-block;">⛓️ Verified on-chain</a>` : ''}
-                </div>
-            `}).join('');
         }
 
         function updateStats(activities) {
@@ -1458,9 +1608,9 @@
                             updateStats(msg.data.activities);
                             renderCharts(msg.data.activities);
                             
-                            // Flash notification for new activities
+                            // Flash notification + sound for new activities
                             if (msg.type === 'new_activities' && msg.data.newItems?.length > 0) {
-                                flashNewActivity(msg.data.newItems.length);
+                                flashNewActivity(msg.data.newItems.length, msg.data.newItems);
                             }
                         }
                     } catch (e) {
@@ -1503,7 +1653,21 @@
             }
         }
 
-        function flashNewActivity(count) {
+        function flashNewActivity(count, newItems = []) {
+            // Play notification sound based on activity type
+            if (newItems.length > 0) {
+                const firstItem = newItems[0];
+                if (firstItem.type === 'trade' || firstItem.type === 'transfer') {
+                    playNotificationSound('trade');
+                } else if (firstItem.type === 'decision') {
+                    playNotificationSound('decision');
+                } else {
+                    playNotificationSound('new');
+                }
+            } else {
+                playNotificationSound('new');
+            }
+            
             // Flash the activity feed header
             const header = document.querySelector('.activity-feed h2');
             if (header) {
@@ -1515,7 +1679,7 @@
             
             // Update document title briefly
             const originalTitle = document.title;
-            document.title = `(${count} new) ${originalTitle}`;
+            document.title = `🔔 (${count} new) ${originalTitle}`;
             setTimeout(() => {
                 document.title = originalTitle;
             }, 3000);
