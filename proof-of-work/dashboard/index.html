@@ -878,23 +878,195 @@
             opacity: 0.5;
         }
 
+        /* Tablet Optimizations */
+        @media (max-width: 900px) {
+            .feed-header {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            
+            .feed-tabs {
+                width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+                padding-bottom: 0.5rem;
+            }
+            
+            .feed-tabs::-webkit-scrollbar {
+                display: none;
+            }
+            
+            .export-buttons {
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
+
         /* Mobile Optimizations */
         @media (max-width: 600px) {
-            .container { padding: 1rem; }
+            .container { padding: 0.75rem; }
+            
+            header { margin-bottom: 1.5rem; padding-bottom: 1rem; }
+            
+            .logo { font-size: 2.5rem; }
+            
+            h1 { font-size: 1.3rem; letter-spacing: 1px; }
+            
+            .subtitle { font-size: 0.8rem; }
+            
+            .thesis { 
+                font-size: 0.85rem; 
+                padding: 0.5rem 1rem;
+                margin-top: 0.75rem;
+            }
+            
+            .hackathon-badge {
+                font-size: 0.7rem;
+                padding: 0.3rem 0.75rem;
+            }
             
             .proof-banner {
                 flex-direction: column;
                 text-align: center;
+                padding: 0.75rem 1rem;
+                margin-bottom: 1.5rem;
             }
+            
+            .proof-banner-icon { font-size: 1.5rem; }
+            .proof-banner-text h3 { font-size: 0.9rem; }
+            .proof-banner-text p { font-size: 0.75rem; }
+            
+            .stats { 
+                grid-template-columns: repeat(2, 1fr); 
+                gap: 0.75rem;
+            }
+            
+            .stat-card { 
+                padding: 1rem 0.75rem;
+                border-radius: 10px;
+            }
+            
+            .stat-value { font-size: 1.5rem; }
+            .stat-value.mood { font-size: 2rem; }
+            .stat-value.sol-position { font-size: 1rem; }
+            .stat-label { font-size: 0.65rem; }
+            
+            .charts-section h2 { font-size: 1rem; }
+            
+            .chart-card { 
+                padding: 1rem;
+                border-radius: 10px;
+            }
+            .chart-card h3 { font-size: 0.75rem; }
+            
+            .chart-container { height: 180px; }
+            .chart-container.small { height: 160px; }
             
             .timeline { padding-left: 1.5rem; }
             .timeline::before { left: 6px; }
             .activity-item::before { left: -1.5rem; width: 10px; height: 10px; }
             
+            .activity-item { 
+                padding: 0.75rem 1rem;
+                border-radius: 6px;
+            }
+            
             .activity-header { flex-direction: column; gap: 0.25rem; }
             .activity-time { order: -1; }
             
-            .stats { grid-template-columns: repeat(2, 1fr); }
+            .activity-desc { font-size: 0.85rem; }
+            .activity-hash { font-size: 0.55rem; }
+            
+            .feed-tabs {
+                gap: 0.4rem;
+                flex-wrap: nowrap;
+                width: 100%;
+                justify-content: flex-start;
+            }
+            
+            .feed-tab {
+                font-size: 0.75rem;
+                padding: 0.4rem 0.75rem;
+                white-space: nowrap;
+                flex-shrink: 0;
+            }
+            
+            .export-buttons {
+                justify-content: center;
+            }
+            
+            .export-btn {
+                font-size: 0.7rem;
+                padding: 0.4rem 0.75rem;
+            }
+            
+            /* Decision items mobile */
+            .decision-item {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+            
+            .decision-item .decision-desc { font-size: 0.95rem; }
+            
+            .decision-item .decision-rationale { 
+                padding: 0.75rem 1rem;
+                font-size: 0.85rem;
+            }
+            
+            /* Milestone items mobile */
+            .milestone-item { padding: 1rem; margin-bottom: 1rem; }
+            .milestone-title { font-size: 1rem; }
+            .milestone-desc { font-size: 0.85rem; }
+            .milestone-badge { font-size: 0.65rem; }
+            
+            .milestones-summary { 
+                padding: 1rem;
+                gap: 0.75rem;
+            }
+            .milestones-summary .summary-stat .value { font-size: 1.5rem; }
+            
+            /* Meta content mobile */
+            .meta-content { padding: 1rem; }
+            .meta-content h3 { font-size: 1.1rem; }
+            .meta-section h4 { font-size: 0.9rem; }
+            .meta-section p, .meta-section li { font-size: 0.85rem; }
+            
+            /* Footer mobile */
+            footer { 
+                margin-top: 2rem; 
+                padding-top: 1.5rem;
+                font-size: 0.75rem;
+            }
+            
+            .wallet-link { 
+                font-size: 0.65rem;
+                padding: 0.4rem 0.75rem;
+                word-break: break-all;
+                max-width: 100%;
+                overflow-wrap: anywhere;
+            }
+        }
+        
+        /* Very small screens */
+        @media (max-width: 380px) {
+            .container { padding: 0.5rem; }
+            
+            .logo-section { gap: 0.5rem; }
+            .logo { font-size: 2rem; }
+            h1 { font-size: 1.1rem; }
+            
+            .stats { gap: 0.5rem; }
+            .stat-card { padding: 0.75rem 0.5rem; }
+            .stat-value { font-size: 1.3rem; }
+            
+            .feed-tab { 
+                font-size: 0.7rem; 
+                padding: 0.35rem 0.6rem;
+            }
+            
+            .proof-banner { padding: 0.5rem 0.75rem; }
         }
 
         /* Refresh Animation */
@@ -930,7 +1102,16 @@
         @media (max-width: 800px) {
             .charts-grid {
                 grid-template-columns: 1fr;
+                gap: 1rem;
             }
+        }
+        
+        @media (max-width: 600px) {
+            .charts-grid {
+                gap: 0.75rem;
+            }
+            
+            .charts-section { margin-bottom: 1.5rem; }
         }
 
         .chart-card {
