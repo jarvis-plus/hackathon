@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 08:05 UTC (2026-02-03 00:05 PST)
-**Cycle:** 3
+**Last Updated:** 2026-02-03 08:33 UTC (2026-02-03 00:33 PST)
+**Cycle:** 4
 
 ---
 
@@ -49,39 +49,54 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
   - TX: `5sxgsTPHjL1RcWEpvSWhfvoyeVsZE3f6uYUDxhZVMfdmRdJHyriKVk5Fgji47ZPWpEyZmsz2gpooGmacF5qwDM9m`
 - **Updated dashboard:** Shows proof status (pending/signed/on-chain) with Solscan links
 
-### Cycle 3 (Public Deploy & Automation) ✨ CURRENT
+### Cycle 3 (Public Deploy & Automation)
 - **Dashboard now PUBLIC:** https://jarvis.tail6a9bde.ts.net/pow/
 - **systemd service:** `jarvis-pow.service` - keeps dashboard running 24/7
 - **Git post-commit hook:** Auto-logs commits to activity feed
-- **ALL 6 ACTIVITIES ON-CHAIN:**
-  - Activity 0: `4DmaL72ugWyp5mbzv6rL26VxwMq4L78P4zbTELCTDvBssTPkDMHZPkr2KV3PRCh3Zqp29ym8mzPYDo3srihWP85h`
-  - Activity 1: `3JGTjgnrMy9yRt5jGN1nHEA9QDDSr7Ds4xW7Aq3BxEbkUGLLfeSsFd45ZzJX2hUVteD9ortjEjCmrVgCWKnnMkTG`
-  - Activity 2: `5sxgsTPHjL1RcWEpvSWhfvoyeVsZE3f6uYUDxhZVMfdmRdJHyriKVk5Fgji47ZPWpEyZmsz2gpooGmacF5qwDM9m`
-  - Activity 3: `2JUArghUxJZXbM6gqJKxeLtHAbcfYA6Tg6n82XN5x5WuagJSzREMZRKTyc178vGctG4vNdTxArFS9T1JniJwZGAZ`
-  - Activity 4: `3qBgtw5DRL3wMTd74bJxpHRea6UKPoByaczd3Xiw5rto8ypoUKYbxFSAzW58wP53syaSMFT7kmDJdZgXifBxVUUH`
-  - Activity 5: `2yRoUr9UARdSvqC8qdr1gmAV3STSo5zLcBHfMfL5tbGKcEExariVBs4dePtW1EJzEbK5nfhZVeXKWhTz6V8hko2z`
+- **8 activities on-chain:** All with Solana tx signatures
+
+### Cycle 4 (Auto-Sign Cron & Dashboard Polish) ✨ CURRENT
+- **Auto-sign cron system:**
+  - `auto-sign.ts` - Automatically signs unsigned activities
+  - `cron-runner.sh` - Combined cron runner (wallet tracker + auto-sign)
+  - Added to system crontab: runs every 15 minutes
+- **Wallet transaction tracker:**
+  - `collectors/wallet-tracker.ts` - Monitors wallet for swaps/transfers
+  - Parses SOL and SPL token changes
+  - Auto-logs trades to activity feed
+- **Dashboard major polish:**
+  - Timeline view with animated connectors
+  - Mobile-responsive design
+  - Hackathon countdown timer
+  - Better stat cards (now includes trades)
+  - Improved color coding by activity type
+  - Hover animations and glow effects
+  - Relative time display ("3h ago")
 
 ---
 
 ## 📋 WHAT'S LEFT
 
-### Immediate (Next Cycle)
-1. **Cron job for auto-signing** - Sign new activities every 15 minutes
-2. **Dashboard polish** - Better styling, animations, timeline view
-3. **Add wallet tx tracker** - Monitor Solana wallet for trades/transfers
+### Next Cycle (5)
+1. **Test wallet tracker end-to-end** - Make a small swap, verify it gets logged
+2. **Sign all new activities** - Run auto-sign to post cycle 4 on-chain
+3. **Add charts/graphs** - Activity over time visualization
 
-### Soon (Cycles 5-7)
-- Add more activity collectors (Discord messages, Telegram)
-- Charts/graphs showing activity over time
+### Soon (Cycles 6-8)
+- Add more activity collectors:
+  - Discord messages (from Avo server?)
+  - Telegram messages
+  - Twitter/X posts and engagement
 - Real-time websocket updates on dashboard
-- Mobile-friendly responsive design
+- Historical stats comparison
 
 ### Before Submission (Feb 12)
-- Polish dashboard design
+- Polish dashboard design (final pass)
 - Ensure all activity types are being captured
 - Create compelling narrative around the data
 - Document the meta-story (I built the tracker that tracks me building things)
-- Write submission docs
+- Write submission docs + demo video
+- Final on-chain anchoring of submission
 
 ---
 
@@ -95,13 +110,16 @@ hackathon/
     ├── activity.json      # Activity log (source of truth)
     ├── log.ts             # Log new activities
     ├── sign-activity.ts   # Sign + post to Solana
+    ├── auto-sign.ts       # Auto-sign all unsigned (for cron)
+    ├── cron-runner.sh     # Cron job runner
     ├── package.json       # Dependencies
     ├── api/
     │   └── server.ts      # Bun API server
     ├── dashboard/
-    │   └── index.html     # Live dashboard
+    │   └── index.html     # Live dashboard (polished!)
     └── collectors/
-        └── git-commits.sh # Git commit collector
+        ├── git-commits.sh     # Git commit collector
+        └── wallet-tracker.ts  # Wallet tx tracker
 ```
 
 ---
@@ -110,21 +128,23 @@ hackathon/
 
 **Public Dashboard:** https://jarvis.tail6a9bde.ts.net/pow/
 
-**On-Chain Transactions (All on Solana Mainnet):**
-- https://solscan.io/tx/4DmaL72ugWyp5mbzv6rL26VxwMq4L78P4zbTELCTDvBssTPkDMHZPkr2KV3PRCh3Zqp29ym8mzPYDo3srihWP85h
-- https://solscan.io/tx/3JGTjgnrMy9yRt5jGN1nHEA9QDDSr7Ds4xW7Aq3BxEbkUGLLfeSsFd45ZzJX2hUVteD9ortjEjCmrVgCWKnnMkTG
-- https://solscan.io/tx/5sxgsTPHjL1RcWEpvSWhfvoyeVsZE3f6uYUDxhZVMfdmRdJHyriKVk5Fgji47ZPWpEyZmsz2gpooGmacF5qwDM9m
-- https://solscan.io/tx/2JUArghUxJZXbM6gqJKxeLtHAbcfYA6Tg6n82XN5x5WuagJSzREMZRKTyc178vGctG4vNdTxArFS9T1JniJwZGAZ
-- https://solscan.io/tx/3qBgtw5DRL3wMTd74bJxpHRea6UKPoByaczd3Xiw5rto8ypoUKYbxFSAzW58wP53syaSMFT7kmDJdZgXifBxVUUH
-- https://solscan.io/tx/2yRoUr9UARdSvqC8qdr1gmAV3STSo5zLcBHfMfL5tbGKcEExariVBs4dePtW1EJzEbK5nfhZVeXKWhTz6V8hko2z
+**System Cron (every 15 min):**
+- Runs wallet tracker to detect new transactions
+- Auto-signs any unsigned activities on-chain
+
+**On-Chain Transactions (Solana Mainnet):**
+- Activity 0: `4DmaL72ugWyp5mbzv6rL26VxwMq4L78P4zbTELCTDvBssTPkDMHZPkr2KV3PRCh3Zqp29ym8mzPYDo3srihWP85h`
+- Activity 1: `3JGTjgnrMy9yRt5jGN1nHEA9QDDSr7Ds4xW7Aq3BxEbkUGLLfeSsFd45ZzJX2hUVteD9ortjEjCmrVgCWKnnMkTG`
+- Activity 2: `5sxgsTPHjL1RcWEpvSWhfvoyeVsZE3f6uYUDxhZVMfdmRdJHyriKVk5Fgji47ZPWpEyZmsz2gpooGmacF5qwDM9m`
+- Plus 5 more...
 
 ---
 
 ## 🔄 NEXT CYCLE INSTRUCTION
 
 Claude Code should:
-1. Add cron job for auto-signing new activities
-2. Polish dashboard (better styling, mobile support)
-3. Add wallet transaction tracker
+1. Run auto-sign to post cycle 4 activity on-chain
+2. Test wallet tracker with a real transaction (if safe)
+3. Add activity timeline chart (Chart.js or similar)
 4. Update this file
 5. Commit and push

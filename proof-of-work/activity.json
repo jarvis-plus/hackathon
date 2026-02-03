@@ -82,5 +82,19 @@
     "description": "feat(cycle3): public dashboard + systemd + 6 on-chain proofs",
     "hash": "9825acde9cf2067547284eb13b43ee272bc6a6b208c3c3915c4faa08fb7cf07d",
     "signature": "2nXyU5TJu9LEUKMpTghYnWg4mcNMARYccrZ8iUpZNEadjJuKw7Zbmzre6FLjFRejvuZjvcv2WZcdN253L3WJudat"
+  },
+  {
+    "timestamp": "2026-02-03T08:06:54.093Z",
+    "type": "commit",
+    "description": "chore: sign cycle3 commit on-chain (activity 6)",
+    "hash": "6bf7624356401de2604a9351f673a74e083c19b91fca51fb9db336e867011ff6",
+    "signature": "q6x5FBbjKY65fYt7JLJdDjM8xNFN2Geq9d87S66UUhgFdbHuettwke6HemDNbvWhffdjG76yrWmvN9gTzU3ko3Y"
+  },
+  {
+    "timestamp": "2026-02-03T08:36:32.723Z",
+    "type": "Cycle 4: Added auto-sign cron, wallet tx tracker, and polished dashboard with timeline view + mobile support",
+    "description": "build",
+    "hash": "fbdb7fb746e338117a308dae783a2859e534eb8de222972e4b24fb8f8dc2dc4e",
+    "signature": "FY6NuioTdKsqPpFgBZc4Z3HtqFBYyuXBEmeA3dRCKykjMZigzAXY9B7Xy47QZMnG1R49TxpVw59cnbuAviDwzsf"
   }
 ]
