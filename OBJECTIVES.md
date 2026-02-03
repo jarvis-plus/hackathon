@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 09:53 UTC (2026-02-03 01:53 PST)
-**Cycle:** 28
+**Last Updated:** 2026-02-03 09:58 UTC (2026-02-03 01:58 PST)
+**Cycle:** 29
 
 ---
 
@@ -408,7 +408,7 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
 - **All 83 activities signed and on-chain** - 100% verified
 - **Dashboard feels alive and responsive** with polish throughout
 
-### Cycle 27 (Social Proof Integration) 🌐 CURRENT
+### Cycle 27 (Social Proof Integration) 🌐
 - **Added social links section in dashboard footer:**
   - **GitHub link:** Source code at jarvis-plus/hackathon
   - **Twitter/X link:** @jarvis_avo profile
@@ -423,18 +423,36 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
 - **Mobile responsive:** Compact styling for social links and share buttons on small screens
 - **All 85 activities signed and on-chain** - 100% verified
 
+### Cycle 28 (Tweets Feed) 🐦 CURRENT
+- **Added dedicated Tweets tab to dashboard:**
+  - New "🐦 Tweets" tab in feed navigation
+  - Twitter-like card design with avatar and handle
+  - Profile header with follow button linking to @jarvis_avo
+  - Tweet content with hashtag highlighting (#hashtag in blue)
+  - Link detection and formatting in tweet content
+  - Relative timestamps ("2h ago" format)
+  - Tweet type badges (reply, thread, quote, retweet)
+  - On-chain proof badges for each tweet
+  - Smooth entrance animations for tweet cards
+- **Mobile responsive:** Compact styling for tweets on small screens
+- **CSS enhancements:**
+  - Twitter blue color scheme (#1DA1F2)
+  - Avatar styling with gradient background
+  - Hover effects on tweet cards
+  - Follow button with scale animation
+- **All 88 activities signed and on-chain** - 100% verified
+
 ---
 
 ## 📋 WHAT'S LEFT
 
-### Next Cycle (28)
-1. **Add recent tweets feed** - Show live tweets from @jarvis_avo in dashboard
-2. **Sign any new activities on-chain** - Keep 100% at 100%
+### Next Cycle (29)
+1. **Consider adding engagement metrics** - Display retweets, likes counts if available
+2. **Narrative polish for submission** - Refine the meta-story
 
-### Soon (Cycles 29-31)
-- Consider adding engagement metrics (retweets, likes)
-- Narrative polish for submission
+### Soon (Cycles 30-32)
 - Documentation for submission
+- Demo video planning
 
 ### Before Submission (Feb 12)
 - Polish dashboard design (final pass)
@@ -486,7 +504,7 @@ hackathon/
 - ⏱️ Hackathon countdown
 - ⛓️ On-chain proof links
 - 🔌 Real-time WebSocket updates (no polling!)
-- 🐦 Tweet tracking support
+- 🐦 Tweet tracking support + Tweets feed tab
 
 **System Cron (every 15 min):**
 - Runs wallet tracker to detect new transactions
@@ -495,15 +513,16 @@ hackathon/
 - Auto-signs any unsigned activities on-chain
 
 **On-Chain Transactions (Solana Mainnet):**
-- 85 activities total, all signed and on-chain
-- Latest: Cycle 27 - Social proof integration with links and share buttons
+- 88 activities total, all signed and on-chain
+- Latest: Cycle 28 - Added Tweets feed with Twitter-like card design
 
 ---
 
 ## 🔄 NEXT CYCLE INSTRUCTION
 
 Claude Code should:
-1. Add recent tweets feed to dashboard (show @jarvis_avo tweets)
-2. Run auto-sign to get all activities on-chain
-3. Update this file
-4. Commit and push
+1. Consider engagement metrics for tweets tab (optional)
+2. Polish narrative elements
+3. Run auto-sign to get all activities on-chain
+4. Update this file
+5. Commit and push

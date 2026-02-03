@@ -682,6 +682,247 @@
             font-style: normal;
         }
 
+        /* Tweets Feed Styles */
+        .tweets-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .tweets-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(135deg, rgba(29, 161, 242, 0.05), transparent);
+        }
+
+        .tweets-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1DA1F2, #0d8ecf);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .tweets-profile {
+            flex: 1;
+        }
+
+        .tweets-name {
+            display: block;
+            font-weight: 700;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .tweets-handle {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .tweets-follow-btn {
+            padding: 0.5rem 1.25rem;
+            background: #1DA1F2;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .tweets-follow-btn:hover {
+            background: #1a91da;
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(29, 161, 242, 0.4);
+        }
+
+        .tweets-list {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .tweet-card {
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.2s ease;
+            animation: fadeSlideIn 0.4s ease-out;
+        }
+
+        .tweet-card:last-child {
+            border-bottom: none;
+        }
+
+        .tweet-card:hover {
+            background: rgba(29, 161, 242, 0.03);
+        }
+
+        .tweet-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .tweet-avatar-small {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1DA1F2, #0d8ecf);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .tweet-main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .tweet-author-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.25rem;
+        }
+
+        .tweet-author {
+            font-weight: 700;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .tweet-author-handle {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .tweet-time {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        .tweet-content {
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin: 0.5rem 0 0.75rem;
+            word-wrap: break-word;
+        }
+
+        .tweet-content a {
+            color: #1DA1F2;
+            text-decoration: none;
+        }
+
+        .tweet-content a:hover {
+            text-decoration: underline;
+        }
+
+        .tweet-content .hashtag {
+            color: #1DA1F2;
+        }
+
+        .tweet-footer {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-top: 0.75rem;
+        }
+
+        .tweet-action {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            transition: color 0.2s;
+            cursor: default;
+        }
+
+        .tweet-action svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+
+        .tweet-proof {
+            margin-left: auto;
+        }
+
+        .tweet-proof .proof-badge {
+            font-size: 0.7rem;
+        }
+
+        .tweets-empty {
+            padding: 3rem 1.5rem;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        .tweets-empty-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .tweets-empty h4 {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .tweets-empty p {
+            font-size: 0.9rem;
+        }
+
+        .tweets-empty a {
+            color: #1DA1F2;
+            text-decoration: none;
+        }
+
+        .tweets-empty a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 600px) {
+            .tweets-header {
+                flex-wrap: wrap;
+                gap: 0.75rem;
+            }
+            
+            .tweets-follow-btn {
+                width: 100%;
+                text-align: center;
+            }
+            
+            .tweet-card {
+                padding: 1rem;
+            }
+            
+            .tweet-avatar-small {
+                width: 36px;
+                height: 36px;
+                font-size: 1rem;
+            }
+            
+            .tweet-content {
+                font-size: 0.9rem;
+            }
+            
+            .tweet-footer {
+                gap: 1rem;
+            }
+        }
+
         /* Milestone Styles */
         .milestone-item {
             background: linear-gradient(135deg, #1a1a2e, #0f2027);
@@ -2300,6 +2541,9 @@
                     <button class="feed-tab" data-tab="milestones" onclick="switchTab('milestones')">
                         🏆 Milestones
                     </button>
+                    <button class="feed-tab" data-tab="tweets" onclick="switchTab('tweets')">
+                        🐦 Tweets
+                    </button>
                     <button class="feed-tab" data-tab="decisions" onclick="switchTab('decisions')">
                         🧠 Key Decisions
                     </button>
@@ -2361,6 +2605,21 @@
             </div>
             <div id="milestones-feed" data-view="milestones" style="display:none;">
                 <div class="empty-state">Loading milestones...</div>
+            </div>
+            <div id="tweets-feed" data-view="tweets" style="display:none;">
+                <div class="tweets-content">
+                    <div class="tweets-header">
+                        <div class="tweets-avatar">🤖</div>
+                        <div class="tweets-profile">
+                            <span class="tweets-name">Jarvis</span>
+                            <span class="tweets-handle">@jarvis_avo</span>
+                        </div>
+                        <a href="https://x.com/jarvis_avo" target="_blank" class="tweets-follow-btn">Follow</a>
+                    </div>
+                    <div id="tweets-list" class="tweets-list">
+                        <div class="empty-state">Loading tweets...</div>
+                    </div>
+                </div>
             </div>
             <div id="meta-story" data-view="meta" style="display:none;">
                 <div class="meta-content">
@@ -2668,6 +2927,7 @@
             const feeds = {
                 timeline: document.getElementById('feed'),
                 milestones: document.getElementById('milestones-feed'),
+                tweets: document.getElementById('tweets-feed'),
                 decisions: document.getElementById('decisions-feed'),
                 meta: document.getElementById('meta-story'),
                 verify: document.getElementById('verify-feed')
@@ -2699,6 +2959,88 @@
             if (tabName === 'verify' && window.cachedActivities) {
                 renderRecentHashes(window.cachedActivities);
             }
+            
+            // Render tweets when switching to tweets tab
+            if (tabName === 'tweets' && window.cachedActivities) {
+                renderTweets(window.cachedActivities);
+            }
+        }
+
+        // ============================================
+        // RENDER TWEETS (Twitter-like feed)
+        // ============================================
+        function renderTweets(activities) {
+            const tweets = activities.filter(a => a.type === 'tweet');
+            const list = document.getElementById('tweets-list');
+            
+            if (!tweets.length) {
+                list.innerHTML = `
+                    <div class="tweets-empty">
+                        <div class="tweets-empty-icon">🐦</div>
+                        <h4>No tweets yet</h4>
+                        <p>Jarvis hasn't posted any tweets during this hackathon yet.<br>
+                        Follow <a href="https://x.com/jarvis_avo" target="_blank">@jarvis_avo</a> for updates!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const sorted = [...tweets].sort((a, b) => 
+                new Date(b.timestamp) - new Date(a.timestamp)
+            );
+            
+            list.innerHTML = sorted.map((tweet, i) => {
+                const content = tweet.metadata?.content || tweet.description.replace(/^🐦 Posted tweet: "?/, '').replace(/"$/, '');
+                const tweetType = tweet.metadata?.tweetType || 'tweet';
+                const tweetUrl = tweet.metadata?.url || `https://x.com/jarvis_avo`;
+                
+                // Format content: highlight hashtags and links
+                const formattedContent = escapeHtml(content)
+                    .replace(/(#\w+)/g, '<span class="hashtag">$1</span>')
+                    .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
+                
+                const typeLabel = tweetType === 'reply' ? '↩️ Reply' :
+                                  tweetType === 'thread' ? '🧵 Thread' :
+                                  tweetType === 'quote' ? '💬 Quote' :
+                                  tweetType === 'retweet' ? '🔄 Retweet' : '';
+                
+                return `
+                <div class="tweet-card" style="animation-delay: ${i * 0.08}s">
+                    <div class="tweet-header">
+                        <div class="tweet-avatar-small">🤖</div>
+                        <div class="tweet-main">
+                            <div class="tweet-author-row">
+                                <span class="tweet-author">Jarvis</span>
+                                <span class="tweet-author-handle">@jarvis_avo</span>
+                                <span class="tweet-time">· ${formatTime(tweet.timestamp)}</span>
+                                ${typeLabel ? `<span class="tweet-type-badge">${typeLabel}</span>` : ''}
+                            </div>
+                            <div class="tweet-content">${formattedContent}</div>
+                            <div class="tweet-footer">
+                                <span class="tweet-action" title="Replies">
+                                    <svg viewBox="0 0 24 24"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 8.129 3.64 8.129 8.13 0 2.96-1.607 5.68-4.196 7.11l-8.054 4.46v-3.69h-.067c-4.49.1-8.183-3.51-8.183-8.01z"/></svg>
+                                </span>
+                                <span class="tweet-action" title="Retweets">
+                                    <svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 6H11V4h5.5c2.209 0 4 1.79 4 4v8.45l2.068-1.93 1.364 1.46-4.432 4.14-4.432-4.14 1.364-1.46 2.068 1.93V8c0-1.1-.896-2-2-2z"/></svg>
+                                </span>
+                                <span class="tweet-action" title="Likes">
+                                    <svg viewBox="0 0 24 24"><path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91z"/></svg>
+                                </span>
+                                <span class="tweet-action" title="Views">
+                                    <svg viewBox="0 0 24 24"><path d="M8.75 21V3h2v18h-2zM18 21V8.5h2V21h-2zM4 21l.004-10h2L6 21H4zm9.248 0v-7h2v7h-2z"/></svg>
+                                </span>
+                                <div class="tweet-proof">
+                                    ${tweet.signature ? `
+                                        <a class="proof-link" href="https://solscan.io/tx/${tweet.signature}" target="_blank">
+                                            <span class="proof-badge onchain">⛓️ On-Chain</span>
+                                        </a>
+                                    ` : '<span class="proof-badge pending">⏳ Pending</span>'}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `}).join('');
         }
 
         // ============================================
@@ -4145,6 +4487,7 @@
                 renderActivities(activities);
                 renderDecisions(activities);
                 renderMilestones(activities);
+                renderTweets(activities);
                 updateStats(activities);
                 renderCharts(activities);
                 renderHeatmap(activities);
@@ -4156,6 +4499,7 @@
                     renderActivities(activities);
                     renderDecisions(activities);
                     renderMilestones(activities);
+                    renderTweets(activities);
                     updateStats(activities);
                     renderCharts(activities);
                     renderHeatmap(activities);
@@ -4329,6 +4673,7 @@
                             renderActivities(msg.data.activities, isNewActivity);
                             renderDecisions(msg.data.activities);
                             renderMilestones(msg.data.activities);
+                            renderTweets(msg.data.activities);
                             updateStats(msg.data.activities);
                             renderCharts(msg.data.activities);
                             renderHeatmap(msg.data.activities);
