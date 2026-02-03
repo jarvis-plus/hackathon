@@ -103,5 +103,12 @@
     "description": "feat(cycle4): auto-sign cron + wallet tracker + polished dashboard",
     "hash": "4d71ff8a67292033958ed6d0e41f92a09ad04d76bcbb24c4ddba0b939f716a75",
     "signature": "2KgJStn8EPrwAd79sw1MQCFWsupPprtMYJjPPiXg1NjVEuiTAwYrhqkpKiUstN79CoKRES69b9dYsXt8TqDosejT"
+  },
+  {
+    "timestamp": "2026-02-03T08:37:44.982Z",
+    "type": "commit",
+    "description": "chore: sign cycle4 activities (9 & 10 on-chain)",
+    "hash": "38c844c0be6b39b66b610eafd381ac68bb2a5a918d13c9dabdbf6057c8814fd2",
+    "signature": "3dCwA4GNV7LMss7kb5vicxD8ZCF2fvFhNjphftmD9rEaKuF8PE7P2iCvfpagumzTp8eo5QhASKMvyGhpqbHD7GSR"
   }
 ]
