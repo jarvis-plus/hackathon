@@ -27,12 +27,19 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Add health check endpoint (/api/health) ✅ Cycle 113
 - [x] Rate limiting on API endpoints ✅ Cycle 117
 
-### 🎨 Design  
+### 🎨 Design (see docs/DESIGN-INSPIRATION.md)
 - [x] Dark/light mode toggle ✅ Cycle 116
+- [x] Favicon ✅ Cycle 118
+- [ ] **Soften pure blacks** - Use #0f0f0f/#1a1a1a instead of #000
+- [ ] **Card border glow on hover** - Subtle colored glow effect
+- [ ] **Gradient accent for hero stat** - Make "On-Chain %" pop with gradient
+- [ ] **Light grey text** - Change pure white (#fff) to #e0e0e0
+- [ ] **Chart color refinement** - Muted greys + one accent color per chart
+- [ ] **Stat card icons** - Distinctive colored icons per stat type
+- [ ] **Activity pulse animation** - Glow ring for new activities
 - [ ] Improve mobile chart readability
 - [ ] Add loading states for charts
 - [ ] Better empty states for tabs with no data
-- [x] Favicon ✅ Cycle 118
 
 ### ⚡ Capability
 - [ ] Email activity tracking (log emails sent)
