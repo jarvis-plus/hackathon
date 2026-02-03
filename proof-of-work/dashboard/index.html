@@ -70,6 +70,20 @@
         [data-theme="light"] .hackathon-badge {
             background: linear-gradient(135deg, #f0e6ff, #e6f0ff);
         }
+        
+        [data-theme="light"] .stat-value.chain {
+            background: linear-gradient(135deg, #8800cc, #00c77b, #0088dd);
+            background-size: 200% 200%;
+            filter: drop-shadow(0 0 8px rgba(0, 199, 123, 0.3));
+        }
+        
+        [data-theme="light"] #card-onchain::before {
+            background: conic-gradient(from 0deg, transparent, rgba(0, 199, 123, 0.08), transparent 30%);
+        }
+        
+        [data-theme="light"] #card-onchain:hover::before {
+            background: conic-gradient(from 0deg, transparent, rgba(136, 0, 204, 0.12), rgba(0, 199, 123, 0.12), transparent 40%);
+        }
 
         body {
             font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace;
@@ -197,7 +211,46 @@
             color: var(--accent-green);
         }
 
-        .stat-value.chain { color: var(--accent-purple); }
+        .stat-value.chain { 
+            background: linear-gradient(135deg, #aa00ff, #00ffaa, #00aaff);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 3s ease infinite;
+            filter: drop-shadow(0 0 12px rgba(0, 255, 170, 0.4));
+        }
+        
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        /* Hero stat card special treatment */
+        #card-onchain {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #card-onchain::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, rgba(0, 255, 170, 0.05), transparent 30%);
+            animation: rotate-glow 8s linear infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes rotate-glow {
+            100% { transform: rotate(360deg); }
+        }
+        
+        #card-onchain:hover::before {
+            background: conic-gradient(from 0deg, transparent, rgba(170, 0, 255, 0.1), rgba(0, 255, 170, 0.1), transparent 40%);
+        }
         .stat-value.commits { color: var(--accent-yellow); }
         .stat-value.trades { color: var(--accent-red); }
         .stat-value.builds { color: var(--accent-blue); }

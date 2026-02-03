@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 14:29 PST
-**Cycle:** 120
+**Last Updated:** 2026-02-03 14:59 PST
+**Cycle:** 121
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -32,7 +32,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Favicon ✅ Cycle 118
 - [x] Soften pure blacks ✅ Cycle 119
 - [x] **Card border glow on hover** ✅ Cycle 120
-- [ ] **Gradient accent for hero stat** - Make "On-Chain %" pop with gradient
+- [x] **Gradient accent for hero stat** ✅ Cycle 121 - Make "On-Chain %" pop with gradient
 - [ ] **Light grey text** - Change pure white (#fff) to #e0e0e0
 - [ ] **Chart color refinement** - Muted greys + one accent color per chart
 - [ ] **Stat card icons** - Distinctive colored icons per stat type
@@ -58,6 +58,14 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 121 (Gradient Accent for Hero Stat)
+- Made "On-Chain %" stat value pop with animated gradient
+- Colors: purple → green → blue (135deg), animates via background-position shift
+- Added rotating conic gradient glow behind the card (#card-onchain)
+- Filter drop-shadow for subtle outer glow effect
+- Full light theme support with adjusted colors
+- 276 activities, all signed on-chain
 
 ### Cycle 120 (Card Border Glow on Hover)
 - Added subtle colored glow effects on hover for all card types
@@ -96,13 +104,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - IP detection: x-forwarded-for, x-real-ip, or socket address
 - Automatic cleanup of expired entries every 5 minutes
 - 263 activities, all signed on-chain
-
-### Cycle 116 (Dark/Light Mode Toggle)
-- Added dark/light mode toggle to dashboard
-- Light theme CSS variables: adjusted colors for readability
-- Toggle button in header next to sound toggle
-- JavaScript: localStorage persistence, respects prefers-color-scheme
-- 259 activities, all signed on-chain
 
 ---
 

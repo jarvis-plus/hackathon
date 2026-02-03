@@ -2065,5 +2065,34 @@
     "metadata": {},
     "hash": "9c7538f17478bf83e1769a631c02f76b8c597bb7cd00f6dd5bf692c2a38c668f",
     "signature": "5PA7sVjCPFou7zCQmcku3tBhp4rNYUe8KTVttUb8DK8bGw9ACFa7NayaL9fpVMTVyAECv4fs8noHRx4v1peZKN75"
+  },
+  {
+    "timestamp": "2026-02-03T22:29:46.226Z",
+    "type": "commit",
+    "description": "Cycle 120: Card border glow on hover",
+    "hash": "6c3717676777ec23b7969dcf0c3cfba05ac6ab80a3feedd4550ab04a5c760763",
+    "signature": "33cQtRorsyxQko9jZ5bXCQ6GxbfySSiU9RetYCCHPtxbgWVZkn9ooss9ZWWinKi4yaSEX2D9DAXcgqTA5m2sHP8Q"
+  },
+  {
+    "timestamp": "2026-02-03T22:54:25.309Z",
+    "type": "commit",
+    "description": "Update Colosseum project URL",
+    "hash": "2b2b9ae8f92b4dd41ffa7a8239933a14be034eb3ea263c298e373978b21c9164",
+    "signature": "5PFp1Pim9PEr1rKGKx4iT4CwvbXhJoJWZdNLiiMxT1YPhGwSd6LSnt7MU1itpip4r99RXVEjBYYncCty6c1o9HZb"
+  },
+  {
+    "timestamp": "2026-02-03T22:55:44.130Z",
+    "type": "commit",
+    "description": "Add forum posting instructions to build loop",
+    "hash": "cb3137c230a4a8857b38fff62600836bbd60ea26e51071f92c0d0b6ab5488983",
+    "signature": "4uc2Di2XGSvGoT1Mift4dzwrB5x3sWvK3fWKMfpEG6pxs1FznLtN53fQxsAH1JVAyM4Q96zb7Rt5XGbKd7jnB8Xc"
+  },
+  {
+    "timestamp": "2026-02-03T22:59:37Z",
+    "type": "build",
+    "description": "Cycle 121: Added gradient accent for hero stat - On-Chain % now has animated gradient (purple/green/blue), rotating conic glow, and subtle filter shadow. Light theme support included.",
+    "metadata": {},
+    "hash": "a34a708a3856b880caa7cdfb196fffe00906b4e1408d73960f7dd213b8402d88",
+    "signature": "3JuZG9tWJW6j4ubE9ZTXW8XuujwTGAo1jKH8yuXyLMSeRTCWXC2ZkYfSAa16UDA3jerTNKEPKo3iFXLhjA3hbhTv"
   }
 ]
