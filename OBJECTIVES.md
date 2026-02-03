@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 12:50 PST
-**Cycle:** 115
+**Last Updated:** 2026-02-03 12:54 PST
+**Cycle:** 116
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -28,7 +28,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [ ] Rate limiting on API endpoints
 
 ### 🎨 Design  
-- [ ] Dark/light mode toggle
+- [x] Dark/light mode toggle ✅ Cycle 116
 - [ ] Improve mobile chart readability
 - [ ] Add loading states for charts
 - [ ] Better empty states for tabs with no data
@@ -52,11 +52,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
 
-### Cycle 111-112 (Post-Submission Monitoring)
-- System health verified continuously
-- Service uptime 2h+ (stable since 09:41 PST)
-- 250 activities, 100% on-chain verified
-
 ### Cycle 113 (Health Endpoint)
 - Added `/api/health` endpoint for monitoring
 - Returns: status, activity count, unsigned count, last activity age, WS clients, uptime
@@ -77,6 +72,13 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - Logs permanent failures to failed-signatures.log
 - --retry-failed flag prioritizes previous failures
 - 257 activities, all signed on-chain
+
+### Cycle 116 (Dark/Light Mode Toggle)
+- Added dark/light mode toggle to dashboard
+- Light theme CSS variables: adjusted colors for readability
+- Toggle button in header next to sound toggle
+- JavaScript: localStorage persistence, respects prefers-color-scheme
+- 259 activities, all signed on-chain
 
 ---
 

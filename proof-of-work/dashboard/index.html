@@ -23,6 +23,51 @@
             --border: #2a2a4a;
         }
 
+        /* Light theme */
+        [data-theme="light"] {
+            --bg-primary: #f5f7fa;
+            --bg-secondary: #ffffff;
+            --bg-card: linear-gradient(135deg, #ffffff, #f0f4f8);
+            --accent-green: #00c77b;
+            --accent-blue: #0088dd;
+            --accent-purple: #8800cc;
+            --accent-yellow: #dd8800;
+            --accent-red: #e53935;
+            --text-primary: #1a1a2e;
+            --text-secondary: #555;
+            --text-muted: #999;
+            --border: #dde3eb;
+        }
+        
+        [data-theme="light"] .proof-banner {
+            background: linear-gradient(90deg, #e8eef5, #dde3f0);
+        }
+        
+        [data-theme="light"] .stat-card,
+        [data-theme="light"] .chart-card,
+        [data-theme="light"] .activity-item,
+        [data-theme="light"] .meta-content,
+        [data-theme="light"] .verify-content,
+        [data-theme="light"] .tweets-content,
+        [data-theme="light"] .decision-item,
+        [data-theme="light"] .milestone-item {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+        
+        [data-theme="light"] .skeleton {
+            background: linear-gradient(
+                90deg,
+                rgba(0, 0, 0, 0.04) 0%,
+                rgba(0, 0, 0, 0.08) 50%,
+                rgba(0, 0, 0, 0.04) 100%
+            );
+            background-size: 200% 100%;
+        }
+        
+        [data-theme="light"] .hackathon-badge {
+            background: linear-gradient(135deg, #f0e6ff, #e6f0ff);
+        }
+
         body {
             font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace;
             background: var(--bg-primary);
@@ -2411,9 +2456,14 @@
             <div class="hackathon-badge">
                 ⏱️ Hackathon ends: <span class="countdown" id="countdown">loading...</span>
             </div>
-            <button class="sound-toggle" id="soundToggle" onclick="toggleSound()" title="Toggle notification sounds">
-                🔔 Sounds On
-            </button>
+            <div style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
+                <button class="sound-toggle" id="soundToggle" onclick="toggleSound()" title="Toggle notification sounds">
+                    🔔 Sounds On
+                </button>
+                <button class="sound-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle dark/light mode">
+                    🌙 Dark
+                </button>
+            </div>
         </header>
 
         <div class="proof-banner">
@@ -2931,6 +2981,40 @@
                 playNotificationSound('new');
             }
         }
+
+        // ============================================
+        // THEME TOGGLE (Dark/Light Mode)
+        // ============================================
+        function getPreferredTheme() {
+            const stored = localStorage.getItem('jarvis-pow-theme');
+            if (stored) return stored;
+            return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        }
+        
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('jarvis-pow-theme', theme);
+            updateThemeButton(theme);
+        }
+        
+        function updateThemeButton(theme) {
+            const btn = document.getElementById('themeToggle');
+            if (btn) {
+                btn.textContent = theme === 'dark' ? '🌙 Dark' : '☀️ Light';
+            }
+        }
+        
+        function toggleTheme() {
+            const current = document.documentElement.getAttribute('data-theme') || 'dark';
+            const next = current === 'dark' ? 'light' : 'dark';
+            setTheme(next);
+        }
+        
+        // Initialize theme on page load
+        (function initTheme() {
+            const theme = getPreferredTheme();
+            setTheme(theme);
+        })();
 
         // ============================================
         // TAB SWITCHING (with smooth transitions)
