@@ -96,7 +96,7 @@ function parseTransaction(tx: ParsedTransactionWithMeta, signature: string): Act
   
   // Determine transaction type
   if (tokenChanges.length >= 2) {
-    // Likely a swap
+    // Token-to-token swap
     const sold = tokenChanges.find(t => t.amount < 0);
     const bought = tokenChanges.find(t => t.amount > 0);
     if (sold && bought) {
@@ -111,6 +111,48 @@ function parseTransaction(tx: ParsedTransactionWithMeta, signature: string): Act
         }
       };
     }
+  } else if (tokenChanges.length === 1 && Math.abs(solChange) > 0.002) {
+    // SOL <-> Token swap (SOL changed significantly + 1 token changed)
+    const tokenChange = tokenChanges[0];
+    if (solChange < -0.002 && tokenChange.amount > 0) {
+      // SOL -> Token swap
+      const solSpent = Math.abs(solChange);
+      return {
+        timestamp,
+        type: 'trade',
+        description: `Swapped ${solSpent.toFixed(4)} SOL → ${tokenChange.amount.toFixed(4)} ${tokenChange.token}`,
+        metadata: {
+          txSignature: signature,
+          from: { token: 'SOL', amount: solSpent },
+          to: { token: tokenChange.token, amount: tokenChange.amount }
+        }
+      };
+    } else if (solChange > 0.002 && tokenChange.amount < 0) {
+      // Token -> SOL swap
+      const solReceived = solChange;
+      return {
+        timestamp,
+        type: 'trade',
+        description: `Swapped ${Math.abs(tokenChange.amount).toFixed(4)} ${tokenChange.token} → ${solReceived.toFixed(4)} SOL`,
+        metadata: {
+          txSignature: signature,
+          from: { token: tokenChange.token, amount: Math.abs(tokenChange.amount) },
+          to: { token: 'SOL', amount: solReceived }
+        }
+      };
+    }
+    // Fall through to regular transfer if not a swap pattern
+    const direction = tokenChange.amount > 0 ? 'Received' : 'Sent';
+    return {
+      timestamp,
+      type: 'transfer',
+      description: `${direction} ${Math.abs(tokenChange.amount).toFixed(4)} ${tokenChange.token}`,
+      metadata: {
+        txSignature: signature,
+        token: tokenChange.token,
+        amount: tokenChange.amount
+      }
+    };
   } else if (tokenChanges.length === 1) {
     const change = tokenChanges[0];
     const direction = change.amount > 0 ? 'Received' : 'Sent';

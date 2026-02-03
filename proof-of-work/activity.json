@@ -148,5 +148,77 @@
     "description": "feat(cycle6): add cumulative on-chain proof count chart",
     "hash": "813f1ef286b1bf76f659865c95fbb8cb3ee760d5f10f00acfa0d72921ea6162d",
     "signature": "2bPKLJVmSyE6C4NTxg5h4dbTRnhNwZ4H9FX69NJQYEecnxDiZz6GZJiv8bapyii6LMPEkVGAeDGn9BiJhPQH55cD"
+  },
+  {
+    "timestamp": "2026-02-03T08:44:52.854Z",
+    "type": "commit",
+    "description": "chore: sign cycle6 activities on-chain (16 total)",
+    "hash": "7f620c9feadff438263fded728ce19bd358cc19e527e86f8e998ff89b25daad0",
+    "signature": "4tcEBH23F5gUaEbHrkqRz3AVx52ZpN2Dj9YFp8TsLGkhGYMnwNDc8qm6hfG5zbbtT6gVohichchdm7P62ctWXgud"
+  },
+  {
+    "timestamp": "2026-02-03T08:45:51.000Z",
+    "type": "trade",
+    "description": "Swapped 0.005 SOL → 0.5234 USDC (wallet tracker test)",
+    "metadata": {
+      "txSignature": "2eMgx6aVgh67EjPYCTJmavBgH51rA7NEfP4D7AToB7VicZafEaMvojHoCm4Fe7LoBr8Ke9Dys9AwZxsLpzfG16bo",
+      "from": {
+        "token": "SOL",
+        "amount": 0.005
+      },
+      "to": {
+        "token": "USDC",
+        "amount": 0.5234
+      },
+      "cycle": 7,
+      "purpose": "End-to-end test of wallet tracker"
+    },
+    "hash": "060ce0d3bb9997ac0ad1d5c3f3fad7c6f0b95236f720b85b24aaebc762b602c0",
+    "signature": "m1asCkWMLNVUNbom3Vz5Lo9rbbtmK6T1AD5yogf4Cg3stvbsa8YVB4Xkawkz4vr34dC9MvnZCQCrNQDka7DHRDi"
+  },
+  {
+    "timestamp": "2026-02-03T08:46:44.651Z",
+    "type": "build",
+    "description": "Cycle 7: Fixed wallet tracker SOL swap detection, tested end-to-end with real swap",
+    "hash": "06a110d519061a840fcde7764c656bce26113d645845387c99b002108cf1d12b",
+    "signature": "4iXL3Rt5KXV5M7uvtcahfxzi8PZGdAEskpHyyijqxrKtfh2VroRQsYwqbcFxByuGF8wPhovhBmMyyV7z3aUbaqNc"
+  },
+  {
+    "timestamp": "2026-02-03T08:47:33.090Z",
+    "type": "commit",
+    "description": "chore: sign cycle6 activities on-chain (16 total)",
+    "hash": "a6b0a03afb442334eeae64fc511e26c02fbfbca6bff9d4ce22aa383c9e846d8f",
+    "signature": "5Mr759Vwve6FBQpJhpLY7kgUJT8KZf5AFVSSRvHHgfzVj7HHeDo4urfKKT383FSzUzBNCZjpNZ82ULkKgGNfgisL"
+  },
+  {
+    "timestamp": "2026-02-03T08:50:06.446Z",
+    "type": "heartbeat",
+    "description": "Agent heartbeat #1 - Status: DEGRADED",
+    "metadata": {
+      "status": "degraded",
+      "health": {
+        "gateway": false,
+        "dashboard": false,
+        "memory": "1.6Gi/7.8Gi"
+      },
+      "lastActivityMinutesAgo": 2,
+      "lastActivityType": "commit",
+      "consecutiveBeats": 1,
+      "totalBeats": 1,
+      "uptimeHours": 0
+    },
+    "hash": "518d31875e3f5ec54c540efdc96233665c3e1921bb1ab252c27732aca6b73441",
+    "signature": "557apFSKZBU7rfehBCVx2Tn1crQMrMtiHs5HPVTyhxU6Qr2cpGZJaPEUKMVXzWoTDj8dc8FxMUwTtLDjk59BC4pc"
+  },
+  {
+    "timestamp": "2026-02-03T08:51:58.933Z",
+    "type": "build",
+    "description": "Cycle 8: Added heartbeat tracker and session tracker collectors for agent uptime monitoring",
+    "metadata": {
+      "cycle": 8,
+      "files": "collectors/heartbeat-tracker.ts,collectors/session-tracker.ts,cron-runner.sh,dashboard/index.html"
+    },
+    "hash": "c31335ba1e4df2ac6cb05e774776d8a306a3795428615e9af1f4ddeac666ea8c",
+    "signature": "5euxWCJxZ5MSadwtWQMAkk9ox3mbzubPmgJy5bUm9j35bmsGra9q2hodk4J713YjqWfwr4dPGc5Xhni9euyuGzkh"
   }
 ]

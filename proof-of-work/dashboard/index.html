@@ -246,6 +246,21 @@
             border-color: var(--accent-blue); 
         }
 
+        .activity-item.heartbeat { 
+            border-left-color: #ff69b4; 
+        }
+        .activity-item.heartbeat::before { 
+            border-color: #ff69b4;
+            animation: pulse 2s infinite;
+        }
+
+        .activity-item.session { 
+            border-left-color: #00ffcc; 
+        }
+        .activity-item.session::before { 
+            border-color: #00ffcc; 
+        }
+
         .activity-header {
             display: flex;
             flex-wrap: wrap;
@@ -679,7 +694,9 @@
                 'decision': '#ff0055',
                 'deploy': '#00aaff',
                 'trade': '#ff6b6b',
-                'transfer': '#ff6b6b'
+                'transfer': '#ff6b6b',
+                'heartbeat': '#ff69b4',
+                'session': '#00ffcc'
             };
             
             activities.forEach(a => {

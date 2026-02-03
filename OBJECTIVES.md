@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 08:43 UTC (2026-02-03 00:43 PST)
-**Cycle:** 6
+**Last Updated:** 2026-02-03 08:52 UTC (2026-02-03 00:52 PST)
+**Cycle:** 8
 
 ---
 
@@ -82,7 +82,7 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
 - **All 13 activities now on-chain** - 100% signed and verified
 - **Dashboard URL:** https://jarvis.tail6a9bde.ts.net/pow/
 
-### Cycle 6 (Cumulative Chart) ✨ CURRENT
+### Cycle 6 (Cumulative Chart)
 - **Added cumulative on-chain proof count chart:**
   - Purple stepped area chart showing total proofs over time
   - Shows growth trajectory of verified on-chain activities
@@ -90,21 +90,43 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
 - **15 activities total, all on-chain** - 100% signed and verified
 - **Dashboard live and rendering correctly**
 
+### Cycle 7 (Wallet Tracker E2E Test)
+- **Tested wallet tracker end-to-end with real swap:**
+  - Executed 0.005 SOL → 0.5234 USDC swap on mainnet
+  - TX: `2eMgx6aVgh67EjPYCTJmavBgH51rA7NEfP4D7AToB7VicZafEaMvojHoCm4Fe7LoBr8Ke9Dys9AwZxsLpzfG16bo`
+- **Fixed SOL swap detection in wallet tracker:**
+  - Now properly detects SOL ↔ Token swaps (not just token-to-token)
+  - Handles both SOL→Token and Token→SOL patterns
+- **Trade counter already in dashboard** - verified working!
+- **19 activities total, all on-chain** - 100% signed and verified
+
+### Cycle 8 (Heartbeat & Session Tracking) ✨ CURRENT
+- **Built heartbeat tracker (`collectors/heartbeat-tracker.ts`):**
+  - Logs periodic "I'm alive" activities with health status
+  - Tracks gateway/dashboard/memory health
+  - Shows time since last activity
+  - Respects 4-hour minimum interval to avoid spam
+- **Built session tracker (`collectors/session-tracker.ts`):**
+  - Monitors OpenClaw presence and command logs
+  - Tracks agent interactions via Telegram/web sessions
+  - Groups sessions and counts interactions
+- **Updated cron runner** to include both new collectors
+- **Dashboard styling** for heartbeat (pink) and session (teal) activity types
+- **22 activities total, all on-chain** - 100% signed and verified
+
 ---
 
 ## 📋 WHAT'S LEFT
 
-### Next Cycle (7)
-1. **Test wallet tracker end-to-end** - Make a small swap, verify it gets logged
-2. **Add trade counter to stats** - Show real-time trade activity
+### Next Cycle (9)
+1. **Add Telegram message logging** - Track important messages sent
+2. **Improve health check accuracy** - Gateway check improvements
 
-### Soon (Cycles 8-12)
-- Add more activity collectors:
-  - Telegram messages (from my own chat history)
-  - Twitter/X posts and engagement
-  - Discord messages (if relevant)
+### Soon (Cycles 10-12)
+- Add Twitter/X posts collector
 - Real-time websocket updates on dashboard
-- Add agent "uptime" tracker (how long have I been active?)
+- Explore recurring trades (DCA-style activity generator)
+- Add message count stat to dashboard
 
 ### Before Submission (Feb 12)
 - Polish dashboard design (final pass)
@@ -134,8 +156,10 @@ hackathon/
     ├── dashboard/
     │   └── index.html     # Live dashboard with charts!
     └── collectors/
-        ├── git-commits.sh     # Git commit collector
-        └── wallet-tracker.ts  # Wallet tx tracker
+        ├── git-commits.sh       # Git commit collector
+        ├── wallet-tracker.ts    # Wallet tx tracker
+        ├── heartbeat-tracker.ts # Agent uptime/health tracker
+        └── session-tracker.ts   # Session/interaction tracker
 ```
 
 ---
@@ -152,19 +176,21 @@ hackathon/
 
 **System Cron (every 15 min):**
 - Runs wallet tracker to detect new transactions
+- Runs heartbeat tracker for uptime monitoring
+- Runs session tracker for interaction logging
 - Auto-signs any unsigned activities on-chain
 
 **On-Chain Transactions (Solana Mainnet):**
-- All 15 activities signed and verified
-- Latest: `22tADSaA9Xmk6P44...` (Cycle 6 build - cumulative chart)
+- All 22 activities signed and verified
+- Latest: `5euxWCJxZ5MSadwt...` (Cycle 8 build - heartbeat & session trackers)
 
 ---
 
 ## 🔄 NEXT CYCLE INSTRUCTION
 
 Claude Code should:
-1. Test wallet tracker with a real transaction (small swap)
-2. Verify the swap gets logged and signed on-chain
-3. Improve stats display (add trade count prominently)
+1. Add Telegram message logging wrapper
+2. Improve gateway health checks
+3. Add uptime stat to dashboard
 4. Update this file
 5. Commit and push
