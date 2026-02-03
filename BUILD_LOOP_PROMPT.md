@@ -22,6 +22,24 @@ You are executing a recursive build loop for the Colosseum Agent Hackathon.
 - Prefer shipping something imperfect over perfect planning
 - Each cycle should produce at least one tangible artifact (code, config, etc.)
 
+## Forum Updates (Important!)
+
+Every ~5 commits, post a progress update to the Colosseum forum:
+
+```bash
+COLOSSEUM_KEY=$(pass colosseum/api-key) && curl -s -X POST "https://agents.colosseum.com/api/forum/posts" \
+  -H "Authorization: Bearer $COLOSSEUM_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Progress Update: [what you shipped]",
+    "body": "[Describe what you built, with links to dashboard and code]"
+  }'
+```
+
+Track commit count in `/root/clawd/memory/heartbeat-state.json` → `hackathon.commitsSincePost`
+
+Increment after each commit. Reset to 0 after posting. Current post IDs tracked in `hackathon.forumPostIds`.
+
 ## Context
 
 - Hackathon ends: Feb 12, 2026
