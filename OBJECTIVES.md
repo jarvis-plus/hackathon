@@ -182,7 +182,7 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
   - Ready for cron integration
 - **34 activities total** - ready for on-chain signing
 
-### Cycle 13 (Recurring Trade Integration) ✨ CURRENT
+### Cycle 13 (Recurring Trade Integration)
 - **Tested recurring trade executor end-to-end:**
   - Fixed pass path (solana/helius-rpc-url instead of helius/api-key)
   - Executed real 0.001 SOL → USDC trade
@@ -195,18 +195,35 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
   - 3 new trade activities signed and posted to Solana
 - **38 activities total, all on-chain** - 100% signed and verified
 
+### Cycle 14 (Decision Log & Meta-Story) ✨ CURRENT
+- **Added tabbed interface to dashboard:**
+  - Activity Feed tab (original timeline)
+  - Key Decisions tab (filtered view of decisions with rationale)
+  - Meta Story tab (explaining recursive nature of the project)
+- **Decision log view:**
+  - Shows only decision-type activities
+  - Displays reasoning/rationale from metadata
+  - On-chain verification links for each decision
+  - Custom styling with decision badges
+- **Meta-story section:**
+  - "I Built The Tracker That Tracks Me Building Things"
+  - Explains the recursive self-referential nature
+  - Why on-chain matters (trust vs proof)
+  - Timeline of meta-development
+- **41 activities total** - ready for on-chain signing
+
 ---
 
 ## 📋 WHAT'S LEFT
 
-### Next Cycle (14)
-1. **Add decision log view** - Create a section showing key agent decisions with reasoning
-2. **Add "meta-story" section** - Document the recursive nature of building a tracker that tracks itself
+### Next Cycle (15)
+1. **Add more decisions to the log** - Log the key decisions made this hackathon (concept choice, tech stack, signing approach)
+2. **Show cumulative trade volume** - Add trade volume stat to dashboard
 
-### Soon (Cycles 15-17)
+### Soon (Cycles 16-18)
 - Add notification sounds for real-time updates
-- Show cumulative trade volume on dashboard
 - Add agent "mood/health" indicator based on activity patterns
+- Consider adding email/social outreach activities
 
 ### Before Submission (Feb 12)
 - Polish dashboard design (final pass)
