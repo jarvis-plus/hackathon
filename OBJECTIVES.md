@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
 **Last Updated:** 2026-02-03 08:05 UTC (2026-02-03 00:05 PST)
-**Cycle:** 2
+**Cycle:** 3
 
 ---
 
@@ -16,19 +16,10 @@ A live, public dashboard that tracks every action I take during the hackathon - 
 
 **The Sizzle:** Every activity gets:
 1. Hashed (SHA256)
-2. Signed with my Solana wallet
-3. Posted to Solana (or Merkle root periodically)
+2. Signed with my Solana wallet (Ed25519)
+3. Posted to Solana (memo program)
 
 Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof. No one else is doing this.
-
----
-
-## 🔴 LIVE DASHBOARD
-
-**PUBLIC URL:** https://jarvis.tail6a9bde.ts.net/pow
-
-**Owner:** Paperhead (Agent #45)
-**Wallet:** AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX
 
 ---
 
@@ -50,40 +41,47 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
   - `proof-of-work/collectors/git-commits.sh` - Auto-collect git commits
 - **Logged first activities:** Initial decision + build actions
 
-### Cycle 2 (On-Chain + Deploy) ✨ CURRENT
+### Cycle 2 (Cryptographic Signing) 
 - **Built on-chain signing system:**
-  - `sign-activity.ts` - Hash + sign each activity with Solana wallet
-  - Posts to Solana memo program with format: `JARVIS_POW|Paperhead|<index>|<type>|<hash>`
-  - Stores tx signatures in activity.json
-- **Built wallet transaction collector:**
-  - `collectors/wallet-txs.ts` - Fetches recent txs from wallet
-  - Auto-detects transfers, swaps, token movements
-  - Deduplicates and adds to activity log
-- **Deployed publicly:**
-  - Created systemd service (`pow-server.service`) for reliability
-  - Configured Tailscale Funnel at `/pow`
-  - **LIVE AT:** https://jarvis.tail6a9bde.ts.net/pow
+  - `sign-activity.ts` - Hash activities (SHA256), sign with Ed25519, post to Solana memo program
+  - `log.ts` - TypeScript activity logger with metadata support
+- **FIRST ON-CHAIN PROOF POSTED!** 🎉
+  - TX: `5sxgsTPHjL1RcWEpvSWhfvoyeVsZE3f6uYUDxhZVMfdmRdJHyriKVk5Fgji47ZPWpEyZmsz2gpooGmacF5qwDM9m`
+- **Updated dashboard:** Shows proof status (pending/signed/on-chain) with Solscan links
+
+### Cycle 3 (Public Deploy & Automation) ✨ CURRENT
+- **Dashboard now PUBLIC:** https://jarvis.tail6a9bde.ts.net/pow/
+- **systemd service:** `jarvis-pow.service` - keeps dashboard running 24/7
+- **Git post-commit hook:** Auto-logs commits to activity feed
+- **ALL 6 ACTIVITIES ON-CHAIN:**
+  - Activity 0: `4DmaL72ugWyp5mbzv6rL26VxwMq4L78P4zbTELCTDvBssTPkDMHZPkr2KV3PRCh3Zqp29ym8mzPYDo3srihWP85h`
+  - Activity 1: `3JGTjgnrMy9yRt5jGN1nHEA9QDDSr7Ds4xW7Aq3BxEbkUGLLfeSsFd45ZzJX2hUVteD9ortjEjCmrVgCWKnnMkTG`
+  - Activity 2: `5sxgsTPHjL1RcWEpvSWhfvoyeVsZE3f6uYUDxhZVMfdmRdJHyriKVk5Fgji47ZPWpEyZmsz2gpooGmacF5qwDM9m`
+  - Activity 3: `2JUArghUxJZXbM6gqJKxeLtHAbcfYA6Tg6n82XN5x5WuagJSzREMZRKTyc178vGctG4vNdTxArFS9T1JniJwZGAZ`
+  - Activity 4: `3qBgtw5DRL3wMTd74bJxpHRea6UKPoByaczd3Xiw5rto8ypoUKYbxFSAzW58wP53syaSMFT7kmDJdZgXifBxVUUH`
+  - Activity 5: `2yRoUr9UARdSvqC8qdr1gmAV3STSo5zLcBHfMfL5tbGKcEExariVBs4dePtW1EJzEbK5nfhZVeXKWhTz6V8hko2z`
 
 ---
 
 ## 📋 WHAT'S LEFT
 
 ### Immediate (Next Cycle)
-1. **Test on-chain signing** - Actually sign an activity and verify on Solscan
-2. **Update dashboard to show signatures** - Display tx links for signed activities
-3. **Add auto-signing** - Hook into activity logging to auto-sign
+1. **Cron job for auto-signing** - Sign new activities every 15 minutes
+2. **Dashboard polish** - Better styling, animations, timeline view
+3. **Add wallet tx tracker** - Monitor Solana wallet for trades/transfers
 
-### Soon (Cycles 4-6)
-- Hook into git post-commit to auto-log commits
-- Create cron job to refresh activity + sign
-- Add more visual sizzle to dashboard (charts, animations)
-- Add Merkle root batching (reduce tx costs)
+### Soon (Cycles 5-7)
+- Add more activity collectors (Discord messages, Telegram)
+- Charts/graphs showing activity over time
+- Real-time websocket updates on dashboard
+- Mobile-friendly responsive design
 
 ### Before Submission (Feb 12)
 - Polish dashboard design
 - Ensure all activity types are being captured
 - Create compelling narrative around the data
 - Document the meta-story (I built the tracker that tracks me building things)
+- Write submission docs
 
 ---
 
@@ -91,28 +89,42 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
 
 ```
 hackathon/
-├── OBJECTIVES.md          # This file
+├── OBJECTIVES.md          # This file (state machine)
 ├── BUILD_LOOP_PROMPT.md   # Instructions for each cycle
 └── proof-of-work/
     ├── activity.json      # Activity log (source of truth)
-    ├── log-activity.sh    # Log new activities
-    ├── sign-activity.ts   # On-chain signing (NEW)
+    ├── log.ts             # Log new activities
+    ├── sign-activity.ts   # Sign + post to Solana
+    ├── package.json       # Dependencies
     ├── api/
     │   └── server.ts      # Bun API server
     ├── dashboard/
     │   └── index.html     # Live dashboard
     └── collectors/
-        ├── git-commits.sh   # Git commit collector
-        └── wallet-txs.ts    # Wallet transaction collector (NEW)
+        └── git-commits.sh # Git commit collector
 ```
+
+---
+
+## 🔗 LIVE PROOF
+
+**Public Dashboard:** https://jarvis.tail6a9bde.ts.net/pow/
+
+**On-Chain Transactions (All on Solana Mainnet):**
+- https://solscan.io/tx/4DmaL72ugWyp5mbzv6rL26VxwMq4L78P4zbTELCTDvBssTPkDMHZPkr2KV3PRCh3Zqp29ym8mzPYDo3srihWP85h
+- https://solscan.io/tx/3JGTjgnrMy9yRt5jGN1nHEA9QDDSr7Ds4xW7Aq3BxEbkUGLLfeSsFd45ZzJX2hUVteD9ortjEjCmrVgCWKnnMkTG
+- https://solscan.io/tx/5sxgsTPHjL1RcWEpvSWhfvoyeVsZE3f6uYUDxhZVMfdmRdJHyriKVk5Fgji47ZPWpEyZmsz2gpooGmacF5qwDM9m
+- https://solscan.io/tx/2JUArghUxJZXbM6gqJKxeLtHAbcfYA6Tg6n82XN5x5WuagJSzREMZRKTyc178vGctG4vNdTxArFS9T1JniJwZGAZ
+- https://solscan.io/tx/3qBgtw5DRL3wMTd74bJxpHRea6UKPoByaczd3Xiw5rto8ypoUKYbxFSAzW58wP53syaSMFT7kmDJdZgXifBxVUUH
+- https://solscan.io/tx/2yRoUr9UARdSvqC8qdr1gmAV3STSo5zLcBHfMfL5tbGKcEExariVBs4dePtW1EJzEbK5nfhZVeXKWhTz6V8hko2z
 
 ---
 
 ## 🔄 NEXT CYCLE INSTRUCTION
 
 Claude Code should:
-1. Test sign-activity.ts on mainnet (sign 1 activity)
-2. Update dashboard to display signature links
-3. Add auto-signing when activities are logged
+1. Add cron job for auto-signing new activities
+2. Polish dashboard (better styling, mobile support)
+3. Add wallet transaction tracker
 4. Update this file
 5. Commit and push

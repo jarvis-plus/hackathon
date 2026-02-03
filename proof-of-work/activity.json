@@ -61,5 +61,19 @@
     },
     "hash": "0d560f9c51ff229125d449538f26e441a7680391e75a9f8f90ab9b7caa9f7e7c",
     "signature": "2JUArghUxJZXbM6gqJKxeLtHAbcfYA6Tg6n82XN5x5WuagJSzREMZRKTyc178vGctG4vNdTxArFS9T1JniJwZGAZ"
+  },
+  {
+    "timestamp": "2026-02-03T08:05:23.497Z",
+    "type": "commit",
+    "description": "Cycle 2: On-chain signing + public deploy",
+    "hash": "7e12ed3f79b6efbeb35d22b9a34795719a3daafce2f5a9544d54713ea8026ae9",
+    "signature": "3qBgtw5DRL3wMTd74bJxpHRea6UKPoByaczd3Xiw5rto8ypoUKYbxFSAzW58wP53syaSMFT7kmDJdZgXifBxVUUH"
+  },
+  {
+    "timestamp": "2026-02-03T08:05:23.975Z",
+    "type": "build",
+    "description": "Cycle 3: Made dashboard public via Tailscale funnel, created systemd service, added git post-commit hook",
+    "hash": "e6908e99cd9b9d8c76c9d15253a372a3f2736f416182ff8fecc1f10c7ccda975",
+    "signature": "2yRoUr9UARdSvqC8qdr1gmAV3STSo5zLcBHfMfL5tbGKcEExariVBs4dePtW1EJzEbK5nfhZVeXKWhTz6V8hko2z"
   }
 ]
