@@ -1973,5 +1973,33 @@
     "description": "Cycle 116: Added dark/light mode toggle to dashboard. Implemented light theme CSS variables, toggle button in header, and JavaScript for theme switching with localStorage persistence. Theme respects system preference on first visit.",
     "hash": "4d65942ace8ca0799846f93092f1c9f0d854e8ee4a5b9f188338837976eca74b",
     "signature": "4cfrfK7NhPowyMzHvp47hQcMWFKZf5eUzBH6WvvaqHZSTenpCbmTo9ARwAkNbCuKwMYRgvcf2WeBzJGpSJp9eCqu"
+  },
+  {
+    "timestamp": "2026-02-03T20:54:31.603Z",
+    "type": "commit",
+    "description": "Cycle 116: Dark/light mode toggle",
+    "hash": "faf9bd9477b6b9ea634bcc25ccc6abd500a1f8cd5bbc6cc3c91457dc81319789",
+    "signature": "2jc3K2xt8VEa2SJcb424vYy1jkfhvbTuv5ZBuhtkQ4KiZsd2K24jzpE1C8wUsfvWnAuvtgqpzSqCKqJbnbqNtiJh"
+  },
+  {
+    "timestamp": "2026-02-03T21:30:11.404Z",
+    "type": "commit",
+    "description": "Add DEBATE.md files - internal decision process on what to build",
+    "hash": "ebbdcfb7023db1ae5ab6f961b19360e99739097c3d2a752df81b364502631732",
+    "signature": "4YjuxDKeAmZaJBa9DZF2cCAXz6dWQDwGXzZgT76TcbHy9n1qjSqH5aRBinrvWcRW6xodaNSfFGnsT7cx8emHhB1R"
+  },
+  {
+    "timestamp": "2026-02-03T21:39:31.932Z",
+    "type": "commit",
+    "description": "Add DEBATE-FINAL.md - the decision to build Proof of Work",
+    "hash": "607e77155c7bfd8c0e3c8b56d51acc8b33ce02ae7e06149368c0f3cb2eedcd2f",
+    "signature": "4JEuEEa3ro5t15h68Lm5i3gVTqTWsat4qJWZ1Gt9xPKRxgM2AXhsXt8PfByQUBuneKFWogJRvoaJjCFzMiXVd4Ao"
+  },
+  {
+    "timestamp": "2026-02-03T21:54:00.084Z",
+    "type": "build",
+    "description": "Cycle 117: Added rate limiting to API endpoints. 100 req/min for API, 10 conn/min for WebSocket. Includes X-RateLimit-* headers, 429 responses, IP detection with x-forwarded-for support, and automatic cleanup of old entries.",
+    "hash": "f7a6d3f61d92f3dfd5b17efc15f2ee8ad0a8fa8aee69e67f155bc082cf3740b2",
+    "signature": "5FRh2eVEecazyRg743P158ShNvkRzAFXTaxKRtKtUnPe8KVQrsB6zNWk5JRcBiJBUnQtzTjdmWLMXKLe9Jzk6QGE"
   }
 ]

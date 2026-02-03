@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 12:54 PST
-**Cycle:** 116
+**Last Updated:** 2026-02-03 13:54 PST
+**Cycle:** 117
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -25,7 +25,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [ ] Refactor dashboard JS into modules (currently one big file)
 - [ ] Add TypeScript types to collectors
 - [x] Add health check endpoint (/api/health) ✅ Cycle 113
-- [ ] Rate limiting on API endpoints
+- [x] Rate limiting on API endpoints ✅ Cycle 117
 
 ### 🎨 Design  
 - [x] Dark/light mode toggle ✅ Cycle 116
@@ -52,10 +52,15 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
 
-### Cycle 113 (Health Endpoint)
-- Added `/api/health` endpoint for monitoring
-- Returns: status, activity count, unsigned count, last activity age, WS clients, uptime
-- Health status: healthy (200) or degraded (503)
+### Cycle 117 (Rate Limiting)
+- Added rate limiting to API endpoints
+- API: 100 requests/minute per IP
+- WebSocket: 10 connections/minute per IP
+- Returns 429 Too Many Requests with Retry-After header
+- X-RateLimit-* headers on all API responses (Limit, Remaining, Reset)
+- IP detection: x-forwarded-for, x-real-ip, or socket address
+- Automatic cleanup of expired entries every 5 minutes
+- 263 activities, all signed on-chain
 
 ### Cycle 114 (Unit Tests)
 - Added unit tests for sign-activity.ts (10 tests, all passing)

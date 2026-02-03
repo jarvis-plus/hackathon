@@ -12,6 +12,109 @@ const DASHBOARD_DIR = join(BASE_DIR, 'dashboard');
 // Track connected WebSocket clients
 const wsClients = new Set<WebSocket>();
 
+// ==============================================
+// RATE LIMITING
+// ==============================================
+// Simple sliding window rate limiter
+// - 100 requests/minute for API endpoints
+// - 10 WebSocket connections/minute per IP
+// - Static assets (dashboard) are not rate limited
+
+interface RateLimitEntry {
+  timestamps: number[];
+}
+
+const rateLimitStore = new Map<string, RateLimitEntry>();
+const WS_RATE_LIMIT_STORE = new Map<string, RateLimitEntry>();
+
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+const API_RATE_LIMIT = 100; // requests per window
+const WS_RATE_LIMIT = 10; // connections per window
+
+// Clean up old entries every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  const cutoff = now - RATE_LIMIT_WINDOW_MS;
+  
+  for (const [ip, entry] of rateLimitStore.entries()) {
+    entry.timestamps = entry.timestamps.filter(t => t > cutoff);
+    if (entry.timestamps.length === 0) {
+      rateLimitStore.delete(ip);
+    }
+  }
+  
+  for (const [ip, entry] of WS_RATE_LIMIT_STORE.entries()) {
+    entry.timestamps = entry.timestamps.filter(t => t > cutoff);
+    if (entry.timestamps.length === 0) {
+      WS_RATE_LIMIT_STORE.delete(ip);
+    }
+  }
+}, 5 * 60 * 1000);
+
+function getClientIP(req: Request, server: any): string {
+  // Check forwarded headers first (for reverse proxy setups)
+  const forwarded = req.headers.get('x-forwarded-for');
+  if (forwarded) {
+    return forwarded.split(',')[0].trim();
+  }
+  
+  const realIP = req.headers.get('x-real-ip');
+  if (realIP) {
+    return realIP;
+  }
+  
+  // Fallback to socket address (Bun-specific)
+  try {
+    const addr = server.requestIP(req);
+    if (addr) return addr.address;
+  } catch (e) {}
+  
+  return 'unknown';
+}
+
+function checkRateLimit(ip: string, store: Map<string, RateLimitEntry>, limit: number): { allowed: boolean; remaining: number; resetIn: number } {
+  const now = Date.now();
+  const cutoff = now - RATE_LIMIT_WINDOW_MS;
+  
+  let entry = store.get(ip);
+  if (!entry) {
+    entry = { timestamps: [] };
+    store.set(ip, entry);
+  }
+  
+  // Remove old timestamps
+  entry.timestamps = entry.timestamps.filter(t => t > cutoff);
+  
+  const remaining = Math.max(0, limit - entry.timestamps.length);
+  const resetIn = entry.timestamps.length > 0 
+    ? Math.ceil((entry.timestamps[0] + RATE_LIMIT_WINDOW_MS - now) / 1000)
+    : 60;
+  
+  if (entry.timestamps.length >= limit) {
+    return { allowed: false, remaining: 0, resetIn };
+  }
+  
+  entry.timestamps.push(now);
+  return { allowed: true, remaining: remaining - 1, resetIn };
+}
+
+function rateLimitResponse(resetIn: number): Response {
+  return new Response(JSON.stringify({
+    error: 'Too Many Requests',
+    message: `Rate limit exceeded. Try again in ${resetIn} seconds.`,
+    retryAfter: resetIn
+  }), {
+    status: 429,
+    headers: {
+      'Content-Type': 'application/json',
+      'Retry-After': String(resetIn),
+      'X-RateLimit-Limit': String(API_RATE_LIMIT),
+      'X-RateLimit-Remaining': '0',
+      'X-RateLimit-Reset': String(Math.ceil(Date.now() / 1000) + resetIn)
+    }
+  });
+}
+
 // Track activity file state for change detection
 let lastActivityMtime = 0;
 let lastActivityCount = 0;
@@ -118,6 +221,7 @@ const server = Bun.serve({
   fetch(req, server) {
     const url = new URL(req.url);
     const path = url.pathname;
+    const clientIP = getClientIP(req, server);
 
     // CORS headers for API
     const corsHeaders = {
@@ -125,11 +229,38 @@ const server = Bun.serve({
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     };
 
-    // WebSocket upgrade
+    // WebSocket upgrade (with separate rate limit)
     if (path === '/ws') {
-      const upgraded = server.upgrade(req);
+      const wsRateCheck = checkRateLimit(clientIP, WS_RATE_LIMIT_STORE, WS_RATE_LIMIT);
+      if (!wsRateCheck.allowed) {
+        return new Response('WebSocket rate limit exceeded', { 
+          status: 429,
+          headers: { 'Retry-After': String(wsRateCheck.resetIn) }
+        });
+      }
+      
+      const upgraded = server.upgrade(req, { data: { ip: clientIP } });
       if (upgraded) return undefined;
       return new Response('WebSocket upgrade failed', { status: 400 });
+    }
+
+    // Rate limit API endpoints (not static dashboard files)
+    if (path.startsWith('/api/')) {
+      const rateCheck = checkRateLimit(clientIP, rateLimitStore, API_RATE_LIMIT);
+      
+      // Add rate limit headers to all API responses
+      const rateLimitHeaders = {
+        'X-RateLimit-Limit': String(API_RATE_LIMIT),
+        'X-RateLimit-Remaining': String(rateCheck.remaining),
+        'X-RateLimit-Reset': String(Math.ceil(Date.now() / 1000) + rateCheck.resetIn)
+      };
+      
+      if (!rateCheck.allowed) {
+        return rateLimitResponse(rateCheck.resetIn);
+      }
+      
+      // Merge rate limit headers into CORS headers for API responses
+      Object.assign(corsHeaders, rateLimitHeaders);
     }
 
     // API routes
