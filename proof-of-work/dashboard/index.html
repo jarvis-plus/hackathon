@@ -453,6 +453,181 @@
             font-style: normal;
         }
 
+        /* Milestone Styles */
+        .milestone-item {
+            background: linear-gradient(135deg, #1a1a2e, #0f2027);
+            border: 1px solid var(--border);
+            border-left: 4px solid #ffd700;
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1.25rem;
+            position: relative;
+            transition: all 0.3s ease;
+            animation: fadeSlideIn 0.4s ease-out;
+            overflow: hidden;
+        }
+
+        .milestone-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.03), transparent);
+            pointer-events: none;
+        }
+
+        .milestone-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 8px 30px rgba(255, 215, 0, 0.15);
+            border-left-color: #ffea00;
+        }
+
+        .milestone-item.completed {
+            border-left-color: #00ffaa;
+        }
+
+        .milestone-item.completed::before {
+            background: linear-gradient(135deg, rgba(0, 255, 170, 0.03), transparent);
+        }
+
+        .milestone-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .milestone-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, #ffd700, #ffaa00);
+            color: #000;
+            padding: 0.3rem 0.8rem;
+            border-radius: 16px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 10px rgba(255, 215, 0, 0.3);
+        }
+
+        .milestone-badge.completed {
+            background: linear-gradient(135deg, #00ffaa, #00dd88);
+        }
+
+        .milestone-time {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .milestone-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .milestone-title .emoji {
+            font-size: 1.3rem;
+        }
+
+        .milestone-desc {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin-bottom: 0.75rem;
+        }
+
+        .milestone-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 0.75rem;
+        }
+
+        .milestone-stat {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.4rem 0.75rem;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .milestone-stat strong {
+            color: var(--accent-green);
+        }
+
+        .milestone-progress {
+            margin-top: 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+        }
+
+        .milestone-progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-bottom: 0.4rem;
+        }
+
+        .milestone-progress-bar {
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .milestone-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ffd700, #00ffaa);
+            border-radius: 3px;
+            transition: width 0.5s ease-out;
+        }
+
+        .milestones-summary {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .summary-stat {
+            text-align: center;
+        }
+
+        .summary-stat .value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #ffd700;
+        }
+
+        .summary-stat .value.completed-value {
+            color: #00ffaa;
+        }
+
+        .summary-stat .label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
         /* Timeline View */
         .timeline {
             position: relative;
@@ -1051,6 +1226,9 @@
                     <button class="feed-tab active" data-tab="timeline" onclick="switchTab('timeline')">
                         <span class="live-indicator"></span> Activity Feed
                     </button>
+                    <button class="feed-tab" data-tab="milestones" onclick="switchTab('milestones')">
+                        🏆 Milestones
+                    </button>
                     <button class="feed-tab" data-tab="decisions" onclick="switchTab('decisions')">
                         🧠 Key Decisions
                     </button>
@@ -1072,6 +1250,9 @@
             </div>
             <div id="decisions-feed" class="timeline" data-view="decisions" style="display:none;">
                 <div class="empty-state">Loading decisions...</div>
+            </div>
+            <div id="milestones-feed" data-view="milestones" style="display:none;">
+                <div class="empty-state">Loading milestones...</div>
             </div>
             <div id="meta-story" data-view="meta" style="display:none;">
                 <div class="meta-content">
@@ -1268,6 +1449,7 @@
             
             // Show/hide content areas
             document.getElementById('feed').style.display = tabName === 'timeline' ? 'block' : 'none';
+            document.getElementById('milestones-feed').style.display = tabName === 'milestones' ? 'block' : 'none';
             document.getElementById('decisions-feed').style.display = tabName === 'decisions' ? 'block' : 'none';
             document.getElementById('meta-story').style.display = tabName === 'meta' ? 'block' : 'none';
         }
@@ -1310,6 +1492,234 @@
                     ` : ''}
                 </div>
             `}).join('');
+        }
+
+        // ============================================
+        // RENDER MILESTONES
+        // ============================================
+        function renderMilestones(activities) {
+            const feed = document.getElementById('milestones-feed');
+            if (!feed) return;
+            
+            // Define milestones with conditions
+            const milestoneDefinitions = [
+                {
+                    id: 'first-activity',
+                    emoji: '🎬',
+                    title: 'First Activity Logged',
+                    desc: 'The journey begins - first action recorded in the proof-of-work system.',
+                    condition: (a) => a.length >= 1,
+                    getDate: (a) => a.length > 0 ? new Date(a[0].timestamp) : null,
+                    threshold: 1
+                },
+                {
+                    id: 'first-onchain',
+                    emoji: '⛓️',
+                    title: 'First On-Chain Proof',
+                    desc: 'First activity cryptographically signed and posted to Solana mainnet.',
+                    condition: (a) => a.some(x => x.signature || x.proof?.txSignature),
+                    getDate: (a) => {
+                        const first = a.find(x => x.signature || x.proof?.txSignature);
+                        return first ? new Date(first.timestamp) : null;
+                    },
+                    threshold: 1
+                },
+                {
+                    id: 'first-trade',
+                    emoji: '💱',
+                    title: 'First Trade Executed',
+                    desc: 'First autonomous swap executed on Solana DEX.',
+                    condition: (a) => a.some(x => x.type === 'trade'),
+                    getDate: (a) => {
+                        const first = a.find(x => x.type === 'trade');
+                        return first ? new Date(first.timestamp) : null;
+                    },
+                    threshold: 1
+                },
+                {
+                    id: 'ten-activities',
+                    emoji: '🔟',
+                    title: '10 Activities Milestone',
+                    desc: 'Double digits! Ten verified actions recorded.',
+                    condition: (a) => a.length >= 10,
+                    getDate: (a) => a.length >= 10 ? new Date(a[9].timestamp) : null,
+                    threshold: 10,
+                    showProgress: true,
+                    getCurrent: (a) => Math.min(a.length, 10)
+                },
+                {
+                    id: 'dashboard-live',
+                    emoji: '🌐',
+                    title: 'Dashboard Goes Public',
+                    desc: 'Proof-of-work dashboard deployed and accessible to the world.',
+                    condition: (a) => a.some(x => x.type === 'deploy' || x.description?.toLowerCase().includes('dashboard')),
+                    getDate: (a) => {
+                        const deploy = a.find(x => x.type === 'deploy' || x.description?.toLowerCase().includes('dashboard'));
+                        return deploy ? new Date(deploy.timestamp) : null;
+                    },
+                    threshold: 1
+                },
+                {
+                    id: 'twentyfive-activities',
+                    emoji: '🎯',
+                    title: '25 Activities Milestone',
+                    desc: 'Quarter century! Twenty-five verified actions recorded.',
+                    condition: (a) => a.length >= 25,
+                    getDate: (a) => a.length >= 25 ? new Date(a[24].timestamp) : null,
+                    threshold: 25,
+                    showProgress: true,
+                    getCurrent: (a) => Math.min(a.length, 25)
+                },
+                {
+                    id: 'fifty-activities',
+                    emoji: '🔥',
+                    title: '50 Activities Milestone',
+                    desc: 'Half century! Fifty verified on-chain proofs.',
+                    condition: (a) => a.length >= 50,
+                    getDate: (a) => a.length >= 50 ? new Date(a[49].timestamp) : null,
+                    threshold: 50,
+                    showProgress: true,
+                    getCurrent: (a) => Math.min(a.length, 50)
+                },
+                {
+                    id: 'first-decision',
+                    emoji: '🧠',
+                    title: 'First Key Decision',
+                    desc: 'First strategic decision recorded with on-chain verification.',
+                    condition: (a) => a.some(x => x.type === 'decision'),
+                    getDate: (a) => {
+                        const first = a.find(x => x.type === 'decision');
+                        return first ? new Date(first.timestamp) : null;
+                    },
+                    threshold: 1
+                },
+                {
+                    id: 'hundred-activities',
+                    emoji: '💯',
+                    title: '100 Activities Milestone',
+                    desc: 'Triple digits! One hundred verified on-chain proofs.',
+                    condition: (a) => a.length >= 100,
+                    getDate: (a) => a.length >= 100 ? new Date(a[99].timestamp) : null,
+                    threshold: 100,
+                    showProgress: true,
+                    getCurrent: (a) => Math.min(a.length, 100)
+                },
+                {
+                    id: 'multi-day',
+                    emoji: '📅',
+                    title: 'Multi-Day Streak',
+                    desc: 'Activity recorded across multiple consecutive days.',
+                    condition: (a) => {
+                        const days = new Set(a.map(x => new Date(x.timestamp).toISOString().split('T')[0]));
+                        return days.size >= 2;
+                    },
+                    getDate: (a) => {
+                        const days = [...new Set(a.map(x => new Date(x.timestamp).toISOString().split('T')[0]))].sort();
+                        return days.length >= 2 ? new Date(days[1] + 'T12:00:00') : null;
+                    },
+                    threshold: 2,
+                    showProgress: true,
+                    getCurrent: (a) => new Set(a.map(x => new Date(x.timestamp).toISOString().split('T')[0])).size
+                },
+                {
+                    id: 'all-onchain',
+                    emoji: '✅',
+                    title: '100% On-Chain',
+                    desc: 'Every single activity cryptographically signed and verified on Solana.',
+                    condition: (a) => a.length > 0 && a.every(x => x.signature || x.proof?.txSignature),
+                    getDate: (a) => {
+                        if (a.length === 0) return null;
+                        const allSigned = a.every(x => x.signature || x.proof?.txSignature);
+                        if (!allSigned) return null;
+                        // Find when the last one was signed
+                        const sorted = [...a].sort((x, y) => new Date(y.timestamp) - new Date(x.timestamp));
+                        return new Date(sorted[0].timestamp);
+                    },
+                    threshold: 1
+                }
+            ];
+            
+            // Sort activities by timestamp
+            const sorted = [...activities].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            
+            // Evaluate milestones
+            const milestones = milestoneDefinitions.map(m => {
+                const completed = m.condition(sorted);
+                const date = completed ? m.getDate(sorted) : null;
+                const current = m.getCurrent ? m.getCurrent(sorted) : (completed ? m.threshold : 0);
+                const progress = Math.min(100, (current / m.threshold) * 100);
+                
+                return {
+                    ...m,
+                    completed,
+                    date,
+                    current,
+                    progress
+                };
+            });
+            
+            // Separate completed and in-progress
+            const completedMilestones = milestones.filter(m => m.completed).sort((a, b) => a.date - b.date);
+            const inProgressMilestones = milestones.filter(m => !m.completed && m.showProgress);
+            
+            // Build summary
+            const summaryHtml = `
+                <div class="milestones-summary">
+                    <div class="summary-stat">
+                        <div class="value completed-value">${completedMilestones.length}</div>
+                        <div class="label">Completed</div>
+                    </div>
+                    <div class="summary-stat">
+                        <div class="value">${inProgressMilestones.length}</div>
+                        <div class="label">In Progress</div>
+                    </div>
+                    <div class="summary-stat">
+                        <div class="value">${milestones.length}</div>
+                        <div class="label">Total Milestones</div>
+                    </div>
+                </div>
+            `;
+            
+            // Build milestone cards
+            const completedHtml = completedMilestones.map((m, i) => `
+                <div class="milestone-item completed" style="animation-delay: ${i * 0.1}s">
+                    <div class="milestone-header">
+                        <span class="milestone-badge completed">🏆 Achieved</span>
+                        <span class="milestone-time">${m.date ? formatTime(m.date) : ''}</span>
+                    </div>
+                    <div class="milestone-title">
+                        <span class="emoji">${m.emoji}</span>
+                        ${escapeHtml(m.title)}
+                    </div>
+                    <div class="milestone-desc">${escapeHtml(m.desc)}</div>
+                </div>
+            `).join('');
+            
+            const inProgressHtml = inProgressMilestones.map((m, i) => `
+                <div class="milestone-item" style="animation-delay: ${(completedMilestones.length + i) * 0.1}s">
+                    <div class="milestone-header">
+                        <span class="milestone-badge">🎯 In Progress</span>
+                    </div>
+                    <div class="milestone-title">
+                        <span class="emoji">${m.emoji}</span>
+                        ${escapeHtml(m.title)}
+                    </div>
+                    <div class="milestone-desc">${escapeHtml(m.desc)}</div>
+                    <div class="milestone-progress">
+                        <div class="milestone-progress-label">
+                            <span>${m.current} / ${m.threshold}</span>
+                            <span>${Math.round(m.progress)}%</span>
+                        </div>
+                        <div class="milestone-progress-bar">
+                            <div class="milestone-progress-fill" style="width: ${m.progress}%"></div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            feed.innerHTML = summaryHtml + 
+                (completedHtml ? '<h3 style="color: var(--accent-green); margin: 1rem 0;">✅ Completed Milestones</h3>' + completedHtml : '') +
+                (inProgressHtml ? '<h3 style="color: #ffd700; margin: 1.5rem 0 1rem;">🎯 In Progress</h3>' + inProgressHtml : '');
         }
 
         // Countdown to hackathon end
@@ -2204,6 +2614,7 @@
                 cachedActivities = activities;
                 renderActivities(activities);
                 renderDecisions(activities);
+                renderMilestones(activities);
                 updateStats(activities);
                 renderCharts(activities);
                 renderHeatmap(activities);
@@ -2214,6 +2625,7 @@
                     cachedActivities = activities;
                     renderActivities(activities);
                     renderDecisions(activities);
+                    renderMilestones(activities);
                     updateStats(activities);
                     renderCharts(activities);
                     renderHeatmap(activities);
@@ -2352,6 +2764,7 @@
                             cachedActivities = msg.data.activities;
                             renderActivities(msg.data.activities);
                             renderDecisions(msg.data.activities);
+                            renderMilestones(msg.data.activities);
                             updateStats(msg.data.activities);
                             renderCharts(msg.data.activities);
                             renderHeatmap(msg.data.activities);
