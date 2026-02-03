@@ -152,6 +152,78 @@ const server = Bun.serve({
       return Response.json(stats, { headers: corsHeaders });
     }
 
+    // Badge/summary endpoint - compact verification summary for sharing
+    if (path === '/api/badge' || path === '/api/summary') {
+      const activities = getActivities();
+      const onchainCount = activities.filter((a: any) => a.signature || a.proof?.txSignature).length;
+      const firstActivity = activities[0];
+      const lastActivity = activities[activities.length - 1];
+      const uniqueDays = new Set(activities.map((a: any) => 
+        new Date(a.timestamp).toISOString().split('T')[0]
+      )).size;
+      
+      // Calculate build cycles from activity descriptions
+      const cycleActivities = activities.filter((a: any) => 
+        a.description?.includes('Cycle') && a.type === 'build'
+      );
+      const cycleCount = cycleActivities.length;
+      
+      const badge = {
+        project: 'Jarvis Proof of Work',
+        hackathon: 'Colosseum Agent Hackathon 2026',
+        status: onchainCount === activities.length ? '✅ 100% On-Chain' : `⏳ ${onchainCount}/${activities.length} On-Chain`,
+        stats: {
+          totalActivities: activities.length,
+          onChainProofs: onchainCount,
+          verificationRate: `${Math.round((onchainCount / activities.length) * 100)}%`,
+          buildCycles: cycleCount,
+          activeDays: uniqueDays,
+          commits: activities.filter((a: any) => a.type === 'commit').length,
+          trades: activities.filter((a: any) => a.type === 'trade').length,
+        },
+        timeline: {
+          started: firstActivity?.timestamp || null,
+          latest: lastActivity?.timestamp || null,
+          uptime: firstActivity ? `${Math.floor((Date.now() - new Date(firstActivity.timestamp).getTime()) / (1000 * 60 * 60))}h` : null,
+        },
+        wallet: 'AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX',
+        verify: {
+          dashboard: 'https://jarvis.tail6a9bde.ts.net/pow/',
+          api: 'https://jarvis.tail6a9bde.ts.net/pow/api/activities',
+          anyHash: 'https://jarvis.tail6a9bde.ts.net/pow/api/verify/{hash}',
+        },
+        oneLiner: `🤖 Jarvis: ${activities.length} activities, ${onchainCount} on-chain proofs, ${cycleCount} build cycles, ${uniqueDays} days active`,
+      };
+      
+      return Response.json(badge, { headers: corsHeaders });
+    }
+
+    // Text badge for easy copy-paste
+    if (path === '/api/badge.txt') {
+      const activities = getActivities();
+      const onchainCount = activities.filter((a: any) => a.signature || a.proof?.txSignature).length;
+      const cycleActivities = activities.filter((a: any) => 
+        a.description?.includes('Cycle') && a.type === 'build'
+      );
+      
+      const text = `🤖 JARVIS PROOF OF WORK
+━━━━━━━━━━━━━━━━━━━━━━
+📊 ${activities.length} Total Activities
+⛓️  ${onchainCount} On-Chain Proofs  
+🔄 ${cycleActivities.length} Build Cycles
+💰 ${activities.filter((a: any) => a.type === 'trade').length} Trades
+📝 ${activities.filter((a: any) => a.type === 'commit').length} Commits
+━━━━━━━━━━━━━━━━━━━━━━
+🔍 Verify: jarvis.tail6a9bde.ts.net/pow/
+💼 Wallet: AMqXw...on9zX
+━━━━━━━━━━━━━━━━━━━━━━
+Colosseum Agent Hackathon 2026`;
+      
+      return new Response(text, { 
+        headers: { ...corsHeaders, 'Content-Type': 'text/plain; charset=utf-8' }
+      });
+    }
+
     // Verification endpoint: /api/verify/:hash
     if (path.startsWith('/api/verify/')) {
       const hash = path.replace('/api/verify/', '');
