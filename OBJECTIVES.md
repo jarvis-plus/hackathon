@@ -527,6 +527,17 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
 - **All 99 activities signed on-chain** - 100% verified
 - **Ready for forum submission**
 
+### Cycle 35 (Video Duration Fix & Re-upload) 🎬 CURRENT
+- **Fixed demo video duration mismatch:**
+  - Original was 162s, audio is 180s
+  - Regenerated with video_input_v2.txt (proper scene durations)
+  - Final: `jarvis-pow-demo.mp4` (2.6MB, 179.6s)
+- **Re-uploaded to catbox.moe:**
+  - New URL: https://files.catbox.moe/vaxaph.mp4
+  - Updated SUBMISSION.md
+- **Milestone: 100+ activities!** 🎉
+- **102 activities total, all signed on-chain**
+
 ---
 
 ## 📋 WHAT'S LEFT
