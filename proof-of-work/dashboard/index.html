@@ -152,6 +152,7 @@
         .stat-value.builds { color: var(--accent-blue); }
         .stat-value.messages { color: #00ff88; }
         .stat-value.tweets { color: #1DA1F2; }
+        .stat-value.uptime { color: #ff69b4; }
 
         .stat-label {
             color: var(--text-secondary);
@@ -543,6 +544,10 @@
                 <div class="stat-value tweets" id="tweets">0</div>
                 <div class="stat-label">Tweets</div>
             </div>
+            <div class="stat-card">
+                <div class="stat-value uptime" id="uptime">0h</div>
+                <div class="stat-label">Uptime</div>
+            </div>
         </div>
 
         <div class="charts-section">
@@ -565,6 +570,12 @@
                 <h3>⛓️ Cumulative On-Chain Proofs</h3>
                 <div class="chart-container">
                     <canvas id="cumulativeChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card" style="margin-top: 1.5rem;">
+                <h3>📅 Actions Per Day</h3>
+                <div class="chart-container" style="height: 250px;">
+                    <canvas id="dailyChart"></canvas>
                 </div>
             </div>
         </div>
@@ -708,12 +719,31 @@
             document.getElementById('tweets').textContent = activities.filter(a => 
                 a.type === 'tweet'
             ).length;
+            
+            // Calculate uptime from first activity
+            if (activities.length > 0) {
+                const sorted = [...activities].sort((a, b) => 
+                    new Date(a.timestamp) - new Date(b.timestamp)
+                );
+                const firstActivity = new Date(sorted[0].timestamp);
+                const now = new Date();
+                const uptimeMs = now - firstActivity;
+                const uptimeHours = Math.floor(uptimeMs / (1000 * 60 * 60));
+                const uptimeDays = Math.floor(uptimeHours / 24);
+                
+                if (uptimeDays >= 1) {
+                    document.getElementById('uptime').textContent = `${uptimeDays}d ${uptimeHours % 24}h`;
+                } else {
+                    document.getElementById('uptime').textContent = `${uptimeHours}h`;
+                }
+            }
         }
 
         // Chart instances
         let timelineChart = null;
         let breakdownChart = null;
         let cumulativeChart = null;
+        let dailyChart = null;
 
         function renderCharts(activities) {
             // Activity over time (by hour)
@@ -926,6 +956,120 @@
                                 color: '#888',
                                 maxRotation: 45,
                                 font: { size: 10 }
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Daily activity breakdown (stacked bar chart)
+            const dailyCounts = {};
+            const allTypes = ['commit', 'build', 'decision', 'deploy', 'trade', 'transfer', 'heartbeat', 'session', 'message', 'tweet'];
+            
+            activities.forEach(a => {
+                const date = new Date(a.timestamp);
+                const dayKey = date.toISOString().split('T')[0]; // YYYY-MM-DD
+                const type = a.type || 'other';
+                
+                if (!dailyCounts[dayKey]) {
+                    dailyCounts[dayKey] = {};
+                    allTypes.forEach(t => dailyCounts[dayKey][t] = 0);
+                    dailyCounts[dayKey]['other'] = 0;
+                }
+                
+                if (allTypes.includes(type)) {
+                    dailyCounts[dayKey][type]++;
+                } else {
+                    dailyCounts[dayKey]['other']++;
+                }
+            });
+
+            const sortedDays = Object.keys(dailyCounts).sort();
+            const dailyLabels = sortedDays.map(d => {
+                const date = new Date(d + 'T12:00:00');
+                return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+            });
+
+            // Create datasets for each activity type (only include types with data)
+            const dailyDatasets = [];
+            const displayTypes = allTypes.concat(['other']);
+            
+            displayTypes.forEach(type => {
+                const hasData = sortedDays.some(day => dailyCounts[day][type] > 0);
+                if (hasData) {
+                    dailyDatasets.push({
+                        label: type.charAt(0).toUpperCase() + type.slice(1),
+                        data: sortedDays.map(day => dailyCounts[day][type] || 0),
+                        backgroundColor: typeColors[type] || '#00ffaa',
+                        borderColor: 'rgba(0,0,0,0.3)',
+                        borderWidth: 1
+                    });
+                }
+            });
+
+            const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+            
+            if (dailyChart) {
+                dailyChart.destroy();
+            }
+
+            dailyChart = new Chart(dailyCtx, {
+                type: 'bar',
+                data: {
+                    labels: dailyLabels,
+                    datasets: dailyDatasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: '#888',
+                                padding: 15,
+                                font: { size: 11 },
+                                usePointStyle: true,
+                                pointStyle: 'rectRounded'
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                title: (items) => items[0]?.label || '',
+                                footer: (items) => {
+                                    const total = items.reduce((sum, item) => sum + item.raw, 0);
+                                    return `Total: ${total} actions`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            stacked: true,
+                            ticks: {
+                                color: '#888',
+                                stepSize: 5
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.05)'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Actions',
+                                color: '#888'
+                            }
+                        },
+                        x: {
+                            stacked: true,
+                            ticks: {
+                                color: '#888',
+                                font: { size: 11 }
                             },
                             grid: {
                                 display: false

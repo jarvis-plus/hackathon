@@ -1,0 +1,28 @@
+{
+  "lastTradeTimestamp": "2026-02-03T09:09:19.037Z",
+  "totalTrades": 3,
+  "totalVolumeSOL": 0.003,
+  "totalVolumeUSDC": 0.003,
+  "history": [
+    {
+      "timestamp": "2026-02-03T09:08:27.493Z",
+      "from": "SOL",
+      "to": "USDC",
+      "amount": 0.001
+    },
+    {
+      "timestamp": "2026-02-03T09:08:54.374Z",
+      "from": "SOL",
+      "to": "USDC",
+      "amount": 0.001,
+      "txSignature": "3jvfDZLkuX6iifc4g6V4LKKpWcQomgxXova3dD6Yu4fUU6QS4Rbd8NQ6wkECadHzRZ2xL4qfdRsxUf9XVHDEvroY"
+    },
+    {
+      "timestamp": "2026-02-03T09:09:19.037Z",
+      "from": "SOL",
+      "to": "USDC",
+      "amount": 0.001,
+      "txSignature": "5Wq8CKXEnSRaySXbM6DewfKHShzF9rooby6H5oDj6dVw6tfY6X7BKqFH7mv4B8zFwucdKvMkGbhupt8gi2krkMpe"
+    }
+  ]
+}

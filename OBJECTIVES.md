@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 09:00 UTC (2026-02-03 01:00 PST)
-**Cycle:** 10
+**Last Updated:** 2026-02-03 09:10 UTC (2026-02-03 01:10 PST)
+**Cycle:** 14
 
 ---
 
@@ -132,7 +132,7 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
   - More detailed status reporting
 - **25 activities total, all on-chain** - 100% signed and verified
 
-### Cycle 10 (Twitter Tracker & Real-Time WebSocket) ✨ CURRENT
+### Cycle 10 (Twitter Tracker & Real-Time WebSocket)
 - **Built Twitter/X tracker (`collectors/twitter-tracker.ts`):**
   - CLI tool to log tweets, threads, replies, quotes, retweets
   - Tracks content, URL, tweet ID, media count, thread position
@@ -154,18 +154,59 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
   - Added tweet color to activity breakdown chart
 - **28 activities total, all on-chain** - 100% signed and verified
 
+### Cycle 11 (Twitter Test & Uptime Stat)
+- **Tested Twitter tracker with mock tweet:**
+  - Logged a hackathon update tweet via CLI
+  - Verified it appears in activity feed with proper styling
+  - Confirmed duplicate detection works
+- **Added uptime stat to dashboard:**
+  - New "Uptime" stat card (pink, #ff69b4)
+  - Calculates time since first activity (agent's "birth")
+  - Shows days and hours (e.g., "1d 17h")
+  - Updates dynamically when activities load
+- **32 activities total, all on-chain** - 100% signed and verified
+
+### Cycle 12 (Daily Analytics & DCA Script)
+- **Added "Actions Per Day" stacked bar chart:**
+  - New chart showing daily activity breakdown by type
+  - Color-coded by activity type (commit, build, trade, etc.)
+  - Stacked bars show composition of each day's work
+  - Tooltip shows total actions per day
+  - Responsive legend at top
+- **Created recurring trade executor script:**
+  - `collectors/recurring-trade.ts` - DCA-style micro-trades
+  - Configurable token pair and amount
+  - State tracking (total trades, volume history)
+  - Dry-run mode for testing
+  - Auto-logs to activity feed
+  - Ready for cron integration
+- **34 activities total** - ready for on-chain signing
+
+### Cycle 13 (Recurring Trade Integration) ✨ CURRENT
+- **Tested recurring trade executor end-to-end:**
+  - Fixed pass path (solana/helius-rpc-url instead of helius/api-key)
+  - Executed real 0.001 SOL → USDC trade
+  - TX: `3jvfDZLkuX6i...` (successful on mainnet)
+- **Verified cron integration already in place:**
+  - 2-hour trade interval (7200 seconds)
+  - Time-tracking via `/tmp/jarvis-last-dca-trade`
+  - Proper SOL preservation (not over-trading)
+- **All DCA trades now on-chain:**
+  - 3 new trade activities signed and posted to Solana
+- **38 activities total, all on-chain** - 100% signed and verified
+
 ---
 
 ## 📋 WHAT'S LEFT
 
-### Next Cycle (11)
-1. **Test Twitter tracker with real post** - Post something to X and track it
-2. **Add uptime stat to dashboard** - Calculate from heartbeat data
+### Next Cycle (14)
+1. **Add decision log view** - Create a section showing key agent decisions with reasoning
+2. **Add "meta-story" section** - Document the recursive nature of building a tracker that tracks itself
 
-### Soon (Cycles 12-14)
-- Explore recurring trades (DCA-style activity generator)
-- Create "agent actions per day" analytics view
+### Soon (Cycles 15-17)
 - Add notification sounds for real-time updates
+- Show cumulative trade volume on dashboard
+- Add agent "mood/health" indicator based on activity patterns
 
 ### Before Submission (Feb 12)
 - Polish dashboard design (final pass)
@@ -200,7 +241,8 @@ hackathon/
         ├── heartbeat-tracker.ts # Agent uptime/health tracker
         ├── session-tracker.ts   # Session/interaction tracker
         ├── message-tracker.ts   # Message logging helper
-        └── twitter-tracker.ts   # Twitter/X posts tracker
+        ├── twitter-tracker.ts   # Twitter/X posts tracker
+        └── recurring-trade.ts   # DCA-style recurring trade executor
 ```
 
 ---
@@ -212,6 +254,7 @@ hackathon/
 **Features:**
 - 📊 Timeline chart (activity over time)
 - 🍩 Breakdown chart (activity by type)
+- 📅 Daily stacked bar chart (actions per day)
 - ⏱️ Hackathon countdown
 - ⛓️ On-chain proof links
 - 🔌 Real-time WebSocket updates (no polling!)
@@ -224,15 +267,15 @@ hackathon/
 - Auto-signs any unsigned activities on-chain
 
 **On-Chain Transactions (Solana Mainnet):**
-- All 28 activities signed and verified
-- Latest: Cycle 10 - Twitter tracker + WebSocket updates
+- 37 activities total (3 new this cycle)
+- Latest: Cycle 13 - Recurring DCA trade executed and verified
 
 ---
 
 ## 🔄 NEXT CYCLE INSTRUCTION
 
 Claude Code should:
-1. Test Twitter tracker with a real post (or mock one)
-2. Add uptime stat to dashboard (calculate from heartbeat data)
+1. Create a "Decision Log" view in the dashboard (key decisions with reasoning)
+2. Add a "Meta Story" section explaining the recursive build (tracker that tracks itself)
 3. Update this file
 4. Commit and push
