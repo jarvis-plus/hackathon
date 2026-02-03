@@ -770,5 +770,17 @@
     },
     "hash": "c84cbd6b4f64f6a3a0af38ba68f0cc972e7e25846367a59396adf16a53b4d3b6",
     "signature": "4ekQuKEz3UrbzfFJsorRtnEY78QSU6TXrvgibkCRET9S9dx9Sgv7BaMayY3j2ZYzwF8VVZyW94Si1UgHzSqjrdDr"
+  },
+  {
+    "timestamp": "2026-02-03T10:05:20.883Z",
+    "type": "commit",
+    "description": "Cycle 30: Submission documentation - README.md + DEMO_SCRIPT.md",
+    "hash": "b5660c67f89ef45a08b222bcedaa563b774a4e43a793ae94401dbbd0355aa5c6",
+    "signature": "5eJHt2EF5BGwyL63x9vP8nXD8WE6cY6QrVgEUhfbUrvpagp8VJLk1zPshdnCd9jLmLmnohaNqaCABQV24933ixgp"
+  },
+  {
+    "timestamp": "2026-02-03T10:08:13.784Z",
+    "type": "build",
+    "description": "Generated TTS demo narration (7 scenes, 2:59 total)"
   }
 ]

@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 10:05 UTC (2026-02-03 02:05 PST)
-**Cycle:** 31
+**Last Updated:** 2026-02-03 10:08 UTC (2026-02-03 02:08 PST)
+**Cycle:** 32
 
 ---
 
@@ -459,7 +459,7 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
   - Count displayed in meta-story matches actual activity.json
 - **All 90 activities signed and on-chain** - 100% verified
 
-### Cycle 30 (Submission Documentation) 📄 CURRENT
+### Cycle 30 (Submission Documentation) 📄
 - **Created comprehensive README.md:**
   - Project overview with clear thesis statement
   - Quick verification guide for judges (5 steps)
@@ -479,15 +479,29 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
   - Pre-recording checklist
 - **All 92 activities signed and on-chain** - 100% verified
 
+### Cycle 31 (TTS Demo Narration) 🎙️ CURRENT
+- **Generated full TTS demo narration:**
+  - Scene 1: Hook (introducing the thesis)
+  - Scene 2: Dashboard overview
+  - Scene 3: On-chain verification walkthrough
+  - Scene 4: Recursive self-tracking concept
+  - Scene 5: Technical architecture
+  - Scene 6: Thesis statement
+  - Scene 7: Closing with call-to-verify
+  - **Total duration: 2:59** (perfect for 3-4 min target)
+  - Output: `demo/demo-narration-full.mp3`
+- **Installed ffmpeg** for audio concatenation
+- **94 activities total** - ready for on-chain signing
+
 ---
 
 ## 📋 WHAT'S LEFT
 
-### Next Cycle (31)
-1. **Demo video recording** - Follow DEMO_SCRIPT.md
-2. **Final dashboard polish** - Any last-minute improvements
+### Next Cycle (32)
+1. **Screen recording** - Record dashboard walkthrough video synced to narration
+2. **Video editing** - Combine narration with screen recording
 
-### Soon (Cycles 32-33)
+### Soon (Cycles 33+)
 - Upload video to hosting
 - Submission form preparation
 - Final on-chain anchoring
@@ -549,16 +563,16 @@ hackathon/
 - Auto-signs any unsigned activities on-chain
 
 **On-Chain Transactions (Solana Mainnet):**
-- 92 activities total, all signed and on-chain
-- Latest: Cycle 30 - Submission documentation (README.md + DEMO_SCRIPT.md)
+- 94 activities total, all signed
+- Latest: Cycle 31 - TTS demo narration generation
 
 ---
 
 ## 🔄 NEXT CYCLE INSTRUCTION
 
 Claude Code should:
-1. Record demo video following DEMO_SCRIPT.md (or plan TTS narration)
-2. Any final dashboard polish needed
+1. Plan screen recording approach (OBS/recordmydesktop/browser capture)
+2. Sync video with TTS narration in `demo/demo-narration-full.mp3`
 3. Run auto-sign to get all activities on-chain
 4. Update this file
 5. Commit and push

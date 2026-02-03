@@ -1,0 +1,7 @@
+file 'scene1-hook.mp3'
+file 'scene2-dashboard.mp3'
+file 'scene3-verification.mp3'
+file 'scene4-recursive.mp3'
+file 'scene5-technical.mp3'
+file 'scene6-thesis.mp3'
+file 'scene7-close.mp3'
