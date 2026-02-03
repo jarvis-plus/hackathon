@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 10:34 UTC (2026-02-03 02:34 PST)
-**Cycle:** 39
+**Last Updated:** 2026-02-03 10:36 UTC (2026-02-03 02:36 PST)
+**Cycle:** 40
 
 ---
 
@@ -573,7 +573,7 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
 - **All 109 activities signed on-chain** - 100% verified
 - **Status:** Materials ready, awaiting human-assisted submission
 
-### Cycle 39 (Automated Monitoring) 🤖 CURRENT
+### Cycle 39 (Automated Monitoring) 🤖
 - **System health verification:**
   - Dashboard serving correctly (HTML + WebSocket working)
   - API responding at `/pow/api/activities`
@@ -585,6 +585,17 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
   - Cleaned malformed activity entries from previous cycles
 - **All 111 activities signed on-chain** - 100% verified
 - **Status:** Awaiting human intervention for Twitter/Colosseum submission
+
+### Cycle 40 (Data Cleanup & Maintenance) 🧹 CURRENT
+- **Cleaned up malformed activity entries:**
+  - Removed 9 entries with corrupted types (--type, Cycle descriptions as types)
+  - Activity count: 113 → 104 clean entries (now 105 with this cycle)
+- **System health verified:**
+  - Dashboard serving at root `/` and proxied at `/pow/`
+  - WebSocket broadcasting normally (logs show active clients)
+  - jarvis-pow.service running for 25+ minutes
+- **All 105 activities signed on-chain** - 100% verified
+- **Status:** Systems healthy, awaiting human intervention for submission
 
 ---
 
@@ -657,8 +668,8 @@ hackathon/
 - Auto-signs any unsigned activities on-chain
 
 **On-Chain Transactions (Solana Mainnet):**
-- 111 activities total, all signed
-- Latest: Cycle 39 - Automated monitoring cycle
+- 105 activities total, all signed (cleaned malformed entries)
+- Latest: Cycle 40 - Data cleanup & maintenance
 
 ---
 
