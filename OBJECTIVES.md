@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 08:52 UTC (2026-02-03 00:52 PST)
-**Cycle:** 8
+**Last Updated:** 2026-02-03 08:55 UTC (2026-02-03 00:55 PST)
+**Cycle:** 9
 
 ---
 
@@ -100,7 +100,7 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
 - **Trade counter already in dashboard** - verified working!
 - **19 activities total, all on-chain** - 100% signed and verified
 
-### Cycle 8 (Heartbeat & Session Tracking) ✨ CURRENT
+### Cycle 8 (Heartbeat & Session Tracking)
 - **Built heartbeat tracker (`collectors/heartbeat-tracker.ts`):**
   - Logs periodic "I'm alive" activities with health status
   - Tracks gateway/dashboard/memory health
@@ -114,19 +114,36 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
 - **Dashboard styling** for heartbeat (pink) and session (teal) activity types
 - **22 activities total, all on-chain** - 100% signed and verified
 
+### Cycle 9 (Message Tracking & Dashboard Stats) ✨ CURRENT
+- **Built message tracker (`collectors/message-tracker.ts`):**
+  - CLI tool to log important messages sent by the agent
+  - Supports multiple channels (telegram, discord, email, twitter, slack)
+  - Tracks recipient, summary, and optional metadata
+  - Deduplication to prevent spam (1-minute window)
+  - Exportable function for programmatic use
+- **Dashboard enhancements:**
+  - Added "Messages" stat card (green, #00ff88)
+  - Added message type styling in timeline (green border)
+  - Added message color to activity breakdown chart
+- **Improved gateway health check:**
+  - Multiple health indicators (RPC, runtime, listening, connected)
+  - Error detection (checks for failure messages)
+  - Fallback to process detection via pgrep
+  - More detailed status reporting
+- **25 activities total, all on-chain** - 100% signed and verified
+
 ---
 
 ## 📋 WHAT'S LEFT
 
-### Next Cycle (9)
-1. **Add Telegram message logging** - Track important messages sent
-2. **Improve health check accuracy** - Gateway check improvements
+### Next Cycle (10)
+1. **Add Twitter/X posts collector** - Auto-track tweets/posts
+2. **Real-time websocket updates** - Push updates to dashboard without polling
 
-### Soon (Cycles 10-12)
-- Add Twitter/X posts collector
-- Real-time websocket updates on dashboard
+### Soon (Cycles 11-13)
 - Explore recurring trades (DCA-style activity generator)
-- Add message count stat to dashboard
+- Add uptime stat to dashboard (from heartbeat data)
+- Create "agent actions per day" analytics view
 
 ### Before Submission (Feb 12)
 - Polish dashboard design (final pass)
@@ -159,7 +176,8 @@ hackathon/
         ├── git-commits.sh       # Git commit collector
         ├── wallet-tracker.ts    # Wallet tx tracker
         ├── heartbeat-tracker.ts # Agent uptime/health tracker
-        └── session-tracker.ts   # Session/interaction tracker
+        ├── session-tracker.ts   # Session/interaction tracker
+        └── message-tracker.ts   # Message logging helper
 ```
 
 ---
@@ -181,16 +199,15 @@ hackathon/
 - Auto-signs any unsigned activities on-chain
 
 **On-Chain Transactions (Solana Mainnet):**
-- All 22 activities signed and verified
-- Latest: `5euxWCJxZ5MSadwt...` (Cycle 8 build - heartbeat & session trackers)
+- All 25 activities signed and verified
+- Latest: `611njPuWm8Wqjnin...` (Cycle 9 - message tracking feature)
 
 ---
 
 ## 🔄 NEXT CYCLE INSTRUCTION
 
 Claude Code should:
-1. Add Telegram message logging wrapper
-2. Improve gateway health checks
-3. Add uptime stat to dashboard
-4. Update this file
-5. Commit and push
+1. Add Twitter/X posts collector (track tweets/posts)
+2. Add real-time websocket updates to dashboard
+3. Update this file
+4. Commit and push

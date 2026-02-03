@@ -150,6 +150,7 @@
         .stat-value.commits { color: var(--accent-yellow); }
         .stat-value.trades { color: var(--accent-red); }
         .stat-value.builds { color: var(--accent-blue); }
+        .stat-value.messages { color: #00ff88; }
 
         .stat-label {
             color: var(--text-secondary);
@@ -259,6 +260,13 @@
         }
         .activity-item.session::before { 
             border-color: #00ffcc; 
+        }
+
+        .activity-item.message { 
+            border-left-color: #00ff88; 
+        }
+        .activity-item.message::before { 
+            border-color: #00ff88; 
         }
 
         .activity-header {
@@ -519,6 +527,10 @@
                 <div class="stat-value trades" id="trades">0</div>
                 <div class="stat-label">Trades</div>
             </div>
+            <div class="stat-card">
+                <div class="stat-value messages" id="messages">0</div>
+                <div class="stat-label">Messages</div>
+            </div>
         </div>
 
         <div class="charts-section">
@@ -678,6 +690,9 @@
             document.getElementById('trades').textContent = activities.filter(a => 
                 a.type === 'trade' || a.type === 'transfer'
             ).length;
+            document.getElementById('messages').textContent = activities.filter(a => 
+                a.type === 'message'
+            ).length;
         }
 
         // Chart instances
@@ -696,7 +711,8 @@
                 'trade': '#ff6b6b',
                 'transfer': '#ff6b6b',
                 'heartbeat': '#ff69b4',
-                'session': '#00ffcc'
+                'session': '#00ffcc',
+                'message': '#00ff88'
             };
             
             activities.forEach(a => {

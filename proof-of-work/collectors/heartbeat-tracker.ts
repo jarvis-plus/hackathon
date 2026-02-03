@@ -51,14 +51,48 @@ function saveActivities(activities: Activity[]) {
   writeFileSync(ACTIVITY_FILE, JSON.stringify(activities, null, 2));
 }
 
-function checkGatewayStatus(): { running: boolean; uptime?: string } {
+function checkGatewayStatus(): { running: boolean; uptime?: string; details?: string } {
   try {
     const output = execSync('openclaw gateway status 2>&1', { encoding: 'utf-8' });
-    // Check if "Runtime: running" appears in the output
-    const running = output.includes('Runtime: running') || output.includes('RPC probe: ok');
-    return { running };
-  } catch {
-    return { running: false };
+    
+    // Multiple indicators of gateway health
+    const indicators = {
+      runtimeRunning: output.includes('Runtime: running'),
+      rpcOk: output.includes('RPC probe: ok'),
+      listening: output.includes('Listening') || output.includes('listening'),
+      connected: output.includes('connected') || output.includes('Connected'),
+    };
+    
+    // Gateway is running if any positive indicator is present and no error indicators
+    const hasErrors = output.toLowerCase().includes('error') || 
+                     output.toLowerCase().includes('failed') ||
+                     output.toLowerCase().includes('not running');
+    
+    const running = !hasErrors && (
+      indicators.runtimeRunning || 
+      indicators.rpcOk || 
+      indicators.listening || 
+      indicators.connected
+    );
+    
+    // Extract uptime if available
+    const uptimeMatch = output.match(/uptime[:\s]+(\d+[hms\s]+)/i);
+    const uptime = uptimeMatch ? uptimeMatch[1].trim() : undefined;
+    
+    return { 
+      running, 
+      uptime,
+      details: `rpc=${indicators.rpcOk ? 'ok' : 'no'} runtime=${indicators.runtimeRunning ? 'ok' : 'no'}`
+    };
+  } catch (e) {
+    // Try alternative check - is the gateway process running?
+    try {
+      const ps = execSync('pgrep -f "openclaw gateway" || echo "none"', { encoding: 'utf-8' }).trim();
+      if (ps !== 'none' && ps.length > 0) {
+        return { running: true, details: 'process-found' };
+      }
+    } catch {}
+    return { running: false, details: 'check-failed' };
   }
 }
 
