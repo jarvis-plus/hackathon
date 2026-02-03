@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 08:55 UTC (2026-02-03 00:55 PST)
-**Cycle:** 9
+**Last Updated:** 2026-02-03 09:00 UTC (2026-02-03 01:00 PST)
+**Cycle:** 10
 
 ---
 
@@ -114,7 +114,7 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
 - **Dashboard styling** for heartbeat (pink) and session (teal) activity types
 - **22 activities total, all on-chain** - 100% signed and verified
 
-### Cycle 9 (Message Tracking & Dashboard Stats) ✨ CURRENT
+### Cycle 9 (Message Tracking & Dashboard Stats)
 - **Built message tracker (`collectors/message-tracker.ts`):**
   - CLI tool to log important messages sent by the agent
   - Supports multiple channels (telegram, discord, email, twitter, slack)
@@ -132,18 +132,40 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
   - More detailed status reporting
 - **25 activities total, all on-chain** - 100% signed and verified
 
+### Cycle 10 (Twitter Tracker & Real-Time WebSocket) ✨ CURRENT
+- **Built Twitter/X tracker (`collectors/twitter-tracker.ts`):**
+  - CLI tool to log tweets, threads, replies, quotes, retweets
+  - Tracks content, URL, tweet ID, media count, thread position
+  - Duplicate detection (by tweet ID and content similarity)
+  - State tracking (total tweets, threads, replies)
+  - Help menu with usage examples
+- **Real-time WebSocket updates in dashboard:**
+  - Server now supports WebSocket connections at `/ws`
+  - Dashboard connects via WebSocket on load
+  - Live push of new activities (no polling required!)
+  - Automatic reconnection on disconnect (5-second retry)
+  - Keepalive ping every 30 seconds
+  - Fallback to polling if WebSocket unavailable
+  - Visual feedback: flashing header + title notification for new activities
+  - Connection status indicator (green = live, yellow = polling)
+- **Dashboard enhancements:**
+  - Added "Tweets" stat card (Twitter blue, #1DA1F2)
+  - Added tweet type styling in timeline (blue border)
+  - Added tweet color to activity breakdown chart
+- **28 activities total, all on-chain** - 100% signed and verified
+
 ---
 
 ## 📋 WHAT'S LEFT
 
-### Next Cycle (10)
-1. **Add Twitter/X posts collector** - Auto-track tweets/posts
-2. **Real-time websocket updates** - Push updates to dashboard without polling
+### Next Cycle (11)
+1. **Test Twitter tracker with real post** - Post something to X and track it
+2. **Add uptime stat to dashboard** - Calculate from heartbeat data
 
-### Soon (Cycles 11-13)
+### Soon (Cycles 12-14)
 - Explore recurring trades (DCA-style activity generator)
-- Add uptime stat to dashboard (from heartbeat data)
 - Create "agent actions per day" analytics view
+- Add notification sounds for real-time updates
 
 ### Before Submission (Feb 12)
 - Polish dashboard design (final pass)
@@ -177,7 +199,8 @@ hackathon/
         ├── wallet-tracker.ts    # Wallet tx tracker
         ├── heartbeat-tracker.ts # Agent uptime/health tracker
         ├── session-tracker.ts   # Session/interaction tracker
-        └── message-tracker.ts   # Message logging helper
+        ├── message-tracker.ts   # Message logging helper
+        └── twitter-tracker.ts   # Twitter/X posts tracker
 ```
 
 ---
@@ -191,6 +214,8 @@ hackathon/
 - 🍩 Breakdown chart (activity by type)
 - ⏱️ Hackathon countdown
 - ⛓️ On-chain proof links
+- 🔌 Real-time WebSocket updates (no polling!)
+- 🐦 Tweet tracking support
 
 **System Cron (every 15 min):**
 - Runs wallet tracker to detect new transactions
@@ -199,15 +224,15 @@ hackathon/
 - Auto-signs any unsigned activities on-chain
 
 **On-Chain Transactions (Solana Mainnet):**
-- All 25 activities signed and verified
-- Latest: `611njPuWm8Wqjnin...` (Cycle 9 - message tracking feature)
+- All 28 activities signed and verified
+- Latest: Cycle 10 - Twitter tracker + WebSocket updates
 
 ---
 
 ## 🔄 NEXT CYCLE INSTRUCTION
 
 Claude Code should:
-1. Add Twitter/X posts collector (track tweets/posts)
-2. Add real-time websocket updates to dashboard
+1. Test Twitter tracker with a real post (or mock one)
+2. Add uptime stat to dashboard (calculate from heartbeat data)
 3. Update this file
 4. Commit and push

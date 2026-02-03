@@ -151,6 +151,7 @@
         .stat-value.trades { color: var(--accent-red); }
         .stat-value.builds { color: var(--accent-blue); }
         .stat-value.messages { color: #00ff88; }
+        .stat-value.tweets { color: #1DA1F2; }
 
         .stat-label {
             color: var(--text-secondary);
@@ -267,6 +268,13 @@
         }
         .activity-item.message::before { 
             border-color: #00ff88; 
+        }
+
+        .activity-item.tweet { 
+            border-left-color: #1DA1F2; 
+        }
+        .activity-item.tweet::before { 
+            border-color: #1DA1F2; 
         }
 
         .activity-header {
@@ -531,6 +539,10 @@
                 <div class="stat-value messages" id="messages">0</div>
                 <div class="stat-label">Messages</div>
             </div>
+            <div class="stat-card">
+                <div class="stat-value tweets" id="tweets">0</div>
+                <div class="stat-label">Tweets</div>
+            </div>
         </div>
 
         <div class="charts-section">
@@ -693,6 +705,9 @@
             document.getElementById('messages').textContent = activities.filter(a => 
                 a.type === 'message'
             ).length;
+            document.getElementById('tweets').textContent = activities.filter(a => 
+                a.type === 'tweet'
+            ).length;
         }
 
         // Chart instances
@@ -712,7 +727,8 @@
                 'transfer': '#ff6b6b',
                 'heartbeat': '#ff69b4',
                 'session': '#00ffcc',
-                'message': '#00ff88'
+                'message': '#00ff88',
+                'tweet': '#1DA1F2'
             };
             
             activities.forEach(a => {
@@ -941,11 +957,117 @@
             }
         }
 
+        // WebSocket connection for real-time updates
+        let ws = null;
+        let wsReconnectTimer = null;
+        let wsConnected = false;
+
+        function connectWebSocket() {
+            // Determine WebSocket URL
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
+            
+            try {
+                ws = new WebSocket(wsUrl);
+                
+                ws.onopen = () => {
+                    console.log('🔌 WebSocket connected');
+                    wsConnected = true;
+                    updateConnectionStatus(true);
+                    
+                    // Clear reconnect timer if any
+                    if (wsReconnectTimer) {
+                        clearTimeout(wsReconnectTimer);
+                        wsReconnectTimer = null;
+                    }
+                };
+                
+                ws.onmessage = (event) => {
+                    try {
+                        const msg = JSON.parse(event.data);
+                        
+                        if (msg.type === 'init' || msg.type === 'new_activities') {
+                            console.log(`📡 Received ${msg.type}: ${msg.data.activities.length} activities`);
+                            renderActivities(msg.data.activities);
+                            updateStats(msg.data.activities);
+                            renderCharts(msg.data.activities);
+                            
+                            // Flash notification for new activities
+                            if (msg.type === 'new_activities' && msg.data.newItems?.length > 0) {
+                                flashNewActivity(msg.data.newItems.length);
+                            }
+                        }
+                    } catch (e) {
+                        console.error('WebSocket message error:', e);
+                    }
+                };
+                
+                ws.onclose = () => {
+                    console.log('🔌 WebSocket disconnected');
+                    wsConnected = false;
+                    updateConnectionStatus(false);
+                    
+                    // Reconnect after 5 seconds
+                    wsReconnectTimer = setTimeout(connectWebSocket, 5000);
+                };
+                
+                ws.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                };
+                
+                // Keepalive ping every 30 seconds
+                setInterval(() => {
+                    if (ws && ws.readyState === WebSocket.OPEN) {
+                        ws.send('ping');
+                    }
+                }, 30000);
+                
+            } catch (e) {
+                console.error('WebSocket connection failed:', e);
+                wsConnected = false;
+                // Fallback to polling
+            }
+        }
+
+        function updateConnectionStatus(connected) {
+            const indicator = document.querySelector('.live-indicator');
+            if (indicator) {
+                indicator.title = connected ? 'Live - WebSocket connected' : 'Polling - WebSocket reconnecting';
+                indicator.style.background = connected ? 'var(--accent-green)' : '#ffaa00';
+            }
+        }
+
+        function flashNewActivity(count) {
+            // Flash the activity feed header
+            const header = document.querySelector('.activity-feed h2');
+            if (header) {
+                header.style.textShadow = '0 0 20px var(--accent-green)';
+                setTimeout(() => {
+                    header.style.textShadow = 'none';
+                }, 1000);
+            }
+            
+            // Update document title briefly
+            const originalTitle = document.title;
+            document.title = `(${count} new) ${originalTitle}`;
+            setTimeout(() => {
+                document.title = originalTitle;
+            }, 3000);
+        }
+
         // Initial load
         loadActivities();
         
-        // Auto-refresh every 30 seconds
-        setInterval(loadActivities, 30000);
+        // Connect WebSocket for real-time updates
+        connectWebSocket();
+        
+        // Fallback polling every 30 seconds (only if WebSocket disconnected)
+        setInterval(() => {
+            if (!wsConnected) {
+                console.log('📡 Polling fallback...');
+                loadActivities();
+            }
+        }, 30000);
     </script>
 </body>
 </html>
