@@ -84,6 +84,23 @@
         [data-theme="light"] #card-onchain:hover::before {
             background: conic-gradient(from 0deg, transparent, rgba(136, 0, 204, 0.12), rgba(0, 199, 123, 0.12), transparent 40%);
         }
+        
+        [data-theme="light"] .stat-icon {
+            opacity: 0.85;
+            filter: drop-shadow(0 0 2px currentColor);
+        }
+        [data-theme="light"] .stat-icon.icon-total { color: #00c77b; }
+        [data-theme="light"] .stat-icon.icon-chain { color: #8800cc; }
+        [data-theme="light"] .stat-icon.icon-commits { color: #dd8800; }
+        [data-theme="light"] .stat-icon.icon-builds { color: #0088dd; }
+        [data-theme="light"] .stat-icon.icon-trades { color: #e53935; }
+        [data-theme="light"] .stat-icon.icon-messages { color: #00b366; }
+        [data-theme="light"] .stat-icon.icon-tweets { color: #1a8cd8; }
+        [data-theme="light"] .stat-icon.icon-uptime { color: #e91e99; }
+        [data-theme="light"] .stat-icon.icon-volume { color: #2e9c4a; }
+        [data-theme="light"] .stat-icon.icon-streak { color: #e65c00; }
+        [data-theme="light"] .stat-icon.icon-mood { color: #8800cc; }
+        [data-theme="light"] .stat-icon.icon-sol { color: #7c3aed; }
 
         body {
             font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace;
@@ -258,6 +275,27 @@
         .stat-value.tweets { color: #1DA1F2; }
         .stat-value.uptime { color: #ff69b4; }
         .stat-value.volume { color: #50fa7b; }
+        
+        /* Stat card icons */
+        .stat-icon {
+            font-size: 1.25rem;
+            margin-bottom: 0.35rem;
+            opacity: 0.9;
+            filter: drop-shadow(0 0 4px currentColor);
+        }
+        .stat-icon.icon-total { color: var(--accent-green); }
+        .stat-icon.icon-chain { color: var(--accent-purple); }
+        .stat-icon.icon-commits { color: var(--accent-yellow); }
+        .stat-icon.icon-builds { color: var(--accent-blue); }
+        .stat-icon.icon-trades { color: var(--accent-red); }
+        .stat-icon.icon-messages { color: #00ff88; }
+        .stat-icon.icon-tweets { color: #1DA1F2; }
+        .stat-icon.icon-uptime { color: #ff69b4; }
+        .stat-icon.icon-volume { color: #50fa7b; }
+        .stat-icon.icon-streak { color: #ff6b35; }
+        .stat-icon.icon-mood { color: var(--accent-purple); }
+        .stat-icon.icon-sol { color: #9945FF; }
+        
         .stat-value.streak { 
             color: #ff6b00;
             display: flex;
@@ -4026,53 +4064,65 @@
             const statsGrid = document.getElementById('stats-grid');
             if (!statsGrid) return;
             
-            // Replace skeleton cards with real stat cards
+            // Replace skeleton cards with real stat cards (with icons)
             statsGrid.innerHTML = `
                 <div class="stat-card">
+                    <div class="stat-icon icon-total">⚡</div>
                     <div class="stat-value" id="total-actions">0</div>
                     <div class="stat-label">Total Actions</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" id="card-onchain">
+                    <div class="stat-icon icon-chain">⛓️</div>
                     <div class="stat-value chain" id="onchain">0</div>
                     <div class="stat-label">On-Chain</div>
                 </div>
                 <div class="stat-card">
+                    <div class="stat-icon icon-commits">📝</div>
                     <div class="stat-value commits" id="commits">0</div>
                     <div class="stat-label">Commits</div>
                 </div>
                 <div class="stat-card">
+                    <div class="stat-icon icon-builds">🔧</div>
                     <div class="stat-value builds" id="builds">0</div>
                     <div class="stat-label">Builds</div>
                 </div>
                 <div class="stat-card">
+                    <div class="stat-icon icon-trades">💱</div>
                     <div class="stat-value trades" id="trades">0</div>
                     <div class="stat-label">Trades</div>
                 </div>
                 <div class="stat-card">
+                    <div class="stat-icon icon-messages">💬</div>
                     <div class="stat-value messages" id="messages">0</div>
                     <div class="stat-label">Messages</div>
                 </div>
                 <div class="stat-card">
+                    <div class="stat-icon icon-tweets">🐦</div>
                     <div class="stat-value tweets" id="tweets">0</div>
                     <div class="stat-label">Tweets</div>
                 </div>
                 <div class="stat-card">
+                    <div class="stat-icon icon-uptime">⏱️</div>
                     <div class="stat-value uptime" id="uptime">0h</div>
                     <div class="stat-label">Uptime</div>
                 </div>
                 <div class="stat-card">
+                    <div class="stat-icon icon-volume">💰</div>
                     <div class="stat-value volume" id="volume">$0</div>
                     <div class="stat-label">Trade Volume</div>
                 </div>
                 <div class="stat-card" id="streak-card">
+                    <div class="stat-icon icon-streak">🔥</div>
                     <div class="stat-value streak" id="streak"><span class="streak-fire">🔥</span>0</div>
                     <div class="stat-label">Day Streak</div>
                 </div>
                 <div class="stat-card" id="mood-card">
+                    <div class="stat-icon icon-mood">🧠</div>
                     <div class="stat-value mood" id="mood">🤖</div>
                     <div class="stat-label">Agent Mood</div>
                 </div>
                 <div class="stat-card" id="sol-position-card">
+                    <div class="stat-icon icon-sol">◎</div>
                     <div class="stat-value sol-position" id="sol-position">0 SOL</div>
                     <div class="stat-label">Net SOL</div>
                 </div>
