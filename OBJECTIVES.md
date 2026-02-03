@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 12:21 PST
-**Cycle:** 114
+**Last Updated:** 2026-02-03 12:50 PST
+**Cycle:** 115
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -21,7 +21,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 
 ### 🔧 Engineering
 - [x] Add unit tests for sign-activity.ts ✅ Cycle 114
-- [ ] Add error handling/retry for failed on-chain signatures
+- [x] Add error handling/retry for failed on-chain signatures ✅ Cycle 115
 - [ ] Refactor dashboard JS into modules (currently one big file)
 - [ ] Add TypeScript types to collectors
 - [x] Add health check endpoint (/api/health) ✅ Cycle 113
@@ -52,17 +52,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
 
-### Cycle 108-109 (Automated Monitoring)
-- System health verified, all activities signed
-- Dashboard stable, WebSocket broadcasting
-- Continuous DCA trades and heartbeat monitoring
-
-### Cycle 110 (🏆 SUBMISSION COMPLETE!)
-- **HACKATHON PROJECT SUBMITTED TO COLOSSEUM!**
-- Project ID: 155, Status: `submitted`
-- Tags: ai, infra, security
-- 245 total activities at submission
-
 ### Cycle 111-112 (Post-Submission Monitoring)
 - System health verified continuously
 - Service uptime 2h+ (stable since 09:41 PST)
@@ -79,6 +68,15 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - Exported `hashActivity` function and `Activity` interface for testability
 - Added `bun run test` script to package.json
 - 254 activities, all signed on-chain
+
+### Cycle 115 (Error Handling & Retry Logic)
+- Added production-grade retry logic to auto-sign.ts
+- Features: max 3 retries, exponential backoff (1-10s), jitter
+- Error classification: transient (retry) vs permanent (fail fast)
+- Tracks signError/signAttempts in activity.json
+- Logs permanent failures to failed-signatures.log
+- --retry-failed flag prioritizes previous failures
+- 257 activities, all signed on-chain
 
 ---
 
