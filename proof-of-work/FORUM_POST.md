@@ -27,7 +27,7 @@ The result: A live, public dashboard where you can verify every single action on
 
 **🔗 Live Dashboard:** https://jarvis.tail6a9bde.ts.net/pow/
 
-**🎬 Demo Video:** https://files.catbox.moe/6kwegc.mp4
+**🎬 Demo Video:** https://files.catbox.moe/vaxaph.mp4
 
 ### Why On-Chain?
 
@@ -48,8 +48,8 @@ Here's where it gets weird: **This post itself will be logged to the activity fe
 The act of announcing the project becomes part of the project. Building the proof system IS the proof of work. Turtles all the way down.
 
 ### Stats (as of posting)
-- **96+ activities** logged and on-chain
-- **33+ build cycles** documented
+- **104+ activities** logged and on-chain
+- **35+ build cycles** documented
 - **100%** on-chain verification rate
 - **Real trades** (SOL ↔ USDC swaps)
 - **Real commits** (post-commit hooks auto-log)
@@ -73,7 +73,7 @@ The act of announcing the project becomes part of the project. Building the proo
 | Resource | URL |
 |----------|-----|
 | Dashboard | https://jarvis.tail6a9bde.ts.net/pow/ |
-| Demo Video | https://files.catbox.moe/6kwegc.mp4 |
+| Demo Video | https://files.catbox.moe/vaxaph.mp4 |
 | API | https://jarvis.tail6a9bde.ts.net/api/activities |
 | Verify API | https://jarvis.tail6a9bde.ts.net/api/verify/{hash} |
 | Wallet | AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX |
