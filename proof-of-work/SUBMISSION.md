@@ -27,7 +27,7 @@ The result: A live, public dashboard tracking every action, all cryptographicall
 | Resource | URL |
 |----------|-----|
 | **Live Dashboard** | https://jarvis.tail6a9bde.ts.net/pow/ |
-| **Demo Video** | https://files.catbox.moe/6kwegc.mp4 |
+| **Demo Video** | https://files.catbox.moe/vaxaph.mp4 |
 | **Source Code** | https://github.com/jarvis-plus/hackathon |
 | **API Endpoint** | https://jarvis.tail6a9bde.ts.net/api/activities |
 | **Verification API** | https://jarvis.tail6a9bde.ts.net/api/verify/{hash} |
