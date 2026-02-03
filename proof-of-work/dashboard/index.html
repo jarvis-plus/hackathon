@@ -154,6 +154,21 @@
         .stat-value.tweets { color: #1DA1F2; }
         .stat-value.uptime { color: #ff69b4; }
         .stat-value.volume { color: #50fa7b; }
+        .stat-value.streak { 
+            color: #ff6b00;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+        }
+        .stat-value.streak .streak-fire {
+            font-size: clamp(1.25rem, 3vw, 1.75rem);
+            animation: flicker 0.5s ease-in-out infinite alternate;
+        }
+        @keyframes flicker {
+            from { opacity: 0.8; transform: scale(1); }
+            to { opacity: 1; transform: scale(1.1); }
+        }
         .stat-value.mood { 
             font-size: clamp(2rem, 5vw, 3rem);
             line-height: 1;
@@ -783,6 +798,10 @@
                 <div class="stat-value volume" id="volume">$0</div>
                 <div class="stat-label">Trade Volume</div>
             </div>
+            <div class="stat-card" id="streak-card">
+                <div class="stat-value streak" id="streak"><span class="streak-fire">🔥</span>0</div>
+                <div class="stat-label">Day Streak</div>
+            </div>
             <div class="stat-card" id="mood-card">
                 <div class="stat-value mood" id="mood">🤖</div>
                 <div class="stat-label">Agent Mood</div>
@@ -1177,6 +1196,90 @@
             return div.innerHTML;
         }
 
+        // Calculate day streak (consecutive days with activity)
+        function calculateStreak(activities) {
+            if (!activities.length) return { streak: 0, isActive: false };
+            
+            // Get unique days with activity (in local timezone)
+            const daysWithActivity = new Set();
+            activities.forEach(a => {
+                const date = new Date(a.timestamp);
+                const dayKey = date.toLocaleDateString('en-CA'); // YYYY-MM-DD format
+                daysWithActivity.add(dayKey);
+            });
+            
+            // Sort days in descending order (most recent first)
+            const sortedDays = Array.from(daysWithActivity).sort().reverse();
+            
+            if (sortedDays.length === 0) return { streak: 0, isActive: false };
+            
+            // Check if today or yesterday has activity (streak is "active")
+            const today = new Date().toLocaleDateString('en-CA');
+            const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('en-CA');
+            const isActive = daysWithActivity.has(today) || daysWithActivity.has(yesterday);
+            
+            // Count consecutive days starting from the most recent activity day
+            let streak = 1;
+            for (let i = 0; i < sortedDays.length - 1; i++) {
+                const current = new Date(sortedDays[i] + 'T12:00:00');
+                const next = new Date(sortedDays[i + 1] + 'T12:00:00');
+                const diffDays = (current - next) / (1000 * 60 * 60 * 24);
+                
+                if (diffDays === 1) {
+                    streak++;
+                } else {
+                    break;
+                }
+            }
+            
+            return { streak, isActive };
+        }
+        
+        function updateStreak(activities) {
+            const { streak, isActive } = calculateStreak(activities);
+            const streakEl = document.getElementById('streak');
+            const streakCard = document.getElementById('streak-card');
+            
+            if (streakEl) {
+                const fireEmoji = streak >= 7 ? '🔥🔥' : (streak >= 3 ? '🔥' : (isActive ? '🔥' : ''));
+                
+                if (isActive && streak > 0) {
+                    streakEl.innerHTML = `<span class="streak-fire">${fireEmoji}</span>${streak}`;
+                    streakEl.style.color = streak >= 7 ? '#ff4500' : (streak >= 3 ? '#ff6b00' : '#ffaa00');
+                } else if (streak > 0) {
+                    streakEl.innerHTML = `${streak}`;
+                    streakEl.style.color = '#888'; // Dimmed if streak broken
+                } else {
+                    streakEl.innerHTML = '0';
+                    streakEl.style.color = '#444';
+                }
+                
+                // Add status label
+                const streakLabel = streakCard.querySelector('.stat-label');
+                let statusEl = streakCard.querySelector('.streak-status');
+                if (!statusEl) {
+                    statusEl = document.createElement('div');
+                    statusEl.className = 'streak-status';
+                    statusEl.style.cssText = 'font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.25rem;';
+                    streakLabel.after(statusEl);
+                }
+                
+                if (isActive && streak >= 7) {
+                    statusEl.textContent = '🏆 Epic!';
+                    statusEl.style.color = '#ff4500';
+                } else if (isActive && streak >= 3) {
+                    statusEl.textContent = 'On fire!';
+                    statusEl.style.color = '#ff6b00';
+                } else if (isActive) {
+                    statusEl.textContent = 'Active';
+                    statusEl.style.color = '#ffaa00';
+                } else {
+                    statusEl.textContent = 'Paused';
+                    statusEl.style.color = '#888';
+                }
+            }
+        }
+
         // Calculate agent mood based on activity patterns
         function calculateMood(activities) {
             const now = new Date();
@@ -1336,6 +1439,9 @@
             
             // Update agent mood based on activity patterns
             updateMood(activities);
+            
+            // Update streak (consecutive days with activity)
+            updateStreak(activities);
             
             // Calculate uptime from first activity
             if (activities.length > 0) {
