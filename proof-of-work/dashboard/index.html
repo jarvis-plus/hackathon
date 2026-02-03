@@ -1485,6 +1485,367 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        /* ============================================
+           POLISHED ANIMATIONS & TRANSITIONS (Cycle 26)
+           ============================================ */
+        
+        /* Smooth scroll behavior */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Page load animation */
+        @keyframes pageLoad {
+            from { 
+                opacity: 0; 
+                transform: translateY(20px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
+        
+        .container {
+            animation: pageLoad 0.6s ease-out;
+        }
+        
+        /* Staggered stat card entrance */
+        @keyframes statCardEntrance {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .stat-card {
+            animation: statCardEntrance 0.4s ease-out backwards;
+        }
+        
+        .stat-card:nth-child(1) { animation-delay: 0.05s; }
+        .stat-card:nth-child(2) { animation-delay: 0.10s; }
+        .stat-card:nth-child(3) { animation-delay: 0.15s; }
+        .stat-card:nth-child(4) { animation-delay: 0.20s; }
+        .stat-card:nth-child(5) { animation-delay: 0.25s; }
+        .stat-card:nth-child(6) { animation-delay: 0.30s; }
+        .stat-card:nth-child(7) { animation-delay: 0.35s; }
+        .stat-card:nth-child(8) { animation-delay: 0.40s; }
+        .stat-card:nth-child(9) { animation-delay: 0.45s; }
+        .stat-card:nth-child(10) { animation-delay: 0.50s; }
+        .stat-card:nth-child(11) { animation-delay: 0.55s; }
+        .stat-card:nth-child(12) { animation-delay: 0.60s; }
+        
+        /* Enhanced stat card hover with glow */
+        .stat-card {
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), 
+                        box-shadow 0.3s ease,
+                        border-color 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4),
+                        0 0 20px rgba(0, 255, 170, 0.1);
+            border-color: rgba(0, 255, 170, 0.3);
+        }
+        
+        /* Stat value number pop animation */
+        @keyframes numberPop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+        
+        .stat-value.updated {
+            animation: numberPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        /* Activity item entrance animation */
+        @keyframes activitySlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .activity-item {
+            animation: activitySlideIn 0.4s ease-out backwards;
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+                        box-shadow 0.25s ease,
+                        border-left-color 0.2s ease;
+        }
+        
+        .activity-item:hover {
+            transform: translateX(8px) scale(1.01);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35),
+                        -4px 0 20px rgba(0, 255, 170, 0.1);
+        }
+        
+        /* New activity highlight pulse */
+        @keyframes newActivityPulse {
+            0% { 
+                box-shadow: 0 0 0 0 rgba(0, 255, 170, 0.5);
+            }
+            70% { 
+                box-shadow: 0 0 0 15px rgba(0, 255, 170, 0);
+            }
+            100% { 
+                box-shadow: 0 0 0 0 rgba(0, 255, 170, 0);
+            }
+        }
+        
+        .activity-item.new-activity {
+            animation: activitySlideIn 0.4s ease-out,
+                       newActivityPulse 1s ease-out 0.4s;
+        }
+        
+        /* Tab switching transitions */
+        .feed-tab {
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .feed-tab:hover:not(.active) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 170, 255, 0.2);
+        }
+        
+        .feed-tab.active {
+            transform: scale(1.05);
+        }
+        
+        /* Feed content fade transition */
+        #feed, #decisions-feed, #milestones-feed, #meta-story, #verify-feed {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        
+        .feed-transitioning {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        
+        /* Chart card hover effects */
+        .chart-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+        
+        .chart-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 170, 0, 0.3);
+        }
+        
+        /* Proof banner enhanced hover */
+        .proof-banner {
+            transition: transform 0.3s ease, box-shadow 0.4s ease;
+        }
+        
+        .proof-banner:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 30px rgba(170, 0, 255, 0.4),
+                        0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Header elements transition */
+        .thesis {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .thesis:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 20px rgba(0, 255, 170, 0.2);
+        }
+        
+        /* Hackathon badge pulse */
+        @keyframes badgePulse {
+            0%, 100% { 
+                box-shadow: 0 0 10px rgba(170, 0, 255, 0.3); 
+            }
+            50% { 
+                box-shadow: 0 0 20px rgba(170, 0, 255, 0.6); 
+            }
+        }
+        
+        .hackathon-badge {
+            animation: badgePulse 3s ease-in-out infinite;
+            transition: transform 0.3s ease;
+        }
+        
+        .hackathon-badge:hover {
+            transform: scale(1.05);
+        }
+        
+        /* Proof badge hover enhancement */
+        .proof-badge {
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .proof-link:hover .proof-badge {
+            transform: scale(1.1) translateY(-1px);
+        }
+        
+        .proof-badge.onchain:hover,
+        .proof-link:hover .proof-badge.onchain {
+            background: rgba(170, 0, 255, 0.3);
+            box-shadow: 0 0 15px rgba(170, 0, 255, 0.4);
+        }
+        
+        /* Export button enhanced hover */
+        .export-btn {
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .export-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 6px 20px rgba(0, 255, 170, 0.25);
+        }
+        
+        .export-btn:active {
+            transform: translateY(-1px) scale(1.02);
+        }
+        
+        /* Timeline connector glow animation */
+        @keyframes timelineGlow {
+            0%, 100% { 
+                opacity: 0.3;
+                filter: drop-shadow(0 0 2px var(--accent-green));
+            }
+            50% { 
+                opacity: 0.6;
+                filter: drop-shadow(0 0 8px var(--accent-blue));
+            }
+        }
+        
+        .timeline::before {
+            animation: timelineGlow 4s ease-in-out infinite;
+        }
+        
+        /* Activity dot pulse on hover */
+        .activity-item:hover::before {
+            box-shadow: 0 0 10px currentColor;
+            transform: scale(1.3);
+        }
+        
+        .activity-item::before {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        /* Smooth heatmap cell transitions */
+        .heatmap-cell {
+            transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1),
+                        outline 0.15s ease,
+                        box-shadow 0.15s ease;
+        }
+        
+        .heatmap-cell:hover {
+            box-shadow: 0 0 10px rgba(0, 255, 170, 0.5);
+        }
+        
+        /* Footer link transitions */
+        footer a {
+            transition: color 0.2s ease, text-shadow 0.2s ease;
+        }
+        
+        footer a:hover {
+            text-shadow: 0 0 10px var(--accent-blue);
+        }
+        
+        /* Wallet link hover effect */
+        .wallet-link {
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+        }
+        
+        .wallet-link:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 20px rgba(0, 170, 255, 0.2);
+            background: rgba(0, 170, 255, 0.1);
+        }
+        
+        /* Sound toggle button animation */
+        .sound-toggle {
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .sound-toggle:hover {
+            transform: scale(1.08);
+            box-shadow: 0 4px 15px rgba(0, 255, 170, 0.2);
+        }
+        
+        .sound-toggle:active {
+            transform: scale(0.95);
+        }
+        
+        /* Verify button pulse effect */
+        .verify-btn {
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .verify-btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.4s ease, height 0.4s ease;
+        }
+        
+        .verify-btn:hover::after {
+            width: 200%;
+            height: 200%;
+        }
+        
+        .verify-btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+        
+        /* Hash item slide effect */
+        .hash-item {
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .hash-item:hover {
+            transform: translateX(8px) scale(1.02);
+            box-shadow: -4px 0 15px rgba(0, 170, 255, 0.2);
+        }
+        
+        /* Milestone progress bar animation */
+        .milestone-progress-fill {
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Logo bounce on hover */
+        .logo {
+            transition: transform 0.3s ease;
+            cursor: default;
+        }
+        
+        .logo:hover {
+            animation: none;
+            transform: scale(1.2) rotate(10deg);
+        }
+        
+        /* Reduce motion for accessibility */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
         /* Charts Section */
         .charts-section {
             margin-bottom: 2rem;
@@ -2139,7 +2500,7 @@
         }
 
         // ============================================
-        // TAB SWITCHING
+        // TAB SWITCHING (with smooth transitions)
         // ============================================
         function switchTab(tabName) {
             // Update tab buttons
@@ -2147,12 +2508,36 @@
                 tab.classList.toggle('active', tab.dataset.tab === tabName);
             });
             
-            // Show/hide content areas
-            document.getElementById('feed').style.display = tabName === 'timeline' ? 'block' : 'none';
-            document.getElementById('milestones-feed').style.display = tabName === 'milestones' ? 'block' : 'none';
-            document.getElementById('decisions-feed').style.display = tabName === 'decisions' ? 'block' : 'none';
-            document.getElementById('meta-story').style.display = tabName === 'meta' ? 'block' : 'none';
-            document.getElementById('verify-feed').style.display = tabName === 'verify' ? 'block' : 'none';
+            // Get all feed containers
+            const feeds = {
+                timeline: document.getElementById('feed'),
+                milestones: document.getElementById('milestones-feed'),
+                decisions: document.getElementById('decisions-feed'),
+                meta: document.getElementById('meta-story'),
+                verify: document.getElementById('verify-feed')
+            };
+            
+            // Hide all with transition
+            Object.keys(feeds).forEach(key => {
+                if (feeds[key]) {
+                    if (key !== tabName) {
+                        feeds[key].style.display = 'none';
+                    }
+                }
+            });
+            
+            // Show selected with entrance animation
+            const targetFeed = feeds[tabName];
+            if (targetFeed) {
+                targetFeed.style.display = 'block';
+                targetFeed.classList.add('feed-transitioning');
+                
+                // Trigger reflow then remove class for animation
+                void targetFeed.offsetWidth;
+                requestAnimationFrame(() => {
+                    targetFeed.classList.remove('feed-transitioning');
+                });
+            }
             
             // Render recent hashes when switching to verify tab
             if (tabName === 'verify' && window.cachedActivities) {
@@ -2492,7 +2877,10 @@
             });
         }
 
-        function renderActivities(activities) {
+        // Track last rendered activity count for new activity detection
+        let lastRenderedCount = 0;
+        
+        function renderActivities(activities, highlightNew = false) {
             const feed = document.getElementById('feed');
             if (!activities.length) {
                 feed.innerHTML = '<div class="empty-state">No activities yet. The agent is warming up... 🤖</div>';
@@ -2500,14 +2888,18 @@
             }
             
             const sorted = [...activities].reverse();
+            const newCount = sorted.length - lastRenderedCount;
+            const shouldHighlight = highlightNew && newCount > 0;
+            
             feed.classList.add('refreshing');
             
             feed.innerHTML = sorted.map((a, i) => {
                 const hash = a.hash || a.proof?.hash;
                 const hashDisplay = hash ? `SHA256: ${hash.slice(0, 12)}...${hash.slice(-6)}` : '';
+                const isNew = shouldHighlight && i < newCount;
                 
                 return `
-                <div class="activity-item ${a.type}" style="animation-delay: ${i * 0.05}s">
+                <div class="activity-item ${a.type}${isNew ? ' new-activity' : ''}" style="animation-delay: ${i * 0.04}s">
                     <div class="activity-header">
                         <div class="activity-badges">
                             <span class="activity-type">${a.type}</span>
@@ -2520,6 +2912,7 @@
                 </div>
             `}).join('');
             
+            lastRenderedCount = sorted.length;
             setTimeout(() => feed.classList.remove('refreshing'), 500);
         }
 
@@ -2851,6 +3244,85 @@
             }).join('');
         }
 
+        // ============================================
+        // ANIMATED NUMBER COUNTER
+        // ============================================
+        function animateNumber(element, targetValue, duration = 600, prefix = '', suffix = '') {
+            if (!element) return;
+            
+            const startValue = parseInt(element.dataset.currentValue || '0', 10);
+            const target = parseInt(targetValue, 10);
+            
+            // Skip animation if value unchanged
+            if (startValue === target) return;
+            
+            element.dataset.currentValue = target;
+            
+            // Add pop animation class
+            element.classList.add('updated');
+            setTimeout(() => element.classList.remove('updated'), 400);
+            
+            // If difference is small, just set it
+            if (Math.abs(target - startValue) <= 2) {
+                element.textContent = prefix + target + suffix;
+                return;
+            }
+            
+            const startTime = performance.now();
+            const easeOutQuart = t => 1 - Math.pow(1 - t, 4);
+            
+            function updateNumber(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easedProgress = easeOutQuart(progress);
+                
+                const currentValue = Math.round(startValue + (target - startValue) * easedProgress);
+                element.textContent = prefix + currentValue + suffix;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(updateNumber);
+                } else {
+                    element.textContent = prefix + target + suffix;
+                }
+            }
+            
+            requestAnimationFrame(updateNumber);
+        }
+        
+        // Animate decimal numbers (for volume, etc.)
+        function animateDecimal(element, targetValue, duration = 600, prefix = '', suffix = '', decimals = 2) {
+            if (!element) return;
+            
+            const startValue = parseFloat(element.dataset.currentValue || '0');
+            const target = parseFloat(targetValue);
+            
+            if (Math.abs(startValue - target) < 0.001) return;
+            
+            element.dataset.currentValue = target;
+            element.classList.add('updated');
+            setTimeout(() => element.classList.remove('updated'), 400);
+            
+            const startTime = performance.now();
+            const easeOutQuart = t => 1 - Math.pow(1 - t, 4);
+            
+            function updateNumber(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easedProgress = easeOutQuart(progress);
+                
+                const currentValue = startValue + (target - startValue) * easedProgress;
+                element.textContent = prefix + currentValue.toFixed(decimals) + suffix;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(updateNumber);
+                } else {
+                    element.textContent = prefix + target.toFixed(decimals) + suffix;
+                }
+            }
+            
+            requestAnimationFrame(updateNumber);
+        }
+        
         // Initialize stat cards from skeleton state
         function initializeStatCards() {
             const statsGrid = document.getElementById('stats-grid');
@@ -2920,23 +3392,25 @@
             
             // Cache activities for verify tab
             window.cachedActivities = activities;
-            document.getElementById('total-actions').textContent = activities.length;
-            document.getElementById('onchain').textContent = activities.filter(a => 
+            
+            // Animate stat number updates
+            animateNumber(document.getElementById('total-actions'), activities.length);
+            animateNumber(document.getElementById('onchain'), activities.filter(a => 
                 a.signature || a.proof?.txSignature
-            ).length;
-            document.getElementById('commits').textContent = activities.filter(a => a.type === 'commit').length;
-            document.getElementById('builds').textContent = activities.filter(a => 
+            ).length);
+            animateNumber(document.getElementById('commits'), activities.filter(a => a.type === 'commit').length);
+            animateNumber(document.getElementById('builds'), activities.filter(a => 
                 a.type === 'build' || a.type === 'deploy' || a.type === 'decision'
-            ).length;
-            document.getElementById('trades').textContent = activities.filter(a => 
+            ).length);
+            animateNumber(document.getElementById('trades'), activities.filter(a => 
                 a.type === 'trade' || a.type === 'transfer'
-            ).length;
-            document.getElementById('messages').textContent = activities.filter(a => 
+            ).length);
+            animateNumber(document.getElementById('messages'), activities.filter(a => 
                 a.type === 'message'
-            ).length;
-            document.getElementById('tweets').textContent = activities.filter(a => 
+            ).length);
+            animateNumber(document.getElementById('tweets'), activities.filter(a => 
                 a.type === 'tweet'
-            ).length;
+            ).length);
             
             // Calculate trade volume (sum of all trade amounts in USD equivalent)
             let totalVolume = 0;
@@ -2957,9 +3431,12 @@
                     totalVolume += meta.amount * SOL_PRICE;
                 }
             });
-            document.getElementById('volume').textContent = totalVolume >= 1 
-                ? `$${totalVolume.toFixed(0)}` 
-                : `$${totalVolume.toFixed(2)}`;
+            const volumeEl = document.getElementById('volume');
+            if (totalVolume >= 1) {
+                animateNumber(volumeEl, Math.round(totalVolume), 600, '$');
+            } else {
+                animateDecimal(volumeEl, totalVolume, 600, '$', '', 2);
+            }
             
             // Calculate net SOL position (spent vs earned)
             let netSOL = 0;
@@ -3659,7 +4136,10 @@
                         if (msg.type === 'init' || msg.type === 'new_activities') {
                             console.log(`📡 Received ${msg.type}: ${msg.data.activities.length} activities`);
                             cachedActivities = msg.data.activities;
-                            renderActivities(msg.data.activities);
+                            
+                            // Pass highlightNew=true for new activities to trigger pulse animation
+                            const isNewActivity = msg.type === 'new_activities' && msg.data.newItems?.length > 0;
+                            renderActivities(msg.data.activities, isNewActivity);
                             renderDecisions(msg.data.activities);
                             renderMilestones(msg.data.activities);
                             updateStats(msg.data.activities);
@@ -3667,7 +4147,7 @@
                             renderHeatmap(msg.data.activities);
                             
                             // Flash notification + sound for new activities
-                            if (msg.type === 'new_activities' && msg.data.newItems?.length > 0) {
+                            if (isNewActivity) {
                                 flashNewActivity(msg.data.newItems.length, msg.data.newItems);
                             }
                         }
