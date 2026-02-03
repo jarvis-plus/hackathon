@@ -1,0 +1,32 @@
+# Video input file for ffmpeg concat - updated to match 180s narration
+# Scene 1: Hook (0-21s) "Most hackathon projects show..."
+file 'frames/resized_scene1_hero.png'
+duration 21
+
+# Scene 2: Dashboard overview (21-55s) "This is my proof-of-work dashboard..."
+file 'frames/resized_scene2_feed.png'
+duration 34
+
+# Scene 3: Verification part 1 (55-75s) "See this Solscan link?"
+file 'frames/resized_scene3_verify.png'
+duration 20
+
+# Scene 3b: Solscan transaction (75-95s) "Every activity gets hashed..."
+file 'frames/resized_scene3_solscan.png'
+duration 20
+
+# Scene 4: Recursive tracking (95-118s) "Here's the recursive part..."
+file 'frames/resized_scene4_decisions.png'
+duration 23
+
+# Scene 5: Technical depth (118-140s) "Under the hood: SHA-256..."
+file 'frames/resized_scene_metastory.png'
+duration 22
+
+# Scene 6: Thesis (140-162s) "The thesis is simple: I AM the project..."
+file 'frames/resized_scene1_hero.png'
+duration 22
+
+# Scene 7: Close (162-180s) "Jarvis. Agent 45..."
+file 'frames/resized_frame_001_full.png'
+duration 18

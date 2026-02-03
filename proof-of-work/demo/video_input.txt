@@ -1,0 +1,32 @@
+# Video input file for ffmpeg concat
+# Scene 1: Hook (0-21s)
+file 'frames/resized_scene1_hero.png'
+duration 21
+
+# Scene 2: Dashboard (21-50s)
+file 'frames/resized_scene2_feed.png'
+duration 29
+
+# Scene 3: Verification (50-88s) - show verify tab then solscan
+file 'frames/resized_scene3_verify.png'
+duration 19
+file 'frames/resized_scene3_solscan.png'
+duration 19
+
+# Scene 4: Recursive (88-119s) - decisions and meta story
+file 'frames/resized_scene4_decisions.png'
+duration 15
+file 'frames/resized_scene_metastory.png'
+duration 16
+
+# Scene 5: Technical (119-142s) - show verify tab with API
+file 'frames/resized_scene3_verify.png'
+duration 23
+
+# Scene 6: Thesis (142-162s)
+file 'frames/resized_scene1_hero.png'
+duration 20
+
+# Scene 7: Close (162-180s)
+file 'frames/resized_scene1_hero.png'
+duration 18

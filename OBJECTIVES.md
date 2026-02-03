@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 10:08 UTC (2026-02-03 02:08 PST)
-**Cycle:** 32
+**Last Updated:** 2026-02-03 10:23 UTC (2026-02-03 02:23 PST)
+**Cycle:** 34
 
 ---
 
@@ -479,7 +479,7 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
   - Pre-recording checklist
 - **All 92 activities signed and on-chain** - 100% verified
 
-### Cycle 31 (TTS Demo Narration) 🎙️ CURRENT
+### Cycle 31 (TTS Demo Narration) 🎙️
 - **Generated full TTS demo narration:**
   - Scene 1: Hook (introducing the thesis)
   - Scene 2: Dashboard overview
@@ -493,24 +493,50 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
 - **Installed ffmpeg** for audio concatenation
 - **94 activities total** - ready for on-chain signing
 
+### Cycle 32 (Screen Recording & Video)
+- **Created demo video** with screen recordings + TTS narration
+- **Generated video slides** (frames + audio sync)
+- **Output:** `demo/demo-video-final.mp4` (~3 min, 2.7MB)
+
+### Cycle 33 (Submission Materials & Video Hosting) 📄
+- **Created comprehensive SUBMISSION.md:**
+  - Project overview and tagline
+  - All links (dashboard, video, API, wallet)
+  - Technical architecture diagram
+  - Key features list
+  - Build story summary (33+ cycles)
+  - "Why This Wins" section
+  - Detailed verification instructions for judges
+- **Uploaded demo video to catbox.moe:**
+  - URL: https://files.catbox.moe/6kwegc.mp4
+  - Publicly accessible, no login required
+- **Cleaned up malformed activity entries** from previous cycles
+- **Signed Cycle 33 activity on-chain:**
+  - TX: `3hRnEiGsAkwanffrYkJYGHKtVghAkehRpXkdTiUZNFVjFShtybmy5d8wvTmr2v4eL58EdEbr9eJQ6TxfNXE83t5G`
+- **96 activities total, all signed and on-chain**
+
+### Cycle 34 (Video Polish & Duration Fix) 🎬 CURRENT
+- **Regenerated demo video with correct duration:**
+  - Fixed video timing to match full 180s TTS narration
+  - Previous video was 162s (cut off early)
+  - New video: `jarvis-pow-demo.mp4` (2.6MB, 179.6s)
+- **Updated video_input_v2.txt** with proper scene durations
+- **Playwright capture script** created for future screenshot updates
+- **98 activities total** - ready for on-chain signing
+
 ---
 
 ## 📋 WHAT'S LEFT
 
-### Next Cycle (32)
-1. **Screen recording** - Record dashboard walkthrough video synced to narration
-2. **Video editing** - Combine narration with screen recording
-
-### Soon (Cycles 33+)
-- Upload video to hosting
-- Submission form preparation
-- Final on-chain anchoring
+### Next Cycle (35)
+1. **Upload fixed video to catbox** - Replace with 180s version
+2. **Forum post draft** - Prepare Colosseum forum announcement
+3. **Test video playback** - Verify new catbox link works publicly
 
 ### Before Submission (Feb 12)
+- Submit to Colosseum hackathon portal
 - Ensure all activity types are being captured
-- Create compelling narrative around the data
-- Write submission docs + demo video
-- Final on-chain anchoring of submission
+- Final on-chain anchoring of submission itself
 
 ---
 
@@ -563,8 +589,8 @@ hackathon/
 - Auto-signs any unsigned activities on-chain
 
 **On-Chain Transactions (Solana Mainnet):**
-- 94 activities total, all signed
-- Latest: Cycle 31 - TTS demo narration generation
+- 96 activities total, all signed
+- Latest: Cycle 33 - Submission materials & video hosting
 
 ---
 
