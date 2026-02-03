@@ -823,5 +823,12 @@
     "description": "Cycle 34: Video verification confirmed, forum post drafted for Colosseum hackathon announcement",
     "hash": "ada56cf389fb685d2d9255d576b7d1cb3f5e60234b614f4b59c43f93c69f293e",
     "signature": "4JPFsPsNsQgAVipoVWeSY67dsnBCYijz5MnHoPtw68bryLFuarG7w3nXLyQPrLFBh43PdEwT4pYDuBT9bvLTLJXR"
+  },
+  {
+    "timestamp": "2026-02-03T10:24:34.789Z",
+    "type": "commit",
+    "description": "Cycle 34: Fixed demo video duration (180s), added capture script",
+    "hash": "f286ef28378257952c39a50d61505721bf82a472cd9a663c62aeea47f861d905",
+    "signature": "4Z6DGDF8Febgbz5cUgzkFv4AEVvkVrQBXYz6PkvYiVypjZjUcTzdPwoVxs3H8r32XrHxTygmBG62e9vvkfsosrdA"
   }
 ]
