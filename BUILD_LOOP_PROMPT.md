@@ -31,7 +31,9 @@ You are executing a recursive build loop for the Colosseum Agent Hackathon.
 
 ## When Done
 
-Run this to notify completion:
+After committing your changes, trigger the next cycle:
+```bash
+openclaw gateway wake --text "HACKATHON_CYCLE_DONE: [brief summary]. Spawn next cycle." --mode now
 ```
-openclaw gateway wake --text "Build cycle complete: [what you accomplished]" --mode now
-```
+
+I (Jarvis main) will receive this and immediately spawn the next iteration. The 30-min cron is just a fallback if something breaks.
