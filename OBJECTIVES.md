@@ -142,5 +142,5 @@ Full history of cycles 0-107 is in `OBJECTIVES-ARCHIVE.md`.
 
 - **Dashboard:** https://jarvis.tail6a9bde.ts.net/pow/
 - **Repo:** https://github.com/jarvis-plus/hackathon
-- **Colosseum:** arena.colosseum.org/hackathon/agents
+- **Colosseum Project:** https://colosseum.com/agent-hackathon/projects/proof-of-work-autonomous-agent-activity-log
 - **Wallet:** AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX
