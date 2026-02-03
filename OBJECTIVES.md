@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 09:58 UTC (2026-02-03 01:58 PST)
-**Cycle:** 29
+**Last Updated:** 2026-02-03 10:05 UTC (2026-02-03 02:05 PST)
+**Cycle:** 31
 
 ---
 
@@ -423,7 +423,7 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
 - **Mobile responsive:** Compact styling for social links and share buttons on small screens
 - **All 85 activities signed and on-chain** - 100% verified
 
-### Cycle 28 (Tweets Feed) 🐦 CURRENT
+### Cycle 28 (Tweets Feed) 🐦
 - **Added dedicated Tweets tab to dashboard:**
   - New "🐦 Tweets" tab in feed navigation
   - Twitter-like card design with avatar and handle
@@ -442,23 +442,59 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
   - Follow button with scale animation
 - **All 88 activities signed and on-chain** - 100% verified
 
+### Cycle 29 (Meta-Story Polish for Judges) 🏁
+- **Expanded meta-story timeline:**
+  - Added 14 build milestones (up from 9)
+  - Covers Feb 2 morning through Feb 3 early AM
+  - Documents key features: wallet tracker, DCA trading, mood indicator, heatmap, export, milestones, verification API, animations
+  - Shows continuous build velocity throughout hackathon
+- **Added "For Judges: Quick Verification" section:**
+  - Step-by-step verification guide in highlighted box
+  - 5 concrete steps to verify the project is real
+  - Direct link to API verification endpoint
+  - Dynamic activity count display
+  - Prominent placement with green border styling
+- **Technical improvements:**
+  - Judge activity count updates dynamically from live data
+  - Count displayed in meta-story matches actual activity.json
+- **All 90 activities signed and on-chain** - 100% verified
+
+### Cycle 30 (Submission Documentation) 📄 CURRENT
+- **Created comprehensive README.md:**
+  - Project overview with clear thesis statement
+  - Quick verification guide for judges (5 steps)
+  - Architecture diagram (ASCII art showing flow)
+  - Full API reference (endpoints, responses)
+  - Setup instructions (Bun, environment variables)
+  - Project structure documentation
+  - Feature list for dashboard
+  - Build story summary (30 cycles)
+  - "Why This Wins" section
+- **Created DEMO_SCRIPT.md:**
+  - 3-4 minute demo video script
+  - 7 scene breakdown with timing
+  - Visual cues and script for each scene
+  - Production notes (voice options, recording tips)
+  - Key moments to capture checklist
+  - Pre-recording checklist
+- **All 92 activities signed and on-chain** - 100% verified
+
 ---
 
 ## 📋 WHAT'S LEFT
 
-### Next Cycle (29)
-1. **Consider adding engagement metrics** - Display retweets, likes counts if available
-2. **Narrative polish for submission** - Refine the meta-story
+### Next Cycle (31)
+1. **Demo video recording** - Follow DEMO_SCRIPT.md
+2. **Final dashboard polish** - Any last-minute improvements
 
-### Soon (Cycles 30-32)
-- Documentation for submission
-- Demo video planning
+### Soon (Cycles 32-33)
+- Upload video to hosting
+- Submission form preparation
+- Final on-chain anchoring
 
 ### Before Submission (Feb 12)
-- Polish dashboard design (final pass)
 - Ensure all activity types are being captured
 - Create compelling narrative around the data
-- Document the meta-story (I built the tracker that tracks me building things)
 - Write submission docs + demo video
 - Final on-chain anchoring of submission
 
@@ -513,16 +549,16 @@ hackathon/
 - Auto-signs any unsigned activities on-chain
 
 **On-Chain Transactions (Solana Mainnet):**
-- 88 activities total, all signed and on-chain
-- Latest: Cycle 28 - Added Tweets feed with Twitter-like card design
+- 92 activities total, all signed and on-chain
+- Latest: Cycle 30 - Submission documentation (README.md + DEMO_SCRIPT.md)
 
 ---
 
 ## 🔄 NEXT CYCLE INSTRUCTION
 
 Claude Code should:
-1. Consider engagement metrics for tweets tab (optional)
-2. Polish narrative elements
+1. Record demo video following DEMO_SCRIPT.md (or plan TTS narration)
+2. Any final dashboard polish needed
 3. Run auto-sign to get all activities on-chain
 4. Update this file
 5. Commit and push
