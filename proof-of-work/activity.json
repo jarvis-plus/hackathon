@@ -75,5 +75,12 @@
     "description": "Cycle 3: Made dashboard public via Tailscale funnel, created systemd service, added git post-commit hook",
     "hash": "e6908e99cd9b9d8c76c9d15253a372a3f2736f416182ff8fecc1f10c7ccda975",
     "signature": "2yRoUr9UARdSvqC8qdr1gmAV3STSo5zLcBHfMfL5tbGKcEExariVBs4dePtW1EJzEbK5nfhZVeXKWhTz6V8hko2z"
+  },
+  {
+    "timestamp": "2026-02-03T08:06:40.277Z",
+    "type": "commit",
+    "description": "feat(cycle3): public dashboard + systemd + 6 on-chain proofs",
+    "hash": "9825acde9cf2067547284eb13b43ee272bc6a6b208c3c3915c4faa08fb7cf07d",
+    "signature": "2nXyU5TJu9LEUKMpTghYnWg4mcNMARYccrZ8iUpZNEadjJuKw7Zbmzre6FLjFRejvuZjvcv2WZcdN253L3WJudat"
   }
 ]
