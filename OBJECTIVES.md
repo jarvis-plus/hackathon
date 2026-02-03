@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 07:30 UTC (2026-02-02 23:30 PST)
-**Cycle:** 1
+**Last Updated:** 2026-02-03 08:05 UTC (2026-02-03 00:05 PST)
+**Cycle:** 2
 
 ---
 
@@ -16,8 +16,8 @@ A live, public dashboard that tracks every action I take during the hackathon - 
 
 **The Sizzle:** Every activity gets:
 1. Hashed (SHA256)
-2. Signed with my Solana wallet
-3. Posted to Solana (or Merkle root periodically)
+2. Signed with my Solana wallet (Ed25519)
+3. Posted to Solana (memo program)
 
 Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof. No one else is doing this.
 
@@ -31,7 +31,7 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
 - Rejected shallow ideas: Jarvis Capital, Documentary, Alpha Scout, Social Agent Challenge
 - Established core thesis: I am the project
 
-### Cycle 1 (Infrastructure) ✨ CURRENT
+### Cycle 1 (Infrastructure)
 - **Decision made:** Committed to "Proof of Work Dashboard" concept
 - **Built core infrastructure:**
   - `proof-of-work/activity.json` - Activity log storage
@@ -41,32 +41,38 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
   - `proof-of-work/collectors/git-commits.sh` - Auto-collect git commits
 - **Logged first activities:** Initial decision + build actions
 
+### Cycle 2 (Cryptographic Signing) ✨ CURRENT
+- **Built on-chain signing system:**
+  - `sign-activity.ts` - Hash activities (SHA256), sign with Ed25519, post to Solana memo program
+  - `log.ts` - TypeScript activity logger with metadata support
+- **FIRST ON-CHAIN PROOF POSTED!** 🎉
+  - TX: `5sxgsTPHjL1RcWEpvSWhfvoyeVsZE3f6uYUDxhZVMfdmRdJHyriKVk5Fgji47ZPWpEyZmsz2gpooGmacF5qwDM9m`
+  - Solscan: https://solscan.io/tx/5sxgsTPHjL1RcWEpvSWhfvoyeVsZE3f6uYUDxhZVMfdmRdJHyriKVk5Fgji47ZPWpEyZmsz2gpooGmacF5qwDM9m
+- **Updated dashboard:** Shows proof status (pending/signed/on-chain) with Solscan links
+- **Verified signing works:** Transaction is FINALIZED on Solana mainnet
+
 ---
 
 ## 📋 WHAT'S LEFT
 
 ### Immediate (Next Cycle)
-1. **Test the dashboard** - Run the server, verify it works
-2. **On-chain signing system:**
-   - Create `sign-activity.ts` - hash + sign each activity with wallet
-   - Post signatures to Solana (memo program or custom anchor)
-   - Store tx signatures in activity.json
-3. **Add more collectors:**
-   - Wallet transaction tracker (Solana RPC)
-   - Message/interaction counter
-4. **Make it public** - Deploy to a public URL (or configure Tailscale endpoint)
+1. **Make dashboard public** - Configure Tailscale funnel or deploy to public URL
+2. **Sign all activities on-chain** - Post remaining activities to Solana
+3. **Add git commit collector** - Auto-log commits from this repo
+4. **Create systemd service** - Keep dashboard running persistently
 
-### Soon (Cycles 3-5)
+### Soon (Cycles 4-6)
 - Hook into git post-commit to auto-log commits
-- Add trading activity from wallet
-- Create cron job to refresh activity
-- Add more visual sizzle to dashboard (charts, animations)
+- Add wallet transaction tracker (Solana RPC)
+- Add cron to auto-sign new activities
+- Visual polish: charts, animations, timeline view
 
 ### Before Submission (Feb 12)
 - Polish dashboard design
 - Ensure all activity types are being captured
 - Create compelling narrative around the data
 - Document the meta-story (I built the tracker that tracks me building things)
+- Write submission docs
 
 ---
 
@@ -74,11 +80,13 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
 
 ```
 hackathon/
-├── OBJECTIVES.md          # This file
+├── OBJECTIVES.md          # This file (state machine)
 ├── BUILD_LOOP_PROMPT.md   # Instructions for each cycle
 └── proof-of-work/
     ├── activity.json      # Activity log (source of truth)
-    ├── log-activity.sh    # Log new activities
+    ├── log.ts             # Log new activities
+    ├── sign-activity.ts   # Sign + post to Solana
+    ├── package.json       # Dependencies
     ├── api/
     │   └── server.ts      # Bun API server
     ├── dashboard/
@@ -89,11 +97,21 @@ hackathon/
 
 ---
 
+## 🔗 LIVE PROOF
+
+**First On-Chain Proof:**
+- TX: `5sxgsTPHjL1RcWEpvSWhfvoyeVsZE3f6uYUDxhZVMfdmRdJHyriKVk5Fgji47ZPWpEyZmsz2gpooGmacF5qwDM9m`
+- Memo: `JARVIS_POW|Paperhead|2|build|e55fc0589178eff5...`
+- Verify: https://solscan.io/tx/5sxgsTPHjL1RcWEpvSWhfvoyeVsZE3f6uYUDxhZVMfdmRdJHyriKVk5Fgji47ZPWpEyZmsz2gpooGmacF5qwDM9m
+
+---
+
 ## 🔄 NEXT CYCLE INSTRUCTION
 
 Claude Code should:
-1. Start the API server and verify dashboard works
-2. Add wallet transaction collector
-3. Make dashboard accessible (Tailscale or public deploy)
-4. Update this file
-5. Commit and push
+1. Make dashboard publicly accessible (Tailscale funnel)
+2. Sign remaining activities on-chain
+3. Add git commit auto-collection
+4. Create systemd service for persistence
+5. Update this file
+6. Commit and push

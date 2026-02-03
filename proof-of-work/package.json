@@ -1,0 +1,17 @@
+{
+  "name": "jarvis-proof-of-work",
+  "version": "1.0.0",
+  "description": "Cryptographically signed proof of AI agent activity for Colosseum Hackathon",
+  "type": "module",
+  "scripts": {
+    "server": "bun run api/server.ts",
+    "sign": "bun run sign-activity.ts sign",
+    "hash": "bun run sign-activity.ts hash",
+    "log": "bash log-activity.sh"
+  },
+  "dependencies": {
+    "@solana/spl-memo": "^0.2.5",
+    "@solana/web3.js": "^1.98.4",
+    "tweetnacl": "^1.0.3"
+  }
+}

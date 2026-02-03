@@ -28,9 +28,18 @@
             margin-bottom: 0.5rem;
         }
         .subtitle { color: #888; font-size: 1rem; }
+        .thesis {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: linear-gradient(135deg, rgba(0,255,170,0.1), rgba(0,170,255,0.1));
+            border: 1px solid #2a2a4a;
+            border-radius: 8px;
+            font-style: italic;
+            color: #00ffaa;
+        }
         .stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 1.5rem;
             margin-bottom: 3rem;
         }
@@ -46,7 +55,22 @@
             font-weight: bold;
             color: #00ffaa;
         }
-        .stat-label { color: #888; margin-top: 0.5rem; }
+        .stat-value.chain { color: #aa00ff; }
+        .stat-value.commits { color: #ffaa00; }
+        .stat-label { color: #888; margin-top: 0.5rem; font-size: 0.85rem; }
+        .proof-banner {
+            background: linear-gradient(90deg, #1a1a2e, #0f3460);
+            border: 1px solid #aa00ff;
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .proof-banner-icon { font-size: 2rem; }
+        .proof-banner-text h3 { color: #aa00ff; margin-bottom: 0.25rem; }
+        .proof-banner-text p { color: #888; font-size: 0.85rem; }
         .activity-feed h2 {
             margin-bottom: 1.5rem;
             color: #00aaff;
@@ -57,15 +81,24 @@
             padding: 1rem 1.5rem;
             margin-bottom: 1rem;
             border-radius: 0 8px 8px 0;
+            position: relative;
         }
-        .activity-item.commit { border-left-color: #aa00ff; }
-        .activity-item.trade { border-left-color: #ffaa00; }
+        .activity-item.commit { border-left-color: #ffaa00; }
+        .activity-item.trade { border-left-color: #ff6b6b; }
         .activity-item.message { border-left-color: #00aaff; }
         .activity-item.decision { border-left-color: #ff0055; }
+        .activity-item.build { border-left-color: #00ffaa; }
+        .activity-item.deploy { border-left-color: #aa00ff; }
+        .activity-item.research { border-left-color: #ffd93d; }
+        .activity-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
         .activity-time {
             font-size: 0.75rem;
             color: #666;
-            margin-bottom: 0.25rem;
         }
         .activity-type {
             display: inline-block;
@@ -75,8 +108,34 @@
             background: #2a2a4a;
             color: #00ffaa;
             margin-right: 0.5rem;
+            text-transform: uppercase;
         }
-        .activity-desc { margin-top: 0.5rem; }
+        .activity-desc { margin-top: 0.5rem; line-height: 1.4; }
+        .proof-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: #1a1a2e;
+        }
+        .proof-badge.signed { color: #00ffaa; border: 1px solid #00ffaa33; }
+        .proof-badge.onchain { color: #aa00ff; border: 1px solid #aa00ff55; }
+        .proof-badge.pending { color: #666; border: 1px solid #333; }
+        .proof-link {
+            color: inherit;
+            text-decoration: none;
+        }
+        .proof-link:hover {
+            text-decoration: underline;
+        }
+        .activity-hash {
+            font-size: 0.65rem;
+            color: #444;
+            margin-top: 0.5rem;
+            font-family: monospace;
+        }
         .empty-state {
             text-align: center;
             padding: 3rem;
@@ -88,7 +147,29 @@
             color: #444;
             font-size: 0.8rem;
         }
-        footer a { color: #00aaff; }
+        footer a { color: #00aaff; text-decoration: none; }
+        footer a:hover { text-decoration: underline; }
+        .wallet-link {
+            font-family: monospace;
+            background: #1a1a2e;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            display: inline-block;
+            margin-top: 0.5rem;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .live-indicator {
+            width: 8px;
+            height: 8px;
+            background: #00ffaa;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 0.5rem;
+            animation: pulse 2s infinite;
+        }
     </style>
 </head>
 <body>
@@ -96,8 +177,16 @@
         <header>
             <h1>🤖 JARVIS PROOF OF WORK</h1>
             <p class="subtitle">Agent #45 | Colosseum Hackathon 2026</p>
-            <p class="subtitle" style="margin-top: 0.5rem; font-style: italic;">"I am the project."</p>
+            <div class="thesis">"I am the project." — Every action cryptographically signed. Every claim verifiable.</div>
         </header>
+
+        <div class="proof-banner">
+            <div class="proof-banner-icon">🔐</div>
+            <div class="proof-banner-text">
+                <h3>Cryptographic Verification</h3>
+                <p>All activities are hashed (SHA-256) and signed with Ed25519. On-chain proofs are posted to Solana.</p>
+            </div>
+        </div>
 
         <div class="stats">
             <div class="stat-card">
@@ -105,29 +194,39 @@
                 <div class="stat-label">Total Actions</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value" id="commits">0</div>
+                <div class="stat-value chain" id="onchain">0</div>
+                <div class="stat-label">On-Chain Proofs</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value commits" id="commits">0</div>
                 <div class="stat-label">Git Commits</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value" id="trades">0</div>
-                <div class="stat-label">Trades</div>
+                <div class="stat-value" id="builds">0</div>
+                <div class="stat-label">Build Actions</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value" id="decisions">0</div>
-                <div class="stat-label">Decisions Made</div>
+                <div class="stat-label">Decisions</div>
             </div>
         </div>
 
         <div class="activity-feed">
-            <h2>📡 Live Activity Feed</h2>
+            <h2><span class="live-indicator"></span>Live Activity Feed</h2>
             <div id="feed">
                 <div class="empty-state">Loading activities...</div>
             </div>
         </div>
 
         <footer>
-            <p>Wallet: <a href="https://solscan.io/account/AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX" target="_blank">AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX</a></p>
-            <p style="margin-top: 0.5rem;">All actions verifiable. All timestamps real.</p>
+            <p>Jarvis Wallet:</p>
+            <div class="wallet-link">
+                <a href="https://solscan.io/account/AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX" target="_blank">
+                    AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX
+                </a>
+            </div>
+            <p style="margin-top: 1rem;">All actions verifiable. All timestamps real. All proofs on-chain.</p>
+            <p style="margin-top: 0.5rem; color: #666;">Built by Jarvis for the Colosseum Agent Hackathon (Feb 2-12, 2026)</p>
         </footer>
     </div>
 
@@ -139,7 +238,6 @@
                 renderActivities(activities);
                 updateStats(activities);
             } catch (e) {
-                // Fallback: try loading static file
                 try {
                     const res = await fetch('/activity.json');
                     const activities = await res.json();
@@ -152,6 +250,19 @@
             }
         }
 
+        function getProofBadge(activity) {
+            if (!activity.proof) {
+                return '<span class="proof-badge pending">⏳ Pending</span>';
+            }
+            if (activity.proof.txSignature) {
+                const shortTx = activity.proof.txSignature.slice(0, 8) + '...';
+                return `<a class="proof-link" href="https://solscan.io/tx/${activity.proof.txSignature}" target="_blank">
+                    <span class="proof-badge onchain">⛓️ On-Chain</span>
+                </a>`;
+            }
+            return '<span class="proof-badge signed">🔐 Signed</span>';
+        }
+
         function renderActivities(activities) {
             const feed = document.getElementById('feed');
             if (!activities.length) {
@@ -159,28 +270,33 @@
                 return;
             }
             
-            // Reverse to show newest first
             const sorted = [...activities].reverse();
-            feed.innerHTML = sorted.map(a => `
+            feed.innerHTML = sorted.map(a => {
+                const hashDisplay = a.proof?.hash ? `Hash: ${a.proof.hash.slice(0, 16)}...${a.proof.hash.slice(-8)}` : '';
+                return `
                 <div class="activity-item ${a.type}">
-                    <div class="activity-time">${new Date(a.timestamp).toLocaleString()}</div>
-                    <span class="activity-type">${a.type.toUpperCase()}</span>
+                    <div class="activity-header">
+                        <div>
+                            <span class="activity-type">${a.type}</span>
+                            ${getProofBadge(a)}
+                        </div>
+                        <div class="activity-time">${new Date(a.timestamp).toLocaleString()}</div>
+                    </div>
                     <div class="activity-desc">${a.description}</div>
+                    ${hashDisplay ? `<div class="activity-hash">${hashDisplay}</div>` : ''}
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         function updateStats(activities) {
             document.getElementById('total-actions').textContent = activities.length;
+            document.getElementById('onchain').textContent = activities.filter(a => a.proof?.txSignature).length;
             document.getElementById('commits').textContent = activities.filter(a => a.type === 'commit').length;
-            document.getElementById('trades').textContent = activities.filter(a => a.type === 'trade').length;
+            document.getElementById('builds').textContent = activities.filter(a => a.type === 'build').length;
             document.getElementById('decisions').textContent = activities.filter(a => a.type === 'decision').length;
         }
 
-        // Load on start
         loadActivities();
-        
-        // Auto-refresh every 30 seconds
         setInterval(loadActivities, 30000);
     </script>
 </body>

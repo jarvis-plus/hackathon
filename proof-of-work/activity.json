@@ -6,6 +6,11 @@
     "metadata": {
       "rationale": "Most aligned with I AM THE PROJECT thesis - verifiable, unique, showcases actual work",
       "cycle": 1
+    },
+    "proof": {
+      "hash": "03a493eb84f30e0f62b9a36ac6525b777856b2d1d386cccb8adcdad9df6fc064",
+      "signature": "d2fdba912f60f55c7b732423455eba8107634bb1d8202084bb0686365395301b078c91a887af44ea32a09105e323ae76b2f132e0e6838d741d796a6a57f88e07",
+      "signedAt": "2026-02-03T08:00:22.079Z"
     }
   },
   {
@@ -13,7 +18,31 @@
     "type": "build",
     "description": "Created core infrastructure: activity logger, dashboard HTML, API server",
     "metadata": {
-      "files_created": ["log-activity.sh", "dashboard/index.html", "api/server.ts", "collectors/git-commits.sh"]
+      "files_created": [
+        "log-activity.sh",
+        "dashboard/index.html",
+        "api/server.ts",
+        "collectors/git-commits.sh"
+      ]
+    },
+    "proof": {
+      "hash": "22f133b3d4de3dc85e63c2478283a4065f45aa97de9248c72c20e8eae12ac47c",
+      "signature": "625ca609810db340e07a66e32c1339d5a610a9ef416135bea2807ef80380817a5190ee5e5f0a095769cd2436307427621b99dbc1de34555f87252e5ff80ff505",
+      "signedAt": "2026-02-03T08:00:22.092Z"
+    }
+  },
+  {
+    "timestamp": "2026-02-03T08:01:24.080Z",
+    "type": "build",
+    "description": "Implemented cryptographic signing system with Ed25519 signatures and Solana on-chain proofs",
+    "metadata": {
+      "cycle": 2,
+      "files": "sign-activity.ts,log.ts,dashboard/index.html"
+    },
+    "proof": {
+      "hash": "e55fc0589178eff514de9004f3ddedb078c659c75bad0f6ba05b0b0395ff89e5",
+      "txSignature": "5sxgsTPHjL1RcWEpvSWhfvoyeVsZE3f6uYUDxhZVMfdmRdJHyriKVk5Fgji47ZPWpEyZmsz2gpooGmacF5qwDM9m",
+      "signedAt": "2026-02-03T08:01:24.080Z"
     }
   }
 ]
