@@ -21,7 +21,7 @@ const MEMO_PROGRAM_ID = new PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfc
 // Owner identity for on-chain records - NEVER use real names
 const OWNER_IDENTITY = 'Paperhead';
 
-interface Activity {
+export interface Activity {
   timestamp: string;
   type: string;
   description: string;
@@ -30,7 +30,7 @@ interface Activity {
   hash?: string;       // SHA256 hash of activity
 }
 
-function hashActivity(activity: Activity): string {
+export function hashActivity(activity: Activity): string {
   // Create deterministic hash of activity content (excluding signature fields)
   const content = {
     owner: OWNER_IDENTITY,

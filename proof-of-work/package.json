@@ -7,7 +7,8 @@
     "server": "bun run api/server.ts",
     "sign": "bun run sign-activity.ts sign",
     "hash": "bun run sign-activity.ts hash",
-    "log": "bash log-activity.sh"
+    "log": "bash log-activity.sh",
+    "test": "bun test"
   },
   "dependencies": {
     "@solana/spl-memo": "^0.2.5",

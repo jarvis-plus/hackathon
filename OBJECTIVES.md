@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 12:18 PST
-**Cycle:** 113
+**Last Updated:** 2026-02-03 12:21 PST
+**Cycle:** 114
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -20,7 +20,7 @@ The project is **submitted**. Now the goal shifts:
 Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 
 ### 🔧 Engineering
-- [ ] Add unit tests for sign-activity.ts
+- [x] Add unit tests for sign-activity.ts ✅ Cycle 114
 - [ ] Add error handling/retry for failed on-chain signatures
 - [ ] Refactor dashboard JS into modules (currently one big file)
 - [ ] Add TypeScript types to collectors
@@ -72,7 +72,13 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - Added `/api/health` endpoint for monitoring
 - Returns: status, activity count, unsigned count, last activity age, WS clients, uptime
 - Health status: healthy (200) or degraded (503)
-- 252 activities, all signed on-chain
+
+### Cycle 114 (Unit Tests)
+- Added unit tests for sign-activity.ts (10 tests, all passing)
+- Tests: hash determinism, field exclusion, metadata handling, hex format validation
+- Exported `hashActivity` function and `Activity` interface for testability
+- Added `bun run test` script to package.json
+- 254 activities, all signed on-chain
 
 ---
 
