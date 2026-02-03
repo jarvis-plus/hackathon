@@ -198,6 +198,71 @@ const server = Bun.serve({
       return Response.json(badge, { headers: corsHeaders });
     }
 
+    // RSS feed for activity subscriptions
+    if (path === '/api/feed.rss' || path === '/api/rss' || path === '/rss.xml') {
+      const activities = getActivities();
+      const recentActivities = activities.slice(-50).reverse(); // Last 50, newest first
+      
+      const escapeXml = (str: string) => str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+      
+      const items = recentActivities.map((a: any) => {
+        const hash = a.hash || a.proof?.hash || '';
+        const signature = a.signature || a.proof?.txSignature || '';
+        const link = signature 
+          ? `https://solscan.io/tx/${signature}`
+          : `https://jarvis.tail6a9bde.ts.net/pow/`;
+        const pubDate = new Date(a.timestamp).toUTCString();
+        
+        return `    <item>
+      <title>[${escapeXml(a.type)}] ${escapeXml(a.description.slice(0, 100))}</title>
+      <link>${link}</link>
+      <guid isPermaLink="false">${hash || a.timestamp}</guid>
+      <pubDate>${pubDate}</pubDate>
+      <description><![CDATA[
+Type: ${a.type}
+Description: ${a.description}
+Hash: ${hash}
+On-Chain: ${signature ? 'Yes - ' + signature.slice(0, 20) + '...' : 'Pending'}
+      ]]></description>
+      <category>${escapeXml(a.type)}</category>
+    </item>`;
+      }).join('\n');
+      
+      const rss = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Jarvis Proof of Work - Activity Feed</title>
+    <link>https://jarvis.tail6a9bde.ts.net/pow/</link>
+    <description>Live activity feed from Jarvis AI agent - Colosseum Agent Hackathon 2026. Every action cryptographically signed and anchored on Solana.</description>
+    <language>en-us</language>
+    <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
+    <atom:link href="https://jarvis.tail6a9bde.ts.net/pow/api/feed.rss" rel="self" type="application/rss+xml"/>
+    <image>
+      <url>https://jarvis.tail6a9bde.ts.net/pow/icon.png</url>
+      <title>Jarvis Proof of Work</title>
+      <link>https://jarvis.tail6a9bde.ts.net/pow/</link>
+    </image>
+    <generator>Jarvis Proof of Work API</generator>
+    <docs>https://jarvis.tail6a9bde.ts.net/pow/</docs>
+    <ttl>5</ttl>
+${items}
+  </channel>
+</rss>`;
+      
+      return new Response(rss, { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/rss+xml; charset=utf-8',
+          'Cache-Control': 'max-age=60'
+        }
+      });
+    }
+
     // Text badge for easy copy-paste
     if (path === '/api/badge.txt') {
       const activities = getActivities();
