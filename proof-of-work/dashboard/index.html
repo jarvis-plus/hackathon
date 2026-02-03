@@ -154,6 +154,32 @@
         .stat-value.tweets { color: #1DA1F2; }
         .stat-value.uptime { color: #ff69b4; }
         .stat-value.volume { color: #50fa7b; }
+        .stat-value.mood { 
+            font-size: clamp(2rem, 5vw, 3rem);
+            line-height: 1;
+        }
+        
+        #mood-card {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #mood-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at center, transparent 30%, var(--bg-primary) 100%);
+            pointer-events: none;
+        }
+        
+        .mood-status {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
 
         .stat-label {
             color: var(--text-secondary);
@@ -757,6 +783,10 @@
                 <div class="stat-value volume" id="volume">$0</div>
                 <div class="stat-label">Trade Volume</div>
             </div>
+            <div class="stat-card" id="mood-card">
+                <div class="stat-value mood" id="mood">🤖</div>
+                <div class="stat-label">Agent Mood</div>
+            </div>
         </div>
 
         <div class="charts-section">
@@ -1147,6 +1177,121 @@
             return div.innerHTML;
         }
 
+        // Calculate agent mood based on activity patterns
+        function calculateMood(activities) {
+            const now = new Date();
+            const oneHourAgo = new Date(now - 60 * 60 * 1000);
+            const fourHoursAgo = new Date(now - 4 * 60 * 60 * 1000);
+            const oneDayAgo = new Date(now - 24 * 60 * 60 * 1000);
+            
+            // Count activities in different time windows
+            const lastHour = activities.filter(a => new Date(a.timestamp) > oneHourAgo).length;
+            const lastFourHours = activities.filter(a => new Date(a.timestamp) > fourHoursAgo).length;
+            const lastDay = activities.filter(a => new Date(a.timestamp) > oneDayAgo).length;
+            
+            // Get activity types in last 4 hours
+            const recentTypes = new Set(
+                activities
+                    .filter(a => new Date(a.timestamp) > fourHoursAgo)
+                    .map(a => a.type)
+            );
+            
+            // Check for specific recent activities
+            const recentDecisions = activities.filter(a => 
+                a.type === 'decision' && new Date(a.timestamp) > fourHoursAgo
+            ).length;
+            const recentTrades = activities.filter(a => 
+                (a.type === 'trade' || a.type === 'transfer') && new Date(a.timestamp) > fourHoursAgo
+            ).length;
+            const recentCommits = activities.filter(a => 
+                a.type === 'commit' && new Date(a.timestamp) > fourHoursAgo
+            ).length;
+            
+            // Determine mood based on patterns
+            let emoji, status, color;
+            
+            if (lastHour >= 5) {
+                // Very high activity - on fire!
+                emoji = '🔥';
+                status = 'On Fire';
+                color = '#ff6b6b';
+            } else if (lastHour >= 3) {
+                // High activity - energetic
+                emoji = '⚡';
+                status = 'Energetic';
+                color = '#ffaa00';
+            } else if (lastFourHours >= 8 && recentTypes.size >= 3) {
+                // Diverse activity - focused work
+                emoji = '🎯';
+                status = 'Focused';
+                color = '#00aaff';
+            } else if (recentDecisions >= 2) {
+                // Making decisions - strategic thinking
+                emoji = '🧠';
+                status = 'Strategic';
+                color = '#aa00ff';
+            } else if (recentTrades >= 2) {
+                // Trading activity - trading mode
+                emoji = '📈';
+                status = 'Trading';
+                color = '#ff6b6b';
+            } else if (recentCommits >= 3) {
+                // Lots of commits - building
+                emoji = '🛠️';
+                status = 'Building';
+                color = '#00ffaa';
+            } else if (lastFourHours >= 4) {
+                // Moderate activity - working
+                emoji = '💪';
+                status = 'Working';
+                color = '#00ffaa';
+            } else if (lastFourHours >= 1) {
+                // Low recent activity - cruising
+                emoji = '🚀';
+                status = 'Cruising';
+                color = '#00aaff';
+            } else if (lastDay >= 10) {
+                // No recent but active day - taking a break
+                emoji = '☕';
+                status = 'Break Time';
+                color = '#ffaa00';
+            } else if (lastDay >= 1) {
+                // Very low activity - resting
+                emoji = '😴';
+                status = 'Resting';
+                color = '#888';
+            } else {
+                // No activity - sleeping/offline
+                emoji = '🌙';
+                status = 'Offline';
+                color = '#444';
+            }
+            
+            return { emoji, status, color };
+        }
+        
+        function updateMood(activities) {
+            const mood = calculateMood(activities);
+            const moodEl = document.getElementById('mood');
+            const moodCard = document.getElementById('mood-card');
+            
+            if (moodEl) {
+                moodEl.textContent = mood.emoji;
+                moodEl.style.color = mood.color;
+                
+                // Add status label below the stat label
+                const moodLabel = moodCard.querySelector('.stat-label');
+                let statusEl = moodCard.querySelector('.mood-status');
+                if (!statusEl) {
+                    statusEl = document.createElement('div');
+                    statusEl.className = 'mood-status';
+                    moodLabel.after(statusEl);
+                }
+                statusEl.textContent = mood.status;
+                statusEl.style.color = mood.color;
+            }
+        }
+
         function updateStats(activities) {
             document.getElementById('total-actions').textContent = activities.length;
             document.getElementById('onchain').textContent = activities.filter(a => 
@@ -1188,6 +1333,9 @@
             document.getElementById('volume').textContent = totalVolume >= 1 
                 ? `$${totalVolume.toFixed(0)}` 
                 : `$${totalVolume.toFixed(2)}`;
+            
+            // Update agent mood based on activity patterns
+            updateMood(activities);
             
             // Calculate uptime from first activity
             if (activities.length > 0) {
