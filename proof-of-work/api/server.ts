@@ -152,6 +152,58 @@ const server = Bun.serve({
       return Response.json(stats, { headers: corsHeaders });
     }
 
+    // Health check endpoint - for monitoring and uptime verification
+    if (path === '/api/health') {
+      const startTime = Date.now();
+      let activityFileOk = false;
+      let activityCount = 0;
+      let lastActivity: string | null = null;
+      let unsignedCount = 0;
+      
+      try {
+        const activities = getActivities();
+        activityFileOk = true;
+        activityCount = activities.length;
+        lastActivity = activities[activities.length - 1]?.timestamp || null;
+        unsignedCount = activities.filter((a: any) => !a.signature && !a.proof?.txSignature).length;
+      } catch (e) {
+        activityFileOk = false;
+      }
+      
+      const lastActivityAge = lastActivity 
+        ? Math.floor((Date.now() - new Date(lastActivity).getTime()) / 1000)
+        : null;
+      
+      // Healthy if: file readable, has activities, recent activity within 2 hours, no unsigned
+      const isHealthy = activityFileOk && 
+        activityCount > 0 && 
+        (lastActivityAge === null || lastActivityAge < 7200); // 2 hours
+      
+      const health = {
+        status: isHealthy ? 'healthy' : 'degraded',
+        timestamp: new Date().toISOString(),
+        checks: {
+          activityFile: activityFileOk ? 'ok' : 'error',
+          activityCount: activityCount,
+          unsignedActivities: unsignedCount,
+          lastActivity: lastActivity,
+          lastActivityAge: lastActivityAge !== null ? `${lastActivityAge}s ago` : null,
+          websocketClients: wsClients.size,
+        },
+        server: {
+          uptime: process.uptime ? `${Math.floor(process.uptime())}s` : 'unknown',
+          port: PORT,
+          version: '1.0.0',
+        },
+        responseTime: `${Date.now() - startTime}ms`,
+      };
+      
+      return Response.json(health, { 
+        status: isHealthy ? 200 : 503,
+        headers: corsHeaders 
+      });
+    }
+
     // Badge/summary endpoint - compact verification summary for sharing
     if (path === '/api/badge' || path === '/api/summary') {
       const activities = getActivities();

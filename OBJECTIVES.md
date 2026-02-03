@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 12:00 PST
-**Cycle:** 112
+**Last Updated:** 2026-02-03 12:18 PST
+**Cycle:** 113
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -24,7 +24,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [ ] Add error handling/retry for failed on-chain signatures
 - [ ] Refactor dashboard JS into modules (currently one big file)
 - [ ] Add TypeScript types to collectors
-- [ ] Add health check endpoint (/api/health)
+- [x] Add health check endpoint (/api/health) ✅ Cycle 113
 - [ ] Rate limiting on API endpoints
 
 ### 🎨 Design  
@@ -67,6 +67,12 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - System health verified continuously
 - Service uptime 2h+ (stable since 09:41 PST)
 - 250 activities, 100% on-chain verified
+
+### Cycle 113 (Health Endpoint)
+- Added `/api/health` endpoint for monitoring
+- Returns: status, activity count, unsigned count, last activity age, WS clients, uptime
+- Health status: healthy (200) or degraded (503)
+- 252 activities, all signed on-chain
 
 ---
 
