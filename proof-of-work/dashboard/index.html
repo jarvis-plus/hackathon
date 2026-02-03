@@ -173,6 +173,13 @@
             font-size: clamp(2rem, 5vw, 3rem);
             line-height: 1;
         }
+        .stat-value.sol-position { 
+            color: #f7931a; /* Bitcoin orange for SOL */
+            font-size: clamp(1.2rem, 3vw, 1.5rem);
+        }
+        .stat-value.sol-position.negative { color: #ff6b6b; }
+        .stat-value.sol-position.positive { color: #00ffaa; }
+        .stat-value.sol-position.neutral { color: #888; }
         
         #mood-card {
             position: relative;
@@ -934,6 +941,10 @@
                 <div class="stat-value mood" id="mood">🤖</div>
                 <div class="stat-label">Agent Mood</div>
             </div>
+            <div class="stat-card" id="sol-position-card">
+                <div class="stat-value sol-position" id="sol-position">0 SOL</div>
+                <div class="stat-label">Net SOL</div>
+            </div>
         </div>
 
         <div class="charts-section">
@@ -1591,6 +1602,45 @@
             document.getElementById('volume').textContent = totalVolume >= 1 
                 ? `$${totalVolume.toFixed(0)}` 
                 : `$${totalVolume.toFixed(2)}`;
+            
+            // Calculate net SOL position (spent vs earned)
+            let netSOL = 0;
+            activities.filter(a => a.type === 'trade' || a.type === 'transfer').forEach(a => {
+                const meta = a.metadata || {};
+                // SOL spent (from SOL trades)
+                if (meta.from?.token === 'SOL' && meta.from?.amount) {
+                    netSOL -= meta.from.amount;
+                }
+                // SOL received (to SOL trades)
+                if (meta.to?.token === 'SOL' && meta.to?.amount) {
+                    netSOL += meta.to.amount;
+                }
+                // Handle SOL transfers
+                if (meta.token === 'SOL' && meta.amount) {
+                    if (a.description?.toLowerCase().includes('received') || 
+                        a.description?.toLowerCase().includes('incoming')) {
+                        netSOL += meta.amount;
+                    } else {
+                        netSOL -= meta.amount;
+                    }
+                }
+            });
+            
+            const solEl = document.getElementById('sol-position');
+            if (solEl) {
+                const formatted = netSOL >= 0 
+                    ? `+${netSOL.toFixed(4)}` 
+                    : netSOL.toFixed(4);
+                solEl.textContent = `${formatted} SOL`;
+                solEl.classList.remove('negative', 'positive', 'neutral');
+                if (netSOL < -0.0001) {
+                    solEl.classList.add('negative');
+                } else if (netSOL > 0.0001) {
+                    solEl.classList.add('positive');
+                } else {
+                    solEl.classList.add('neutral');
+                }
+            }
             
             // Update agent mood based on activity patterns
             updateMood(activities);

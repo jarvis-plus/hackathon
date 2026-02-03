@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 09:29 UTC (2026-02-03 01:29 PST)
-**Cycle:** 20
+**Last Updated:** 2026-02-03 09:32 UTC (2026-02-03 01:32 PST)
+**Cycle:** 21
 
 ---
 
@@ -278,7 +278,7 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
   - Status label showing streak state
 - **58 activities total, all on-chain** - 100% signed and verified
 
-### Cycle 19 (Activity Heatmap) ✨ CURRENT
+### Cycle 19 (Activity Heatmap)
 - **Added GitHub-style activity heatmap to dashboard:**
   - New chart card showing 16 weeks (~4 months) of activity history
   - Grid layout: 7 rows (days of week) × variable columns (weeks)
@@ -292,18 +292,28 @@ Judges can verify EVERYTHING on-chain. Not just "trust me" - cryptographic proof
   - Legend showing intensity scale
 - **62 activities total, all on-chain** - 100% signed and verified
 
+### Cycle 20 (SOL Position Tracking) ✨ CURRENT
+- **Added net SOL position tracking to dashboard:**
+  - New "Net SOL" stat card showing cumulative SOL spent/earned from trades
+  - Tracks all trade activities with SOL in from/to metadata
+  - Color-coded display: red (negative), green (positive), gray (neutral)
+  - Bitcoin-orange color styling (#f7931a) for SOL branding
+  - Precision to 4 decimal places (0.0001 SOL)
+  - Handles both swaps (from/to) and direct transfers
+- **64 activities total, all on-chain** - 100% signed and verified
+
 ---
 
 ## 📋 WHAT'S LEFT
 
-### Next Cycle (20)
-1. **Add total SOL spent/earned tracking** - Net position stat showing wallet balance changes
+### Next Cycle (21)
+1. **Add export feature** - Download activity log as JSON/CSV for verification
 2. **Sign all new activities on-chain** - Keep 100% on-chain
 
-### Soon (Cycles 21-23)
+### Soon (Cycles 22-24)
 - Consider adding email/social outreach activities
 - Add "milestones" view (major achievements during hackathon)
-- Consider export feature (download activity as JSON/CSV)
+- Mobile responsiveness improvements
 
 ### Before Submission (Feb 12)
 - Polish dashboard design (final pass)
@@ -364,15 +374,15 @@ hackathon/
 - Auto-signs any unsigned activities on-chain
 
 **On-Chain Transactions (Solana Mainnet):**
-- 62 activities total, all signed and on-chain
-- Latest: Cycle 19 - Activity heatmap added
+- 64 activities total, all signed and on-chain
+- Latest: Cycle 20 - SOL position tracking added
 
 ---
 
 ## 🔄 NEXT CYCLE INSTRUCTION
 
 Claude Code should:
-1. Add SOL net position tracking - Show wallet balance changes over hackathon period
+1. Add export feature - Allow downloading activity log as JSON/CSV
 2. Run auto-sign to get all activities on-chain
 3. Update this file
 4. Commit and push
