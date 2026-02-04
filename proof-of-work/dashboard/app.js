@@ -10244,3 +10244,221 @@ if (typeof PALETTE_COMMANDS !== 'undefined' && Array.isArray(PALETTE_COMMANDS)) 
 if (document.readyState !== 'loading') {
     initVoiceInput();
 }
+
+// ========================================
+// ACTIVITY CALENDAR VIEW
+// ========================================
+
+let currentCalendarYear = new Date().getFullYear();
+let currentCalendarMonth = new Date().getMonth() + 1; // 1-indexed
+let calendarTooltip = null;
+
+async function loadCalendar(year, month) {
+    const grid = document.getElementById('calendarGrid');
+    const title = document.getElementById('calendarMonthYear');
+    if (!grid || !title) return;
+    
+    try {
+        const response = await fetch(`/pow/api/calendar?year=${year}&month=${month}`);
+        const data = await response.json();
+        
+        // Update title
+        title.textContent = `${data.monthName} ${data.year}`;
+        
+        // Update stats
+        document.getElementById('calStatTotal').textContent = data.stats.totalActivities;
+        document.getElementById('calStatDays').textContent = data.stats.activeDays;
+        document.getElementById('calStatAvg').textContent = data.stats.avgPerDay;
+        
+        // Build grid
+        grid.innerHTML = '';
+        
+        // Add empty cells for days before start of month
+        for (let i = 0; i < data.startDayOfWeek; i++) {
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'calendar-day empty';
+            grid.appendChild(emptyCell);
+        }
+        
+        // Check if today is in this month
+        const today = new Date();
+        const isCurrentMonth = today.getFullYear() === year && today.getMonth() + 1 === month;
+        
+        // Add day cells
+        for (const day of data.days) {
+            const cell = document.createElement('div');
+            const hasActivities = day.count > 0;
+            const isToday = isCurrentMonth && day.day === today.getDate();
+            
+            cell.className = `calendar-day${hasActivities ? ' has-activities' : ''}${isToday ? ' today' : ''}`;
+            cell.dataset.date = day.date;
+            cell.dataset.count = day.count;
+            
+            // Day number
+            const dayNum = document.createElement('div');
+            dayNum.className = 'calendar-day-number';
+            dayNum.textContent = day.day;
+            cell.appendChild(dayNum);
+            
+            if (hasActivities) {
+                // Activity count
+                const countLabel = document.createElement('div');
+                countLabel.className = 'calendar-day-count';
+                countLabel.textContent = `${day.count} action${day.count !== 1 ? 's' : ''}`;
+                cell.appendChild(countLabel);
+                
+                // Activity dots (show up to 12)
+                const dotsContainer = document.createElement('div');
+                dotsContainer.className = 'calendar-day-activities';
+                
+                const maxDots = 12;
+                const shownActivities = day.activities.slice(0, maxDots);
+                
+                for (const activity of shownActivities) {
+                    const dot = document.createElement('div');
+                    dot.className = 'calendar-activity-dot';
+                    dot.dataset.type = activity.type;
+                    dot.title = `${activity.type}: ${activity.description?.substring(0, 50) || 'No description'}`;
+                    dotsContainer.appendChild(dot);
+                }
+                
+                if (day.count > maxDots) {
+                    const more = document.createElement('div');
+                    more.className = 'calendar-more-indicator';
+                    more.textContent = `+${day.count - maxDots} more`;
+                    dotsContainer.appendChild(more);
+                }
+                
+                cell.appendChild(dotsContainer);
+                
+                // Store activities for tooltip
+                cell.dataset.activities = JSON.stringify(day.activities.slice(0, 10));
+            }
+            
+            // Tooltip events
+            cell.addEventListener('mouseenter', showCalendarTooltip);
+            cell.addEventListener('mouseleave', hideCalendarTooltip);
+            cell.addEventListener('click', () => {
+                // Could link to filtered activity view for this day
+                if (hasActivities) {
+                    // Scroll to activities or apply date filter
+                    console.log('Clicked day:', day.date);
+                }
+            });
+            
+            grid.appendChild(cell);
+        }
+        
+        // Save current state
+        currentCalendarYear = year;
+        currentCalendarMonth = month;
+        
+        // Update navigation buttons
+        const now = new Date();
+        const nextBtn = document.getElementById('calendarNext');
+        if (nextBtn) {
+            // Disable next if we're at current month
+            nextBtn.disabled = (year > now.getFullYear()) || 
+                               (year === now.getFullYear() && month >= now.getMonth() + 1);
+        }
+        
+    } catch (error) {
+        console.error('Failed to load calendar:', error);
+        grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: var(--text-secondary);">Failed to load calendar</div>';
+    }
+}
+
+function navigateCalendar(direction) {
+    let newMonth = currentCalendarMonth + direction;
+    let newYear = currentCalendarYear;
+    
+    if (newMonth < 1) {
+        newMonth = 12;
+        newYear--;
+    } else if (newMonth > 12) {
+        newMonth = 1;
+        newYear++;
+    }
+    
+    loadCalendar(newYear, newMonth);
+}
+
+function showCalendarTooltip(e) {
+    const cell = e.currentTarget;
+    const count = parseInt(cell.dataset.count || '0', 10);
+    if (count === 0) return;
+    
+    const activitiesStr = cell.dataset.activities;
+    if (!activitiesStr) return;
+    
+    const activities = JSON.parse(activitiesStr);
+    
+    if (!calendarTooltip) {
+        calendarTooltip = document.createElement('div');
+        calendarTooltip.className = 'calendar-tooltip';
+        document.body.appendChild(calendarTooltip);
+    }
+    
+    const date = new Date(cell.dataset.date + 'T12:00:00');
+    const formattedDate = date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+    });
+    
+    let html = `<div class="calendar-tooltip-date">${formattedDate}</div>`;
+    html += `<div class="calendar-tooltip-count">${count} activit${count !== 1 ? 'ies' : 'y'}</div>`;
+    html += '<div class="calendar-tooltip-list">';
+    
+    for (const activity of activities) {
+        const time = new Date(activity.timestamp).toLocaleTimeString('en-US', { 
+            hour: 'numeric', 
+            minute: '2-digit'
+        });
+        html += `<div class="calendar-tooltip-item">
+            <span class="calendar-tooltip-type">${activity.type}</span>
+            <span>${time}</span>
+            ${activity.signed ? '✓' : ''}
+        </div>`;
+    }
+    
+    if (count > 10) {
+        html += `<div class="calendar-tooltip-item" style="color: var(--text-secondary); font-style: italic;">
+            +${count - 10} more activities...
+        </div>`;
+    }
+    
+    html += '</div>';
+    calendarTooltip.innerHTML = html;
+    calendarTooltip.style.display = 'block';
+    
+    // Position tooltip
+    const rect = cell.getBoundingClientRect();
+    calendarTooltip.style.left = `${rect.left + rect.width / 2 - calendarTooltip.offsetWidth / 2}px`;
+    calendarTooltip.style.top = `${rect.bottom + 8}px`;
+    
+    // Keep tooltip on screen
+    const tooltipRect = calendarTooltip.getBoundingClientRect();
+    if (tooltipRect.right > window.innerWidth - 10) {
+        calendarTooltip.style.left = `${window.innerWidth - tooltipRect.width - 10}px`;
+    }
+    if (tooltipRect.left < 10) {
+        calendarTooltip.style.left = '10px';
+    }
+    if (tooltipRect.bottom > window.innerHeight - 10) {
+        calendarTooltip.style.top = `${rect.top - tooltipRect.height - 8}px`;
+    }
+}
+
+function hideCalendarTooltip() {
+    if (calendarTooltip) {
+        calendarTooltip.style.display = 'none';
+    }
+}
+
+// Load calendar on page load (add to existing init)
+document.addEventListener('DOMContentLoaded', () => {
+    // Load current month calendar
+    loadCalendar(currentCalendarYear, currentCalendarMonth);
+});

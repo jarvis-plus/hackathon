@@ -390,6 +390,36 @@
                 </div>
             </div>
             
+            <!-- Activity Calendar View -->
+            <div class="chart-card" style="margin-top: 1.5rem;" id="calendar-view-card">
+                <div class="calendar-header">
+                    <button class="calendar-nav-btn" id="calendarPrev" onclick="navigateCalendar(-1)" aria-label="Previous month">
+                        ◀
+                    </button>
+                    <h3 id="calendar-title">📆 <span id="calendarMonthYear">Loading...</span></h3>
+                    <button class="calendar-nav-btn" id="calendarNext" onclick="navigateCalendar(1)" aria-label="Next month">
+                        ▶
+                    </button>
+                </div>
+                <div class="calendar-stats" id="calendarStats">
+                    <span class="calendar-stat"><strong id="calStatTotal">0</strong> activities</span>
+                    <span class="calendar-stat"><strong id="calStatDays">0</strong> active days</span>
+                    <span class="calendar-stat"><strong id="calStatAvg">0</strong> avg/day</span>
+                </div>
+                <div class="calendar-container" id="calendarContainer">
+                    <div class="calendar-weekdays">
+                        <div class="calendar-weekday">Sun</div>
+                        <div class="calendar-weekday">Mon</div>
+                        <div class="calendar-weekday">Tue</div>
+                        <div class="calendar-weekday">Wed</div>
+                        <div class="calendar-weekday">Thu</div>
+                        <div class="calendar-weekday">Fri</div>
+                        <div class="calendar-weekday">Sat</div>
+                    </div>
+                    <div class="calendar-grid" id="calendarGrid"></div>
+                </div>
+            </div>
+            
             <!-- Activity Insights Panel -->
             <div class="chart-card insights-panel" style="margin-top: 1.5rem;" id="insights-panel">
                 <h3>🧠 Activity Insights</h3>

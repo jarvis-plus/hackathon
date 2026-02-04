@@ -3468,6 +3468,226 @@ const server = Bun.serve({
     }
 
     // ==========================================
+    // API: GET /api/calendar
+    // Month calendar view data for activities
+    // Returns activities organized by month/day
+    // ==========================================
+    if (path === '/api/calendar') {
+      const activities = getActivities();
+      const yearParam = url.searchParams.get('year');
+      const monthParam = url.searchParams.get('month');
+      
+      // Default to current month
+      const now = new Date();
+      const year = parseInt(yearParam || String(now.getFullYear()), 10);
+      const month = parseInt(monthParam || String(now.getMonth() + 1), 10) - 1; // 0-indexed
+      
+      // Validate
+      if (year < 2020 || year > 2100 || month < 0 || month > 11) {
+        return Response.json({ error: 'Invalid year or month' }, { status: 400, headers: corsHeaders });
+      }
+      
+      // Get first and last day of month
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const daysInMonth = lastDay.getDate();
+      
+      // Get day of week for first day (0 = Sunday)
+      const startDayOfWeek = firstDay.getDay();
+      
+      // Build day data
+      const days: Array<{
+        day: number;
+        date: string;
+        activities: Array<{ hash: string; type: string; description: string; timestamp: string; signed: boolean }>;
+        count: number;
+      }> = [];
+      
+      for (let d = 1; d <= daysInMonth; d++) {
+        const date = new Date(year, month, d);
+        const dateStr = date.toISOString().split('T')[0];
+        
+        const dayActivities = activities
+          .filter((a: any) => a.timestamp.startsWith(dateStr))
+          .map((a: any) => ({
+            hash: a.hash || a.proof?.hash || '',
+            type: a.type,
+            description: a.description,
+            timestamp: a.timestamp,
+            signed: !!(a.signature || a.proof?.txSignature)
+          }));
+        
+        days.push({
+          day: d,
+          date: dateStr,
+          activities: dayActivities,
+          count: dayActivities.length
+        });
+      }
+      
+      // Calculate month stats
+      const totalActivities = days.reduce((sum, d) => sum + d.count, 0);
+      const activeDays = days.filter(d => d.count > 0).length;
+      const maxDay = days.reduce((max, d) => d.count > max.count ? d : max, { day: 0, count: 0 });
+      
+      // Get previous/next month info
+      const prevMonth = month === 0 ? { year: year - 1, month: 12 } : { year, month };
+      const nextMonth = month === 11 ? { year: year + 1, month: 1 } : { year, month: month + 2 };
+      
+      return Response.json({
+        year,
+        month: month + 1, // 1-indexed for display
+        monthName: firstDay.toLocaleDateString('en-US', { month: 'long' }),
+        daysInMonth,
+        startDayOfWeek,
+        days,
+        stats: {
+          totalActivities,
+          activeDays,
+          avgPerDay: activeDays > 0 ? Math.round(totalActivities / activeDays * 10) / 10 : 0,
+          busiestDay: maxDay.count > 0 ? { day: maxDay.day, count: maxDay.count } : null
+        },
+        navigation: {
+          prev: prevMonth,
+          next: nextMonth
+        }
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: GET /api/heatmap
+    // GitHub-style activity heatmap data
+    // Returns daily activity counts for last N weeks
+    // ==========================================
+    if (path === '/api/heatmap') {
+      const activities = getActivities();
+      const weeksParam = url.searchParams.get('weeks');
+      const weeks = Math.min(Math.max(parseInt(weeksParam || '52', 10) || 52, 1), 104); // 1-104 weeks
+      
+      // Calculate date range (going back from today)
+      const today = new Date();
+      today.setHours(23, 59, 59, 999);
+      
+      // Find the most recent Sunday to align weeks
+      const endDate = new Date(today);
+      const dayOfWeek = endDate.getDay();
+      endDate.setDate(endDate.getDate() + (6 - dayOfWeek)); // Go to Saturday
+      
+      const startDate = new Date(endDate);
+      startDate.setDate(startDate.getDate() - (weeks * 7) + 1);
+      startDate.setHours(0, 0, 0, 0);
+      
+      // Build a map of date -> count
+      const dayCounts: Record<string, number> = {};
+      const dayTypes: Record<string, Record<string, number>> = {};
+      
+      for (const activity of activities) {
+        const date = new Date(activity.timestamp);
+        if (date < startDate || date > endDate) continue;
+        
+        const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD
+        dayCounts[dateKey] = (dayCounts[dateKey] || 0) + 1;
+        
+        // Track types per day
+        if (!dayTypes[dateKey]) dayTypes[dateKey] = {};
+        dayTypes[dateKey][activity.type] = (dayTypes[dateKey][activity.type] || 0) + 1;
+      }
+      
+      // Calculate intensity levels (0-4 like GitHub)
+      const counts = Object.values(dayCounts);
+      const maxCount = Math.max(...counts, 1);
+      const thresholds = [0, Math.ceil(maxCount * 0.25), Math.ceil(maxCount * 0.5), Math.ceil(maxCount * 0.75), maxCount];
+      
+      const getLevel = (count: number): number => {
+        if (count === 0) return 0;
+        if (count <= thresholds[1]) return 1;
+        if (count <= thresholds[2]) return 2;
+        if (count <= thresholds[3]) return 3;
+        return 4;
+      };
+      
+      // Build weeks array (each week = array of 7 days, Sun-Sat)
+      const weeksData: Array<Array<{
+        date: string;
+        count: number;
+        level: number;
+        types: Record<string, number>;
+      }>> = [];
+      
+      const cursor = new Date(startDate);
+      // Align to Sunday
+      cursor.setDate(cursor.getDate() - cursor.getDay());
+      
+      while (cursor <= endDate) {
+        const week: Array<{
+          date: string;
+          count: number;
+          level: number;
+          types: Record<string, number>;
+        }> = [];
+        
+        for (let d = 0; d < 7; d++) {
+          const dateKey = cursor.toISOString().split('T')[0];
+          const count = dayCounts[dateKey] || 0;
+          week.push({
+            date: dateKey,
+            count,
+            level: getLevel(count),
+            types: dayTypes[dateKey] || {}
+          });
+          cursor.setDate(cursor.getDate() + 1);
+        }
+        
+        weeksData.push(week);
+      }
+      
+      // Calculate stats
+      const totalDays = weeksData.length * 7;
+      const activeDays = Object.keys(dayCounts).length;
+      const totalActivities = counts.reduce((a, b) => a + b, 0);
+      const avgPerActiveDay = activeDays > 0 ? Math.round(totalActivities / activeDays * 10) / 10 : 0;
+      
+      // Find busiest day
+      let busiestDay = { date: '', count: 0 };
+      for (const [date, count] of Object.entries(dayCounts)) {
+        if (count > busiestDay.count) {
+          busiestDay = { date, count };
+        }
+      }
+      
+      // Day of week distribution
+      const dayOfWeekCounts = [0, 0, 0, 0, 0, 0, 0]; // Sun-Sat
+      for (const activity of activities) {
+        const date = new Date(activity.timestamp);
+        if (date >= startDate && date <= endDate) {
+          dayOfWeekCounts[date.getDay()]++;
+        }
+      }
+      
+      return Response.json({
+        weeks: weeksData,
+        stats: {
+          totalWeeks: weeks,
+          totalDays,
+          activeDays,
+          totalActivities,
+          avgPerActiveDay,
+          busiestDay,
+          thresholds,
+          maxCount,
+          dayOfWeekDistribution: {
+            labels: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+            counts: dayOfWeekCounts
+          }
+        },
+        range: {
+          start: startDate.toISOString().split('T')[0],
+          end: endDate.toISOString().split('T')[0]
+        }
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
     // API: GET /api/activity-types
     // Get all activity types (built-in + custom)
     // ==========================================

@@ -1054,6 +1054,86 @@
         }
       }
     },
+    "/api/calendar": {
+      "get": {
+        "tags": [
+          "Stats"
+        ],
+        "summary": "Get calendar view data",
+        "description": "Returns activities organized in a monthly calendar format with daily counts and details.",
+        "operationId": "getCalendar",
+        "parameters": [
+          {
+            "name": "year",
+            "in": "query",
+            "description": "Year (2020-2100, defaults to current)",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "month",
+            "in": "query",
+            "description": "Month (1-12, defaults to current)",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 12
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Calendar data for the specified month",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid year or month"
+          }
+        }
+      }
+    },
+    "/api/heatmap": {
+      "get": {
+        "tags": [
+          "Stats"
+        ],
+        "summary": "Get activity heatmap data",
+        "description": "Returns GitHub-style activity heatmap data with daily counts and intensity levels.",
+        "operationId": "getHeatmap",
+        "parameters": [
+          {
+            "name": "weeks",
+            "in": "query",
+            "description": "Number of weeks to include (1-104, defaults to 52)",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 104,
+              "default": 52
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Heatmap data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HeatmapData"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/health": {
       "get": {
         "tags": [
@@ -3994,6 +4074,235 @@
               "type": "string"
             },
             "description": "Human-readable factors contributing to score"
+          }
+        }
+      },
+      "CalendarView": {
+        "type": "object",
+        "description": "Monthly calendar view of activities",
+        "properties": {
+          "year": {
+            "type": "integer",
+            "description": "Calendar year"
+          },
+          "month": {
+            "type": "integer",
+            "description": "Calendar month (1-12)"
+          },
+          "monthName": {
+            "type": "string",
+            "description": "Full month name"
+          },
+          "daysInMonth": {
+            "type": "integer",
+            "description": "Number of days in the month"
+          },
+          "startDayOfWeek": {
+            "type": "integer",
+            "description": "Day of week for first day (0=Sunday)"
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "day": {
+                  "type": "integer"
+                },
+                "date": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "count": {
+                  "type": "integer"
+                },
+                "activities": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "hash": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string"
+                      },
+                      "description": {
+                        "type": "string"
+                      },
+                      "timestamp": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "signed": {
+                        "type": "boolean"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "stats": {
+            "type": "object",
+            "properties": {
+              "totalActivities": {
+                "type": "integer"
+              },
+              "activeDays": {
+                "type": "integer"
+              },
+              "avgPerDay": {
+                "type": "number"
+              },
+              "busiestDay": {
+                "type": "object",
+                "nullable": true,
+                "properties": {
+                  "day": {
+                    "type": "integer"
+                  },
+                  "count": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          },
+          "navigation": {
+            "type": "object",
+            "properties": {
+              "prev": {
+                "type": "object",
+                "properties": {
+                  "year": {
+                    "type": "integer"
+                  },
+                  "month": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "next": {
+                "type": "object",
+                "properties": {
+                  "year": {
+                    "type": "integer"
+                  },
+                  "month": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "HeatmapData": {
+        "type": "object",
+        "description": "GitHub-style activity heatmap data",
+        "properties": {
+          "weeks": {
+            "type": "array",
+            "description": "Array of weeks, each containing 7 days",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "date": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "count": {
+                    "type": "integer"
+                  },
+                  "level": {
+                    "type": "integer",
+                    "description": "Intensity level 0-4"
+                  },
+                  "types": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "integer"
+                    },
+                    "description": "Activity type breakdown for the day"
+                  }
+                }
+              }
+            }
+          },
+          "stats": {
+            "type": "object",
+            "properties": {
+              "totalWeeks": {
+                "type": "integer"
+              },
+              "totalDays": {
+                "type": "integer"
+              },
+              "activeDays": {
+                "type": "integer"
+              },
+              "totalActivities": {
+                "type": "integer"
+              },
+              "avgPerActiveDay": {
+                "type": "number"
+              },
+              "busiestDay": {
+                "type": "object",
+                "properties": {
+                  "date": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "count": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "thresholds": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                },
+                "description": "Level thresholds [0, L1, L2, L3, max]"
+              },
+              "maxCount": {
+                "type": "integer"
+              },
+              "dayOfWeekDistribution": {
+                "type": "object",
+                "properties": {
+                  "labels": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "counts": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "range": {
+            "type": "object",
+            "properties": {
+              "start": {
+                "type": "string",
+                "format": "date"
+              },
+              "end": {
+                "type": "string",
+                "format": "date"
+              }
+            }
           }
         }
       }
