@@ -5567,6 +5567,17 @@ function renderFilteredActivities(activities) {
         });
     }
     
+    // Apply collection filter
+    if (window.currentCollectionFilter) {
+        const collection = typeof getCollectionById === 'function' ? getCollectionById(window.currentCollectionFilter) : null;
+        if (collection && collection.activities) {
+            filtered = filtered.filter(a => {
+                const hash = a.hash || a.proof?.hash;
+                return hash && collection.activities.includes(hash);
+            });
+        }
+    }
+    
     // Apply status filter
     if (currentStatusFilter !== 'all') {
         filtered = filtered.filter(a => {
@@ -5587,9 +5598,13 @@ function renderFilteredActivities(activities) {
     const statsEl = document.getElementById('filterStats');
     if (statsEl) {
         const hasDateFilter = currentDateFrom || currentDateTo;
-        const isFiltered = currentTypeFilter !== 'all' || currentSearchQuery || currentTagFilter || currentWalletFilter || hasDateFilter || window.bookmarkFilterActive || currentStatusFilter !== 'all';
+        const isFiltered = currentTypeFilter !== 'all' || currentSearchQuery || currentTagFilter || currentWalletFilter || hasDateFilter || window.bookmarkFilterActive || currentStatusFilter !== 'all' || window.currentCollectionFilter;
         if (isFiltered) {
             const filterParts = [];
+            if (window.currentCollectionFilter) {
+                const coll = typeof getCollectionById === 'function' ? getCollectionById(window.currentCollectionFilter) : null;
+                if (coll) filterParts.push(`📁 ${coll.name}`);
+            }
             if (window.bookmarkFilterActive) filterParts.push('⭐ bookmarked');
             if (currentTypeFilter !== 'all') filterParts.push(`type: ${currentTypeFilter}`);
             if (currentTagFilter) filterParts.push(`tag: ${currentTagFilter}`);
@@ -14782,6 +14797,21 @@ function handleContextMenuAction(actionId) {
             }
             break;
             
+        case 'ctxCollection':
+            if (typeof showAddToCollectionMenu === 'function') {
+                // Show collection submenu at the current menu position
+                const menu = document.getElementById('activityContextMenu');
+                const rect = menu?.getBoundingClientRect();
+                const mockEvent = {
+                    clientX: rect ? rect.right - 10 : window.innerWidth / 2,
+                    clientY: rect ? rect.top + 80 : window.innerHeight / 2,
+                    stopPropagation: () => {}
+                };
+                showAddToCollectionMenu(targetHash, mockEvent);
+            }
+            hideContextMenu();
+            return; // Don't hide menu twice
+            
         case 'ctxCopyLink':
             const activityId = targetActivity ? getActivityId(targetActivity) : targetHash.substring(0, 8);
             const link = `${window.location.origin}${window.location.pathname}#activity-${activityId}`;
@@ -18733,3 +18763,681 @@ window.startFocusTimer = startFocusTimer;
 window.stopFocusTimer = stopFocusTimer;
 window.toggleFocusTimerPause = toggleFocusTimerPause;
 window.recordFocusTimerLap = recordFocusTimerLap;
+
+// ============================================
+// ACTIVITY COLLECTIONS SYSTEM
+// ============================================
+
+/**
+ * Collections allow grouping activities into named folders/collections.
+ * Stored in localStorage with structure:
+ * {
+ *   id: string,        // UUID
+ *   name: string,      // Collection name
+ *   color: string,     // Color code for visual identification
+ *   emoji: string,     // Optional emoji icon
+ *   activities: string[], // Array of activity hashes
+ *   createdAt: number, // Timestamp
+ *   updatedAt: number  // Timestamp
+ * }
+ */
+
+const COLLECTION_COLORS = [
+    '#00ffaa', // Green (default accent)
+    '#ff6b6b', // Red
+    '#4ecdc4', // Teal
+    '#f7d794', // Yellow
+    '#dda0dd', // Plum
+    '#ff9ff3', // Pink
+    '#54a0ff', // Blue
+    '#ff9f43', // Orange
+    '#a29bfe', // Purple
+    '#00cec9'  // Cyan
+];
+
+let collectionsCache = [];
+let currentCollectionFilter = null; // null = show all, otherwise = collection ID
+
+/**
+ * Generate a UUID for collections
+ */
+function generateCollectionId() {
+    return 'coll_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+}
+
+/**
+ * Load collections from localStorage
+ */
+function loadCollections() {
+    try {
+        const stored = localStorage.getItem('jarvis-pow-collections');
+        collectionsCache = stored ? JSON.parse(stored) : [];
+    } catch (e) {
+        console.error('Failed to load collections:', e);
+        collectionsCache = [];
+    }
+    return collectionsCache;
+}
+
+/**
+ * Save collections to localStorage
+ */
+function saveCollections() {
+    try {
+        localStorage.setItem('jarvis-pow-collections', JSON.stringify(collectionsCache));
+    } catch (e) {
+        console.error('Failed to save collections:', e);
+    }
+}
+
+/**
+ * Get all collections
+ */
+function getCollections() {
+    if (collectionsCache.length === 0) {
+        loadCollections();
+    }
+    return collectionsCache;
+}
+
+/**
+ * Get collection by ID
+ */
+function getCollectionById(id) {
+    return getCollections().find(c => c.id === id);
+}
+
+/**
+ * Create a new collection
+ */
+function createCollection(name, color = null, emoji = '📁') {
+    const collections = getCollections();
+    
+    const newCollection = {
+        id: generateCollectionId(),
+        name: name.trim(),
+        color: color || COLLECTION_COLORS[collections.length % COLLECTION_COLORS.length],
+        emoji: emoji,
+        activities: [],
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+    };
+    
+    collectionsCache.push(newCollection);
+    saveCollections();
+    
+    announceToScreenReader(`Collection "${name}" created`);
+    showToast(`📁 Collection "${name}" created`, 'success');
+    
+    return newCollection;
+}
+
+/**
+ * Delete a collection
+ */
+function deleteCollection(id) {
+    const collection = getCollectionById(id);
+    if (!collection) return false;
+    
+    collectionsCache = collectionsCache.filter(c => c.id !== id);
+    saveCollections();
+    
+    // Clear filter if we were filtering by this collection
+    if (currentCollectionFilter === id) {
+        currentCollectionFilter = null;
+        if (typeof loadActivities === 'function') {
+            loadActivities();
+        }
+    }
+    
+    announceToScreenReader(`Collection "${collection.name}" deleted`);
+    showToast(`🗑️ Collection "${collection.name}" deleted`, 'info');
+    
+    return true;
+}
+
+/**
+ * Rename a collection
+ */
+function renameCollection(id, newName) {
+    const collection = getCollectionById(id);
+    if (!collection) return false;
+    
+    collection.name = newName.trim();
+    collection.updatedAt = Date.now();
+    saveCollections();
+    
+    return true;
+}
+
+/**
+ * Update collection color
+ */
+function updateCollectionColor(id, color) {
+    const collection = getCollectionById(id);
+    if (!collection) return false;
+    
+    collection.color = color;
+    collection.updatedAt = Date.now();
+    saveCollections();
+    
+    return true;
+}
+
+/**
+ * Update collection emoji
+ */
+function updateCollectionEmoji(id, emoji) {
+    const collection = getCollectionById(id);
+    if (!collection) return false;
+    
+    collection.emoji = emoji;
+    collection.updatedAt = Date.now();
+    saveCollections();
+    
+    return true;
+}
+
+/**
+ * Add an activity to a collection
+ */
+function addActivityToCollection(collectionId, activityHash) {
+    const collection = getCollectionById(collectionId);
+    if (!collection) return false;
+    
+    if (!collection.activities.includes(activityHash)) {
+        collection.activities.push(activityHash);
+        collection.updatedAt = Date.now();
+        saveCollections();
+        
+        announceToScreenReader(`Activity added to "${collection.name}"`);
+        showToast(`✅ Added to "${collection.name}"`, 'success');
+    }
+    
+    return true;
+}
+
+/**
+ * Remove an activity from a collection
+ */
+function removeActivityFromCollection(collectionId, activityHash) {
+    const collection = getCollectionById(collectionId);
+    if (!collection) return false;
+    
+    const index = collection.activities.indexOf(activityHash);
+    if (index > -1) {
+        collection.activities.splice(index, 1);
+        collection.updatedAt = Date.now();
+        saveCollections();
+        
+        announceToScreenReader(`Activity removed from "${collection.name}"`);
+    }
+    
+    return true;
+}
+
+/**
+ * Get all collections that contain a specific activity
+ */
+function getCollectionsForActivity(activityHash) {
+    return getCollections().filter(c => c.activities.includes(activityHash));
+}
+
+/**
+ * Check if activity is in any collection
+ */
+function isActivityInAnyCollection(activityHash) {
+    return getCollections().some(c => c.activities.includes(activityHash));
+}
+
+/**
+ * Open the collections modal
+ */
+function openCollectionsModal() {
+    const modal = document.getElementById('collectionsModal');
+    if (!modal) return;
+    
+    loadCollections();
+    renderCollectionsList();
+    modal.style.display = 'flex';
+    
+    // Focus management for accessibility
+    const firstItem = modal.querySelector('.collection-item, .collection-create-btn');
+    if (firstItem) firstItem.focus();
+    
+    announceToScreenReader('Collections modal opened. Manage your activity collections.');
+}
+
+/**
+ * Close the collections modal
+ */
+function closeCollectionsModal() {
+    const modal = document.getElementById('collectionsModal');
+    if (modal) modal.style.display = 'none';
+}
+
+/**
+ * Render the collections list in the modal
+ */
+function renderCollectionsList() {
+    const list = document.getElementById('collectionsList');
+    if (!list) return;
+    
+    const collections = getCollections();
+    
+    if (collections.length === 0) {
+        list.innerHTML = `
+            <div class="collections-empty">
+                <span class="collections-empty-icon">📁</span>
+                <p>No collections yet!</p>
+                <p class="collections-empty-hint">Create your first collection to organize activities.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    list.innerHTML = collections.map(c => {
+        const isActive = currentCollectionFilter === c.id;
+        const activityCount = c.activities.length;
+        
+        return `
+            <div class="collection-item ${isActive ? 'active' : ''}" 
+                 data-id="${c.id}" 
+                 style="--collection-color: ${c.color}">
+                <div class="collection-header">
+                    <div class="collection-icon-wrapper">
+                        <span class="collection-icon" onclick="openEmojiPickerForCollection('${c.id}')">${c.emoji}</span>
+                        <div class="collection-color-dot" style="background: ${c.color}" onclick="openColorPickerForCollection('${c.id}')"></div>
+                    </div>
+                    <div class="collection-info" onclick="filterByCollection('${c.id}')">
+                        <span class="collection-name" title="Click to filter activities">${escapeHtml(c.name)}</span>
+                        <span class="collection-count">${activityCount} ${activityCount === 1 ? 'activity' : 'activities'}</span>
+                    </div>
+                    <div class="collection-actions">
+                        <button class="collection-action-btn" onclick="editCollectionName('${c.id}')" title="Rename">✏️</button>
+                        <button class="collection-action-btn" onclick="viewCollectionActivities('${c.id}')" title="View activities">👁️</button>
+                        <button class="collection-action-btn danger" onclick="confirmDeleteCollection('${c.id}')" title="Delete">🗑️</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    // Update collection count badge
+    updateCollectionsBadge();
+}
+
+/**
+ * Update the collections count badge in header
+ */
+function updateCollectionsBadge() {
+    const badge = document.querySelector('.collections-count');
+    const count = getCollections().length;
+    
+    if (badge) {
+        badge.textContent = count;
+        badge.style.display = count > 0 ? 'inline-flex' : 'none';
+    }
+}
+
+/**
+ * Open the create collection form
+ */
+function openCreateCollectionForm() {
+    const name = prompt('Enter collection name:');
+    if (!name || !name.trim()) return;
+    
+    createCollection(name);
+    renderCollectionsList();
+}
+
+/**
+ * Edit collection name
+ */
+function editCollectionName(id) {
+    const collection = getCollectionById(id);
+    if (!collection) return;
+    
+    const newName = prompt('Enter new name:', collection.name);
+    if (!newName || !newName.trim()) return;
+    
+    renameCollection(id, newName);
+    renderCollectionsList();
+    showToast(`✏️ Collection renamed to "${newName}"`, 'success');
+}
+
+/**
+ * Confirm and delete collection
+ */
+function confirmDeleteCollection(id) {
+    const collection = getCollectionById(id);
+    if (!collection) return;
+    
+    const confirmed = confirm(`Delete collection "${collection.name}"?\n\nThis won't delete the activities, just the collection.`);
+    if (confirmed) {
+        deleteCollection(id);
+        renderCollectionsList();
+    }
+}
+
+/**
+ * Filter activities by collection
+ */
+function filterByCollection(collectionId) {
+    const collection = getCollectionById(collectionId);
+    if (!collection) return;
+    
+    // Toggle filter if already active
+    if (currentCollectionFilter === collectionId) {
+        currentCollectionFilter = null;
+        showToast(`📁 Showing all activities`, 'info');
+    } else {
+        currentCollectionFilter = collectionId;
+        showToast(`📁 Filtering by "${collection.name}"`, 'info');
+    }
+    
+    // Close modal and reload activities
+    closeCollectionsModal();
+    
+    if (typeof loadActivities === 'function') {
+        loadActivities();
+    }
+    
+    // Update filter indicator
+    updateCollectionFilterIndicator();
+}
+
+/**
+ * Clear collection filter
+ */
+function clearCollectionFilter() {
+    currentCollectionFilter = null;
+    updateCollectionFilterIndicator();
+    
+    if (typeof loadActivities === 'function') {
+        loadActivities();
+    }
+}
+
+/**
+ * Update the collection filter indicator in the UI
+ */
+function updateCollectionFilterIndicator() {
+    const indicator = document.getElementById('collectionFilterIndicator');
+    
+    if (!indicator) return;
+    
+    if (currentCollectionFilter) {
+        const collection = getCollectionById(currentCollectionFilter);
+        if (collection) {
+            indicator.innerHTML = `
+                <span class="filter-tag collection-filter-tag" style="--collection-color: ${collection.color}">
+                    ${collection.emoji} ${escapeHtml(collection.name)}
+                    <button class="filter-tag-remove" onclick="clearCollectionFilter()" title="Clear filter">&times;</button>
+                </span>
+            `;
+            indicator.style.display = 'inline-flex';
+        }
+    } else {
+        indicator.style.display = 'none';
+    }
+}
+
+/**
+ * View activities in a collection (filter and scroll)
+ */
+function viewCollectionActivities(collectionId) {
+    filterByCollection(collectionId);
+}
+
+/**
+ * Open emoji picker for collection (simple prompt for now)
+ */
+function openEmojiPickerForCollection(collectionId) {
+    const emojis = ['📁', '📂', '⭐', '🔥', '💼', '🎯', '📊', '💡', '🚀', '🎨', '📝', '🔧', '💰', '🌟', '❤️', '💜'];
+    const collection = getCollectionById(collectionId);
+    if (!collection) return;
+    
+    const emojiChoice = prompt(`Choose an emoji for "${collection.name}":\n\n${emojis.join(' ')}\n\nOr enter your own:`, collection.emoji);
+    if (emojiChoice) {
+        updateCollectionEmoji(collectionId, emojiChoice);
+        renderCollectionsList();
+    }
+}
+
+/**
+ * Open color picker for collection
+ */
+function openColorPickerForCollection(collectionId) {
+    const collection = getCollectionById(collectionId);
+    if (!collection) return;
+    
+    const colorInput = document.createElement('input');
+    colorInput.type = 'color';
+    colorInput.value = collection.color;
+    
+    colorInput.onchange = () => {
+        updateCollectionColor(collectionId, colorInput.value);
+        renderCollectionsList();
+    };
+    
+    colorInput.click();
+}
+
+/**
+ * Show "Add to Collection" submenu for an activity
+ */
+function showAddToCollectionMenu(activityHash, event) {
+    event?.stopPropagation();
+    
+    // Remove any existing menu
+    const existingMenu = document.querySelector('.add-to-collection-menu');
+    if (existingMenu) existingMenu.remove();
+    
+    const collections = getCollections();
+    const activityCollections = getCollectionsForActivity(activityHash);
+    
+    const menu = document.createElement('div');
+    menu.className = 'add-to-collection-menu';
+    menu.setAttribute('role', 'menu');
+    menu.innerHTML = `
+        <div class="collection-menu-header">Add to Collection</div>
+        ${collections.length === 0 ? `
+            <div class="collection-menu-empty">No collections yet</div>
+        ` : collections.map(c => {
+            const isInCollection = activityCollections.some(ac => ac.id === c.id);
+            return `
+                <button class="collection-menu-item ${isInCollection ? 'in-collection' : ''}"
+                        onclick="toggleActivityInCollection('${c.id}', '${activityHash}')"
+                        role="menuitem"
+                        style="--collection-color: ${c.color}">
+                    <span class="collection-menu-icon">${c.emoji}</span>
+                    <span class="collection-menu-name">${escapeHtml(c.name)}</span>
+                    ${isInCollection ? '<span class="collection-menu-check">✓</span>' : ''}
+                </button>
+            `;
+        }).join('')}
+        <div class="collection-menu-divider"></div>
+        <button class="collection-menu-item new-collection" onclick="quickCreateCollectionAndAdd('${activityHash}')" role="menuitem">
+            <span class="collection-menu-icon">➕</span>
+            <span class="collection-menu-name">New Collection...</span>
+        </button>
+    `;
+    
+    // Position menu near the event
+    if (event) {
+        menu.style.position = 'fixed';
+        menu.style.left = `${Math.min(event.clientX, window.innerWidth - 220)}px`;
+        menu.style.top = `${Math.min(event.clientY, window.innerHeight - 300)}px`;
+    }
+    
+    document.body.appendChild(menu);
+    
+    // Close menu on click outside
+    setTimeout(() => {
+        document.addEventListener('click', function closeMenu(e) {
+            if (!menu.contains(e.target)) {
+                menu.remove();
+                document.removeEventListener('click', closeMenu);
+            }
+        });
+    }, 0);
+    
+    // Close on Escape
+    menu.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') menu.remove();
+    });
+}
+
+/**
+ * Toggle activity in/out of a collection
+ */
+function toggleActivityInCollection(collectionId, activityHash) {
+    const collection = getCollectionById(collectionId);
+    if (!collection) return;
+    
+    const isInCollection = collection.activities.includes(activityHash);
+    
+    if (isInCollection) {
+        removeActivityFromCollection(collectionId, activityHash);
+    } else {
+        addActivityToCollection(collectionId, activityHash);
+    }
+    
+    // Remove menu
+    const menu = document.querySelector('.add-to-collection-menu');
+    if (menu) menu.remove();
+    
+    // Refresh display
+    if (typeof renderActivities === 'function' && window.cachedActivities) {
+        renderActivities(window.cachedActivities);
+    }
+}
+
+/**
+ * Quick create a collection and add an activity to it
+ */
+function quickCreateCollectionAndAdd(activityHash) {
+    const name = prompt('Enter collection name:');
+    if (!name || !name.trim()) return;
+    
+    const collection = createCollection(name);
+    addActivityToCollection(collection.id, activityHash);
+    
+    // Remove menu
+    const menu = document.querySelector('.add-to-collection-menu');
+    if (menu) menu.remove();
+    
+    // Refresh display
+    if (typeof renderActivities === 'function' && window.cachedActivities) {
+        renderActivities(window.cachedActivities);
+    }
+}
+
+/**
+ * Render collection badges on an activity card
+ */
+function renderCollectionBadges(activityHash) {
+    const collections = getCollectionsForActivity(activityHash);
+    if (collections.length === 0) return '';
+    
+    return collections.map(c => `
+        <span class="activity-collection-badge" 
+              style="--collection-color: ${c.color}" 
+              title="${escapeHtml(c.name)}"
+              onclick="filterByCollection('${c.id}'); event.stopPropagation();">
+            ${c.emoji}
+        </span>
+    `).join('');
+}
+
+// Keyboard shortcut: C for collections
+document.addEventListener('keydown', (e) => {
+    // Skip if typing in an input
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
+        return;
+    }
+    
+    // C to open collections modal
+    if (e.key === 'c' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        openCollectionsModal();
+    }
+});
+
+// Update KEYBOARD_SHORTCUTS if available
+if (typeof KEYBOARD_SHORTCUTS !== 'undefined') {
+    KEYBOARD_SHORTCUTS['c'] = { action: 'openCollectionsModal', description: 'Open collections manager' };
+}
+
+// Add to command palette if available
+if (typeof window.commandPaletteCommands !== 'undefined') {
+    window.commandPaletteCommands.push({
+        name: 'Manage Collections',
+        shortcut: 'C',
+        description: 'Organize activities into collections',
+        icon: '📁',
+        action: () => {
+            openCollectionsModal();
+            if (typeof hideCommandPalette === 'function') hideCommandPalette();
+        },
+        group: 'Organization'
+    });
+    
+    window.commandPaletteCommands.push({
+        name: 'Create New Collection',
+        shortcut: '',
+        description: 'Create a new activity collection',
+        icon: '➕',
+        action: () => {
+            openCreateCollectionForm();
+            if (typeof hideCommandPalette === 'function') hideCommandPalette();
+        },
+        group: 'Organization'
+    });
+    
+    window.commandPaletteCommands.push({
+        name: 'Clear Collection Filter',
+        shortcut: '',
+        description: 'Show all activities (remove collection filter)',
+        icon: '🔓',
+        action: () => {
+            clearCollectionFilter();
+            if (typeof hideCommandPalette === 'function') hideCommandPalette();
+        },
+        group: 'Filters'
+    });
+}
+
+// Initialize collections on load
+document.addEventListener('DOMContentLoaded', () => {
+    loadCollections();
+    updateCollectionsBadge();
+    updateCollectionFilterIndicator();
+});
+
+// Expose functions globally
+window.openCollectionsModal = openCollectionsModal;
+window.closeCollectionsModal = closeCollectionsModal;
+window.createCollection = createCollection;
+window.deleteCollection = deleteCollection;
+window.filterByCollection = filterByCollection;
+window.clearCollectionFilter = clearCollectionFilter;
+window.showAddToCollectionMenu = showAddToCollectionMenu;
+window.toggleActivityInCollection = toggleActivityInCollection;
+window.quickCreateCollectionAndAdd = quickCreateCollectionAndAdd;
+window.openCreateCollectionForm = openCreateCollectionForm;
+window.editCollectionName = editCollectionName;
+window.confirmDeleteCollection = confirmDeleteCollection;
+window.viewCollectionActivities = viewCollectionActivities;
+window.openEmojiPickerForCollection = openEmojiPickerForCollection;
+window.openColorPickerForCollection = openColorPickerForCollection;
+window.renderCollectionBadges = renderCollectionBadges;
+window.getCollectionsForActivity = getCollectionsForActivity;
+window.isActivityInAnyCollection = isActivityInAnyCollection;
+window.currentCollectionFilter = null;
+// Make currentCollectionFilter accessible for filtering
+Object.defineProperty(window, 'currentCollectionFilter', {
+    get: () => currentCollectionFilter,
+    set: (v) => { currentCollectionFilter = v; }
+});

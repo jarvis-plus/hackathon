@@ -19324,3 +19324,479 @@ body.tour-active {
         animation: none;
     }
 }
+
+/* ============================================
+   ACTIVITY COLLECTIONS SYSTEM
+   ============================================ */
+
+/* Collections Button in Header */
+.collections-btn {
+    position: relative;
+}
+
+.collections-count {
+    background: var(--accent-green);
+    color: var(--bg-primary);
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.1rem 0.4rem;
+    border-radius: 10px;
+    margin-left: 0.3rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.2rem;
+}
+
+/* Collection Filter Indicator */
+.collection-filter-indicator {
+    display: inline-flex;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+}
+
+.collection-filter-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--collection-color) 20%, transparent), color-mix(in srgb, var(--collection-color) 10%, transparent));
+    border: 1px solid var(--collection-color);
+    color: var(--text-primary);
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.filter-tag-remove {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 0;
+    margin-left: 0.2rem;
+}
+
+.filter-tag-remove:hover {
+    color: var(--accent-red);
+}
+
+/* Collections Modal */
+.collections-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.collections-content {
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    max-width: 500px;
+    width: 100%;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--border-color);
+    animation: modalSlideIn 0.2s ease-out;
+}
+
+.collections-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.collections-header h2 {
+    font-size: 1.3rem;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.collections-body {
+    padding: 1rem 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.collections-body .section-note {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+}
+
+.collections-actions-top {
+    margin-bottom: 1rem;
+}
+
+.collection-create-btn {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, rgba(0, 255, 170, 0.1), rgba(0, 170, 255, 0.1));
+    border: 1px dashed var(--accent-green);
+    border-radius: 10px;
+    color: var(--accent-green);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.collection-create-btn:hover {
+    background: linear-gradient(135deg, rgba(0, 255, 170, 0.2), rgba(0, 170, 255, 0.2));
+    transform: translateY(-1px);
+}
+
+.collections-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.collections-empty {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--text-muted);
+}
+
+.collections-empty-icon {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 0.75rem;
+    opacity: 0.5;
+}
+
+.collections-empty-hint {
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+}
+
+/* Collection Item */
+.collection-item {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    transition: all 0.2s ease;
+    border-left: 3px solid var(--collection-color);
+}
+
+.collection-item:hover {
+    border-color: var(--collection-color);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.collection-item.active {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--collection-color) 15%, var(--bg-tertiary)), var(--bg-tertiary));
+    border-color: var(--collection-color);
+}
+
+.collection-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.collection-icon-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+}
+
+.collection-icon {
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.collection-icon:hover {
+    transform: scale(1.1);
+}
+
+.collection-color-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.collection-color-dot:hover {
+    transform: scale(1.3);
+}
+
+.collection-info {
+    flex: 1;
+    cursor: pointer;
+    min-width: 0;
+}
+
+.collection-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.collection-count {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.collection-actions {
+    display: flex;
+    gap: 0.25rem;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.collection-item:hover .collection-actions {
+    opacity: 1;
+}
+
+.collection-action-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    border-radius: 6px;
+    padding: 0.35rem 0.5rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+}
+
+.collection-action-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.collection-action-btn.danger:hover {
+    background: rgba(255, 100, 100, 0.2);
+}
+
+/* Add to Collection Menu (popup) */
+.add-to-collection-menu {
+    position: fixed;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 0.5rem;
+    min-width: 200px;
+    max-width: 280px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    z-index: 2000;
+    animation: fadeInUp 0.15s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.collection-menu-header {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.collection-menu-empty {
+    padding: 1rem;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.collection-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    background: none;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: left;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    transition: all 0.15s ease;
+    border-left: 3px solid transparent;
+}
+
+.collection-menu-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-left-color: var(--collection-color, var(--accent-green));
+}
+
+.collection-menu-item.in-collection {
+    background: rgba(0, 255, 170, 0.1);
+    border-left-color: var(--collection-color);
+}
+
+.collection-menu-item.new-collection {
+    border-top: 1px solid var(--border-color);
+    margin-top: 0.25rem;
+    padding-top: 0.75rem;
+    color: var(--accent-green);
+}
+
+.collection-menu-icon {
+    font-size: 1.1rem;
+}
+
+.collection-menu-name {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.collection-menu-check {
+    color: var(--accent-green);
+    font-weight: bold;
+}
+
+.collection-menu-divider {
+    height: 1px;
+    background: var(--border-color);
+    margin: 0.25rem 0;
+}
+
+/* Activity Collection Badges */
+.activity-collection-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.4rem;
+    height: 1.4rem;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--collection-color) 30%, transparent), color-mix(in srgb, var(--collection-color) 15%, transparent));
+    border: 1px solid var(--collection-color);
+    border-radius: 50%;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.activity-collection-badge:hover {
+    transform: scale(1.15);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Collection badges container in activity cards */
+.activity-collections {
+    display: inline-flex;
+    gap: 0.25rem;
+    margin-left: 0.5rem;
+}
+
+/* Light Theme */
+[data-theme="light"] .collections-modal {
+    background: rgba(255, 255, 255, 0.9);
+}
+
+[data-theme="light"] .collections-content {
+    background: #ffffff;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .collection-item {
+    background: #f8f9fa;
+}
+
+[data-theme="light"] .collection-create-btn {
+    background: linear-gradient(135deg, rgba(0, 200, 150, 0.1), rgba(0, 150, 200, 0.1));
+}
+
+[data-theme="light"] .add-to-collection-menu {
+    background: #ffffff;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .collection-menu-item:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .collection-menu-item.in-collection {
+    background: rgba(0, 200, 150, 0.1);
+}
+
+/* Ocean Theme */
+[data-theme="ocean"] .collection-item {
+    background: rgba(30, 41, 59, 0.8);
+}
+
+[data-theme="ocean"] .collection-create-btn {
+    border-color: #38bdf8;
+    color: #38bdf8;
+}
+
+/* Forest Theme */
+[data-theme="forest"] .collection-item {
+    background: rgba(30, 40, 30, 0.8);
+}
+
+[data-theme="forest"] .collection-create-btn {
+    border-color: #4ade80;
+    color: #4ade80;
+}
+
+/* Sunset Theme */
+[data-theme="sunset"] .collection-item {
+    background: rgba(40, 25, 25, 0.8);
+}
+
+[data-theme="sunset"] .collection-create-btn {
+    border-color: #fb923c;
+    color: #fb923c;
+}
+
+/* Cyberpunk Theme */
+[data-theme="cyberpunk"] .collection-item {
+    background: rgba(20, 10, 30, 0.8);
+}
+
+[data-theme="cyberpunk"] .collection-create-btn {
+    border-color: #f0abfc;
+    color: #f0abfc;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 600px) {
+    .collections-content {
+        max-height: 90vh;
+        margin: 0.5rem;
+    }
+    
+    .collection-actions {
+        opacity: 1;
+    }
+    
+    .collection-action-btn {
+        padding: 0.5rem;
+    }
+}

@@ -138,8 +138,14 @@
                 <button class="sound-toggle focus-timer-btn" id="focusTimerBtn" onclick="toggleFocusTimer()" title="Start/Stop focus timer (F)" aria-pressed="false" aria-label="Focus Timer: Stopped">
                     ⏱️ Timer
                 </button>
+                <button class="sound-toggle collections-btn" id="collectionsBtn" onclick="openCollectionsModal()" title="Manage collections (C)" aria-label="Manage activity collections">
+                    📁 Collections <span class="collections-count" style="display: none;">0</span>
+                </button>
             </div>
         </header>
+        
+        <!-- Collection Filter Indicator -->
+        <div id="collectionFilterIndicator" class="collection-filter-indicator" style="display: none;"></div>
         
         <!-- Focus Timer Floating Display -->
         <div id="focusTimerDisplay" class="focus-timer-display" role="timer" aria-live="polite" aria-label="Focus timer" style="display: none;">
@@ -180,6 +186,31 @@
                     <div class="widgets-actions">
                         <button class="widgets-reset-btn" onclick="resetWidgets()">🔄 Reset to Default</button>
                         <button class="widgets-save-btn" onclick="saveAndCloseWidgets()">✅ Save & Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Collections Modal -->
+        <div id="collectionsModal" class="collections-modal" role="dialog" aria-labelledby="collectionsTitle" aria-modal="true" style="display: none;">
+            <div class="collections-content">
+                <div class="collections-header">
+                    <h2 id="collectionsTitle">📁 Collections</h2>
+                    <button class="modal-close" onclick="closeCollectionsModal()" aria-label="Close modal">&times;</button>
+                </div>
+                <div class="collections-body">
+                    <p class="section-note">Organize activities into named collections. Click a collection to filter.</p>
+                    <div class="collections-actions-top">
+                        <button class="collection-create-btn" onclick="openCreateCollectionForm()">
+                            ➕ New Collection
+                        </button>
+                    </div>
+                    <div id="collectionsList" class="collections-list" role="list">
+                        <div class="collections-empty">
+                            <span class="collections-empty-icon">📁</span>
+                            <p>No collections yet!</p>
+                            <p class="collections-empty-hint">Create your first collection to organize activities.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1899,6 +1930,11 @@
         <div class="context-menu-item" id="ctxBookmark" role="menuitem" tabindex="-1">
             <span class="context-menu-icon">⭐</span>
             <span class="context-menu-label">Bookmark</span>
+        </div>
+        <div class="context-menu-item" id="ctxCollection" role="menuitem" tabindex="-1">
+            <span class="context-menu-icon">📁</span>
+            <span class="context-menu-label">Add to Collection</span>
+            <span class="context-menu-shortcut">▸</span>
         </div>
         <div class="context-menu-divider"></div>
         <div class="context-menu-item" id="ctxCopyLink" role="menuitem" tabindex="-1">
