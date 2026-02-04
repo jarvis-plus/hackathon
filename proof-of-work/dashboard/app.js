@@ -1,4 +1,229 @@
 // ============================================
+// DASHBOARD WIDGETS CONFIGURATION
+// ============================================
+
+/**
+ * Default widget definitions - order and visibility
+ * Each widget corresponds to a stat card in the dashboard
+ */
+const DEFAULT_WIDGETS = [
+    { id: 'total-actions', icon: '⚡', name: 'Total Actions', desc: 'All recorded activities', enabled: true },
+    { id: 'onchain', icon: '⛓️', name: 'On-Chain', desc: 'Activities signed to Solana', enabled: true },
+    { id: 'commits', icon: '📝', name: 'Commits', desc: 'Git commits made', enabled: true },
+    { id: 'builds', icon: '🔧', name: 'Builds', desc: 'Builds, deploys, decisions', enabled: true },
+    { id: 'trades', icon: '💱', name: 'Trades', desc: 'Trades and transfers', enabled: true },
+    { id: 'messages', icon: '💬', name: 'Messages', desc: 'Messages sent', enabled: true },
+    { id: 'tweets', icon: '🐦', name: 'Tweets', desc: 'Twitter activity', enabled: true },
+    { id: 'uptime', icon: '⏱️', name: 'Uptime', desc: 'Time since first activity', enabled: true },
+    { id: 'volume', icon: '💰', name: 'Trade Volume', desc: 'Total trading volume in USD', enabled: true },
+    { id: 'streak', icon: '🔥', name: 'Day Streak', desc: 'Consecutive active days', enabled: true },
+    { id: 'mood', icon: '🧠', name: 'Agent Mood', desc: 'Current agent state', enabled: true },
+    { id: 'sol-position', icon: '◎', name: 'Net SOL', desc: 'Net SOL position', enabled: true }
+];
+
+let widgetConfig = JSON.parse(localStorage.getItem('pow_widget_config')) || null;
+let pendingWidgetConfig = null; // Temp config during editing
+
+/**
+ * Get the current widget configuration (order + visibility)
+ */
+function getWidgetConfig() {
+    if (!widgetConfig) {
+        widgetConfig = JSON.parse(JSON.stringify(DEFAULT_WIDGETS));
+    }
+    return widgetConfig;
+}
+
+/**
+ * Save widget configuration to localStorage
+ */
+function saveWidgetConfig(config) {
+    widgetConfig = config;
+    localStorage.setItem('pow_widget_config', JSON.stringify(config));
+}
+
+/**
+ * Open the widgets configuration modal
+ */
+function openWidgetsModal() {
+    const modal = document.getElementById('widgetsModal');
+    if (!modal) return;
+    
+    // Clone current config for editing
+    pendingWidgetConfig = JSON.parse(JSON.stringify(getWidgetConfig()));
+    
+    renderWidgetsList();
+    modal.style.display = 'flex';
+    
+    // Focus management for accessibility
+    const firstToggle = modal.querySelector('.widget-toggle');
+    if (firstToggle) firstToggle.focus();
+    
+    // Trap focus in modal
+    modal.addEventListener('keydown', handleWidgetsModalKeydown);
+    
+    announceToScreenReader('Widgets configuration modal opened. Drag to reorder, toggle to show or hide.');
+}
+
+/**
+ * Close the widgets modal
+ */
+function closeWidgetsModal() {
+    const modal = document.getElementById('widgetsModal');
+    if (modal) {
+        modal.style.display = 'none';
+        modal.removeEventListener('keydown', handleWidgetsModalKeydown);
+    }
+    pendingWidgetConfig = null;
+}
+
+/**
+ * Handle keyboard navigation in widgets modal
+ */
+function handleWidgetsModalKeydown(e) {
+    if (e.key === 'Escape') {
+        closeWidgetsModal();
+    }
+}
+
+/**
+ * Render the widgets list in the modal
+ */
+function renderWidgetsList() {
+    const list = document.getElementById('widgetsList');
+    if (!list || !pendingWidgetConfig) return;
+    
+    list.innerHTML = pendingWidgetConfig.map((widget, index) => `
+        <div class="widget-item ${widget.enabled ? '' : 'hidden-widget'}" 
+             data-index="${index}" 
+             draggable="true"
+             role="listitem"
+             aria-label="${widget.name} widget, ${widget.enabled ? 'visible' : 'hidden'}">
+            <span class="widget-drag-handle" aria-hidden="true">⠿</span>
+            <span class="widget-icon">${widget.icon}</span>
+            <div class="widget-info">
+                <div class="widget-name">${widget.name}</div>
+                <div class="widget-desc">${widget.desc}</div>
+            </div>
+            <button class="widget-toggle ${widget.enabled ? 'enabled' : ''}" 
+                    onclick="toggleWidget(${index})"
+                    aria-pressed="${widget.enabled}"
+                    aria-label="Toggle ${widget.name} visibility">
+            </button>
+        </div>
+    `).join('');
+    
+    // Add drag-and-drop event listeners
+    initWidgetDragDrop();
+}
+
+/**
+ * Initialize drag and drop for widget reordering
+ */
+function initWidgetDragDrop() {
+    const list = document.getElementById('widgetsList');
+    if (!list) return;
+    
+    const items = list.querySelectorAll('.widget-item');
+    let draggedItem = null;
+    let draggedIndex = -1;
+    
+    items.forEach(item => {
+        item.addEventListener('dragstart', (e) => {
+            draggedItem = item;
+            draggedIndex = parseInt(item.dataset.index);
+            item.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', draggedIndex);
+        });
+        
+        item.addEventListener('dragend', () => {
+            item.classList.remove('dragging');
+            items.forEach(i => i.classList.remove('drag-over'));
+            draggedItem = null;
+            draggedIndex = -1;
+        });
+        
+        item.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            if (draggedItem && item !== draggedItem) {
+                item.classList.add('drag-over');
+            }
+        });
+        
+        item.addEventListener('dragleave', () => {
+            item.classList.remove('drag-over');
+        });
+        
+        item.addEventListener('drop', (e) => {
+            e.preventDefault();
+            item.classList.remove('drag-over');
+            
+            if (!draggedItem || item === draggedItem) return;
+            
+            const targetIndex = parseInt(item.dataset.index);
+            
+            // Reorder the config array
+            const movedWidget = pendingWidgetConfig.splice(draggedIndex, 1)[0];
+            pendingWidgetConfig.splice(targetIndex, 0, movedWidget);
+            
+            // Re-render the list
+            renderWidgetsList();
+            
+            announceToScreenReader(`${movedWidget.name} moved to position ${targetIndex + 1}`);
+        });
+    });
+}
+
+/**
+ * Toggle widget visibility
+ */
+function toggleWidget(index) {
+    if (!pendingWidgetConfig || !pendingWidgetConfig[index]) return;
+    
+    pendingWidgetConfig[index].enabled = !pendingWidgetConfig[index].enabled;
+    renderWidgetsList();
+    
+    const widget = pendingWidgetConfig[index];
+    announceToScreenReader(`${widget.name} ${widget.enabled ? 'shown' : 'hidden'}`);
+}
+
+/**
+ * Reset widgets to default configuration
+ */
+function resetWidgets() {
+    pendingWidgetConfig = JSON.parse(JSON.stringify(DEFAULT_WIDGETS));
+    renderWidgetsList();
+    announceToScreenReader('Widgets reset to default configuration');
+}
+
+/**
+ * Save and close widgets modal
+ */
+function saveAndCloseWidgets() {
+    if (pendingWidgetConfig) {
+        saveWidgetConfig(pendingWidgetConfig);
+        
+        // Re-render stat cards with new configuration
+        if (window.cachedActivities) {
+            statsInitialized = false;
+            updateStats(window.cachedActivities);
+        }
+        
+        showToast('Widget configuration saved!', 'success');
+    }
+    closeWidgetsModal();
+}
+
+// Make functions globally available
+window.openWidgetsModal = openWidgetsModal;
+window.closeWidgetsModal = closeWidgetsModal;
+window.toggleWidget = toggleWidget;
+window.resetWidgets = resetWidgets;
+window.saveAndCloseWidgets = saveAndCloseWidgets;
+
+// ============================================
 // INFINITE SCROLL / LAZY LOADING
 // ============================================
 const ACTIVITIES_PER_PAGE = 50;
@@ -1459,74 +1684,126 @@ function animateDecimal(element, targetValue, duration = 600, prefix = '', suffi
     }, delay);
 }
 
+// Widget definitions with HTML generation info
+const WIDGET_HTML_MAP = {
+    'total-actions': {
+        iconClass: 'icon-total',
+        valueId: 'total-actions',
+        valueClass: '',
+        defaultValue: '0',
+        label: 'Total Actions'
+    },
+    'onchain': {
+        iconClass: 'icon-chain',
+        valueId: 'onchain',
+        valueClass: 'chain',
+        defaultValue: '0',
+        label: 'On-Chain',
+        cardId: 'card-onchain'
+    },
+    'commits': {
+        iconClass: 'icon-commits',
+        valueId: 'commits',
+        valueClass: 'commits',
+        defaultValue: '0',
+        label: 'Commits'
+    },
+    'builds': {
+        iconClass: 'icon-builds',
+        valueId: 'builds',
+        valueClass: 'builds',
+        defaultValue: '0',
+        label: 'Builds'
+    },
+    'trades': {
+        iconClass: 'icon-trades',
+        valueId: 'trades',
+        valueClass: 'trades',
+        defaultValue: '0',
+        label: 'Trades'
+    },
+    'messages': {
+        iconClass: 'icon-messages',
+        valueId: 'messages',
+        valueClass: 'messages',
+        defaultValue: '0',
+        label: 'Messages'
+    },
+    'tweets': {
+        iconClass: 'icon-tweets',
+        valueId: 'tweets',
+        valueClass: 'tweets',
+        defaultValue: '0',
+        label: 'Tweets'
+    },
+    'uptime': {
+        iconClass: 'icon-uptime',
+        valueId: 'uptime',
+        valueClass: 'uptime',
+        defaultValue: '0h',
+        label: 'Uptime'
+    },
+    'volume': {
+        iconClass: 'icon-volume',
+        valueId: 'volume',
+        valueClass: 'volume',
+        defaultValue: '$0',
+        label: 'Trade Volume'
+    },
+    'streak': {
+        iconClass: 'icon-streak',
+        valueId: 'streak',
+        valueClass: 'streak',
+        defaultValue: '<span class="streak-fire">🔥</span>0',
+        label: 'Day Streak',
+        cardId: 'streak-card'
+    },
+    'mood': {
+        iconClass: 'icon-mood',
+        valueId: 'mood',
+        valueClass: 'mood',
+        defaultValue: '🤖',
+        label: 'Agent Mood',
+        cardId: 'mood-card'
+    },
+    'sol-position': {
+        iconClass: 'icon-sol',
+        valueId: 'sol-position',
+        valueClass: 'sol-position',
+        defaultValue: '0 SOL',
+        label: 'Net SOL',
+        cardId: 'sol-position-card'
+    }
+};
+
 // Initialize stat cards from skeleton state with entry animations
 function initializeStatCards() {
     const statsGrid = document.getElementById('stats-grid');
     if (!statsGrid) return;
     
-    // Replace skeleton cards with real stat cards (with icons and entry animation)
-    statsGrid.innerHTML = `
-        <div class="stat-card animate-entry">
-            <div class="stat-icon icon-total">⚡</div>
-            <div class="stat-value" id="total-actions">0</div>
-            <div class="stat-label">Total Actions</div>
-        </div>
-        <div class="stat-card animate-entry" id="card-onchain">
-            <div class="stat-icon icon-chain">⛓️</div>
-            <div class="stat-value chain" id="onchain">0</div>
-            <div class="stat-label">On-Chain</div>
-        </div>
-        <div class="stat-card animate-entry">
-            <div class="stat-icon icon-commits">📝</div>
-            <div class="stat-value commits" id="commits">0</div>
-            <div class="stat-label">Commits</div>
-        </div>
-        <div class="stat-card animate-entry">
-            <div class="stat-icon icon-builds">🔧</div>
-            <div class="stat-value builds" id="builds">0</div>
-            <div class="stat-label">Builds</div>
-        </div>
-        <div class="stat-card animate-entry">
-            <div class="stat-icon icon-trades">💱</div>
-            <div class="stat-value trades" id="trades">0</div>
-            <div class="stat-label">Trades</div>
-        </div>
-        <div class="stat-card animate-entry">
-            <div class="stat-icon icon-messages">💬</div>
-            <div class="stat-value messages" id="messages">0</div>
-            <div class="stat-label">Messages</div>
-        </div>
-        <div class="stat-card animate-entry">
-            <div class="stat-icon icon-tweets">🐦</div>
-            <div class="stat-value tweets" id="tweets">0</div>
-            <div class="stat-label">Tweets</div>
-        </div>
-        <div class="stat-card animate-entry">
-            <div class="stat-icon icon-uptime">⏱️</div>
-            <div class="stat-value uptime" id="uptime">0h</div>
-            <div class="stat-label">Uptime</div>
-        </div>
-        <div class="stat-card animate-entry">
-            <div class="stat-icon icon-volume">💰</div>
-            <div class="stat-value volume" id="volume">$0</div>
-            <div class="stat-label">Trade Volume</div>
-        </div>
-        <div class="stat-card animate-entry" id="streak-card">
-            <div class="stat-icon icon-streak">🔥</div>
-            <div class="stat-value streak" id="streak"><span class="streak-fire">🔥</span>0</div>
-            <div class="stat-label">Day Streak</div>
-        </div>
-        <div class="stat-card animate-entry" id="mood-card">
-            <div class="stat-icon icon-mood">🧠</div>
-            <div class="stat-value mood" id="mood">🤖</div>
-            <div class="stat-label">Agent Mood</div>
-        </div>
-        <div class="stat-card animate-entry" id="sol-position-card">
-            <div class="stat-icon icon-sol">◎</div>
-            <div class="stat-value sol-position" id="sol-position">0 SOL</div>
-            <div class="stat-label">Net SOL</div>
-        </div>
-    `;
+    // Get widget configuration (order + visibility)
+    const config = getWidgetConfig();
+    
+    // Generate HTML for enabled widgets only, in configured order
+    const cardsHtml = config
+        .filter(widget => widget.enabled)
+        .map(widget => {
+            const htmlDef = WIDGET_HTML_MAP[widget.id];
+            if (!htmlDef) return '';
+            
+            const cardIdAttr = htmlDef.cardId ? ` id="${htmlDef.cardId}"` : '';
+            const valueClass = htmlDef.valueClass ? ` ${htmlDef.valueClass}` : '';
+            
+            return `
+        <div class="stat-card animate-entry"${cardIdAttr}>
+            <div class="stat-icon ${htmlDef.iconClass}">${widget.icon}</div>
+            <div class="stat-value${valueClass}" id="${htmlDef.valueId}">${htmlDef.defaultValue}</div>
+            <div class="stat-label">${htmlDef.label}</div>
+        </div>`;
+        })
+        .join('');
+    
+    statsGrid.innerHTML = cardsHtml;
     
     // Remove entry animation class after animations complete to allow hover effects
     setTimeout(() => {
@@ -6259,6 +6536,7 @@ const KEYBOARD_SHORTCUTS = {
     'b': { action: 'toggleBookmarkFilter', description: 'Toggle bookmark filter' },
     'B': { action: 'bookmarkFocused', description: 'Bookmark focused activity' },
     'z': { action: 'toggleFocusMode', description: 'Toggle focus mode' },
+    'w': { action: 'openWidgets', description: 'Open widgets configuration' },
     '?': { action: 'showShortcuts', description: 'Show keyboard shortcuts' },
 };
 
@@ -6311,6 +6589,7 @@ function createShortcutsModal() {
                     <div class="shortcut-row"><kbd>c</kbd> Toggle compare mode</div>
                     <div class="shortcut-row"><kbd>x</kbd> Toggle bulk select mode</div>
                     <div class="shortcut-row"><kbd>v</kbd> Voice activity input</div>
+                    <div class="shortcut-row"><kbd>w</kbd> Configure widgets</div>
                     <div class="shortcut-row"><kbd>?</kbd> Show this help</div>
                 </div>
             </div>
@@ -6397,6 +6676,8 @@ function handleShortcutAction(action) {
         } else {
             announceToScreenReader('Focus an activity first to bookmark it');
         }
+    } else if (action === 'openWidgets') {
+        openWidgetsModal();
     }
 }
 
@@ -6513,6 +6794,7 @@ const PALETTE_COMMANDS = [
     { id: 'export-csv', title: 'Export as CSV', description: 'Download activities as CSV file', icon: '📊', shortcut: '⇧E', action: () => exportActivities('csv'), group: 'Export' },
     
     // Settings
+    { id: 'widgets', title: 'Customize Widgets', description: 'Configure dashboard stat cards', icon: '🧩', shortcut: 'W', action: () => { openWidgetsModal(); hideCommandPalette(); }, group: 'Settings' },
     { id: 'theme-auto', title: 'Theme: Auto (System)', description: 'Follow system dark/light preference', icon: '🔄', action: () => { setTheme('auto'); hideCommandPalette(); }, group: 'Settings' },
     { id: 'theme-dark', title: 'Theme: Dark', description: 'Switch to dark theme', icon: '🌙', action: () => { setTheme('dark'); hideCommandPalette(); }, group: 'Settings' },
     { id: 'theme-light', title: 'Theme: Light', description: 'Switch to light theme', icon: '☀️', action: () => { setTheme('light'); hideCommandPalette(); }, group: 'Settings' },

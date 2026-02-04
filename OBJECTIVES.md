@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-04 04:52 PST
-**Cycle:** 194
+**Last Updated:** 2026-02-04 04:56 PST
+**Cycle:** 195
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -115,13 +115,33 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Auto theme mode (follow OS dark/light preference) ✅ Cycle 192
 - [x] Activity status indicator (pending/completed/failed states) ✅ Cycle 193
 - [x] Batch restore from trash (restore multiple at once) ✅ Cycle 194
-- [ ] Activity quick actions menu (right-click context menu)
+- [x] Activity quick actions menu (right-click context menu) ✅ Cycle 195
 - [ ] Dashboard widgets (customizable stat cards)
 - [ ] Activity reminder system (set reminders for follow-ups)
 
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 195 (Activity Quick Actions Context Menu)
+- Implemented right-click context menu for activity items
+- **Menu Actions**:
+  - 📌 Pin / Unpin activity
+  - ⭐ Bookmark / Unbookmark
+  - 🔗 Copy Link (with activity deep link)
+  - # Copy Hash (full SHA-256 hash)
+  - ⛓️ View On-Chain (opens Solscan if signed)
+  - 📊 Set Status submenu (Completed/Pending/Failed)
+  - ⚖️ Add to Compare (only shown when compare mode active)
+  - ☑️ Select for Bulk (only shown when bulk mode active)
+  - 🗑️ Delete (moves to trash)
+- **Smart Positioning**: Menu stays on screen, adjusts transform origin
+- **Keyboard Navigation**: Arrow keys, Enter to select, Escape to close
+- **Screen Reader Announcements**: Announces when menu opens
+- **Theme Support**: All 7 themes (Auto, Dark, Light, Ocean, Forest, Sunset, Cyberpunk)
+- **Mobile Responsive**: Larger touch targets, hidden shortcuts on small screens
+- **Stats**: 522 activities, all signed on-chain
+- Commit: e579df4
 
 ### Cycle 194 (Batch Restore from Trash)
 - Implemented bulk restore for restoring multiple activities from trash at once
@@ -195,25 +215,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - **OpenAPI Updated**: BulkDeleteResult schema, new endpoint documented
 - **Stats**: 506 activities, all signed on-chain
 - Commit: e45bc38
-
-### Cycle 190 (Export with Filters)
-- Updated main export buttons to use filter-aware `exportActivities()` function
-- **Visual Filter Indicator**:
-  - Shows next to export buttons when any filter is active
-  - Displays filtered count (e.g., "🔍 47")
-  - Hover tooltip shows active filter details
-  - Pulse animation draws attention
-- **Respects All Filters**:
-  - Type filter
-  - Search query
-  - Tag filter
-  - Wallet filter
-  - Date range
-  - Bookmark filter
-- **Theme Support**: All 6 themes (Dark, Light, Ocean, Forest, Sunset, Cyberpunk)
-- **Accessibility**: Descriptive title attributes for screen readers
-- **Stats**: 504 activities, all signed on-chain
-- Commit: 6cc680e
 
 ---
 

@@ -88,8 +88,29 @@
                 <button class="tour-start-btn" id="tourStartBtn" onclick="startTour()" title="Take a guided tour of the dashboard" aria-label="Start dashboard tour">
                     🎓 Tour
                 </button>
+                <button class="sound-toggle" id="widgetsBtn" onclick="openWidgetsModal()" title="Customize dashboard widgets (W)" aria-label="Customize dashboard widgets">
+                    🧩 Widgets
+                </button>
             </div>
         </header>
+        
+        <!-- Dashboard Widgets Modal -->
+        <div id="widgetsModal" class="widgets-modal" role="dialog" aria-labelledby="widgetsTitle" aria-modal="true" style="display: none;">
+            <div class="widgets-content">
+                <div class="widgets-header">
+                    <h2 id="widgetsTitle">🧩 Dashboard Widgets</h2>
+                    <button class="modal-close" onclick="closeWidgetsModal()" aria-label="Close modal">&times;</button>
+                </div>
+                <div class="widgets-body">
+                    <p class="section-note">Drag to reorder • Click toggle to show/hide widgets</p>
+                    <div id="widgetsList" class="widgets-list" role="list"></div>
+                    <div class="widgets-actions">
+                        <button class="widgets-reset-btn" onclick="resetWidgets()">🔄 Reset to Default</button>
+                        <button class="widgets-save-btn" onclick="saveAndCloseWidgets()">✅ Save & Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
         
         <!-- Custom Activity Types Modal -->
         <div id="customTypesModal" class="custom-types-modal" role="dialog" aria-labelledby="customTypesTitle" aria-modal="true" style="display: none;">
