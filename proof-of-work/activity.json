@@ -3534,5 +3534,30 @@
     "hash": "ca9dace4441544e457d093ba531923ee13bdee478f924b0e7adb61a25fdfd3dc",
     "signature": "5UPxZEusBjCiiYyf5zdif2ynNVdNajkcia1odaCaWh2ynqyMLehAKtABxD1uR99S5p4pKKc87iDF9Yx3734hVkpF",
     "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
+  },
+  {
+    "timestamp": "2026-02-04T05:16:29.181Z",
+    "type": "commit",
+    "description": "Cycle 171: Social Sharing Cards - OG image generation",
+    "hash": "e4861c5ca3c607924022acde8ce7d703d0bc17d764112f53c542d4cd038f9440",
+    "signature": "4v8rP7LVxkvYMfhRKESB6yLLcdL7YydjbxDm8nCd6jEhvy1YBsGLKQPD8GZkmhzxhjNruZFrtkvjZpA5cP6ap2we",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
+  },
+  {
+    "timestamp": "2026-02-04T05:16:43.298Z",
+    "type": "build",
+    "description": "Cycle 170: Implemented social sharing cards with OG images. Added /api/og/:hash endpoint generating 1200x630 SVG cards with activity type, description, hash, and on-chain status. Added /share/:hash page with full OG/Twitter meta tags that redirects to dashboard. Updated share button to copy shareable links with social preview support. Documented in OpenAPI spec. Also marked timeline slider as complete (was already implemented). ~200 lines server.ts, ~70 lines openapi.json, ~30 lines app.js",
+    "hash": "b5fa79d512bf158eab619863a6e53e696cea389512e9b7712b94ad7a5b4ab75e",
+    "signature": "1RaMeshRZTCK5rUQNC6w9nWVxp4Vh8FPYdRXvsexA4rx5BTa3cTULJRFmy1zDKAfEihfXFTAtrjJ5m48t4dr7rC",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
+  },
+  {
+    "timestamp": "2026-02-04T05:20:49Z",
+    "type": "build",
+    "description": "Cycle 172: Activity Streak Tracking - Added streak tracking system with consecutive day counting, milestone tracking (3/7/14/30/60/90/180/365 days), streak status (active/at_risk/broken), weekly and monthly active days. New /api/streaks endpoint with detailed metrics and motivational messages. Updated /api/stats with streak summary. OpenAPI updated.",
+    "metadata": {},
+    "hash": "556d2abdd67931807a37809c003c901b8418aedebd641387affbaf0b514201a8",
+    "signature": "5mechCGDor4eZqb75SmFDdVxFfWwVNL1XHu6Xmm1hUXU1myk4rXidJLcXZKkD9mTbAM5dvPHphKcmoSK7H56wjkY",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
   }
 ]

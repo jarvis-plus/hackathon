@@ -928,29 +928,34 @@ function renderActivities(activities, highlightNew = false) {
         const walletHtml = renderWalletBadge(a.wallet);
         const activityId = getActivityId(a);
         const isPinned = !!a.pinned;
+        const bookmarked = hash ? isBookmarked(hash) : false;
         
-        const ariaLabel = `${isPinned ? 'Pinned ' : ''}${a.type} activity: ${escapeHtml(a.description.substring(0, 80))}${a.description.length > 80 ? '...' : ''}`;
+        const ariaLabel = `${bookmarked ? 'Bookmarked ' : ''}${isPinned ? 'Pinned ' : ''}${a.type} activity: ${escapeHtml(a.description.substring(0, 80))}${a.description.length > 80 ? '...' : ''}`;
         const notesHtml = renderActivityNotes(a, hash);
         const pinButtonHtml = renderPinButton(hash, isPinned);
+        const bookmarkButtonHtml = renderBookmarkButton(hash);
         
         const compareButtonHtml = renderCompareButton(hash);
         
         return `
-        <div class="activity-item ${a.type}${isNew ? ' new-activity' : ''}${isPinned ? ' pinned' : ''}" 
+        <div class="activity-item ${a.type}${isNew ? ' new-activity' : ''}${isPinned ? ' pinned' : ''}${bookmarked ? ' bookmarked' : ''}" 
              style="animation-delay: ${i * 0.04}s" 
              data-wallet="${a.wallet || ''}" 
              data-activity-id="${activityId}"
              data-hash="${hash || ''}"
              data-pinned="${isPinned}"
+             data-bookmarked="${bookmarked}"
              tabindex="0"
              role="article"
              aria-label="${ariaLabel}">
             ${renderShareButton(activityId, hash)}
             ${renderCompareButton(hash)}
+            ${bookmarkButtonHtml}
             ${pinButtonHtml}
             <div class="activity-header">
                 <div class="activity-badges">
                     ${isPinned ? '<span class="pinned-badge" title="Pinned activity">📌</span>' : ''}
+                    ${bookmarked ? '<span class="bookmarked-badge" title="Bookmarked">⭐</span>' : ''}
                     <span class="activity-type">${a.type}</span>
                     ${getProofBadge(a)}
                     ${walletHtml}
@@ -4158,13 +4163,23 @@ function renderFilteredActivities(activities) {
         });
     }
     
+    // Apply bookmark filter
+    if (window.bookmarkFilterActive) {
+        const bookmarks = getBookmarks();
+        filtered = filtered.filter(a => {
+            const hash = a.hash || a.proof?.hash;
+            return hash && bookmarks.has(hash);
+        });
+    }
+    
     // Update filter stats
     const statsEl = document.getElementById('filterStats');
     if (statsEl) {
         const hasDateFilter = currentDateFrom || currentDateTo;
-        const isFiltered = currentTypeFilter !== 'all' || currentSearchQuery || currentTagFilter || currentWalletFilter || hasDateFilter;
+        const isFiltered = currentTypeFilter !== 'all' || currentSearchQuery || currentTagFilter || currentWalletFilter || hasDateFilter || window.bookmarkFilterActive;
         if (isFiltered) {
             const filterParts = [];
+            if (window.bookmarkFilterActive) filterParts.push('⭐ bookmarked');
             if (currentTypeFilter !== 'all') filterParts.push(`type: ${currentTypeFilter}`);
             if (currentTagFilter) filterParts.push(`tag: ${currentTagFilter}`);
             if (currentWalletFilter) filterParts.push(`wallet: ${getWalletName(currentWalletFilter)}`);
@@ -4317,6 +4332,159 @@ function renderActivityWallet(activity) {
         💳 ${escapeHtml(name)}
     </span>`;
 }
+
+// ============================================
+// BOOKMARK / FAVORITES SYSTEM (Client-Side)
+// ============================================
+
+/**
+ * Get bookmarked activity hashes from localStorage
+ * @returns {Set} Set of bookmarked hashes
+ */
+function getBookmarks() {
+    try {
+        const stored = localStorage.getItem('jarvis-pow-bookmarks');
+        return new Set(stored ? JSON.parse(stored) : []);
+    } catch (e) {
+        console.error('Failed to load bookmarks:', e);
+        return new Set();
+    }
+}
+
+/**
+ * Save bookmarks to localStorage
+ * @param {Set} bookmarks - Set of hashes to save
+ */
+function saveBookmarks(bookmarks) {
+    try {
+        localStorage.setItem('jarvis-pow-bookmarks', JSON.stringify([...bookmarks]));
+    } catch (e) {
+        console.error('Failed to save bookmarks:', e);
+    }
+}
+
+/**
+ * Check if an activity is bookmarked
+ * @param {string} hash - Activity hash
+ * @returns {boolean}
+ */
+function isBookmarked(hash) {
+    return getBookmarks().has(hash);
+}
+
+/**
+ * Toggle bookmark status on an activity
+ * @param {string} hash - The activity hash
+ */
+function toggleBookmark(hash) {
+    const bookmarks = getBookmarks();
+    const activityItem = document.querySelector(`[data-hash="${hash}"]`);
+    const bookmarkBtn = activityItem?.querySelector('.bookmark-btn');
+    const wasBookmarked = bookmarks.has(hash);
+    
+    if (wasBookmarked) {
+        bookmarks.delete(hash);
+    } else {
+        bookmarks.add(hash);
+    }
+    
+    saveBookmarks(bookmarks);
+    
+    // Update UI
+    if (activityItem) {
+        activityItem.classList.toggle('bookmarked', !wasBookmarked);
+        activityItem.dataset.bookmarked = !wasBookmarked;
+        
+        // Update button state
+        if (bookmarkBtn) {
+            bookmarkBtn.classList.toggle('bookmarked', !wasBookmarked);
+            bookmarkBtn.innerHTML = !wasBookmarked ? '⭐' : '☆';
+            bookmarkBtn.title = !wasBookmarked ? 'Remove bookmark' : 'Add to bookmarks';
+            bookmarkBtn.setAttribute('aria-label', !wasBookmarked ? 'Remove bookmark' : 'Add to bookmarks');
+        }
+        
+        // Update badge
+        const badges = activityItem.querySelector('.activity-badges');
+        const existingBadge = badges?.querySelector('.bookmarked-badge');
+        if (!wasBookmarked && !existingBadge) {
+            const pinnedBadge = badges?.querySelector('.pinned-badge');
+            if (pinnedBadge) {
+                pinnedBadge.insertAdjacentHTML('afterend', '<span class="bookmarked-badge" title="Bookmarked">⭐</span>');
+            } else {
+                badges?.insertAdjacentHTML('afterbegin', '<span class="bookmarked-badge" title="Bookmarked">⭐</span>');
+            }
+        } else if (wasBookmarked && existingBadge) {
+            existingBadge.remove();
+        }
+    }
+    
+    // Update bookmark count
+    updateBookmarkCount();
+    
+    // Play sound feedback
+    if (typeof playNotificationSound === 'function') {
+        playNotificationSound(!wasBookmarked ? 'new' : 'misc');
+    }
+    
+    // Announce to screen readers
+    announceToScreenReader(!wasBookmarked ? 'Activity bookmarked' : 'Bookmark removed');
+    
+    // Re-apply bookmark filter if active
+    if (window.bookmarkFilterActive) {
+        applyFilters();
+    }
+}
+
+/**
+ * Render bookmark button for an activity
+ * @param {string} hash - The activity hash
+ * @returns {string} HTML string for the bookmark button
+ */
+function renderBookmarkButton(hash) {
+    if (!hash) return '';
+    
+    const bookmarked = isBookmarked(hash);
+    return `
+        <button class="bookmark-btn ${bookmarked ? 'bookmarked' : ''}" 
+                onclick="toggleBookmark('${hash}')" 
+                title="${bookmarked ? 'Remove bookmark' : 'Add to bookmarks'}"
+                aria-label="${bookmarked ? 'Remove bookmark' : 'Add to bookmarks'}">
+            ${bookmarked ? '⭐' : '☆'}
+        </button>
+    `;
+}
+
+/**
+ * Update bookmark count display in filter button
+ */
+function updateBookmarkCount() {
+    const bookmarks = getBookmarks();
+    const countEl = document.getElementById('bookmark-count');
+    if (countEl) {
+        countEl.textContent = bookmarks.size > 0 ? `(${bookmarks.size})` : '';
+    }
+}
+
+/**
+ * Toggle bookmark filter - show only bookmarked activities
+ */
+function toggleBookmarkFilter() {
+    window.bookmarkFilterActive = !window.bookmarkFilterActive;
+    
+    const btn = document.getElementById('bookmark-filter-btn');
+    if (btn) {
+        btn.classList.toggle('active', window.bookmarkFilterActive);
+    }
+    
+    applyFilters();
+    
+    announceToScreenReader(window.bookmarkFilterActive ? 
+        'Showing bookmarked activities only' : 
+        'Showing all activities');
+}
+
+// Initialize bookmark filter state
+window.bookmarkFilterActive = false;
 
 /**
  * Render pin button for an activity
@@ -5208,6 +5376,8 @@ const KEYBOARD_SHORTCUTS = {
     'e': { action: 'exportJSON', description: 'Export as JSON' },
     'E': { action: 'exportCSV', description: 'Export as CSV' },
     'l': { action: 'loadMore', description: 'Load more activities' },
+    'b': { action: 'toggleBookmarkFilter', description: 'Toggle bookmark filter' },
+    'B': { action: 'bookmarkFocused', description: 'Bookmark focused activity' },
     '?': { action: 'showShortcuts', description: 'Show keyboard shortcuts' },
 };
 
@@ -5248,6 +5418,11 @@ function createShortcutsModal() {
                     <div class="shortcut-row"><kbd>e</kbd> Export as JSON</div>
                     <div class="shortcut-row"><kbd>Shift+e</kbd> Export as CSV</div>
                     <div class="shortcut-row"><kbd>l</kbd> Load more activities</div>
+                </div>
+                <div class="shortcut-section">
+                    <h4>Bookmarks</h4>
+                    <div class="shortcut-row"><kbd>b</kbd> Toggle bookmark filter</div>
+                    <div class="shortcut-row"><kbd>Shift+b</kbd> Bookmark focused activity</div>
                 </div>
                 <div class="shortcut-section">
                     <h4>Help</h4>
@@ -5320,6 +5495,19 @@ function handleShortcutAction(action) {
         exportActivities('csv');
     } else if (action === 'loadMore') {
         loadMoreActivities();
+    } else if (action === 'toggleBookmarkFilter') {
+        toggleBookmarkFilter();
+    } else if (action === 'bookmarkFocused') {
+        // Bookmark the currently focused activity
+        const focused = document.activeElement;
+        if (focused && focused.classList.contains('activity-item')) {
+            const hash = focused.dataset.hash;
+            if (hash) {
+                toggleBookmark(hash);
+            }
+        } else {
+            announceToScreenReader('Focus an activity first to bookmark it');
+        }
     }
 }
 
@@ -5396,6 +5584,337 @@ function addKeyboardHint() {
 
 // Initialize keyboard shortcuts on load
 document.addEventListener('DOMContentLoaded', addKeyboardHint);
+
+// Initialize bookmark count on page load
+document.addEventListener('DOMContentLoaded', updateBookmarkCount);
+
+// ============================================
+// COMMAND PALETTE (Cmd+K)
+// ============================================
+
+let commandPaletteOpen = false;
+let commandPaletteSelectedIndex = 0;
+let filteredCommands = [];
+
+/**
+ * Command definitions for the palette
+ * Each command has: id, title, description, icon, shortcut (optional), action, group
+ */
+const PALETTE_COMMANDS = [
+    // Navigation
+    { id: 'tab-feed', title: 'Activity Feed', description: 'View recent activities', icon: '📋', shortcut: '1', action: () => switchTab('timeline'), group: 'Navigation' },
+    { id: 'tab-milestones', title: 'Milestones', description: 'View achievement milestones', icon: '🏆', shortcut: '2', action: () => switchTab('milestones'), group: 'Navigation' },
+    { id: 'tab-tweets', title: 'Tweets', description: 'View tweet activities', icon: '🐦', shortcut: '3', action: () => switchTab('tweets'), group: 'Navigation' },
+    { id: 'tab-decisions', title: 'Key Decisions', description: 'View important decisions', icon: '🎯', shortcut: '4', action: () => switchTab('decisions'), group: 'Navigation' },
+    { id: 'tab-meta', title: 'Meta Story', description: 'View project narrative', icon: '📖', shortcut: '5', action: () => switchTab('meta'), group: 'Navigation' },
+    { id: 'tab-verify', title: 'Verify', description: 'Verify activity proofs', icon: '🔐', shortcut: '6', action: () => switchTab('verify'), group: 'Navigation' },
+    
+    // Search & Filter
+    { id: 'search', title: 'Search Activities', description: 'Focus the search input', icon: '🔍', shortcut: '/', action: () => focusSearchInput(), group: 'Search & Filter' },
+    { id: 'reset-filters', title: 'Reset All Filters', description: 'Clear all active filters', icon: '🔄', shortcut: 'R', action: () => resetFilters(), group: 'Search & Filter' },
+    { id: 'filter-bookmarks', title: 'Toggle Bookmarks Filter', description: 'Show only bookmarked items', icon: '⭐', shortcut: 'B', action: () => toggleBookmarkFilter(), group: 'Search & Filter' },
+    { id: 'filter-build', title: 'Filter: Build', description: 'Show only build activities', icon: '🔨', action: () => { setTypeFilter('build'); hideCommandPalette(); }, group: 'Search & Filter' },
+    { id: 'filter-commit', title: 'Filter: Commits', description: 'Show only commit activities', icon: '📝', action: () => { setTypeFilter('commit'); hideCommandPalette(); }, group: 'Search & Filter' },
+    { id: 'filter-trade', title: 'Filter: Trades', description: 'Show only trade activities', icon: '💰', action: () => { setTypeFilter('trade'); hideCommandPalette(); }, group: 'Search & Filter' },
+    { id: 'filter-tweet', title: 'Filter: Tweets', description: 'Show only tweet activities', icon: '🐦', action: () => { setTypeFilter('tweet'); hideCommandPalette(); }, group: 'Search & Filter' },
+    { id: 'filter-message', title: 'Filter: Messages', description: 'Show only message activities', icon: '💬', action: () => { setTypeFilter('message'); hideCommandPalette(); }, group: 'Search & Filter' },
+    
+    // Export
+    { id: 'export-json', title: 'Export as JSON', description: 'Download activities as JSON file', icon: '📄', shortcut: 'E', action: () => exportActivities('json'), group: 'Export' },
+    { id: 'export-csv', title: 'Export as CSV', description: 'Download activities as CSV file', icon: '📊', shortcut: '⇧E', action: () => exportActivities('csv'), group: 'Export' },
+    
+    // Settings
+    { id: 'theme-dark', title: 'Theme: Dark', description: 'Switch to dark theme', icon: '🌙', action: () => { setTheme('dark'); hideCommandPalette(); }, group: 'Settings' },
+    { id: 'theme-light', title: 'Theme: Light', description: 'Switch to light theme', icon: '☀️', action: () => { setTheme('light'); hideCommandPalette(); }, group: 'Settings' },
+    { id: 'theme-ocean', title: 'Theme: Ocean', description: 'Switch to ocean theme', icon: '🌊', action: () => { setTheme('ocean'); hideCommandPalette(); }, group: 'Settings' },
+    { id: 'theme-forest', title: 'Theme: Forest', description: 'Switch to forest theme', icon: '🌲', action: () => { setTheme('forest'); hideCommandPalette(); }, group: 'Settings' },
+    { id: 'theme-sunset', title: 'Theme: Sunset', description: 'Switch to sunset theme', icon: '🌅', action: () => { setTheme('sunset'); hideCommandPalette(); }, group: 'Settings' },
+    { id: 'theme-cyberpunk', title: 'Theme: Cyberpunk', description: 'Switch to cyberpunk theme', icon: '🔮', action: () => { setTheme('cyberpunk'); hideCommandPalette(); }, group: 'Settings' },
+    { id: 'toggle-sound', title: 'Toggle Sound', description: 'Turn notification sounds on/off', icon: '🔔', action: () => { toggleSound(); hideCommandPalette(); }, group: 'Settings' },
+    { id: 'toggle-notifs', title: 'Toggle Browser Notifications', description: 'Enable/disable browser notifications', icon: '🔕', action: () => { toggleNotifications(); hideCommandPalette(); }, group: 'Settings' },
+    
+    // Actions
+    { id: 'load-more', title: 'Load More Activities', description: 'Load additional activities', icon: '⬇️', shortcut: 'L', action: () => loadMoreActivities(), group: 'Actions' },
+    { id: 'scroll-top', title: 'Scroll to Top', description: 'Jump to top of page', icon: '⬆️', shortcut: 'T', action: () => { window.scrollTo({ top: 0, behavior: 'smooth' }); hideCommandPalette(); }, group: 'Actions' },
+    { id: 'refresh', title: 'Refresh Data', description: 'Reload activity data', icon: '🔃', action: () => { fetchActivities(); hideCommandPalette(); }, group: 'Actions' },
+    
+    // Help
+    { id: 'shortcuts', title: 'Keyboard Shortcuts', description: 'View all keyboard shortcuts', icon: '⌨️', shortcut: '?', action: () => { showShortcutsModal(); hideCommandPalette(); }, group: 'Help' },
+    { id: 'api-docs', title: 'API Documentation', description: 'Open OpenAPI/Swagger docs', icon: '📚', action: () => { window.open('/pow/api/docs', '_blank'); hideCommandPalette(); }, group: 'Help' },
+    { id: 'github', title: 'GitHub Repository', description: 'View source code', icon: '🐙', action: () => { window.open('https://github.com/jarvis-plus/hackathon', '_blank'); hideCommandPalette(); }, group: 'Help' },
+];
+
+/**
+ * Create and inject command palette HTML
+ */
+function createCommandPalette() {
+    if (document.getElementById('command-palette-overlay')) return;
+    
+    const overlay = document.createElement('div');
+    overlay.id = 'command-palette-overlay';
+    overlay.className = 'command-palette-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', 'Command palette');
+    
+    overlay.innerHTML = `
+        <div class="command-palette" role="combobox" aria-expanded="true" aria-haspopup="listbox">
+            <div class="command-palette-search">
+                <span class="command-palette-search-icon">🔍</span>
+                <input 
+                    type="text" 
+                    class="command-palette-input" 
+                    id="command-palette-input"
+                    placeholder="Type a command or search..."
+                    autocomplete="off"
+                    spellcheck="false"
+                    aria-label="Search commands"
+                    aria-autocomplete="list"
+                    aria-controls="command-palette-list"
+                >
+                <div class="command-palette-shortcut">
+                    <kbd>Esc</kbd> to close
+                </div>
+            </div>
+            <div class="command-palette-results" id="command-palette-results" role="listbox" aria-label="Commands">
+            </div>
+            <div class="command-palette-footer">
+                <div class="command-palette-footer-hint">
+                    <span><kbd>↑</kbd><kbd>↓</kbd> Navigate</span>
+                    <span><kbd>Enter</kbd> Select</span>
+                    <span><kbd>Esc</kbd> Close</span>
+                </div>
+                <span>⌘K to open anytime</span>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
+    
+    // Set up event listeners
+    const input = overlay.querySelector('#command-palette-input');
+    input.addEventListener('input', handleCommandPaletteInput);
+    input.addEventListener('keydown', handleCommandPaletteKeydown);
+    
+    // Close when clicking overlay
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+            hideCommandPalette();
+        }
+    });
+}
+
+/**
+ * Filter commands based on search query
+ */
+function filterCommands(query) {
+    query = query.toLowerCase().trim();
+    
+    if (!query) {
+        return [...PALETTE_COMMANDS];
+    }
+    
+    return PALETTE_COMMANDS.filter(cmd => {
+        const titleMatch = cmd.title.toLowerCase().includes(query);
+        const descMatch = cmd.description.toLowerCase().includes(query);
+        const groupMatch = cmd.group.toLowerCase().includes(query);
+        return titleMatch || descMatch || groupMatch;
+    }).sort((a, b) => {
+        // Prioritize title matches
+        const aTitle = a.title.toLowerCase().indexOf(query);
+        const bTitle = b.title.toLowerCase().indexOf(query);
+        if (aTitle !== -1 && bTitle === -1) return -1;
+        if (bTitle !== -1 && aTitle === -1) return 1;
+        if (aTitle !== -1 && bTitle !== -1) return aTitle - bTitle;
+        return 0;
+    });
+}
+
+/**
+ * Render command palette results
+ */
+function renderCommandPaletteResults() {
+    const resultsEl = document.getElementById('command-palette-results');
+    if (!resultsEl) return;
+    
+    if (filteredCommands.length === 0) {
+        resultsEl.innerHTML = `
+            <div class="command-palette-empty">
+                <div class="command-palette-empty-icon">🔍</div>
+                <div class="command-palette-empty-text">No commands found</div>
+            </div>
+        `;
+        return;
+    }
+    
+    // Group commands
+    const groups = {};
+    filteredCommands.forEach((cmd, index) => {
+        if (!groups[cmd.group]) {
+            groups[cmd.group] = [];
+        }
+        groups[cmd.group].push({ ...cmd, index });
+    });
+    
+    let html = '';
+    for (const [groupName, commands] of Object.entries(groups)) {
+        html += `<div class="command-palette-group">`;
+        html += `<div class="command-palette-group-title">${groupName}</div>`;
+        
+        for (const cmd of commands) {
+            const isSelected = cmd.index === commandPaletteSelectedIndex;
+            html += `
+                <div class="command-palette-item${isSelected ? ' selected' : ''}" 
+                     data-index="${cmd.index}" 
+                     role="option"
+                     aria-selected="${isSelected}"
+                     onclick="executeCommandPaletteItem(${cmd.index})">
+                    <span class="command-palette-item-icon">${cmd.icon}</span>
+                    <div class="command-palette-item-content">
+                        <div class="command-palette-item-title">${cmd.title}</div>
+                        <div class="command-palette-item-description">${cmd.description}</div>
+                    </div>
+                    ${cmd.shortcut ? `<div class="command-palette-item-shortcut"><kbd>${cmd.shortcut}</kbd></div>` : ''}
+                </div>
+            `;
+        }
+        
+        html += `</div>`;
+    }
+    
+    resultsEl.innerHTML = html;
+    
+    // Ensure selected item is visible
+    const selectedEl = resultsEl.querySelector('.command-palette-item.selected');
+    if (selectedEl) {
+        selectedEl.scrollIntoView({ block: 'nearest' });
+    }
+}
+
+/**
+ * Handle input changes in command palette
+ */
+function handleCommandPaletteInput(e) {
+    const query = e.target.value;
+    filteredCommands = filterCommands(query);
+    commandPaletteSelectedIndex = 0;
+    renderCommandPaletteResults();
+}
+
+/**
+ * Handle keyboard navigation in command palette
+ */
+function handleCommandPaletteKeydown(e) {
+    switch (e.key) {
+        case 'ArrowDown':
+            e.preventDefault();
+            commandPaletteSelectedIndex = Math.min(commandPaletteSelectedIndex + 1, filteredCommands.length - 1);
+            renderCommandPaletteResults();
+            break;
+        case 'ArrowUp':
+            e.preventDefault();
+            commandPaletteSelectedIndex = Math.max(commandPaletteSelectedIndex - 1, 0);
+            renderCommandPaletteResults();
+            break;
+        case 'Enter':
+            e.preventDefault();
+            executeCommandPaletteItem(commandPaletteSelectedIndex);
+            break;
+        case 'Escape':
+            e.preventDefault();
+            hideCommandPalette();
+            break;
+    }
+}
+
+/**
+ * Execute a command palette item
+ */
+function executeCommandPaletteItem(index) {
+    const cmd = filteredCommands[index];
+    if (cmd && cmd.action) {
+        hideCommandPalette();
+        cmd.action();
+    }
+}
+
+/**
+ * Show the command palette
+ */
+function showCommandPalette() {
+    createCommandPalette();
+    
+    const overlay = document.getElementById('command-palette-overlay');
+    const input = document.getElementById('command-palette-input');
+    
+    // Reset state
+    filteredCommands = [...PALETTE_COMMANDS];
+    commandPaletteSelectedIndex = 0;
+    if (input) input.value = '';
+    
+    // Render and show
+    renderCommandPaletteResults();
+    overlay.classList.add('visible');
+    commandPaletteOpen = true;
+    
+    // Focus input
+    setTimeout(() => {
+        if (input) input.focus();
+    }, 50);
+    
+    announceToScreenReader('Command palette opened. Type to search commands.');
+}
+
+/**
+ * Hide the command palette
+ */
+function hideCommandPalette() {
+    const overlay = document.getElementById('command-palette-overlay');
+    if (overlay) {
+        overlay.classList.remove('visible');
+    }
+    commandPaletteOpen = false;
+    announceToScreenReader('Command palette closed');
+}
+
+/**
+ * Toggle command palette visibility
+ */
+function toggleCommandPalette() {
+    if (commandPaletteOpen) {
+        hideCommandPalette();
+    } else {
+        showCommandPalette();
+    }
+}
+
+// Add Cmd+K / Ctrl+K handler
+document.addEventListener('keydown', (e) => {
+    // Cmd+K (Mac) or Ctrl+K (Windows/Linux)
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        toggleCommandPalette();
+    }
+    
+    // Also handle Escape to close palette if open
+    if (e.key === 'Escape' && commandPaletteOpen) {
+        e.preventDefault();
+        e.stopPropagation();
+        hideCommandPalette();
+    }
+});
+
+// Update keyboard hint to mention Cmd+K
+function updateKeyboardHintForPalette() {
+    const hint = document.getElementById('keyboard-hint');
+    if (hint) {
+        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+        const cmdKey = isMac ? '⌘' : 'Ctrl';
+        hint.innerHTML = `<span class="keyboard-hint-text">Press <kbd>${cmdKey}+K</kbd> for commands</span>`;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', updateKeyboardHintForPalette);
 
 // ============================================
 // BROWSER NOTIFICATIONS
@@ -6150,6 +6669,11 @@ createShortcutsModal = function() {
                     <div class="shortcut-row"><kbd>e</kbd> Export as JSON</div>
                     <div class="shortcut-row"><kbd>Shift+e</kbd> Export as CSV</div>
                     <div class="shortcut-row"><kbd>l</kbd> Load more activities</div>
+                </div>
+                <div class="shortcut-section">
+                    <h4>Bookmarks</h4>
+                    <div class="shortcut-row"><kbd>b</kbd> Toggle bookmark filter</div>
+                    <div class="shortcut-row"><kbd>Shift+b</kbd> Bookmark focused activity</div>
                 </div>
                 <div class="shortcut-section">
                     <h4>Help</h4>

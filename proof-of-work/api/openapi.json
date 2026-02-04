@@ -456,7 +456,7 @@
       "get": {
         "tags": ["Stats"],
         "summary": "Get activity statistics",
-        "description": "Returns aggregated statistics about all activities.",
+        "description": "Returns aggregated statistics about all activities, including streak data.",
         "operationId": "getStats",
         "responses": {
           "200": {
@@ -465,6 +465,26 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Stats"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/streaks": {
+      "get": {
+        "tags": ["Stats"],
+        "summary": "Get detailed streak information",
+        "description": "Returns comprehensive activity streak tracking data including current streak, longest streak, milestones, and activity patterns.",
+        "operationId": "getStreaks",
+        "responses": {
+          "200": {
+            "description": "Streak information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Streaks"
                 }
               }
             }
@@ -1634,6 +1654,87 @@
           "onchain": {
             "type": "integer",
             "description": "Number of activities with on-chain proofs"
+          },
+          "streak": {
+            "type": "object",
+            "description": "Summary of activity streaks",
+            "properties": {
+              "current": {
+                "type": "integer",
+                "description": "Current consecutive days streak"
+              },
+              "longest": {
+                "type": "integer",
+                "description": "Longest streak ever achieved"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["active", "at_risk", "broken", "none"],
+                "description": "Current streak status"
+              },
+              "todayActive": {
+                "type": "boolean",
+                "description": "Whether there is activity today"
+              }
+            }
+          }
+        }
+      },
+      "Streaks": {
+        "type": "object",
+        "description": "Detailed activity streak tracking information",
+        "properties": {
+          "currentStreak": {
+            "type": "integer",
+            "description": "Current consecutive days with activity"
+          },
+          "longestStreak": {
+            "type": "integer",
+            "description": "Highest streak ever achieved"
+          },
+          "streakDates": {
+            "type": "array",
+            "items": {"type": "string", "format": "date"},
+            "description": "Array of dates in the current streak"
+          },
+          "todayActive": {
+            "type": "boolean",
+            "description": "Whether there is activity today"
+          },
+          "lastActiveDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Most recent date with activity"
+          },
+          "activeDays": {
+            "type": "integer",
+            "description": "Total count of unique days with activity"
+          },
+          "activeDaysThisWeek": {
+            "type": "integer",
+            "description": "Days with activity in the current week"
+          },
+          "activeDaysThisMonth": {
+            "type": "integer",
+            "description": "Days with activity in the current month"
+          },
+          "streakStatus": {
+            "type": "string",
+            "enum": ["active", "at_risk", "broken", "none"],
+            "description": "Status of current streak (active, at_risk if no activity today, broken, or none)"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-friendly streak message with emoji"
+          },
+          "nextMilestone": {
+            "type": "integer",
+            "description": "Next streak milestone to aim for (3, 7, 14, 30, 60, 90, 180, 365, etc.)"
+          },
+          "daysUntilNextMilestone": {
+            "type": "integer",
+            "description": "Days remaining to reach the next milestone"
           }
         }
       },

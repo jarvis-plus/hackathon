@@ -1178,6 +1178,169 @@ function saveActivities(activities: any[]): void {
   lastActivityMtime = stats.mtimeMs;
 }
 
+// ==============================================
+// STREAK TRACKING
+// ==============================================
+
+/**
+ * Activity Streak Interface
+ * 
+ * Tracks consecutive days with activity:
+ * - currentStreak: Days in a row with activity (including today if active)
+ * - longestStreak: Highest streak ever achieved
+ * - streakDates: Array of dates in current streak
+ * - todayActive: Whether there's activity today
+ * - lastActiveDate: Most recent date with activity
+ * - activeDays: Total count of unique days with activity
+ * - activeDaysThisWeek: Days with activity in current week
+ * - activeDaysThisMonth: Days with activity in current month
+ */
+interface ActivityStreak {
+  currentStreak: number;
+  longestStreak: number;
+  streakDates: string[];
+  todayActive: boolean;
+  lastActiveDate: string | null;
+  activeDays: number;
+  activeDaysThisWeek: number;
+  activeDaysThisMonth: number;
+  streakStatus: 'active' | 'at_risk' | 'broken' | 'none';
+}
+
+/**
+ * Calculate activity streaks from the activity list.
+ * A streak is consecutive calendar days with at least one activity.
+ * 
+ * @param activities - Array of activity objects with timestamp field
+ * @returns ActivityStreak object with all streak metrics
+ */
+function calculateStreaks(activities: any[]): ActivityStreak {
+  if (activities.length === 0) {
+    return {
+      currentStreak: 0,
+      longestStreak: 0,
+      streakDates: [],
+      todayActive: false,
+      lastActiveDate: null,
+      activeDays: 0,
+      activeDaysThisWeek: 0,
+      activeDaysThisMonth: 0,
+      streakStatus: 'none'
+    };
+  }
+
+  // Get unique dates with activity (YYYY-MM-DD format, in local timezone)
+  const activeDatesSet = new Set<string>();
+  for (const activity of activities) {
+    if (activity.timestamp) {
+      const date = new Date(activity.timestamp);
+      const dateStr = date.toISOString().split('T')[0];
+      activeDatesSet.add(dateStr);
+    }
+  }
+
+  // Sort dates chronologically
+  const activeDates = Array.from(activeDatesSet).sort();
+  
+  // Today's date
+  const today = new Date().toISOString().split('T')[0];
+  const todayActive = activeDatesSet.has(today);
+  
+  // Yesterday's date
+  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+  
+  // Calculate this week's active days (Sunday-Saturday)
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const weekStart = new Date(now);
+  weekStart.setDate(weekStart.getDate() - dayOfWeek);
+  weekStart.setHours(0, 0, 0, 0);
+  const weekStartStr = weekStart.toISOString().split('T')[0];
+  const activeDaysThisWeek = activeDates.filter(d => d >= weekStartStr && d <= today).length;
+  
+  // Calculate this month's active days
+  const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+  const activeDaysThisMonth = activeDates.filter(d => d >= monthStart && d <= today).length;
+  
+  // Find current streak (working backwards from today or yesterday)
+  let currentStreak = 0;
+  const streakDates: string[] = [];
+  let checkDate = todayActive ? today : yesterday;
+  
+  // Only count streak if today is active OR yesterday was active
+  if (activeDatesSet.has(checkDate)) {
+    while (activeDatesSet.has(checkDate)) {
+      currentStreak++;
+      streakDates.unshift(checkDate);
+      // Go to previous day
+      const prevDate = new Date(checkDate + 'T00:00:00Z');
+      prevDate.setDate(prevDate.getDate() - 1);
+      checkDate = prevDate.toISOString().split('T')[0];
+    }
+  }
+  
+  // Find longest streak ever
+  let longestStreak = 0;
+  let tempStreak = 1;
+  
+  for (let i = 1; i < activeDates.length; i++) {
+    const prevDate = new Date(activeDates[i - 1] + 'T00:00:00Z');
+    const currDate = new Date(activeDates[i] + 'T00:00:00Z');
+    const diffDays = Math.round((currDate.getTime() - prevDate.getTime()) / 86400000);
+    
+    if (diffDays === 1) {
+      tempStreak++;
+    } else {
+      longestStreak = Math.max(longestStreak, tempStreak);
+      tempStreak = 1;
+    }
+  }
+  longestStreak = Math.max(longestStreak, tempStreak);
+  
+  // Determine streak status
+  let streakStatus: ActivityStreak['streakStatus'] = 'none';
+  if (currentStreak > 0) {
+    if (todayActive) {
+      streakStatus = 'active';
+    } else {
+      // Yesterday was active but not today - at risk of breaking
+      streakStatus = 'at_risk';
+    }
+  } else if (activeDates.length > 0) {
+    streakStatus = 'broken';
+  }
+  
+  return {
+    currentStreak,
+    longestStreak,
+    streakDates,
+    todayActive,
+    lastActiveDate: activeDates[activeDates.length - 1] || null,
+    activeDays: activeDates.length,
+    activeDaysThisWeek,
+    activeDaysThisMonth,
+    streakStatus
+  };
+}
+
+/**
+ * Get the next streak milestone to aim for.
+ * Milestones: 3, 7, 14, 30, 60, 90, 180, 365, 500, 1000
+ * 
+ * @param currentStreak - Current streak count
+ * @returns Next milestone number
+ */
+function getNextMilestone(currentStreak: number): number {
+  const milestones = [3, 7, 14, 30, 60, 90, 180, 365, 500, 1000];
+  for (const milestone of milestones) {
+    if (currentStreak < milestone) {
+      return milestone;
+    }
+  }
+  // Beyond 1000, aim for next 100
+  return Math.ceil((currentStreak + 1) / 100) * 100;
+}
+
 /**
  * Serve a file from the dashboard directory.
  * Handles content-type detection and caching headers.
@@ -2287,6 +2450,7 @@ const server = Bun.serve({
     if (path === '/api/stats') {
       const activities = getActivities();
       const DEFAULT_WALLET = 'AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX';
+      const streaks = calculateStreaks(activities);
       const stats = {
         total: activities.length,
         byType: activities.reduce((acc: Record<string, number>, a: any) => {
@@ -2301,8 +2465,54 @@ const server = Bun.serve({
         firstActivity: activities[0]?.timestamp || null,
         lastActivity: activities[activities.length - 1]?.timestamp || null,
         onchain: activities.filter((a: any) => a.signature || a.proof?.txSignature).length,
+        // Streak summary in stats
+        streak: {
+          current: streaks.currentStreak,
+          longest: streaks.longestStreak,
+          status: streaks.streakStatus,
+          todayActive: streaks.todayActive
+        }
       };
       return Response.json(stats, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: GET /api/streaks
+    // Detailed activity streak tracking
+    // Returns current streak, longest streak, and activity patterns
+    // ==========================================
+    if (path === '/api/streaks') {
+      const activities = getActivities();
+      const streaks = calculateStreaks(activities);
+      
+      // Add streak message based on status
+      let message = '';
+      if (streaks.streakStatus === 'active') {
+        if (streaks.currentStreak >= 30) {
+          message = `🔥 Incredible! ${streaks.currentStreak}-day streak! You're on fire!`;
+        } else if (streaks.currentStreak >= 14) {
+          message = `⭐ Amazing! ${streaks.currentStreak}-day streak! Keep it up!`;
+        } else if (streaks.currentStreak >= 7) {
+          message = `🎯 Great job! ${streaks.currentStreak}-day streak! One week strong!`;
+        } else if (streaks.currentStreak >= 3) {
+          message = `👍 Nice! ${streaks.currentStreak}-day streak building!`;
+        } else {
+          message = `✅ Streak started! ${streaks.currentStreak} day(s) and counting!`;
+        }
+      } else if (streaks.streakStatus === 'at_risk') {
+        message = `⚠️ Your ${streaks.currentStreak}-day streak is at risk! Log an activity today to keep it alive.`;
+      } else if (streaks.streakStatus === 'broken') {
+        message = `💔 Streak broken. Start fresh today!`;
+      } else {
+        message = `🚀 No streak yet. Log your first activity to begin!`;
+      }
+      
+      return Response.json({
+        ...streaks,
+        message,
+        nextMilestone: getNextMilestone(streaks.currentStreak),
+        daysUntilNextMilestone: getNextMilestone(streaks.currentStreak) - streaks.currentStreak
+      }, { headers: corsHeaders });
     }
 
     // ==========================================

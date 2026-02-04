@@ -553,6 +553,14 @@
                     <input type="text" id="activitySearch" placeholder="Search activities..." oninput="applyFilters()" aria-describedby="filterStats">
                     <button class="search-clear" id="searchClear" onclick="clearSearch()" title="Clear search" aria-label="Clear search">×</button>
                 </div>
+                <div class="bookmark-filter-container">
+                    <button class="bookmark-filter-btn" id="bookmark-filter-btn" onclick="toggleBookmarkFilter()" 
+                            title="Show bookmarked activities only (B)" 
+                            aria-label="Toggle bookmark filter" 
+                            aria-pressed="false">
+                        ⭐ Bookmarked <span id="bookmark-count"></span>
+                    </button>
+                </div>
                 <div class="type-filters" role="group" aria-label="Filter by activity type">
                     <button class="type-filter active" data-type="all" onclick="setTypeFilter('all')" aria-pressed="true">All</button>
                     <button class="type-filter" data-type="commit" onclick="setTypeFilter('commit')" aria-pressed="false">📝 Commits</button>

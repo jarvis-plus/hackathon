@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 21:16 PST
-**Cycle:** 171
+**Last Updated:** 2026-02-03 21:20 PST
+**Cycle:** 172
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -91,10 +91,36 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Multi-theme support (more color schemes) ✅ Cycle 169
 - [x] Activity timeline slider (zoom in/out on time ranges) ✅ Cycle 170
 - [x] Social sharing cards (OG images for activities) ✅ Cycle 171
+- [x] Activity streak tracking (consecutive days, milestones) ✅ Cycle 172
 
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 172 (Activity Streak Tracking)
+- Implemented gamification through consecutive day tracking
+- **New Endpoint**: `GET /api/streaks`
+- **Streak Metrics**:
+  - `currentStreak`: Consecutive days with activity (including today if active)
+  - `longestStreak`: Highest streak ever achieved
+  - `streakDates`: Array of dates in current streak
+  - `todayActive`: Whether there's activity today
+  - `lastActiveDate`: Most recent date with activity
+  - `activeDays`: Total unique days with activity
+  - `activeDaysThisWeek`/`activeDaysThisMonth`: Weekly/monthly tracking
+  - `streakStatus`: active / at_risk / broken / none
+  - `message`: Motivational message with emoji based on streak length
+  - `nextMilestone`: Target milestone (3, 7, 14, 30, 60, 90, 180, 365, etc.)
+  - `daysUntilNextMilestone`: Days remaining to reach milestone
+- **Updated `/api/stats`**: Added `streak` summary object with current, longest, status, todayActive
+- **Implementation**:
+  - `ActivityStreak` interface for type safety
+  - `calculateStreaks()`: Analyzes activity timestamps for consecutive days
+  - `getNextMilestone()`: Returns next streak goal based on current count
+  - Streak status logic: active (today has activity), at_risk (yesterday only), broken (gap)
+- **OpenAPI Updated**: Added `Streaks` schema and `/api/streaks` endpoint docs
+- ~170 lines added to server.ts, ~80 lines to openapi.json
+- 440 activities, all signed on-chain
 
 ### Cycle 171 (Social Sharing Cards)
 - Implemented Open Graph image generation for social media sharing
@@ -185,25 +211,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - **OpenAPI Updated**: Added ActivityDiff schema with full documentation
 - **Files Modified**: server.ts (~160 lines), openapi.json (~70 lines), app.js (~200 lines), dashboard.css (~350 lines)
 - 430 activities, all signed on-chain
-
-### Cycle 167 (Slack/Discord Webhook Integration)
-- Added format field to webhook subscriptions for native Slack/Discord support
-- **Format Options**:
-  - `json` (default): Standard JSON payload with event, timestamp, data
-  - `slack`: Slack Block Kit format with header, fields, context, actions
-  - `discord`: Discord Embed format with color-coded embeds
-- **Implementation**:
-  - Added `format` field to WebhookSubscription interface
-  - formatSlackPayload(): Block Kit with activity type emoji, on-chain status, hash
-  - formatDiscordPayload(): Discord embed with type-based colors, fields, footer
-  - Updated deliverWebhook() to format based on webhook settings
-  - Validation for format field in POST /api/webhooks
-  - Format shown in GET /api/webhooks response
-- **Slack Features**: Header block, 2-column fields, context with hash/time, dashboard button
-- **Discord Features**: Colored embed per type, 3 inline fields, footer with timestamp
-- **OpenAPI Updated**: WebhookSummary, WebhookCreate, WebhookCreated schemas with format
-- ~180 lines for formatters, ~30 lines for endpoint changes
-- 426 activities, all signed on-chain
 
 ---
 
