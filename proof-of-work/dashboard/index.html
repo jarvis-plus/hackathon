@@ -179,6 +179,43 @@
                     <canvas id="dailyChart" aria-labelledby="daily-chart-title"></canvas>
                 </div>
             </div>
+            <div class="chart-card" style="margin-top: 1.5rem;" id="velocity-chart-card" aria-busy="true">
+                <h3 id="velocity-chart-title">⚡ Activity Velocity</h3>
+                <p class="chart-subtitle">Rolling 4-hour average of actions per hour</p>
+                <div class="chart-container" style="height: 220px; position: relative;">
+                    <div class="chart-loading" id="velocity-loading">
+                        <div class="skeleton-chart">
+                            <div class="skeleton skeleton-bar"></div>
+                            <div class="skeleton skeleton-bar"></div>
+                            <div class="skeleton skeleton-bar"></div>
+                            <div class="skeleton skeleton-bar"></div>
+                            <div class="skeleton skeleton-bar"></div>
+                            <div class="skeleton skeleton-bar"></div>
+                            <div class="skeleton skeleton-bar"></div>
+                            <div class="skeleton skeleton-bar"></div>
+                        </div>
+                        <span class="loading-text">Calculating velocity...</span>
+                    </div>
+                    <canvas id="velocityChart" aria-labelledby="velocity-chart-title"></canvas>
+                </div>
+                <div class="velocity-stats" id="velocityStats">
+                    <div class="velocity-stat">
+                        <span class="velocity-stat-label">Current Velocity:</span>
+                        <span class="velocity-stat-value" id="currentVelocity">--</span>
+                        <span class="velocity-stat-unit">acts/hr</span>
+                    </div>
+                    <div class="velocity-stat">
+                        <span class="velocity-stat-label">Peak Velocity:</span>
+                        <span class="velocity-stat-value" id="peakVelocity">--</span>
+                        <span class="velocity-stat-unit">acts/hr</span>
+                    </div>
+                    <div class="velocity-stat">
+                        <span class="velocity-stat-label">Avg Velocity:</span>
+                        <span class="velocity-stat-value" id="avgVelocity">--</span>
+                        <span class="velocity-stat-unit">acts/hr</span>
+                    </div>
+                </div>
+            </div>
             <div class="chart-card" style="margin-top: 1.5rem;" id="heatmap-chart-card" aria-busy="true">
                 <h3 id="heatmap-chart-title">🗓️ Activity Heatmap</h3>
                 <div class="heatmap-container" id="heatmapContainer" style="position: relative;" role="grid" aria-label="Activity heatmap showing daily activity levels over the past 16 weeks">

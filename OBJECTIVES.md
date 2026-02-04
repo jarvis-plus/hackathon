@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 19:14 PST
-**Cycle:** 154
+**Last Updated:** 2026-02-03 20:05 PST
+**Cycle:** 155
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -70,7 +70,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Activity Insights Panel ✅ Cycle 151 - Peak hours, busiest day, productivity score
 - [x] Animated stat counters (count up on load) ✅ Cycle 152
 - [x] Weekly activity comparison (this week vs last) ✅ Cycle 154
-- [ ] Activity velocity chart (actions per hour over time)
+- [x] Activity velocity chart (actions per hour over time) ✅ Cycle 155
 - [ ] Goal tracking (set daily targets)
 
 ### 🔒 Security & Infrastructure
@@ -82,6 +82,18 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 155 (Activity Velocity Chart Integration)
+- Fixed velocity chart not appearing - function existed but was never called
+- Added `renderVelocityChart(activities)` to main render pipeline (fetchActivities)
+- Added `renderVelocityChart(activities)` to fallback fetch path
+- Added `renderVelocityChart(msg.data.activities)` to WebSocket message handler
+- Chart shows rolling 4-hour average of actions per hour
+- Features: peak highlighting (orange), average line (dashed purple), gradient fill
+- Responsive with mobile-optimized tick labels and fonts
+- Accessibility: ARIA labels with current/peak/avg velocity stats
+- Service restarted to pick up dashboard changes
+- 391 activities, all signed on-chain
 
 ### Cycle 154 (Weekly Activity Comparison)
 - Implemented side-by-side comparison of this week vs last week
@@ -158,33 +170,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - ARIA labels on all elements for accessibility
 - Files: index.html, dashboard.css, app.js
 - 377 activities, all signed on-chain
-
-### Cycle 150 (Accessibility Improvements - Enhanced)
-- Comprehensive accessibility overhaul for WCAG compliance
-- **Skip link** for keyboard users to bypass navigation
-- **ARIA labels** on all interactive elements (buttons, toggles, tabs)
-- **Tablist/tabpanel roles** with aria-selected for proper tab semantics
-- **Focus-visible states** for keyboard navigation (green outline ring)
-- **Screen reader announcements** via ARIA live region for dynamic content
-- **Form labels** for search input, date pickers, and verify input
-- **High contrast mode** support via @media (prefers-contrast: high)
-- **Reduced motion** support via @media (prefers-reduced-motion)
-- **Arrow key navigation** between tabs (Left/Right, Home/End)
-- **Touch target sizes** minimum 44x44px on mobile (pointer: coarse)
-- **Modal accessibility** (role=dialog, aria-modal, aria-labelledby)
-- **Chart/stat card focus** states for screen reader navigation
-- Additional enhancements in this cycle:
-  - Activity items now keyboard navigable with tabindex="0" and role="article"
-  - j/k vim-style navigation between activity items
-  - Day group headers have proper ARIA (role=button, aria-expanded, aria-controls)
-  - Screen reader announces new activities arriving via WebSocket
-  - Screen reader announces filter results count
-  - announceToScreenReader() for day group collapse/expand
-  - Tag/wallet filter buttons have focus states
-- ~280 lines CSS, ~200 lines JS for comprehensive a11y
-- Fixed missing showToast() function bug discovered during implementation
-- Files: index.html, dashboard.css, app.js
-- 374 activities, all signed on-chain
 
 ---
 

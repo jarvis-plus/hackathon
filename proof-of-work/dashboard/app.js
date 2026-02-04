@@ -2116,6 +2116,211 @@ function hideHeatmapTooltip() {
 }
 
 // ============================================
+// ACTIVITY VELOCITY CHART
+// ============================================
+
+let velocityChart = null;
+
+/**
+ * Render activity velocity chart - shows rolling average of actions per hour over time
+ * This visualizes productivity momentum and identifies high/low activity periods
+ */
+function renderVelocityChart(activities) {
+    if (!activities || activities.length === 0) return;
+    
+    // Hide loading state
+    const loadingEl = document.getElementById('velocity-loading');
+    if (loadingEl) loadingEl.style.display = 'none';
+    const chartCard = document.getElementById('velocity-chart-card');
+    if (chartCard) chartCard.setAttribute('aria-busy', 'false');
+    
+    // Sort activities by timestamp
+    const sorted = [...activities].sort((a, b) => 
+        new Date(a.timestamp) - new Date(b.timestamp)
+    );
+    
+    if (sorted.length < 2) return;
+    
+    // Get time range
+    const firstTime = new Date(sorted[0].timestamp);
+    const lastTime = new Date(sorted[sorted.length - 1].timestamp);
+    
+    // Create 4-hour rolling window data points
+    // Sample at each hour, calculate activities in the past 4 hours
+    const windowSizeMs = 4 * 60 * 60 * 1000; // 4 hours
+    const sampleIntervalMs = 60 * 60 * 1000; // 1 hour
+    
+    const dataPoints = [];
+    const labels = [];
+    
+    // Start from 4 hours after first activity to have meaningful data
+    let currentTime = new Date(firstTime.getTime() + windowSizeMs);
+    
+    while (currentTime <= lastTime) {
+        const windowStart = new Date(currentTime.getTime() - windowSizeMs);
+        
+        // Count activities in this window
+        const activitiesInWindow = sorted.filter(a => {
+            const t = new Date(a.timestamp);
+            return t >= windowStart && t <= currentTime;
+        }).length;
+        
+        // Calculate velocity (activities per hour over 4-hour window)
+        const velocity = activitiesInWindow / 4;
+        
+        dataPoints.push(velocity);
+        labels.push(currentTime.toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric'
+        }));
+        
+        currentTime = new Date(currentTime.getTime() + sampleIntervalMs);
+    }
+    
+    // Calculate stats
+    const maxVelocity = Math.max(...dataPoints);
+    const avgVelocity = dataPoints.reduce((a, b) => a + b, 0) / dataPoints.length;
+    const currentVelocity = dataPoints.length > 0 ? dataPoints[dataPoints.length - 1] : 0;
+    
+    // Update velocity stats in UI
+    const currentEl = document.getElementById('currentVelocity');
+    const peakEl = document.getElementById('peakVelocity');
+    const avgEl = document.getElementById('avgVelocity');
+    
+    if (currentEl) {
+        currentEl.textContent = currentVelocity.toFixed(1);
+        currentEl.classList.add('current');
+    }
+    if (peakEl) {
+        peakEl.textContent = maxVelocity.toFixed(1);
+        peakEl.classList.add('peak');
+    }
+    if (avgEl) {
+        avgEl.textContent = avgVelocity.toFixed(1);
+    }
+    
+    // Get mobile options
+    const mobileOpts = getMobileChartOptions();
+    
+    // Render Chart.js velocity chart
+    const ctx = document.getElementById('velocityChart');
+    if (!ctx) return;
+    
+    if (velocityChart) {
+        velocityChart.destroy();
+    }
+    
+    // Create gradient fill
+    const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 220);
+    gradient.addColorStop(0, 'rgba(78, 205, 196, 0.3)');
+    gradient.addColorStop(1, 'rgba(78, 205, 196, 0.02)');
+    
+    velocityChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Activity Velocity',
+                data: dataPoints,
+                borderColor: '#4ecdc4',
+                backgroundColor: gradient,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: (ctx) => {
+                    // Highlight peak point
+                    return ctx.raw === maxVelocity ? '#ffaa00' : '#4ecdc4';
+                },
+                pointBorderColor: (ctx) => {
+                    return ctx.raw === maxVelocity ? '#ffaa00' : '#4ecdc4';
+                },
+                pointRadius: (ctx) => {
+                    // Larger point for peak
+                    return ctx.raw === maxVelocity ? 6 : mobileOpts.pointRadius;
+                },
+                pointHoverRadius: mobileOpts.pointHoverRadius,
+                borderWidth: 2
+            }, {
+                label: 'Average',
+                data: dataPoints.map(() => avgVelocity),
+                borderColor: 'rgba(155, 135, 245, 0.5)',
+                borderDash: [5, 5],
+                borderWidth: 1,
+                pointRadius: 0,
+                pointHoverRadius: 0,
+                fill: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: (ctx) => {
+                            if (ctx.datasetIndex === 0) {
+                                return `${ctx.raw.toFixed(2)} actions/hour`;
+                            }
+                            return `Avg: ${avgVelocity.toFixed(2)} actions/hour`;
+                        },
+                        afterLabel: (ctx) => {
+                            if (ctx.datasetIndex === 0 && ctx.raw === maxVelocity) {
+                                return '⚡ Peak velocity!';
+                            }
+                            return '';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        color: '#6b6b6b',
+                        font: mobileOpts.tickFont,
+                        maxTicksLimit: 5,
+                        callback: (value) => value.toFixed(1)
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.03)'
+                    },
+                    title: {
+                        display: !isMobile(),
+                        text: 'Actions/Hour',
+                        color: '#6b6b6b',
+                        font: { size: 10 }
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: '#6b6b6b',
+                        maxRotation: isMobile() ? 60 : 45,
+                        font: mobileOpts.tickFont,
+                        maxTicksLimit: mobileOpts.maxTicksLimit
+                    },
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+    
+    // Set accessibility
+    ctx.setAttribute('role', 'img');
+    ctx.setAttribute('aria-label', 
+        `Activity velocity chart showing productivity rate. Current: ${currentVelocity.toFixed(1)}, Peak: ${maxVelocity.toFixed(1)}, Average: ${avgVelocity.toFixed(1)} actions per hour`
+    );
+}
+
+// ============================================
 // ACTIVITY INSIGHTS PANEL
 // ============================================
 
@@ -2427,221 +2632,6 @@ function renderWeeklyBars(containerId, dailyCounts, label, peakIndex) {
     html += '</div>';
     container.innerHTML = html;
 }
-
-// ============================================
-// WEEKLY COMPARISON PANEL
-// ============================================
-
-/**
- * Render weekly comparison (this week vs last week)
- * Shows activity counts, on-chain rates, peak days, and daily averages
- */
-function renderWeeklyComparison(activities) {
-    if (!activities || activities.length === 0) return;
-    
-    // Get current date and calculate week boundaries
-    // Week starts on Monday (getDay(): 0=Sun, 1=Mon, ..., 6=Sat)
-    const now = new Date();
-    const dayOfWeek = now.getDay();
-    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // If Sunday, go back 6 days
-    
-    const thisWeekStart = new Date(now);
-    thisWeekStart.setDate(now.getDate() + mondayOffset);
-    thisWeekStart.setHours(0, 0, 0, 0);
-    
-    const lastWeekStart = new Date(thisWeekStart);
-    lastWeekStart.setDate(thisWeekStart.getDate() - 7);
-    
-    const lastWeekEnd = new Date(thisWeekStart);
-    lastWeekEnd.setMilliseconds(-1); // End of last week (Sunday 23:59:59.999)
-    
-    // Filter activities for each week
-    const thisWeekActivities = activities.filter(a => {
-        const date = new Date(a.timestamp);
-        return date >= thisWeekStart && date <= now;
-    });
-    
-    const lastWeekActivities = activities.filter(a => {
-        const date = new Date(a.timestamp);
-        return date >= lastWeekStart && date < thisWeekStart;
-    });
-    
-    // Calculate stats for each week
-    const thisWeekStats = calculateWeekStats(thisWeekActivities, thisWeekStart, now);
-    const lastWeekStats = calculateWeekStats(lastWeekActivities, lastWeekStart, lastWeekEnd);
-    
-    // Update DOM elements
-    updateWeeklyElement('weeklyThisCount', thisWeekStats.count);
-    updateWeeklyElement('weeklyLastCount', lastWeekStats.count);
-    updateWeeklyChange('weeklyCountChange', thisWeekStats.count, lastWeekStats.count);
-    
-    updateWeeklyElement('weeklyThisOnchain', `${thisWeekStats.onChainRate.toFixed(0)}%`);
-    updateWeeklyElement('weeklyLastOnchain', `${lastWeekStats.onChainRate.toFixed(0)}%`);
-    updateWeeklyChange('weeklyOnchainChange', thisWeekStats.onChainRate, lastWeekStats.onChainRate, '%');
-    
-    updateWeeklyElement('weeklyThisPeakDay', thisWeekStats.peakDay);
-    updateWeeklyElement('weeklyLastPeakDay', lastWeekStats.peakDay);
-    
-    updateWeeklyElement('weeklyThisAvg', thisWeekStats.dailyAvg.toFixed(1));
-    updateWeeklyElement('weeklyLastAvg', lastWeekStats.dailyAvg.toFixed(1));
-    updateWeeklyChange('weeklyAvgChange', thisWeekStats.dailyAvg, lastWeekStats.dailyAvg);
-    
-    // Render daily bar charts
-    renderWeeklyBars('weeklyBarsThis', thisWeekStats.dailyCounts, thisWeekStats.peakDayIndex, true);
-    renderWeeklyBars('weeklyBarsLast', lastWeekStats.dailyCounts, lastWeekStats.peakDayIndex, false);
-}
-
-/**
- * Calculate stats for a given week of activities
- */
-function calculateWeekStats(activities, weekStart, weekEnd) {
-    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const dailyCounts = new Array(7).fill(0); // Mon-Sun
-    
-    activities.forEach(a => {
-        const date = new Date(a.timestamp);
-        // Convert getDay() (0=Sun..6=Sat) to our index (0=Mon..6=Sun)
-        const dayIndex = (date.getDay() + 6) % 7;
-        dailyCounts[dayIndex]++;
-    });
-    
-    // Find peak day
-    const maxCount = Math.max(...dailyCounts);
-    const peakDayIndex = dailyCounts.indexOf(maxCount);
-    const peakDay = maxCount > 0 ? dayNames[peakDayIndex] : '--';
-    
-    // Calculate on-chain rate
-    const onChainCount = activities.filter(a => a.signature).length;
-    const onChainRate = activities.length > 0 ? (onChainCount / activities.length) * 100 : 0;
-    
-    // Calculate daily average (only for days that have passed)
-    const now = new Date();
-    let daysElapsed;
-    if (weekEnd <= now) {
-        // Last week - all 7 days
-        daysElapsed = 7;
-    } else {
-        // This week - count days from Monday to today (inclusive)
-        const dayOfWeek = now.getDay();
-        daysElapsed = dayOfWeek === 0 ? 7 : dayOfWeek; // Sunday = 7 days, Monday = 1, etc.
-    }
-    const dailyAvg = daysElapsed > 0 ? activities.length / daysElapsed : 0;
-    
-    return {
-        count: activities.length,
-        onChainRate,
-        peakDay,
-        peakDayIndex,
-        dailyAvg,
-        dailyCounts
-    };
-}
-
-/**
- * Update a weekly stat element with animated value
- */
-function updateWeeklyElement(elementId, value) {
-    const el = document.getElementById(elementId);
-    if (el) {
-        if (typeof value === 'number') {
-            animateNumber(el, value, 600);
-        } else {
-            el.textContent = value;
-        }
-    }
-}
-
-/**
- * Update a change indicator (arrow + percentage)
- */
-function updateWeeklyChange(elementId, current, previous, suffix = '') {
-    const el = document.getElementById(elementId);
-    if (!el) return;
-    
-    const arrowEl = el.querySelector('.change-arrow');
-    const valueEl = el.querySelector('.change-value');
-    
-    if (previous === 0 && current === 0) {
-        // No change, both zero
-        el.className = 'weekly-change neutral';
-        if (arrowEl) arrowEl.textContent = '→';
-        if (valueEl) valueEl.textContent = '--';
-        return;
-    }
-    
-    let changePercent;
-    if (previous === 0) {
-        changePercent = current > 0 ? 100 : 0;
-    } else {
-        changePercent = ((current - previous) / previous) * 100;
-    }
-    
-    const isPositive = changePercent > 0;
-    const isNeutral = Math.abs(changePercent) < 0.5;
-    
-    el.className = 'weekly-change ' + (isNeutral ? 'neutral' : (isPositive ? 'positive' : 'negative'));
-    
-    if (arrowEl) {
-        arrowEl.textContent = isNeutral ? '→' : (isPositive ? '↑' : '↓');
-    }
-    
-    if (valueEl) {
-        const absChange = Math.abs(changePercent);
-        if (absChange >= 1) {
-            valueEl.textContent = `${isPositive ? '+' : '-'}${absChange.toFixed(0)}%`;
-        } else {
-            valueEl.textContent = isNeutral ? '--' : `${isPositive ? '+' : '-'}${absChange.toFixed(1)}%`;
-        }
-    }
-}
-
-/**
- * Render bar chart for a week's daily activity
- */
-function renderWeeklyBars(containerId, dailyCounts, peakDayIndex, isThisWeek) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-    
-    // Keep the label but clear bars
-    const label = container.querySelector('.weekly-bars-label');
-    container.innerHTML = '';
-    if (label) {
-        container.appendChild(label);
-    } else {
-        const newLabel = document.createElement('div');
-        newLabel.className = 'weekly-bars-label';
-        newLabel.textContent = isThisWeek ? 'This Week' : 'Last Week';
-        container.appendChild(newLabel);
-    }
-    
-    // Create bars row container
-    const barsRow = document.createElement('div');
-    barsRow.className = 'weekly-bars-row';
-    
-    const maxCount = Math.max(...dailyCounts, 1);
-    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    
-    dailyCounts.forEach((count, index) => {
-        const bar = document.createElement('div');
-        bar.className = 'weekly-day-bar' + (index === peakDayIndex && count > 0 ? ' peak' : '');
-        
-        const heightPercent = (count / maxCount) * 100;
-        bar.style.height = `${Math.max(heightPercent, 3)}%`;
-        
-        // Tooltip
-        bar.setAttribute('data-tooltip', `${dayNames[index]}: ${count} activities`);
-        bar.setAttribute('role', 'img');
-        bar.setAttribute('aria-label', `${dayNames[index]}: ${count} activities`);
-        
-        // Animation delay for staggered effect
-        bar.style.animationDelay = `${index * 50}ms`;
-        
-        barsRow.appendChild(bar);
-    });
-    
-    container.appendChild(barsRow);
-}
-
 // Store activities globally for export
 let cachedActivities = [];
 
@@ -2662,6 +2652,7 @@ async function loadActivities() {
         renderHeatmap(activities);
         renderInsights(activities);
         renderWeeklyComparison(activities);
+        renderVelocityChart(activities);
         populateTagFilters(activities);
     } catch (e) {
         try {
@@ -2677,6 +2668,7 @@ async function loadActivities() {
             renderHeatmap(activities);
             renderInsights(activities);
             renderWeeklyComparison(activities);
+            renderVelocityChart(activities);
             populateTagFilters(activities);
         } catch (e2) {
             document.getElementById('feed').innerHTML = `
@@ -2861,6 +2853,7 @@ function connectWebSocket() {
                     renderCharts(msg.data.activities);
                     renderHeatmap(msg.data.activities);
                     renderInsights(msg.data.activities);
+                    renderVelocityChart(msg.data.activities);
                     populateTagFilters(msg.data.activities);
                     
                     // Flash notification + sound for new activities
