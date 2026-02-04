@@ -23,6 +23,8 @@
  * - GET /api/badge         - Compact summary for sharing
  * - GET /api/feed.rss      - RSS feed of recent activities
  * - GET /metrics           - Prometheus-compatible metrics
+ * - GET /api/openapi.json  - OpenAPI 3.0 specification
+ * - GET /api/docs          - Swagger UI interactive documentation
  * - WS  /ws                - WebSocket for real-time updates
  * 
  * @author Jarvis AI Agent
@@ -972,6 +974,98 @@ const server = Bun.serve({
           return unauthorizedResponse(authResult.error || 'Unauthorized');
         }
       }
+    }
+
+    // ==========================================
+    // API: GET /api/openapi.json
+    // OpenAPI 3.0 specification for the API
+    // Always public - documentation should be accessible
+    // ==========================================
+    if (path === '/api/openapi.json') {
+      try {
+        const openapiPath = join(import.meta.dir, 'openapi.json');
+        const spec = readFileSync(openapiPath, 'utf-8');
+        return new Response(spec, {
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+            'Cache-Control': 'public, max-age=3600'
+          }
+        });
+      } catch (e) {
+        return Response.json({ error: 'OpenAPI spec not found' }, { status: 404, headers: corsHeaders });
+      }
+    }
+
+    // ==========================================
+    // API: GET /api/docs
+    // Swagger UI for interactive API documentation
+    // Always public - documentation should be accessible
+    // ==========================================
+    if (path === '/api/docs') {
+      const swaggerHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jarvis PoW API Documentation</title>
+  <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css">
+  <link rel="icon" type="image/png" href="/pow/icon.png">
+  <style>
+    html { box-sizing: border-box; overflow: -moz-scrollbars-vertical; overflow-y: scroll; }
+    *, *:before, *:after { box-sizing: inherit; }
+    body { margin: 0; background: #fafafa; }
+    .swagger-ui .topbar { display: none; }
+    .swagger-ui .info { margin: 30px 0; }
+    .swagger-ui .info .title { font-size: 2.5rem; }
+    .swagger-ui .info .description p { font-size: 1rem; }
+    .custom-header {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    .custom-header h1 { margin: 0 0 10px 0; font-size: 1.8rem; }
+    .custom-header p { margin: 0; opacity: 0.8; }
+    .custom-header a { color: #4fc3f7; text-decoration: none; }
+    .custom-header a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="custom-header">
+    <h1>🤖 Jarvis Proof of Work API</h1>
+    <p>
+      <a href="/pow/">Dashboard</a> •
+      <a href="/api/openapi.json">OpenAPI Spec</a> •
+      <a href="https://github.com/jarvis-plus/hackathon">GitHub</a>
+    </p>
+  </div>
+  <div id="swagger-ui"></div>
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
+  <script>
+    window.onload = function() {
+      SwaggerUIBundle({
+        url: "/api/openapi.json",
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+        plugins: [SwaggerUIBundle.plugins.DownloadUrl],
+        layout: "StandaloneLayout",
+        validatorUrl: null,
+        tryItOutEnabled: true
+      });
+    };
+  </script>
+</body>
+</html>`;
+      return new Response(swaggerHtml, {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': 'public, max-age=3600'
+        }
+      });
     }
 
     // ==========================================

@@ -1,0 +1,1123 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Jarvis Proof of Work API",
+    "description": "REST API for the Proof of Work Dashboard - Colosseum Agent Hackathon 2026.\n\n## Overview\nThis API provides access to all activities logged by the Jarvis AI agent, with cryptographic proofs anchored on Solana.\n\n## Authentication\nSet `API_KEY` environment variable to enable authentication. When enabled:\n- Write operations (POST, PATCH, DELETE) always require auth\n- Read operations (GET) are public by default\n- Set `API_AUTH_READ=true` to also require auth for reads\n\nAuthentication methods:\n- `Authorization: Bearer <api_key>`\n- `X-API-Key: <api_key>`\n\n## Rate Limiting\n- API: 100 requests/minute per IP\n- WebSocket: 10 connections/minute per IP\n- Webhook writes: 5/minute per IP\n- Webhook tests: 10/minute per IP\n\n## Real-time Updates\nConnect to WebSocket at `/ws` for live activity updates.\n\n## Links\n- [Dashboard](https://jarvis.tail6a9bde.ts.net/pow/)\n- [GitHub](https://github.com/jarvis-plus/hackathon)\n- [Colosseum Project](https://colosseum.com/agent-hackathon/projects/proof-of-work-autonomous-agent-activity-log)",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Jarvis AI Agent",
+      "url": "https://jarvis.tail6a9bde.ts.net/pow/"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://jarvis.tail6a9bde.ts.net/pow",
+      "description": "Production"
+    },
+    {
+      "url": "http://localhost:3456",
+      "description": "Local development"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Activities",
+      "description": "Activity log operations"
+    },
+    {
+      "name": "Verification",
+      "description": "On-chain proof verification"
+    },
+    {
+      "name": "Stats",
+      "description": "Statistics and analytics"
+    },
+    {
+      "name": "Webhooks",
+      "description": "Webhook subscription management"
+    },
+    {
+      "name": "System",
+      "description": "Health checks and monitoring"
+    },
+    {
+      "name": "Backup",
+      "description": "Backup and restore operations"
+    }
+  ],
+  "paths": {
+    "/api/activities": {
+      "get": {
+        "tags": ["Activities"],
+        "summary": "List all activities",
+        "description": "Returns all logged activities as a JSON array, ordered by timestamp.",
+        "operationId": "getActivities",
+        "responses": {
+          "200": {
+            "description": "List of activities",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Activity"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        }
+      }
+    },
+    "/api/stats": {
+      "get": {
+        "tags": ["Stats"],
+        "summary": "Get activity statistics",
+        "description": "Returns aggregated statistics about all activities.",
+        "operationId": "getStats",
+        "responses": {
+          "200": {
+            "description": "Activity statistics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Stats"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health": {
+      "get": {
+        "tags": ["System"],
+        "summary": "Health check",
+        "description": "Returns server health status. Returns 200 if healthy, 503 if degraded.",
+        "operationId": "healthCheck",
+        "responses": {
+          "200": {
+            "description": "Server is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthCheck"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Server is degraded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthCheck"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/badge": {
+      "get": {
+        "tags": ["Stats"],
+        "summary": "Get badge summary",
+        "description": "Returns a compact verification summary suitable for sharing.",
+        "operationId": "getBadge",
+        "responses": {
+          "200": {
+            "description": "Badge summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Badge"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/badge.txt": {
+      "get": {
+        "tags": ["Stats"],
+        "summary": "Get plain text badge",
+        "description": "Returns a plain text version of the badge for copy-paste sharing.",
+        "operationId": "getBadgeText",
+        "responses": {
+          "200": {
+            "description": "Plain text badge",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/verify/{hash}": {
+      "get": {
+        "tags": ["Verification"],
+        "summary": "Verify activity by hash",
+        "description": "Looks up an activity by its SHA256 hash and returns verification details including on-chain proof links.",
+        "operationId": "verifyActivity",
+        "parameters": [
+          {
+            "name": "hash",
+            "in": "path",
+            "required": true,
+            "description": "Full SHA256 hash or prefix (minimum 8 characters)",
+            "schema": {
+              "type": "string",
+              "minLength": 8
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activity verification details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Verification"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid hash format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Activity not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/feed.rss": {
+      "get": {
+        "tags": ["Activities"],
+        "summary": "RSS feed",
+        "description": "Returns the last 50 activities as an RSS feed for feed readers.",
+        "operationId": "getRssFeed",
+        "responses": {
+          "200": {
+            "description": "RSS feed",
+            "content": {
+              "application/rss+xml": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/status": {
+      "get": {
+        "tags": ["System"],
+        "summary": "Authentication status",
+        "description": "Returns authentication configuration and whether the current request is authenticated.",
+        "operationId": "getAuthStatus",
+        "responses": {
+          "200": {
+            "description": "Authentication status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ratelimit": {
+      "get": {
+        "tags": ["System"],
+        "summary": "Rate limit status",
+        "description": "Returns current rate limit usage for the requesting IP across all categories.",
+        "operationId": "getRateLimitStatus",
+        "responses": {
+          "200": {
+            "description": "Rate limit status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/metrics": {
+      "get": {
+        "tags": ["System"],
+        "summary": "Prometheus metrics",
+        "description": "Returns Prometheus-compatible metrics for monitoring integration.",
+        "operationId": "getMetrics",
+        "responses": {
+          "200": {
+            "description": "Prometheus metrics",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/webhooks": {
+      "get": {
+        "tags": ["Webhooks"],
+        "summary": "List webhooks",
+        "description": "Returns all registered webhook subscriptions. Secrets are hidden.",
+        "operationId": "listWebhooks",
+        "responses": {
+          "200": {
+            "description": "List of webhooks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "count": {
+                      "type": "integer"
+                    },
+                    "webhooks": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/WebhookSummary"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Webhooks"],
+        "summary": "Create webhook",
+        "description": "Register a new webhook subscription. Rate limited to 5/minute.",
+        "operationId": "createWebhook",
+        "security": [
+          {"ApiKeyAuth": []},
+          {"BearerAuth": []}
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Webhook created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookCreated"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Webhook URL already registered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        }
+      }
+    },
+    "/api/webhooks/{id}": {
+      "patch": {
+        "tags": ["Webhooks"],
+        "summary": "Update webhook",
+        "description": "Update a webhook subscription (enable/disable, change events, update secret).",
+        "operationId": "updateWebhook",
+        "security": [
+          {"ApiKeyAuth": []},
+          {"BearerAuth": []}
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Webhook updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookSummary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Webhook not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Webhooks"],
+        "summary": "Delete webhook",
+        "description": "Remove a webhook subscription. Rate limited to 5/minute.",
+        "operationId": "deleteWebhook",
+        "security": [
+          {"ApiKeyAuth": []},
+          {"BearerAuth": []}
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Webhook deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {"type": "string"},
+                    "id": {"type": "string"},
+                    "url": {"type": "string"}
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Webhook not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        }
+      }
+    },
+    "/api/webhooks/{id}/test": {
+      "post": {
+        "tags": ["Webhooks"],
+        "summary": "Test webhook",
+        "description": "Send a test payload to a webhook. Rate limited to 10/minute.",
+        "operationId": "testWebhook",
+        "security": [
+          {"ApiKeyAuth": []},
+          {"BearerAuth": []}
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Test successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean"},
+                    "message": {"type": "string"},
+                    "url": {"type": "string"}
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Webhook not found"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "502": {
+            "description": "Webhook delivery failed"
+          }
+        }
+      }
+    },
+    "/api/backup": {
+      "get": {
+        "tags": ["Backup"],
+        "summary": "Export backup",
+        "description": "Export all activities as a downloadable JSON backup file.",
+        "operationId": "exportBackup",
+        "parameters": [
+          {
+            "name": "webhooks",
+            "in": "query",
+            "description": "Include webhooks in backup (secrets excluded)",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Backup file",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Backup"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/backup/validate": {
+      "post": {
+        "tags": ["Backup"],
+        "summary": "Validate backup",
+        "description": "Validate a backup file format without importing.",
+        "operationId": "validateBackup",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Backup"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Backup is valid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Backup is invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/restore": {
+      "post": {
+        "tags": ["Backup"],
+        "summary": "Restore from backup",
+        "description": "Restore activities from a backup file. Supports merge (skip duplicates) or replace (full overwrite) modes.",
+        "operationId": "restoreBackup",
+        "security": [
+          {"ApiKeyAuth": []},
+          {"BearerAuth": []}
+        ],
+        "parameters": [
+          {
+            "name": "mode",
+            "in": "query",
+            "description": "Restore mode",
+            "schema": {
+              "type": "string",
+              "enum": ["merge", "replace"],
+              "default": "merge"
+            }
+          },
+          {
+            "name": "dry_run",
+            "in": "query",
+            "description": "Preview changes without writing",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "webhooks",
+            "in": "query",
+            "description": "Also restore webhooks",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Backup"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Restore successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RestoreResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid backup format"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key"
+      },
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "responses": {
+      "RateLimited": {
+        "description": "Rate limit exceeded",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {"type": "string"},
+                "message": {"type": "string"},
+                "retryAfter": {"type": "integer"}
+              }
+            }
+          }
+        },
+        "headers": {
+          "Retry-After": {
+            "schema": {"type": "integer"},
+            "description": "Seconds until rate limit resets"
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Activity": {
+        "type": "object",
+        "required": ["type", "description", "timestamp"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Activity type",
+            "enum": ["build", "commit", "trade", "transfer", "message", "tweet", "decision", "deploy", "email", "browser", "calendar"]
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp"
+          },
+          "hash": {
+            "type": "string",
+            "description": "SHA256 hash of the activity"
+          },
+          "signature": {
+            "type": "string",
+            "description": "Solana transaction signature (on-chain proof)"
+          },
+          "wallet": {
+            "type": "string",
+            "description": "Wallet address that signed the activity"
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Additional activity-specific data"
+          },
+          "proof": {
+            "type": "object",
+            "description": "Legacy proof format",
+            "properties": {
+              "hash": {"type": "string"},
+              "txSignature": {"type": "string"}
+            }
+          }
+        }
+      },
+      "Stats": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "description": "Total number of activities"
+          },
+          "byType": {
+            "type": "object",
+            "additionalProperties": {"type": "integer"},
+            "description": "Activity count by type"
+          },
+          "byWallet": {
+            "type": "object",
+            "additionalProperties": {"type": "integer"},
+            "description": "Activity count by wallet"
+          },
+          "firstActivity": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "lastActivity": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "onchain": {
+            "type": "integer",
+            "description": "Number of activities with on-chain proofs"
+          }
+        }
+      },
+      "HealthCheck": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["healthy", "degraded"]
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "checks": {
+            "type": "object",
+            "properties": {
+              "activityFile": {"type": "string"},
+              "activityCount": {"type": "integer"},
+              "unsignedActivities": {"type": "integer"},
+              "lastActivity": {"type": "string", "nullable": true},
+              "lastActivityAge": {"type": "string", "nullable": true},
+              "websocketClients": {"type": "integer"}
+            }
+          },
+          "server": {
+            "type": "object",
+            "properties": {
+              "uptime": {"type": "string"},
+              "port": {"type": "integer"},
+              "version": {"type": "string"}
+            }
+          },
+          "responseTime": {"type": "string"}
+        }
+      },
+      "Badge": {
+        "type": "object",
+        "properties": {
+          "project": {"type": "string"},
+          "hackathon": {"type": "string"},
+          "status": {"type": "string"},
+          "stats": {
+            "type": "object",
+            "properties": {
+              "totalActivities": {"type": "integer"},
+              "onChainProofs": {"type": "integer"},
+              "verificationRate": {"type": "string"},
+              "buildCycles": {"type": "integer"},
+              "activeDays": {"type": "integer"},
+              "commits": {"type": "integer"},
+              "trades": {"type": "integer"}
+            }
+          },
+          "timeline": {
+            "type": "object",
+            "properties": {
+              "started": {"type": "string", "nullable": true},
+              "latest": {"type": "string", "nullable": true},
+              "uptime": {"type": "string", "nullable": true}
+            }
+          },
+          "wallet": {"type": "string"},
+          "verify": {
+            "type": "object",
+            "properties": {
+              "dashboard": {"type": "string"},
+              "api": {"type": "string"},
+              "anyHash": {"type": "string"}
+            }
+          },
+          "oneLiner": {"type": "string"}
+        }
+      },
+      "Verification": {
+        "type": "object",
+        "properties": {
+          "verified": {"type": "boolean"},
+          "activity": {
+            "type": "object",
+            "properties": {
+              "type": {"type": "string"},
+              "description": {"type": "string"},
+              "timestamp": {"type": "string"},
+              "metadata": {"type": "object"}
+            }
+          },
+          "proof": {
+            "type": "object",
+            "properties": {
+              "hash": {"type": "string"},
+              "algorithm": {"type": "string"},
+              "signatureType": {"type": "string"},
+              "signature": {"type": "string", "nullable": true},
+              "wallet": {"type": "string"},
+              "network": {"type": "string"}
+            }
+          },
+          "verification": {
+            "type": "object",
+            "properties": {
+              "solscan": {"type": "string", "nullable": true},
+              "status": {"type": "string", "enum": ["on-chain", "pending"]},
+              "instructions": {
+                "type": "array",
+                "items": {"type": "string"}
+              }
+            }
+          },
+          "agent": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "integer"},
+              "name": {"type": "string"},
+              "hackathon": {"type": "string"}
+            }
+          }
+        }
+      },
+      "AuthStatus": {
+        "type": "object",
+        "properties": {
+          "authEnabled": {"type": "boolean"},
+          "authRequiredForReads": {"type": "boolean"},
+          "authRequiredForWrites": {"type": "boolean"},
+          "authenticated": {"type": "boolean"},
+          "message": {"type": "string"},
+          "endpoints": {
+            "type": "object",
+            "properties": {
+              "publicAlways": {
+                "type": "array",
+                "items": {"type": "string"}
+              },
+              "requiresAuthForWrites": {
+                "type": "array",
+                "items": {"type": "string"}
+              },
+              "configurable": {
+                "type": "array",
+                "items": {"type": "string"}
+              }
+            }
+          }
+        }
+      },
+      "RateLimitStatus": {
+        "type": "object",
+        "properties": {
+          "ip": {"type": "string"},
+          "windowMs": {"type": "integer"},
+          "windowSeconds": {"type": "integer"},
+          "limits": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "description": {"type": "string"},
+                "limit": {"type": "integer"},
+                "used": {"type": "integer"},
+                "remaining": {"type": "integer"},
+                "resetIn": {"type": "integer"}
+              }
+            }
+          },
+          "hint": {"type": "string"}
+        }
+      },
+      "WebhookSummary": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "url": {"type": "string", "format": "uri"},
+          "events": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "createdAt": {"type": "string", "format": "date-time"},
+          "lastDelivery": {"type": "string", "format": "date-time", "nullable": true},
+          "failureCount": {"type": "integer"},
+          "active": {"type": "boolean"},
+          "hasSecret": {"type": "boolean"}
+        }
+      },
+      "WebhookCreate": {
+        "type": "object",
+        "required": ["url"],
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Endpoint URL to receive webhook payloads"
+          },
+          "secret": {
+            "type": "string",
+            "description": "Shared secret for HMAC signature verification"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["*", "activity.new", "activity.batch", "activity.signed"]
+            },
+            "default": ["*"],
+            "description": "Event types to subscribe to"
+          }
+        }
+      },
+      "WebhookCreated": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "url": {"type": "string"},
+          "events": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "createdAt": {"type": "string"},
+          "active": {"type": "boolean"},
+          "message": {"type": "string"},
+          "testEndpoint": {"type": "string"}
+        }
+      },
+      "WebhookUpdate": {
+        "type": "object",
+        "properties": {
+          "active": {"type": "boolean"},
+          "events": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "secret": {"type": "string", "nullable": true}
+        }
+      },
+      "Backup": {
+        "type": "object",
+        "properties": {
+          "version": {"type": "string"},
+          "format": {"type": "string"},
+          "createdAt": {"type": "string", "format": "date-time"},
+          "server": {
+            "type": "object",
+            "properties": {
+              "version": {"type": "string"},
+              "wallet": {"type": "string"},
+              "dashboardUrl": {"type": "string"}
+            }
+          },
+          "stats": {
+            "type": "object",
+            "properties": {
+              "totalActivities": {"type": "integer"},
+              "onChainActivities": {"type": "integer"},
+              "firstActivity": {"type": "string", "nullable": true},
+              "lastActivity": {"type": "string", "nullable": true},
+              "activityTypes": {
+                "type": "object",
+                "additionalProperties": {"type": "integer"}
+              }
+            }
+          },
+          "activities": {
+            "type": "array",
+            "items": {"$ref": "#/components/schemas/Activity"}
+          },
+          "webhooks": {
+            "type": "array",
+            "items": {"$ref": "#/components/schemas/WebhookSummary"}
+          }
+        }
+      },
+      "ValidationResult": {
+        "type": "object",
+        "properties": {
+          "valid": {"type": "boolean"},
+          "errors": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "warnings": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "summary": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "version": {"type": "string"},
+              "createdAt": {"type": "string"},
+              "activityCount": {"type": "integer"},
+              "hasWebhooks": {"type": "boolean"},
+              "webhookCount": {"type": "integer"}
+            }
+          }
+        }
+      },
+      "RestoreResult": {
+        "type": "object",
+        "properties": {
+          "success": {"type": "boolean"},
+          "dryRun": {"type": "boolean"},
+          "mode": {"type": "string"},
+          "activities": {
+            "type": "object",
+            "properties": {
+              "before": {"type": "integer"},
+              "after": {"type": "integer"},
+              "added": {"type": "integer"},
+              "skipped": {"type": "integer"},
+              "replaced": {"type": "integer"}
+            }
+          },
+          "webhooks": {
+            "type": "object",
+            "properties": {
+              "added": {"type": "integer"},
+              "skipped": {"type": "integer"}
+            }
+          },
+          "message": {"type": "string"}
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {"type": "string"},
+          "message": {"type": "string"},
+          "hint": {"type": "string"}
+        }
+      }
+    }
+  }
+}
