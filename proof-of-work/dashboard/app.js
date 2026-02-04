@@ -963,12 +963,15 @@ function renderActivities(activities, highlightNew = false) {
         const activityId = getActivityId(a);
         const isPinned = !!a.pinned;
         const bookmarked = hash ? isBookmarked(hash) : false;
+        const activityStatus = a.status || 'completed';
         
-        const ariaLabel = `${bookmarked ? 'Bookmarked ' : ''}${isPinned ? 'Pinned ' : ''}${a.type} activity: ${escapeHtml(a.description.substring(0, 80))}${a.description.length > 80 ? '...' : ''}`;
+        const ariaLabel = `${bookmarked ? 'Bookmarked ' : ''}${isPinned ? 'Pinned ' : ''}${activityStatus !== 'completed' ? activityStatus + ' ' : ''}${a.type} activity: ${escapeHtml(a.description.substring(0, 80))}${a.description.length > 80 ? '...' : ''}`;
         const notesHtml = renderActivityNotes(a, hash);
         const attachmentsHtml = renderActivityAttachments(a, hash);
         const pinButtonHtml = renderPinButton(hash, isPinned);
         const bookmarkButtonHtml = renderBookmarkButton(hash);
+        const statusButtonHtml = renderStatusButton(hash, activityStatus);
+        const statusBadgeHtml = renderStatusBadge(activityStatus);
         
         const compareButtonHtml = renderCompareButton(hash);
         
@@ -980,13 +983,14 @@ function renderActivities(activities, highlightNew = false) {
         const linksIndicatorHtml = renderLinksIndicator(a);
         
         return `
-        <div class="activity-item ${a.type}${isNew ? ' new-activity' : ''}${isPinned ? ' pinned' : ''}${bookmarked ? ' bookmarked' : ''}${compareSelected ? ' compare-selected' : ''}${bulkSelected ? ' bulk-selected' : ''}" 
+        <div class="activity-item ${a.type}${isNew ? ' new-activity' : ''}${isPinned ? ' pinned' : ''}${bookmarked ? ' bookmarked' : ''}${compareSelected ? ' compare-selected' : ''}${bulkSelected ? ' bulk-selected' : ''}${activityStatus !== 'completed' ? ' status-' + activityStatus : ''}" 
              style="animation-delay: ${i * 0.04}s" 
              data-wallet="${a.wallet || ''}" 
              data-activity-id="${activityId}"
              data-hash="${hash || ''}"
              data-pinned="${isPinned}"
              data-bookmarked="${bookmarked}"
+             data-status="${activityStatus}"
              tabindex="0"
              role="article"
              aria-label="${ariaLabel}">
@@ -996,10 +1000,12 @@ function renderActivities(activities, highlightNew = false) {
             ${renderCompareButton(hash)}
             ${bookmarkButtonHtml}
             ${pinButtonHtml}
+            ${statusButtonHtml}
             <div class="activity-header">
                 <div class="activity-badges">
                     ${isPinned ? '<span class="pinned-badge" title="Pinned activity">📌</span>' : ''}
                     ${bookmarked ? '<span class="bookmarked-badge" title="Bookmarked">⭐</span>' : ''}
+                    ${statusBadgeHtml}
                     <span class="activity-type">${a.type}</span>
                     ${importanceBadgeHtml}
                     ${getProofBadge(a)}
@@ -3550,6 +3556,7 @@ let currentTypeFilter = 'all';
 let currentSearchQuery = '';
 let currentTagFilter = null; // null means "all tags"
 let currentWalletFilter = null; // null means "all wallets"
+let currentStatusFilter = 'all'; // 'all', 'pending', 'completed', 'failed'
 let currentDateFrom = null; // null means no start date filter
 let currentDateTo = null; // null means no end date filter
 let availableTags = new Set();
@@ -3581,6 +3588,23 @@ function setTagFilter(tag) {
     // Update active state on tag buttons
     document.querySelectorAll('.tag-filter').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.tag === currentTagFilter);
+    });
+    
+    applyFilters();
+}
+
+/**
+ * Set status filter (pending/completed/failed/all)
+ * @param {string} status - The status to filter by
+ */
+function setStatusFilter(status) {
+    currentStatusFilter = status;
+    
+    // Update active state and ARIA on buttons
+    document.querySelectorAll('.status-filter-btn').forEach(btn => {
+        const isActive = btn.dataset.status === status;
+        btn.classList.toggle('active', isActive);
+        btn.setAttribute('aria-pressed', isActive);
     });
     
     applyFilters();
@@ -3751,7 +3775,8 @@ function updateExportFilterIndicator() {
         currentWalletFilter !== null ||
         currentDateFrom !== null ||
         currentDateTo !== null ||
-        window.bookmarkFilterActive;
+        window.bookmarkFilterActive ||
+        currentStatusFilter !== 'all';
     
     if (hasActiveFilters) {
         indicator.style.display = 'inline-flex';
@@ -3770,6 +3795,7 @@ function updateExportFilterIndicator() {
         if (currentSearchQuery) activeFilters.push(`Search: "${currentSearchQuery}"`);
         if (currentTagFilter) activeFilters.push(`Tag: ${currentTagFilter}`);
         if (currentWalletFilter) activeFilters.push(`Wallet: ${currentWalletFilter.slice(0, 8)}...`);
+        if (currentStatusFilter !== 'all') activeFilters.push(`Status: ${currentStatusFilter}`);
         if (currentDateFrom || currentDateTo) {
             const from = currentDateFrom ? currentDateFrom.toLocaleDateString() : 'start';
             const to = currentDateTo ? currentDateTo.toLocaleDateString() : 'now';
@@ -4395,17 +4421,26 @@ function renderFilteredActivities(activities) {
         });
     }
     
+    // Apply status filter
+    if (currentStatusFilter !== 'all') {
+        filtered = filtered.filter(a => {
+            const activityStatus = a.status || 'completed';
+            return activityStatus === currentStatusFilter;
+        });
+    }
+    
     // Update filter stats
     const statsEl = document.getElementById('filterStats');
     if (statsEl) {
         const hasDateFilter = currentDateFrom || currentDateTo;
-        const isFiltered = currentTypeFilter !== 'all' || currentSearchQuery || currentTagFilter || currentWalletFilter || hasDateFilter || window.bookmarkFilterActive;
+        const isFiltered = currentTypeFilter !== 'all' || currentSearchQuery || currentTagFilter || currentWalletFilter || hasDateFilter || window.bookmarkFilterActive || currentStatusFilter !== 'all';
         if (isFiltered) {
             const filterParts = [];
             if (window.bookmarkFilterActive) filterParts.push('⭐ bookmarked');
             if (currentTypeFilter !== 'all') filterParts.push(`type: ${currentTypeFilter}`);
             if (currentTagFilter) filterParts.push(`tag: ${currentTagFilter}`);
             if (currentWalletFilter) filterParts.push(`wallet: ${getWalletName(currentWalletFilter)}`);
+            if (currentStatusFilter !== 'all') filterParts.push(`status: ${currentStatusFilter}`);
             if (hasDateFilter) {
                 const fromStr = currentDateFrom ? currentDateFrom.toLocaleDateString() : '...';
                 const toStr = currentDateTo ? currentDateTo.toLocaleDateString() : '...';
@@ -4426,7 +4461,7 @@ function renderFilteredActivities(activities) {
     const feed = document.getElementById('feed');
     if (!filtered.length) {
         const hasDateFilter = currentDateFrom || currentDateTo;
-        const hasFilters = currentTypeFilter !== 'all' || currentSearchQuery || currentTagFilter || currentWalletFilter || hasDateFilter;
+        const hasFilters = currentTypeFilter !== 'all' || currentSearchQuery || currentTagFilter || currentWalletFilter || hasDateFilter || currentStatusFilter !== 'all';
         feed.innerHTML = `
             <div class="empty-state">
                 <div class="empty-state-icon">${hasFilters ? '🔍' : '🤖'}</div>
@@ -4806,6 +4841,163 @@ async function togglePin(hash) {
         if (pinBtn) {
             pinBtn.disabled = false;
             pinBtn.classList.remove('loading');
+        }
+    }
+}
+
+// ==============================================
+// STATUS INDICATOR FUNCTIONS
+// ==============================================
+
+/**
+ * Render status badge for an activity
+ * @param {string} status - The status (pending/completed/failed)
+ * @returns {string} HTML string for the status badge
+ */
+function renderStatusBadge(status) {
+    if (!status || status === 'completed') return '';
+    
+    const statusConfig = {
+        pending: { emoji: '⏳', label: 'Pending', class: 'status-pending' },
+        failed: { emoji: '❌', label: 'Failed', class: 'status-failed' }
+    };
+    
+    const config = statusConfig[status];
+    if (!config) return '';
+    
+    return `<span class="status-badge ${config.class}" title="${config.label}">${config.emoji}</span>`;
+}
+
+/**
+ * Render status button for cycling through statuses
+ * @param {string} hash - The activity hash
+ * @param {string} currentStatus - Current status
+ * @returns {string} HTML string for the status button
+ */
+function renderStatusButton(hash, currentStatus) {
+    if (!hash) return '';
+    
+    const statusConfig = {
+        pending: { emoji: '⏳', next: 'completed', title: 'Mark as completed' },
+        completed: { emoji: '✅', next: 'failed', title: 'Mark as failed' },
+        failed: { emoji: '❌', next: 'pending', title: 'Mark as pending' }
+    };
+    
+    const config = statusConfig[currentStatus] || statusConfig.completed;
+    
+    return `
+        <button class="status-btn status-${currentStatus}" 
+                onclick="cycleStatus('${hash}', '${config.next}')" 
+                title="${config.title}"
+                aria-label="${config.title}">
+            ${config.emoji}
+        </button>
+    `;
+}
+
+/**
+ * Cycle activity status (pending -> completed -> failed -> pending)
+ * @param {string} hash - The activity hash
+ * @param {string} newStatus - The new status to set
+ */
+async function cycleStatus(hash, newStatus) {
+    const activityItem = document.querySelector(`[data-hash="${hash}"]`);
+    const statusBtn = activityItem?.querySelector('.status-btn');
+    
+    if (statusBtn) {
+        statusBtn.disabled = true;
+        statusBtn.classList.add('loading');
+    }
+    
+    try {
+        const response = await fetch(`/api/activities/${hash}/status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus })
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to update status');
+        }
+        
+        const result = await response.json();
+        
+        // Update the activity item's status
+        if (activityItem) {
+            // Remove old status classes
+            activityItem.classList.remove('status-pending', 'status-failed');
+            activityItem.dataset.status = result.status;
+            
+            // Add new status class if not completed
+            if (result.status !== 'completed') {
+                activityItem.classList.add('status-' + result.status);
+            }
+            
+            // Update status button
+            const statusConfig = {
+                pending: { emoji: '⏳', next: 'completed', title: 'Mark as completed' },
+                completed: { emoji: '✅', next: 'failed', title: 'Mark as failed' },
+                failed: { emoji: '❌', next: 'pending', title: 'Mark as pending' }
+            };
+            const config = statusConfig[result.status];
+            
+            if (statusBtn && config) {
+                statusBtn.className = `status-btn status-${result.status}`;
+                statusBtn.innerHTML = config.emoji;
+                statusBtn.title = config.title;
+                statusBtn.setAttribute('aria-label', config.title);
+                statusBtn.onclick = () => cycleStatus(hash, config.next);
+            }
+            
+            // Update badge
+            const badges = activityItem.querySelector('.activity-badges');
+            const existingBadge = badges?.querySelector('.status-badge');
+            if (existingBadge) {
+                existingBadge.remove();
+            }
+            
+            if (result.status !== 'completed') {
+                const badgeConfig = {
+                    pending: { emoji: '⏳', label: 'Pending', class: 'status-pending' },
+                    failed: { emoji: '❌', label: 'Failed', class: 'status-failed' }
+                };
+                const bc = badgeConfig[result.status];
+                if (bc) {
+                    const pinnedBadge = badges?.querySelector('.pinned-badge');
+                    const bookmarkBadge = badges?.querySelector('.bookmarked-badge');
+                    const insertAfter = bookmarkBadge || pinnedBadge;
+                    const newBadge = `<span class="status-badge ${bc.class}" title="${bc.label}">${bc.emoji}</span>`;
+                    if (insertAfter) {
+                        insertAfter.insertAdjacentHTML('afterend', newBadge);
+                    } else {
+                        badges.insertAdjacentHTML('afterbegin', newBadge);
+                    }
+                }
+            }
+            
+            // Update the activity in allActivities array
+            const idx = window.allActivities.findIndex(a => (a.hash || a.proof?.hash) === hash);
+            if (idx !== -1) {
+                if (result.status === 'completed') {
+                    delete window.allActivities[idx].status;
+                    delete window.allActivities[idx].statusUpdatedAt;
+                } else {
+                    window.allActivities[idx].status = result.status;
+                    window.allActivities[idx].statusUpdatedAt = result.statusUpdatedAt;
+                }
+            }
+        }
+        
+        showToast(`Status updated to ${result.status}`, 'success');
+        
+    } catch (error) {
+        console.error('Failed to update status:', error);
+        showToast(`Failed to update status: ${error.message}`, 'error');
+    } finally {
+        if (statusBtn) {
+            statusBtn.disabled = false;
+            statusBtn.classList.remove('loading');
         }
     }
 }

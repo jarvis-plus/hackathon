@@ -4885,6 +4885,84 @@
     background: rgba(255, 255, 255, 0.2);
 }
 
+/* ============================================ */
+/* STATUS FILTER BUTTONS                        */
+/* ============================================ */
+.status-filters {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+}
+
+.status-filters-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+.status-filter-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.status-filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.6rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.status-filter-btn:hover {
+    color: var(--text-primary);
+    border-color: var(--accent);
+    background: rgba(0, 170, 255, 0.1);
+}
+
+.status-filter-btn.active {
+    color: #fff;
+    background: linear-gradient(135deg, var(--accent), var(--accent-blue));
+    border-color: transparent;
+}
+
+/* Status-specific active colors */
+.status-filter-btn[data-status="pending"].active {
+    background: linear-gradient(135deg, #eab308, #ca8a04);
+}
+
+.status-filter-btn[data-status="completed"].active {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+.status-filter-btn[data-status="failed"].active {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .status-filters {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .status-filter-btn {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+    }
+}
+
 /* Activity card tags display */
 .activity-tags {
     display: flex;
@@ -5782,6 +5860,174 @@
     
     .pin-btn {
         right: 2rem;
+    }
+}
+
+/* ============================================ */
+/* STATUS INDICATOR BUTTON & BADGE              */
+/* ============================================ */
+.status-btn {
+    position: absolute;
+    top: 0.75rem;
+    right: 6.5rem; /* Positioned left of bookmark button */
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    z-index: 5;
+}
+
+.activity-item:hover .status-btn {
+    opacity: 0.6;
+}
+
+.status-btn:hover {
+    opacity: 1 !important;
+    background: var(--bg-primary);
+    border-color: var(--border);
+    transform: scale(1.1);
+}
+
+.status-btn:active {
+    transform: scale(0.95);
+}
+
+/* Status-specific button colors */
+.status-btn.status-pending {
+    opacity: 1 !important;
+}
+
+.status-btn.status-pending:hover {
+    background: rgba(234, 179, 8, 0.15);
+    border-color: #eab308;
+}
+
+.status-btn.status-completed:hover {
+    background: rgba(34, 197, 94, 0.15);
+    border-color: #22c55e;
+}
+
+.status-btn.status-failed {
+    opacity: 1 !important;
+}
+
+.status-btn.status-failed:hover {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: #ef4444;
+}
+
+/* Loading state for status button */
+.status-btn.loading {
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+.status-btn.loading::after {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border: 2px solid transparent;
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+/* Status badge in activity header */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    margin-right: 0.25rem;
+    animation: statusPop 0.3s ease;
+}
+
+@keyframes statusPop {
+    0% { transform: scale(0); }
+    70% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+
+.status-badge.status-pending {
+    color: #eab308;
+}
+
+.status-badge.status-failed {
+    color: #ef4444;
+}
+
+/* Activity card with pending status */
+.activity-item.status-pending {
+    border-color: rgba(234, 179, 8, 0.4);
+    background: linear-gradient(
+        135deg,
+        rgba(234, 179, 8, 0.08) 0%,
+        var(--bg-secondary) 30%
+    );
+    box-shadow: 
+        0 0 0 1px rgba(234, 179, 8, 0.15),
+        0 4px 15px rgba(234, 179, 8, 0.08),
+        inset 0 1px 0 rgba(234, 179, 8, 0.1);
+}
+
+.activity-item.status-pending:hover {
+    border-color: rgba(234, 179, 8, 0.6);
+}
+
+/* Activity card with failed status */
+.activity-item.status-failed {
+    border-color: rgba(239, 68, 68, 0.4);
+    background: linear-gradient(
+        135deg,
+        rgba(239, 68, 68, 0.08) 0%,
+        var(--bg-secondary) 30%
+    );
+    box-shadow: 
+        0 0 0 1px rgba(239, 68, 68, 0.15),
+        0 4px 15px rgba(239, 68, 68, 0.08),
+        inset 0 1px 0 rgba(239, 68, 68, 0.1);
+}
+
+.activity-item.status-failed:hover {
+    border-color: rgba(239, 68, 68, 0.6);
+}
+
+/* Light theme adjustments for status */
+[data-theme="light"] .activity-item.status-pending {
+    background: linear-gradient(
+        135deg,
+        rgba(234, 179, 8, 0.12) 0%,
+        var(--bg-secondary) 30%
+    );
+}
+
+[data-theme="light"] .activity-item.status-failed {
+    background: linear-gradient(
+        135deg,
+        rgba(239, 68, 68, 0.12) 0%,
+        var(--bg-secondary) 30%
+    );
+}
+
+/* Mobile: always show status button on non-completed items */
+@media (max-width: 768px) {
+    .activity-item.status-pending .status-btn,
+    .activity-item.status-failed .status-btn {
+        opacity: 1;
+    }
+    
+    .status-btn {
+        right: 6rem;
     }
 }
 

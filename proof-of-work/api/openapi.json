@@ -953,6 +953,161 @@
         }
       }
     },
+    "/api/activities/{hash}/status": {
+      "patch": {
+        "tags": [
+          "Activities"
+        ],
+        "summary": "Update activity status",
+        "description": "Update the status of an activity. Valid statuses: pending, completed, failed. Status helps track task progress and workflow states.",
+        "operationId": "updateActivityStatus",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "hash",
+            "in": "path",
+            "required": true,
+            "description": "SHA256 hash of the activity",
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["status"],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": ["pending", "completed", "failed"],
+                    "description": "New status for the activity"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusUpdateResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid status value",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Activity not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/activities/status": {
+      "get": {
+        "tags": [
+          "Activities"
+        ],
+        "summary": "Get activities by status",
+        "description": "Returns activities filtered by status. Activities without a status field are considered 'completed'.",
+        "operationId": "getActivitiesByStatus",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": true,
+            "description": "Status to filter by",
+            "schema": {
+              "type": "string",
+              "enum": ["pending", "completed", "failed"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activities with matching status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": ["pending", "completed", "failed"]
+                    },
+                    "count": {
+                      "type": "integer",
+                      "description": "Number of activities with this status"
+                    },
+                    "counts": {
+                      "type": "object",
+                      "description": "Counts for all statuses",
+                      "properties": {
+                        "pending": {
+                          "type": "integer"
+                        },
+                        "completed": {
+                          "type": "integer"
+                        },
+                        "failed": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "activities": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Activity"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or missing status parameter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/activities/{hash}/attachments": {
       "get": {
         "tags": [
@@ -4418,6 +4573,30 @@
           },
           "message": {
             "type": "string"
+          }
+        }
+      },
+      "StatusUpdateResult": {
+        "type": "object",
+        "properties": {
+          "hash": {
+            "type": "string",
+            "description": "SHA256 hash of the activity"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "completed", "failed"],
+            "description": "New status value"
+          },
+          "statusUpdatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the status was last updated (null for completed)"
+          },
+          "message": {
+            "type": "string",
+            "description": "Success message"
           }
         }
       },

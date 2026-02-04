@@ -24,7 +24,9 @@
  * - PATCH /api/activities/:hash/notes - Add/update notes on activity
  * - DELETE /api/activities/:hash/notes - Remove notes from activity
  * - PATCH /api/activities/:hash/pin - Toggle pin status on activity
+ * - PATCH /api/activities/:hash/status - Update status (pending/completed/failed)
  * - GET /api/activities/pinned    - Get all pinned activities
+ * - GET /api/activities/status    - Get activities filtered by status
  * - DELETE /api/activities/:hash  - Soft delete an activity (move to trash)
  * - PATCH /api/activities/:hash/restore - Restore a deleted activity
  * - GET /api/activities/trash     - List all deleted activities
@@ -3311,6 +3313,124 @@ const server = Bun.serve({
           message: newPinned ? 'Activity pinned' : 'Activity unpinned'
         }, { headers: corsHeaders });
       }
+    }
+
+    // ==========================================
+    // API: PATCH /api/activities/:hash/status
+    // Update status on an activity (pending/completed/failed)
+    // Status helps track task progress and workflow states
+    // ==========================================
+    if (path.match(/^\/api\/activities\/[a-f0-9]{64}\/status$/) && req.method === 'PATCH') {
+      const hash = path.split('/')[3];
+      
+      try {
+        const body = await req.json() as { status: string };
+        
+        // Validate status value
+        const validStatuses = ['pending', 'completed', 'failed'];
+        if (!body.status || !validStatuses.includes(body.status)) {
+          return Response.json({ 
+            error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` 
+          }, { status: 400, headers: corsHeaders });
+        }
+        
+        const activities = getActivities();
+        const activityIndex = activities.findIndex((a: any) => a.hash === hash);
+        
+        if (activityIndex === -1) {
+          return Response.json({ 
+            error: 'Activity not found' 
+          }, { status: 404, headers: corsHeaders });
+        }
+        
+        const oldStatus = activities[activityIndex].status || 'completed';
+        
+        // Set or remove status (completed is default, so we can remove it)
+        if (body.status === 'completed') {
+          delete activities[activityIndex].status;
+          delete activities[activityIndex].statusUpdatedAt;
+        } else {
+          activities[activityIndex].status = body.status;
+          activities[activityIndex].statusUpdatedAt = new Date().toISOString();
+        }
+        
+        saveActivities(activities);
+        
+        // Broadcast update
+        broadcastUpdate('activity_status_changed', {
+          hash,
+          oldStatus,
+          newStatus: body.status,
+          statusUpdatedAt: activities[activityIndex].statusUpdatedAt || null
+        });
+        
+        // Broadcast to webhooks
+        broadcastToWebhooks('activity.status_changed', {
+          hash,
+          oldStatus,
+          newStatus: body.status,
+          activity: activities[activityIndex]
+        });
+        
+        const statusEmoji = body.status === 'pending' ? '⏳' : body.status === 'failed' ? '❌' : '✅';
+        console.log(`${statusEmoji} Activity ${hash.slice(0, 8)}... status: ${oldStatus} → ${body.status}`);
+        
+        return Response.json({
+          hash,
+          status: body.status,
+          statusUpdatedAt: activities[activityIndex].statusUpdatedAt || null,
+          message: `Activity status updated to ${body.status}`
+        }, { headers: corsHeaders });
+        
+      } catch (e) {
+        return Response.json({ 
+          error: 'Invalid request body. Expected: { status: "pending"|"completed"|"failed" }' 
+        }, { status: 400, headers: corsHeaders });
+      }
+    }
+
+    // ==========================================
+    // API: GET /api/activities/status
+    // Get activities filtered by status
+    // Query params: ?status=pending|completed|failed
+    // ==========================================
+    if (path === '/api/activities/status' && req.method === 'GET') {
+      const statusFilter = url.searchParams.get('status');
+      const validStatuses = ['pending', 'completed', 'failed'];
+      
+      if (!statusFilter || !validStatuses.includes(statusFilter)) {
+        return Response.json({ 
+          error: `status query param required. Must be one of: ${validStatuses.join(', ')}` 
+        }, { status: 400, headers: corsHeaders });
+      }
+      
+      const activities = getActivities();
+      const filtered = activities.filter((a: any) => {
+        // Activities without status field are "completed"
+        const activityStatus = a.status || 'completed';
+        return activityStatus === statusFilter && !a.deleted;
+      });
+      
+      // Sort by statusUpdatedAt or timestamp
+      filtered.sort((a: any, b: any) => {
+        const aTime = new Date(a.statusUpdatedAt || a.timestamp).getTime();
+        const bTime = new Date(b.statusUpdatedAt || b.timestamp).getTime();
+        return bTime - aTime;
+      });
+      
+      // Get counts for all statuses
+      const counts = {
+        pending: activities.filter((a: any) => a.status === 'pending' && !a.deleted).length,
+        completed: activities.filter((a: any) => (!a.status || a.status === 'completed') && !a.deleted).length,
+        failed: activities.filter((a: any) => a.status === 'failed' && !a.deleted).length
+      };
+      
+      return Response.json({
+        status: statusFilter,
+        count: filtered.length,
+        counts,
+        activities: filtered
+      }, { headers: corsHeaders });
     }
 
     // ==========================================

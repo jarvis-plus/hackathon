@@ -972,6 +972,15 @@
                         <!-- Dynamically populated when multiple wallets exist -->
                     </div>
                 </div>
+                <div class="status-filters" id="statusFilters" role="group" aria-label="Filter by status">
+                    <span class="status-filters-label">📊 Status:</span>
+                    <div class="status-filter-buttons" id="statusFilterButtons">
+                        <button class="status-filter-btn active" data-status="all" onclick="setStatusFilter('all')" aria-pressed="true">All</button>
+                        <button class="status-filter-btn" data-status="completed" onclick="setStatusFilter('completed')" aria-pressed="false">✅ Completed</button>
+                        <button class="status-filter-btn" data-status="pending" onclick="setStatusFilter('pending')" aria-pressed="false">⏳ Pending</button>
+                        <button class="status-filter-btn" data-status="failed" onclick="setStatusFilter('failed')" aria-pressed="false">❌ Failed</button>
+                    </div>
+                </div>
                 <div class="date-range-filters" id="dateRangeFilters" role="group" aria-label="Filter by date range">
                     <span class="date-range-label" id="dateRangeLabel">📅 Date Range:</span>
                     <div class="date-range-inputs">
