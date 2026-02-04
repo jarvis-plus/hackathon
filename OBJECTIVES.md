@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 17:20 PST
-**Cycle:** 130
+**Last Updated:** 2026-02-03 17:50 PST
+**Cycle:** 131
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -46,7 +46,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [ ] Browser activity tracking (log web research)
 - [ ] Calendar event tracking
 - [ ] Multi-wallet support
-- [ ] Activity search/filter on dashboard
+- [x] Activity search/filter on dashboard ✅ Cycle 131
 - [ ] Activity categories/tags
 
 ### 📝 Documentation
@@ -58,6 +58,16 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 131 (Activity Search & Filter)
+- Added search box with text search across description, type, hash, metadata
+- Added type filter buttons: All, Commits, Builds, Trades, Messages, Tweets, Decisions, Heartbeats
+- Each type has distinct active color matching the activity type theme
+- Shows filter stats ("Showing X of Y activities") when filters active
+- Added "Reset Filters" button in empty state when no matches
+- Mobile responsive: horizontal scroll for type filters on smaller screens
+- Preserves real-time WebSocket updates while filtering
+- 305 activities, all signed on-chain
 
 ### Cycle 130 (TypeScript Types for Collectors)
 - Created collectors/types.ts with 200+ lines of shared type definitions
@@ -97,15 +107,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - Covers: activity feed, decisions, verify hashes, error states
 - Light theme support for all empty states
 - 293 activities, all signed on-chain
-
-### Cycle 126 (Chart Loading States)
-- Added loading skeleton states for all 5 charts in analytics section
-- Timeline, cumulative, daily charts get animated skeleton bars
-- Breakdown chart gets skeleton doughnut ring
-- Heatmap gets spinning loader
-- Each loading state auto-hides when chart data loads
-- Improves perceived performance on slower connections
-- 290 activities, all signed on-chain
 
 ---
 
