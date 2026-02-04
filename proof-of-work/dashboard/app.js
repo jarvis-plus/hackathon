@@ -8128,7 +8128,7 @@ function renderGroupedActivities(activities, highlightNew = false) {
                     ${tagsHtml}
                     ${typeof renderActivityReactions === 'function' ? renderActivityReactions(hash) : ''}
                     <div class="activity-footer">
-                        ${hashDisplay ? `<div class="activity-hash">${hashDisplay}</div>` : \'\'}
+                        ${hashDisplay ? `<div class="activity-hash">${hashDisplay}</div>` : ''}
                         ${renderActivitySparkline(a)}
                     </div>
                 </div>
@@ -8233,7 +8233,7 @@ function renderGroupedActivitiesLimited(activities, limit, highlightNew = false)
                     ${tagsHtml}
                     ${typeof renderActivityReactions === 'function' ? renderActivityReactions(hash) : ''}
                     <div class="activity-footer">
-                        ${hashDisplay ? `<div class="activity-hash">${hashDisplay}</div>` : \'\'}
+                        ${hashDisplay ? `<div class="activity-hash">${hashDisplay}</div>` : ''}
                         ${renderActivitySparkline(a)}
                     </div>
                 </div>
@@ -10640,11 +10640,6 @@ function formatTimeAgo(date) {
 /**
  * Escape HTML helper
  */
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
 
 // ======== MINI ACTIVITY PREVIEW ON HOVER ========
 // Shows a quick peek tooltip when hovering over activity cards
@@ -11101,9 +11096,6 @@ function showCompareModal() {
     if (compareSelectedActivities.length !== 2) return;
     openComparisonModal();
 }
-    
-    announceToScreenReader('Activity comparison modal opened');
-}
 
 /**
  * Hide the comparison modal
@@ -11317,7 +11309,6 @@ if (document.readyState === 'loading') {
 // Select 2 activities to compare side-by-side
 // ============================================
 
-let compareModeActive = false;
 let compareSelectedActivities = []; // Array of {hash, activity} objects
 let compareSelectionPanelEl = null;
 
@@ -11475,47 +11466,6 @@ function handleCompareClick(event) {
 /**
  * Update the floating selection panel UI
  */
-function updateCompareSelectionUI() {
-    const slot1 = document.getElementById('compare-slot-1');
-    const slot2 = document.getElementById('compare-slot-2');
-    const compareBtn = document.getElementById('compare-start-btn');
-    
-    // Update slot 1
-    if (compareSelectedActivities[0]) {
-        const a = compareSelectedActivities[0].activity;
-        slot1.classList.add('filled');
-        slot1.querySelector('.compare-slot-content').innerHTML = `
-            <div class="compare-slot-type">${getActivityEmoji(a.type)} ${a.type}</div>
-            <div class="compare-slot-desc">${escapeHtml(a.description.substring(0, 40))}${a.description.length > 40 ? '...' : ''}</div>
-            <button class="compare-slot-remove" onclick="removeFromCompare(0)" title="Remove">×</button>
-        `;
-    } else {
-        slot1.classList.remove('filled');
-        slot1.querySelector('.compare-slot-content').innerHTML = '<span class="compare-slot-empty">Select first activity</span>';
-    }
-    
-    // Update slot 2
-    if (compareSelectedActivities[1]) {
-        const a = compareSelectedActivities[1].activity;
-        slot2.classList.add('filled');
-        slot2.querySelector('.compare-slot-content').innerHTML = `
-            <div class="compare-slot-type">${getActivityEmoji(a.type)} ${a.type}</div>
-            <div class="compare-slot-desc">${escapeHtml(a.description.substring(0, 40))}${a.description.length > 40 ? '...' : ''}</div>
-            <button class="compare-slot-remove" onclick="removeFromCompare(1)" title="Remove">×</button>
-        `;
-    } else {
-        slot2.classList.remove('filled');
-        slot2.querySelector('.compare-slot-content').innerHTML = '<span class="compare-slot-empty">Select second activity</span>';
-    }
-    
-    // Enable/disable compare button
-    if (compareBtn) {
-        compareBtn.disabled = compareSelectedActivities.length < 2;
-    }
-    
-    // Also update the HTML compare bar
-    updateCompareBarUI();
-}
 
 /**
  * Update the HTML compare bar UI (the floating bar at bottom)
@@ -12123,86 +12073,10 @@ function getTypeEmoji(type) {
 /**
  * Open the custom types management modal.
  */
-function openCustomTypesModal() {
-    // Remove existing modal if any
-    const existing = document.querySelector('.custom-types-modal');
-    if (existing) existing.remove();
-    
-    const modal = document.createElement('div');
-    modal.className = 'custom-types-modal';
-    modal.onclick = (e) => {
-        if (e.target === modal) closeCustomTypesModal();
-    };
-    
-    modal.innerHTML = `
-        <div class="custom-types-content" role="dialog" aria-modal="true" aria-labelledby="custom-types-title">
-            <div class="custom-types-header">
-                <h3 id="custom-types-title">📦 Custom Activity Types</h3>
-                <button class="custom-types-close" onclick="closeCustomTypesModal()" aria-label="Close">&times;</button>
-            </div>
-            <div class="custom-types-body">
-                <div class="custom-type-form">
-                    <h4>Create New Type</h4>
-                    <div class="form-row">
-                        <div class="form-group small">
-                            <label for="newTypeEmoji">Emoji</label>
-                            <input type="text" id="newTypeEmoji" class="emoji-input" placeholder="🎯" maxlength="4">
-                        </div>
-                        <div class="form-group">
-                            <label for="newTypeName">Name</label>
-                            <input type="text" id="newTypeName" placeholder="Code Review" maxlength="50">
-                        </div>
-                        <div class="form-group small">
-                            <label for="newTypeColor">Color</label>
-                            <input type="color" id="newTypeColor" class="color-input" value="#00ffaa">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="newTypeDesc">Description (optional)</label>
-                            <input type="text" id="newTypeDesc" placeholder="Activities related to reviewing code..." maxlength="200">
-                        </div>
-                    </div>
-                    <div class="custom-type-actions">
-                        <button class="create-type-btn" onclick="createCustomType()" id="createTypeBtn">
-                            ➕ Create Type
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="custom-types-list">
-                    <h4>Your Custom Types</h4>
-                    <div id="customTypesList">
-                        ${renderCustomTypesList()}
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
-    customTypesModalVisible = true;
-    
-    // Focus the name input
-    setTimeout(() => {
-        document.getElementById('newTypeName')?.focus();
-    }, 100);
-    
-    // Escape key to close
-    document.addEventListener('keydown', handleCustomTypesEscape);
-}
 
 /**
  * Close the custom types modal.
  */
-function closeCustomTypesModal() {
-    const modal = document.querySelector('.custom-types-modal');
-    if (modal) {
-        modal.remove();
-    }
-    customTypesModalVisible = false;
-    document.removeEventListener('keydown', handleCustomTypesEscape);
-}
 
 function handleCustomTypesEscape(e) {
     if (e.key === 'Escape' && customTypesModalVisible) {
@@ -12319,41 +12193,6 @@ async function createCustomType() {
 /**
  * Delete a custom type.
  */
-async function deleteCustomType(id) {
-    const type = customTypesCache.find(t => t.id === id);
-    if (!type) return;
-    
-    if (!confirm(`Delete custom type "${type.name}"?\n\nExisting activities with this type will be preserved.`)) {
-        return;
-    }
-    
-    try {
-        const response = await fetch(`/api/custom-types/${encodeURIComponent(id)}`, {
-            method: 'DELETE'
-        });
-        
-        const data = await response.json();
-        
-        if (!response.ok) {
-            throw new Error(data.error || 'Failed to delete type');
-        }
-        
-        // Remove from cache and refresh
-        customTypesCache = customTypesCache.filter(t => t.id !== id);
-        updateCustomTypeFilters();
-        
-        // Update list in modal
-        const listEl = document.getElementById('customTypesList');
-        if (listEl) listEl.innerHTML = renderCustomTypesList();
-        
-        announceToScreenReader(`Custom type ${type.name} deleted`);
-        
-    } catch (e) {
-        console.error('Failed to delete custom type:', e);
-        announceToScreenReader(`Error: ${e.message}`);
-        alert(`Failed to delete type: ${e.message}`);
-    }
-}
 
 // Add to command palette
 if (typeof PALETTE_COMMANDS !== 'undefined' && Array.isArray(PALETTE_COMMANDS)) {
@@ -14090,16 +13929,6 @@ async function updateTrashBadge() {
 /**
  * Download a blob as a file
  */
-function downloadBlob(blob, filename) {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-}
 
 /**
  * Render bulk select checkbox for activity cards
@@ -14542,32 +14371,8 @@ function renderTrashItem(item) {
 }
 
 // Get emoji for activity type
-function getTypeEmoji(type) {
-    const emojiMap = {
-        'commit': '📝',
-        'build': '🔨',
-        'trade': '💹',
-        'message': '💬',
-        'email': '📧',
-        'calendar': '📅',
-        'tweet': '🐦',
-        'decision': '🧠',
-        'heartbeat': '💓',
-        'browser': '🌐',
-        'transfer': '💸',
-        'deploy': '🚀',
-        'session': '🔌',
-        'research': '🔍'
-    };
-    return emojiMap[type] || '⚡';
-}
 
 // Escape HTML to prevent XSS
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
 
 // Restore an activity from trash
 async function restoreActivity(hash) {
@@ -15894,12 +15699,6 @@ function jumpToActivity(hash) {
 }
 
 // Helper: escape HTML
-function escapeHtml(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
 
 // Helper: format relative time
 function formatRelativeTime(dateStr) {
@@ -16205,41 +16004,8 @@ async function handleLinkActivitySubmit(event) {
 }
 
 // Helper: get type emoji
-function getTypeEmoji(type) {
-    const emojis = {
-        'commit': '💾',
-        'build': '🔨',
-        'deploy': '🚀',
-        'trade': '💹',
-        'transfer': '💸',
-        'message': '💬',
-        'tweet': '🐦',
-        'decision': '🎯',
-        'research': '🔍',
-        'email': '📧',
-        'calendar': '📅',
-        'browser': '🌐',
-        'session': '⚡',
-        'heartbeat': '💓'
-    };
-    return emojis[type] || '📌';
-}
 
 // Jump to an activity (reuse existing functionality if available)
-function jumpToActivity(hash) {
-    closeRelationshipsModal();
-    
-    // Try to scroll to activity in the feed
-    const activityEl = document.querySelector(`[data-hash="${hash}"]`);
-    if (activityEl) {
-        activityEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        activityEl.classList.add('highlighted');
-        setTimeout(() => activityEl.classList.remove('highlighted'), 2000);
-    } else {
-        // Navigate via deep link
-        window.location.hash = hash.slice(0, 8);
-    }
-}
 
 // Add keyboard shortcut for relationships (L key) and location (Shift+L)
 document.addEventListener('keydown', (e) => {
@@ -16936,7 +16702,6 @@ function celebrate(type = 'normal') {
 window.celebrate = celebrate;
 
 // Check for milestone celebration when activities load
-const originalRenderActivities = typeof renderActivities === 'function' ? renderActivities : null;
 if (originalRenderActivities) {
     // Hook into activity rendering to check milestones
     const checkMilestoneHook = function() {
@@ -16963,21 +16728,6 @@ let heatmapData = {};
 /**
  * Render the activity heatmap for the current year
  */
-function renderHeatmap(activities) {
-    if (!activities || !activities.length) return;
-    
-    // Build activity counts by date
-    heatmapData = {};
-    activities.forEach(activity => {
-        const date = new Date(activity.timestamp);
-        const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
-        heatmapData[dateStr] = (heatmapData[dateStr] || 0) + 1;
-    });
-    
-    renderHeatmapGrid();
-    renderHeatmapStats();
-    renderHottestDays();
-}
 
 /**
  * Render the heatmap grid for the selected year
@@ -17088,38 +16838,10 @@ function getHeatmapLevel(count) {
 /**
  * Show tooltip on hover
  */
-function showHeatmapTooltip(e) {
-    const cell = e.target;
-    const tooltip = document.getElementById('heatmapTooltip');
-    if (!tooltip) return;
-    
-    const date = new Date(cell.dataset.date);
-    const count = parseInt(cell.dataset.count) || 0;
-    
-    document.getElementById('tooltipDate').textContent = date.toLocaleDateString('en-US', {
-        weekday: 'short',
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-    });
-    document.getElementById('tooltipCount').textContent = count === 0 ? 'No activities' : 
-        `${count} activit${count === 1 ? 'y' : 'ies'}`;
-    
-    tooltip.style.display = 'flex';
-    
-    // Position tooltip
-    const rect = cell.getBoundingClientRect();
-    tooltip.style.left = `${rect.left + rect.width / 2 - tooltip.offsetWidth / 2}px`;
-    tooltip.style.top = `${rect.top - tooltip.offsetHeight - 8}px`;
-}
 
 /**
  * Hide tooltip
  */
-function hideHeatmapTooltip() {
-    const tooltip = document.getElementById('heatmapTooltip');
-    if (tooltip) tooltip.style.display = 'none';
-}
 
 /**
  * Render heatmap statistics
@@ -20813,15 +20535,6 @@ function renderAnalyticsTable(analytics) {
 /**
  * Format date to short format
  */
-function formatShortDate(dateStr) {
-    if (!dateStr || dateStr === 'N/A') return 'N/A';
-    try {
-        const date = new Date(dateStr);
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    } catch {
-        return dateStr;
-    }
-}
 
 /**
  * Update time comparison section
@@ -20974,7 +20687,7 @@ function createPresentationOverlay() {
     const overlay = document.createElement('div');
     overlay.id = 'presentation-overlay';
     overlay.className = 'presentation-overlay';
-    overlay.innerHTML = \`
+    overlay.innerHTML = `
         <div class="presentation-bg" id="presentationBg"></div>
         
         <div class="presentation-header">
@@ -20988,11 +20701,11 @@ function createPresentationOverlay() {
             
             <div class="presentation-stats">
                 <div class="presentation-stat">
-                    <div class="presentation-stat-value">\${activities.length}</div>
+                    <div class="presentation-stat-value">${activities.length}</div>
                     <div class="presentation-stat-label">Activities</div>
                 </div>
                 <div class="presentation-stat">
-                    <div class="presentation-stat-value">\${signedPercent}%</div>
+                    <div class="presentation-stat-value">${signedPercent}%</div>
                     <div class="presentation-stat-label">On-Chain</div>
                 </div>
             </div>
@@ -21017,13 +20730,13 @@ function createPresentationOverlay() {
             <div class="presentation-speed">
                 <span class="presentation-speed-label">Speed:</span>
                 <button class="presentation-speed-btn" onclick="adjustPresentationSpeed(-1)" title="Slower">−</button>
-                <span class="presentation-speed-value" id="presentationSpeedValue">\${presentationMode.speed}s</span>
+                <span class="presentation-speed-value" id="presentationSpeedValue">${presentationMode.speed}s</span>
                 <button class="presentation-speed-btn" onclick="adjustPresentationSpeed(1)" title="Faster">+</button>
             </div>
             
             <button class="presentation-control-btn" onclick="presentationPrev()" title="Previous (Left arrow)">⏮️</button>
             <button class="presentation-control-btn primary" id="presentationPlayPause" onclick="togglePresentationPlay()" title="Play/Pause (Space)">
-                \${presentationMode.playing ? '⏸️' : '▶️'}
+                ${presentationMode.playing ? '⏸️' : '▶️'}
             </button>
             <button class="presentation-control-btn" onclick="presentationNext()" title="Next (Right arrow)">⏭️</button>
             
@@ -21031,10 +20744,10 @@ function createPresentationOverlay() {
                 <div class="presentation-progress-bar">
                     <div class="presentation-progress-fill" id="presentationProgressFill"></div>
                 </div>
-                <span class="presentation-counter" id="presentationCounter">1 / \${activities.length}</span>
+                <span class="presentation-counter" id="presentationCounter">1 / ${activities.length}</span>
             </div>
         </div>
-    \`;
+    `;
     
     document.body.appendChild(overlay);
     
@@ -21077,13 +20790,13 @@ function renderPresentationCard() {
     const index = presentationMode.index;
     
     if (activities.length === 0) {
-        card.innerHTML = \`
+        card.innerHTML = `
             <div class="presentation-empty">
                 <div class="presentation-empty-icon">📭</div>
                 <h3>No Activities Yet</h3>
                 <p>Activities will appear here as they're logged.</p>
             </div>
-        \`;
+        `;
         return;
     }
     
@@ -21097,24 +20810,24 @@ function renderPresentationCard() {
         minute: '2-digit'
     });
     
-    const onChainHTML = activity.signature ? \`
+    const onChainHTML = activity.signature ? `
         <div class="presentation-onchain">
             ⛓️ Verified On-Chain
-            <a href="https://solscan.io/tx/\${activity.signature}" target="_blank" rel="noopener">
+            <a href="https://solscan.io/tx/${activity.signature}" target="_blank" rel="noopener">
                 View →
             </a>
         </div>
-    \` : '';
+    ` : '';
     
-    card.innerHTML = \`
-        <div class="presentation-card-index">#\${activities.length - index}</div>
-        <div class="presentation-type \${activity.type}">
-            \${typeEmoji} \${activity.type.charAt(0).toUpperCase() + activity.type.slice(1)}
+    card.innerHTML = `
+        <div class="presentation-card-index">#${activities.length - index}</div>
+        <div class="presentation-type ${activity.type}">
+            ${typeEmoji} ${activity.type.charAt(0).toUpperCase() + activity.type.slice(1)}
         </div>
-        <div class="presentation-description">\${escapeHtml(activity.description)}</div>
-        <div class="presentation-timestamp">🕐 \${timestamp}</div>
-        \${onChainHTML}
-    \`;
+        <div class="presentation-description">${escapeHtml(activity.description)}</div>
+        <div class="presentation-timestamp">🕐 ${timestamp}</div>
+        ${onChainHTML}
+    `;
     
     // Trigger animation
     card.style.animation = 'none';
@@ -21123,7 +20836,7 @@ function renderPresentationCard() {
     
     // Update counter
     if (counter) {
-        counter.textContent = \`\${index + 1} / \${activities.length}\`;
+        counter.textContent = `${index + 1} / ${activities.length}`;
     }
     
     // Reset progress bar
@@ -21133,31 +20846,10 @@ function renderPresentationCard() {
 /**
  * Get emoji for activity type
  */
-function getTypeEmoji(type) {
-    const emojis = {
-        build: '🔧',
-        commit: '📝',
-        trade: '💱',
-        decision: '🧠',
-        tweet: '🐦',
-        email: '📧',
-        message: '💬',
-        calendar: '📅',
-        browser: '🌐',
-        transfer: '💸',
-        swap: '🔄'
-    };
-    return emojis[type] || '⚡';
-}
 
 /**
  * HTML escape helper
  */
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
 
 /**
  * Go to next activity
@@ -21342,12 +21034,12 @@ function handlePresentationKeydown(e) {
 
 // Add fadeout animation
 const style = document.createElement('style');
-style.textContent = \`
+style.textContent = `
     @keyframes presentationFadeOut {
         from { opacity: 1; }
         to { opacity: 0; }
     }
-\`;
+`;
 document.head.appendChild(style);
 
 console.log('🎬 Presentation Mode loaded - Press P to present');
