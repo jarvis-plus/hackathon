@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 17:54 PST
-**Cycle:** 132
+**Last Updated:** 2026-02-03 17:59 PST
+**Cycle:** 133
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -50,7 +50,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [ ] Activity categories/tags
 
 ### 📝 Documentation
-- [ ] Add inline code comments to server.ts
+- [x] Add inline code comments to server.ts ✅ Cycle 133
 - [ ] Document collector API in README
 - [ ] Add architecture diagram (Mermaid)
 - [ ] CONTRIBUTING.md for open source
@@ -58,6 +58,17 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 133 (Inline Code Documentation)
+- Added comprehensive JSDoc and inline comments to api/server.ts
+- Documented architecture overview in file header (purpose, endpoints, design)
+- Added function-level documentation for all helpers (getClientIP, checkRateLimit, etc.)
+- Explained rate limiting algorithm (sliding window with cleanup)
+- Added section headers for better code navigation
+- Documented each API endpoint inline with route comments
+- Explained WebSocket broadcasting and file change detection
+- ~200 lines of documentation added, file now ~800 lines total
+- 314 activities, all signed on-chain
 
 ### Cycle 132 (Email Activity Tracking)
 - Created collectors/email-tracker.ts that polls Gmail sent folder via gog CLI
@@ -97,17 +108,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - Better maintainability - concerns now separated into proper files
 - All functionality preserved, service restarted and verified
 - 299 activities, all signed on-chain
-
-### Cycle 128 (Mobile Chart Readability)
-- Added responsive Chart.js options detecting mobile viewport
-- Increased tick font sizes from 10px to 11px on mobile
-- Doughnut chart legend moves to bottom on mobile (was right-side)
-- Reduced tick count on mobile (maxTicksLimit: 4 vs 8)
-- Larger touch targets: point radii 4px vs 3px, hover 7px vs 5px
-- Increased mobile chart height (200px vs 180px, doughnut 240px)
-- Added window resize handler for orientation change re-rendering
-- Hides axis titles on mobile to reduce visual clutter
-- 296 activities, all signed on-chain
 
 ---
 
