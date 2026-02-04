@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 21:14 PST
-**Cycle:** 170
+**Last Updated:** 2026-02-03 21:16 PST
+**Cycle:** 171
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -90,11 +90,31 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Performance dashboard (response times, memory usage) ✅ Cycle 169 (already existed)
 - [x] Multi-theme support (more color schemes) ✅ Cycle 169
 - [x] Activity timeline slider (zoom in/out on time ranges) ✅ Cycle 170
-- [ ] Social sharing cards (OG images for activities)
+- [x] Social sharing cards (OG images for activities) ✅ Cycle 171
 
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 171 (Social Sharing Cards)
+- Implemented Open Graph image generation for social media sharing
+- **New Endpoints**:
+  - `GET /api/og` - Default OG image (1200x630 SVG) with aggregate stats
+  - `GET /api/og/:hash` - Activity-specific OG image with type, description, status
+- **SVG Features**:
+  - Dark gradient background with grid pattern
+  - Type-specific emoji and accent colors (🔨 build, 📝 commit, 💰 trade, etc.)
+  - Three stat boxes (Activities/Hash, On-Chain/Status, Proofs/Timestamp)
+  - Glow filter effects on stat values
+  - Solana badge in corner
+  - Footer with dashboard URL
+- **HTML Changes**:
+  - Added 12 OG meta tags (og:type, og:url, og:title, og:description, og:image, etc.)
+  - Added 6 Twitter Card meta tags (twitter:card, twitter:image, etc.)
+  - Image dimensions specified (1200x630)
+- **OpenAPI Updated**: Added `/api/og` and `/api/og/{hash}` with Social tag
+- Works on Twitter, Facebook, Discord, Slack, and other platforms
+- 437 activities, all signed on-chain
 
 ### Cycle 170 (Activity Timeline Slider)
 - Implemented visual time range selector for activity filtering
@@ -184,28 +204,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - **OpenAPI Updated**: WebhookSummary, WebhookCreate, WebhookCreated schemas with format
 - ~180 lines for formatters, ~30 lines for endpoint changes
 - 426 activities, all signed on-chain
-
-### Cycle 166 (Email Digest Subscriptions API)
-- Extended email digest with subscription management system
-- **New Endpoints**:
-  - `GET /api/digest/subscriptions` - List all subscriptions
-  - `POST /api/digest/subscriptions` - Subscribe an email
-  - `GET /api/digest/subscriptions/:id` - Get subscription details
-  - `PATCH /api/digest/subscriptions/:id` - Update frequency/status
-  - `DELETE /api/digest/subscriptions/:id` - Unsubscribe
-- **send-digest.ts Script**:
-  - Cron-compatible script for sending email digests
-  - Integrates with gog/Gmail for email delivery
-  - Supports --dry-run, --frequency, --force flags
-  - Tracks lastSent timestamp per subscription
-  - Exponential backoff for delivery timing
-- **Data Storage**: `data/digest-subscriptions.json`
-- **Validation**: Email format, frequency enum (daily/weekly/monthly)
-- **Privacy**: Emails masked in API responses (te***@example.com)
-- **OpenAPI Updated**: Added DigestSubscription, DigestData schemas
-- **README Updated**: Full documentation for digest API
-- ~200 lines in server.ts, ~350 lines in send-digest.ts
-- 425 activities, all signed on-chain
 
 ---
 

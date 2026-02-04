@@ -19,6 +19,8 @@
  * - GET /api/activities           - All activities as JSON array
  * - GET /api/activities/:hash     - Single activity by hash
  * - GET /api/activities/:hash/diff - Compare with previous same-type activity
+ * - GET /api/og/:hash             - OG image for social sharing (SVG)
+ * - GET /share/:hash              - Share page with OG meta tags (redirects to dashboard)
  * - PATCH /api/activities/:hash/notes - Add/update notes on activity
  * - DELETE /api/activities/:hash/notes - Remove notes from activity
  * - PATCH /api/activities/:hash/pin - Toggle pin status on activity
@@ -1983,6 +1985,302 @@ const server = Bun.serve({
     }
 
     // ==========================================
+    // API: GET /api/og/:hash
+    // Generate Open Graph image for social sharing
+    // Returns an SVG image suitable for Twitter/Facebook/Discord
+    // ==========================================
+    if (path.match(/^\/api\/og\/[a-f0-9]{64}$/) && req.method === 'GET') {
+      const hash = path.split('/').pop()!;
+      const activities = getActivities();
+      const activity = activities.find((a: any) => a.hash === hash);
+      
+      if (!activity) {
+        return new Response('Activity not found', { 
+          status: 404, 
+          headers: corsHeaders 
+        });
+      }
+      
+      // Activity type icons and colors
+      const typeConfig: Record<string, { icon: string; color: string; bg: string }> = {
+        commit: { icon: '📝', color: '#00ffaa', bg: '#1a3a2a' },
+        build: { icon: '🔨', color: '#00aaff', bg: '#1a2a3a' },
+        deploy: { icon: '🚀', color: '#ff6b6b', bg: '#3a1a1a' },
+        trade: { icon: '💹', color: '#ffd700', bg: '#3a3a1a' },
+        transfer: { icon: '💸', color: '#ff9f43', bg: '#3a2a1a' },
+        message: { icon: '💬', color: '#a29bfe', bg: '#2a1a3a' },
+        tweet: { icon: '🐦', color: '#1da1f2', bg: '#1a2a3a' },
+        email: { icon: '📧', color: '#ff7675', bg: '#3a1a2a' },
+        calendar: { icon: '📅', color: '#74b9ff', bg: '#1a2a3a' },
+        decision: { icon: '🧠', color: '#fd79a8', bg: '#3a1a2a' },
+        heartbeat: { icon: '💓', color: '#e84393', bg: '#3a1a2a' },
+        browser: { icon: '🌐', color: '#00cec9', bg: '#1a3a3a' },
+        default: { icon: '⚡', color: '#636e72', bg: '#2a2a2a' }
+      };
+      
+      const config = typeConfig[activity.type] || typeConfig.default;
+      const isOnChain = activity.signature || activity.proof?.txSignature;
+      const shortHash = hash.substring(0, 8) + '...' + hash.substring(hash.length - 8);
+      
+      // Escape special chars for XML
+      const escapeXml = (str: string) => str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+      
+      // Truncate description for display
+      const description = escapeXml((activity.description || 'No description').substring(0, 120) + 
+        (activity.description?.length > 120 ? '...' : ''));
+      
+      // Format timestamp
+      const date = new Date(activity.timestamp);
+      const formattedDate = date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      // Generate SVG with 1200x630 dimensions (standard OG image size)
+      const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:${config.bg};stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0a0a0a;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:${config.color};stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#00aaff;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bgGrad)"/>
+  
+  <!-- Grid pattern overlay -->
+  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+  </pattern>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  
+  <!-- Accent line at top -->
+  <rect x="0" y="0" width="1200" height="4" fill="url(#accentGrad)"/>
+  
+  <!-- Header: JARVIS PROOF OF WORK -->
+  <text x="60" y="70" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="#666" font-weight="600">
+    🤖 JARVIS PROOF OF WORK
+  </text>
+  
+  <!-- Activity Type Badge -->
+  <rect x="60" y="100" width="200" height="50" rx="25" fill="${config.color}" fill-opacity="0.15"/>
+  <rect x="60" y="100" width="200" height="50" rx="25" fill="none" stroke="${config.color}" stroke-width="2"/>
+  <text x="100" y="135" font-family="system-ui, sans-serif" font-size="28" fill="${config.color}" font-weight="700">
+    ${config.icon} ${escapeXml(activity.type.toUpperCase())}
+  </text>
+  
+  <!-- On-Chain Badge (if applicable) -->
+  ${isOnChain ? `
+  <rect x="280" y="100" width="180" height="50" rx="25" fill="#00ffaa" fill-opacity="0.15"/>
+  <rect x="280" y="100" width="180" height="50" rx="25" fill="none" stroke="#00ffaa" stroke-width="2"/>
+  <text x="310" y="135" font-family="system-ui, sans-serif" font-size="24" fill="#00ffaa" font-weight="600">
+    ⛓️ ON-CHAIN
+  </text>
+  ` : ''}
+  
+  <!-- Description (main content) -->
+  <text x="60" y="220" font-family="system-ui, -apple-system, sans-serif" font-size="36" fill="#ffffff" font-weight="500">
+    <tspan x="60" dy="0">${description.substring(0, 50)}</tspan>
+    <tspan x="60" dy="50">${description.substring(50, 100)}</tspan>
+    ${description.length > 100 ? `<tspan x="60" dy="50">${description.substring(100)}</tspan>` : ''}
+  </text>
+  
+  <!-- Hash Display -->
+  <rect x="60" y="400" width="500" height="60" rx="8" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <text x="80" y="440" font-family="monospace" font-size="20" fill="#888">
+    SHA-256: ${shortHash}
+  </text>
+  
+  <!-- Timestamp -->
+  <text x="60" y="520" font-family="system-ui, sans-serif" font-size="22" fill="#666">
+    🕐 ${escapeXml(formattedDate)}
+  </text>
+  
+  <!-- Verification Link -->
+  <text x="60" y="570" font-family="system-ui, sans-serif" font-size="18" fill="${config.color}">
+    Verify at jarvis.tail6a9bde.ts.net/pow/
+  </text>
+  
+  <!-- Wallet (bottom right) -->
+  <text x="1140" y="590" font-family="monospace" font-size="14" fill="#444" text-anchor="end">
+    ${activity.wallet || 'AMqXw6B...JXon9zX'}
+  </text>
+  
+  <!-- Bottom accent line -->
+  <rect x="0" y="626" width="1200" height="4" fill="url(#accentGrad)"/>
+</svg>`;
+
+      return new Response(svg, {
+        headers: {
+          'Content-Type': 'image/svg+xml',
+          'Cache-Control': 'public, max-age=86400', // Cache for 24 hours
+          ...corsHeaders
+        }
+      });
+    }
+
+    // ==========================================
+    // GET /share/:hash
+    // Social sharing page with proper OG meta tags
+    // Redirects to dashboard with activity hash
+    // ==========================================
+    if (path.match(/^\/share\/[a-f0-9]{64}$/) && req.method === 'GET') {
+      const hash = path.split('/').pop()!;
+      const activities = getActivities();
+      const activity = activities.find((a: any) => a.hash === hash);
+      
+      if (!activity) {
+        // Redirect to dashboard if activity not found
+        return new Response(null, {
+          status: 302,
+          headers: { 'Location': '/#not-found' }
+        });
+      }
+      
+      // Escape special chars for HTML
+      const escapeHtml = (str: string) => str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+      
+      const isOnChain = activity.signature || activity.proof?.txSignature;
+      const title = `${activity.type.charAt(0).toUpperCase() + activity.type.slice(1)} - Jarvis Proof of Work`;
+      const description = escapeHtml((activity.description || 'Activity on Jarvis Proof of Work').substring(0, 200));
+      const ogImageUrl = `https://jarvis.tail6a9bde.ts.net/api/og/${hash}`;
+      const canonicalUrl = `https://jarvis.tail6a9bde.ts.net/share/${hash}`;
+      const dashboardUrl = `https://jarvis.tail6a9bde.ts.net/#${hash}`;
+      
+      // Type-specific colors for theme
+      const typeColors: Record<string, string> = {
+        commit: '#00ffaa', build: '#00aaff', deploy: '#ff6b6b',
+        trade: '#ffd700', transfer: '#ff9f43', message: '#a29bfe',
+        tweet: '#1da1f2', email: '#ff7675', calendar: '#74b9ff',
+        decision: '#fd79a8', heartbeat: '#e84393', browser: '#00cec9'
+      };
+      const themeColor = typeColors[activity.type] || '#00ffaa';
+      
+      const html = `<!DOCTYPE html>
+<html lang="en" prefix="og: http://ogp.me/ns#">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Primary Meta Tags -->
+    <title>${escapeHtml(title)}</title>
+    <meta name="title" content="${escapeHtml(title)}">
+    <meta name="description" content="${description}">
+    <meta name="theme-color" content="${themeColor}">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="${canonicalUrl}">
+    <meta property="og:title" content="${escapeHtml(title)}">
+    <meta property="og:description" content="${description}">
+    <meta property="og:image" content="${ogImageUrl}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="Jarvis Proof of Work">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="${canonicalUrl}">
+    <meta property="twitter:title" content="${escapeHtml(title)}">
+    <meta property="twitter:description" content="${description}">
+    <meta property="twitter:image" content="${ogImageUrl}">
+    <meta name="twitter:site" content="@jarvis_avo">
+    <meta name="twitter:creator" content="@jarvis_avo">
+    
+    <!-- Article metadata -->
+    <meta property="article:published_time" content="${activity.timestamp}">
+    <meta property="article:author" content="Jarvis AI Agent">
+    ${isOnChain ? '<meta property="article:tag" content="blockchain">' : ''}
+    <meta property="article:tag" content="${activity.type}">
+    <meta property="article:tag" content="proof-of-work">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="${canonicalUrl}">
+    
+    <!-- Redirect script -->
+    <script>
+        // Redirect to dashboard with hash after a brief moment
+        // This allows crawlers to see the OG tags first
+        window.location.replace('${dashboardUrl}');
+    </script>
+    
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #0a0a0a;
+            color: #e8e8e8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .loading {
+            text-align: center;
+        }
+        .loading h1 {
+            color: ${themeColor};
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        .loading p {
+            color: #888;
+        }
+        .loading a {
+            color: ${themeColor};
+            text-decoration: none;
+        }
+        .loading a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <noscript>
+        <meta http-equiv="refresh" content="0;url=${dashboardUrl}">
+    </noscript>
+    <div class="loading">
+        <h1>🤖 Jarvis Proof of Work</h1>
+        <p>Redirecting to activity...</p>
+        <p><a href="${dashboardUrl}">Click here if not redirected</a></p>
+    </div>
+</body>
+</html>`;
+      
+      return new Response(html, {
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
+          ...corsHeaders
+        }
+      });
+    }
+
+    // ==========================================
     // API: GET /api/stats
     // Returns aggregated statistics
     // ==========================================
@@ -2968,6 +3266,177 @@ Colosseum Agent Hackathon 2026`;
       
       return new Response(text, { 
         headers: { ...corsHeaders, 'Content-Type': 'text/plain; charset=utf-8' }
+      });
+    }
+
+    // ==========================================
+    // API: GET /api/og (or /api/og/:hash)
+    // Dynamic Open Graph images for social sharing
+    // Returns SVG image with activity/summary details
+    // ==========================================
+    if (path === '/api/og' || path.startsWith('/api/og/')) {
+      const hashParam = path.replace('/api/og/', '').replace('/api/og', '');
+      
+      // XML escape helper for SVG attributes
+      const escapeXmlAttr = (str: string) => str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+      const activities = getActivities();
+      const onchainCount = activities.filter((a: any) => a.signature || a.proof?.txSignature).length;
+      
+      // Type emoji mapping
+      const typeEmoji: Record<string, string> = {
+        'build': '🔨',
+        'commit': '📝',
+        'trade': '💰',
+        'decision': '🎯',
+        'research': '🔍',
+        'email': '📧',
+        'calendar': '📅',
+        'browser': '🌐',
+        'default': '⚡'
+      };
+      
+      // Type color mapping
+      const typeColor: Record<string, string> = {
+        'build': '#00ffaa',
+        'commit': '#a855f7',
+        'trade': '#22c55e',
+        'decision': '#3b82f6',
+        'research': '#f59e0b',
+        'email': '#ec4899',
+        'calendar': '#06b6d4',
+        'browser': '#8b5cf6',
+        'default': '#64748b'
+      };
+      
+      let title = 'Jarvis Proof of Work';
+      let subtitle = 'Colosseum Agent Hackathon 2026';
+      let stat1Label = 'Activities';
+      let stat1Value = String(activities.length);
+      let stat2Label = 'On-Chain';
+      let stat2Value = `${Math.round((onchainCount / Math.max(activities.length, 1)) * 100)}%`;
+      let stat3Label = 'Proofs';
+      let stat3Value = String(onchainCount);
+      let accentColor = '#00ffaa';
+      let activityEmoji = '🤖';
+      let description = 'Every action cryptographically signed on Solana';
+      
+      // If specific activity hash provided
+      if (hashParam && hashParam.length >= 8) {
+        const activity = activities.find((a: any) => 
+          a.hash === hashParam || 
+          a.hash?.startsWith(hashParam) ||
+          a.proof?.hash === hashParam ||
+          a.proof?.hash?.startsWith(hashParam)
+        );
+        
+        if (activity) {
+          const actType = activity.type || 'default';
+          activityEmoji = typeEmoji[actType] || typeEmoji.default;
+          accentColor = typeColor[actType] || typeColor.default;
+          
+          title = `[${activity.type?.toUpperCase() || 'ACTIVITY'}]`;
+          subtitle = activity.description?.slice(0, 60) || 'Activity logged';
+          if (activity.description?.length > 60) subtitle += '...';
+          
+          const hash = activity.hash || activity.proof?.hash || '';
+          const sig = activity.signature || activity.proof?.txSignature;
+          
+          stat1Label = 'Hash';
+          stat1Value = hash.slice(0, 8) + '...';
+          stat2Label = 'Status';
+          stat2Value = sig ? '✓ On-Chain' : 'Pending';
+          stat3Label = 'Logged';
+          stat3Value = new Date(activity.timestamp).toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+          description = sig 
+            ? `Verified on Solana: ${sig.slice(0, 20)}...`
+            : 'Awaiting on-chain signature';
+        }
+      }
+      
+      // Generate SVG Open Graph image (1200x630 standard)
+      const svg = `<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a0f"/>
+      <stop offset="50%" style="stop-color:#111118"/>
+      <stop offset="100%" style="stop-color:#0a0a0f"/>
+    </linearGradient>
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:${accentColor}"/>
+      <stop offset="100%" style="stop-color:${accentColor}88"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bgGradient)"/>
+  
+  <!-- Grid pattern -->
+  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="${accentColor}11" stroke-width="1"/>
+  </pattern>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  
+  <!-- Accent line -->
+  <rect x="0" y="0" width="1200" height="4" fill="url(#accentGradient)"/>
+  <rect x="0" y="626" width="1200" height="4" fill="url(#accentGradient)"/>
+  
+  <!-- Logo/Emoji -->
+  <text x="80" y="140" font-size="80" fill="white">${activityEmoji}</text>
+  
+  <!-- Title -->
+  <text x="180" y="120" font-family="system-ui, -apple-system, sans-serif" font-size="48" font-weight="bold" fill="white">${escapeXmlAttr(title)}</text>
+  
+  <!-- Subtitle -->
+  <text x="180" y="170" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="#a0a0a0">${escapeXmlAttr(subtitle)}</text>
+  
+  <!-- Divider -->
+  <rect x="80" y="210" width="1040" height="1" fill="${accentColor}44"/>
+  
+  <!-- Stats boxes -->
+  <rect x="80" y="260" width="320" height="160" rx="12" fill="#1a1a2411" stroke="${accentColor}44" stroke-width="2"/>
+  <text x="240" y="310" font-family="system-ui, sans-serif" font-size="18" fill="#888" text-anchor="middle">${escapeXmlAttr(stat1Label)}</text>
+  <text x="240" y="380" font-family="system-ui, sans-serif" font-size="42" font-weight="bold" fill="white" text-anchor="middle" filter="url(#glow)">${escapeXmlAttr(stat1Value)}</text>
+  
+  <rect x="440" y="260" width="320" height="160" rx="12" fill="#1a1a2411" stroke="${accentColor}44" stroke-width="2"/>
+  <text x="600" y="310" font-family="system-ui, sans-serif" font-size="18" fill="#888" text-anchor="middle">${escapeXmlAttr(stat2Label)}</text>
+  <text x="600" y="380" font-family="system-ui, sans-serif" font-size="42" font-weight="bold" fill="${accentColor}" text-anchor="middle" filter="url(#glow)">${escapeXmlAttr(stat2Value)}</text>
+  
+  <rect x="800" y="260" width="320" height="160" rx="12" fill="#1a1a2411" stroke="${accentColor}44" stroke-width="2"/>
+  <text x="960" y="310" font-family="system-ui, sans-serif" font-size="18" fill="#888" text-anchor="middle">${escapeXmlAttr(stat3Label)}</text>
+  <text x="960" y="380" font-family="system-ui, sans-serif" font-size="42" font-weight="bold" fill="white" text-anchor="middle" filter="url(#glow)">${escapeXmlAttr(stat3Value)}</text>
+  
+  <!-- Description -->
+  <text x="600" y="480" font-family="system-ui, sans-serif" font-size="20" fill="#666" text-anchor="middle">${escapeXmlAttr(description)}</text>
+  
+  <!-- Footer -->
+  <text x="80" y="590" font-family="monospace" font-size="16" fill="#444">jarvis.tail6a9bde.ts.net/pow/</text>
+  <text x="1120" y="590" font-family="system-ui, sans-serif" font-size="16" fill="#444" text-anchor="end">Agent #45 • Colosseum 2026</text>
+  
+  <!-- Solana badge -->
+  <rect x="1000" y="75" width="120" height="36" rx="18" fill="#14F195" fill-opacity="0.15"/>
+  <text x="1060" y="100" font-family="system-ui, sans-serif" font-size="14" font-weight="bold" fill="#14F195" text-anchor="middle">⚡ SOLANA</text>
+</svg>`;
+
+      return new Response(svg, {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'image/svg+xml',
+          'Cache-Control': 'public, max-age=300' // Cache for 5 min
+        }
       });
     }
 

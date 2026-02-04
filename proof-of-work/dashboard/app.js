@@ -945,7 +945,7 @@ function renderActivities(activities, highlightNew = false) {
              tabindex="0"
              role="article"
              aria-label="${ariaLabel}">
-            ${renderShareButton(activityId)}
+            ${renderShareButton(activityId, hash)}
             ${renderCompareButton(hash)}
             ${pinButtonHtml}
             <div class="activity-header">
@@ -4272,7 +4272,7 @@ function renderGroupedActivitiesFiltered(activities) {
                      tabindex="0"
                      role="article"
                      aria-label="${a.type} activity: ${escapeHtml(a.description.substring(0, 80))}${a.description.length > 80 ? '...' : ''}">
-                    ${renderShareButton(activityId)}
+                    ${renderShareButton(activityId, hash)}
                     <div class="activity-header">
                         <div class="activity-badges">
                             <span class="activity-type">${a.type}</span>
@@ -5002,7 +5002,7 @@ function renderGroupedActivities(activities, highlightNew = false) {
                      style="animation-delay: ${Math.min(dayIndex, 5) * 0.04}s" 
                      data-wallet="${a.wallet || ''}" 
                      data-activity-id="${activityId}" tabindex="0" role="article" aria-label="${ariaLabel}">
-                    ${renderShareButton(activityId)}
+                    ${renderShareButton(activityId, hash)}
                     <div class="activity-header">
                         <div class="activity-badges">
                             <span class="activity-type">${a.type}</span>
@@ -5095,7 +5095,7 @@ function renderGroupedActivitiesLimited(activities, limit, highlightNew = false)
                      style="animation-delay: ${Math.min(dayIndex, 5) * 0.04}s" 
                      data-wallet="${a.wallet || ''}" 
                      data-activity-id="${activityId}" tabindex="0" role="article" aria-label="${ariaLabel}">
-                    ${renderShareButton(activityId)}
+                    ${renderShareButton(activityId, hash)}
                     <div class="activity-header">
                         <div class="activity-badges">
                             <span class="activity-type">${a.type}</span>
@@ -5649,8 +5649,16 @@ function getActivityId(activity) {
 
 /**
  * Generate full URL with activity hash
+ * @param {string} activityId - Short activity ID (first 8 chars of hash)
+ * @param {string} fullHash - Full SHA256 hash for social share URL
  */
-function getActivityUrl(activityId) {
+function getActivityUrl(activityId, fullHash = null) {
+    // If full hash provided, use the share page URL with OG meta tags
+    if (fullHash && fullHash.length === 64) {
+        const baseUrl = window.location.origin;
+        return `${baseUrl}/share/${fullHash}`;
+    }
+    // Fallback to hash-based deep link
     const url = new URL(window.location.href);
     url.hash = `activity-${activityId}`;
     return url.toString();
@@ -5658,9 +5666,12 @@ function getActivityUrl(activityId) {
 
 /**
  * Copy activity link to clipboard and show feedback
+ * @param {string} activityId - Short activity ID
+ * @param {HTMLElement} buttonElement - Button element for visual feedback
+ * @param {string} fullHash - Full SHA256 hash for social share URL
  */
-function copyActivityLink(activityId, buttonElement) {
-    const url = getActivityUrl(activityId);
+function copyActivityLink(activityId, buttonElement, fullHash = null) {
+    const url = getActivityUrl(activityId, fullHash);
     
     navigator.clipboard.writeText(url).then(() => {
         // Update button state
@@ -5791,10 +5802,11 @@ window.addEventListener('hashchange', handleDeepLink);
 /**
  * Render share button HTML for activity cards
  */
-function renderShareButton(activityId) {
+function renderShareButton(activityId, fullHash = null) {
+    const hashArg = fullHash ? `'${fullHash}'` : 'null';
     return `<button class="activity-share-btn" 
-                    onclick="event.stopPropagation(); copyActivityLink('${activityId}', this);" 
-                    title="Copy link to this activity">
+                    onclick="event.stopPropagation(); copyActivityLink('${activityId}', this, ${hashArg});" 
+                    title="Copy shareable link (with social preview)">
         🔗
     </button>`;
 }

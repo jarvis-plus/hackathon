@@ -380,6 +380,78 @@
         }
       }
     },
+    "/api/og/{hash}": {
+      "get": {
+        "tags": ["Activities"],
+        "summary": "Get OG image for activity",
+        "description": "Returns an SVG image (1200x630) suitable for Open Graph social sharing. The image displays the activity type, description, hash, and verification status with type-specific colors.",
+        "operationId": "getOgImage",
+        "parameters": [
+          {
+            "name": "hash",
+            "in": "path",
+            "required": true,
+            "description": "SHA256 hash of the activity (64 hex characters)",
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OG image in SVG format",
+            "content": {
+              "image/svg+xml": {
+                "schema": {
+                  "type": "string",
+                  "description": "SVG image data"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Activity not found"
+          }
+        }
+      }
+    },
+    "/share/{hash}": {
+      "get": {
+        "tags": ["Activities"],
+        "summary": "Social share page",
+        "description": "Returns an HTML page with proper OG meta tags for social sharing. The page automatically redirects to the dashboard with the activity highlighted. Use this URL for sharing activities on Twitter, Facebook, Discord, etc.",
+        "operationId": "getSharePage",
+        "parameters": [
+          {
+            "name": "hash",
+            "in": "path",
+            "required": true,
+            "description": "SHA256 hash of the activity (64 hex characters)",
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "HTML page with OG meta tags",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string",
+                  "description": "HTML page with Open Graph and Twitter Card meta tags"
+                }
+              }
+            }
+          },
+          "302": {
+            "description": "Redirect to dashboard if activity not found"
+          }
+        }
+      }
+    },
     "/api/stats": {
       "get": {
         "tags": ["Stats"],
@@ -463,6 +535,60 @@
               "text/plain": {
                 "schema": {
                   "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/og": {
+      "get": {
+        "tags": ["Social"],
+        "summary": "Get Open Graph image",
+        "description": "Returns a dynamic SVG image (1200x630) for social media sharing. Shows aggregate stats for the dashboard.",
+        "operationId": "getOgImage",
+        "responses": {
+          "200": {
+            "description": "SVG Open Graph image",
+            "content": {
+              "image/svg+xml": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/og/{hash}": {
+      "get": {
+        "tags": ["Social"],
+        "summary": "Get activity Open Graph image",
+        "description": "Returns a dynamic SVG image (1200x630) for a specific activity. Shows activity type, description, hash, and on-chain status. Perfect for sharing individual activities on social media.",
+        "operationId": "getActivityOgImage",
+        "parameters": [
+          {
+            "name": "hash",
+            "in": "path",
+            "required": true,
+            "description": "Activity hash or prefix (minimum 8 characters)",
+            "schema": {
+              "type": "string",
+              "minLength": 8
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SVG Open Graph image for the activity",
+            "content": {
+              "image/svg+xml": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
                 }
               }
             }
