@@ -2215,6 +2215,8 @@ let currentTypeFilter = 'all';
 let currentSearchQuery = '';
 let currentTagFilter = null; // null means "all tags"
 let currentWalletFilter = null; // null means "all wallets"
+let currentDateFrom = null; // null means no start date filter
+let currentDateTo = null; // null means no end date filter
 let availableTags = new Set();
 
 // Known wallets configuration (matches types.ts)
@@ -2392,10 +2394,43 @@ function applyFilters() {
         clearBtn.classList.toggle('visible', currentSearchQuery.length > 0);
     }
     
+    // Read date range inputs
+    const dateFromInput = document.getElementById('dateFrom');
+    const dateToInput = document.getElementById('dateTo');
+    currentDateFrom = dateFromInput && dateFromInput.value ? new Date(dateFromInput.value + 'T00:00:00') : null;
+    currentDateTo = dateToInput && dateToInput.value ? new Date(dateToInput.value + 'T23:59:59') : null;
+    
     // Re-render with filters
     if (window.cachedActivities) {
         renderFilteredActivities(window.cachedActivities);
     }
+}
+
+// Quick date range presets
+function setQuickDateRange(preset) {
+    const dateFromInput = document.getElementById('dateFrom');
+    const dateToInput = document.getElementById('dateTo');
+    const now = new Date();
+    
+    // Clear active state on all quick buttons
+    document.querySelectorAll('.date-quick-btn').forEach(btn => btn.classList.remove('active'));
+    
+    if (preset === 'today') {
+        const today = now.toISOString().split('T')[0];
+        if (dateFromInput) dateFromInput.value = today;
+        if (dateToInput) dateToInput.value = today;
+        event.target.classList.add('active');
+    } else if (preset === 'week') {
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        if (dateFromInput) dateFromInput.value = weekAgo.toISOString().split('T')[0];
+        if (dateToInput) dateToInput.value = now.toISOString().split('T')[0];
+        event.target.classList.add('active');
+    } else if (preset === 'all') {
+        if (dateFromInput) dateFromInput.value = '';
+        if (dateToInput) dateToInput.value = '';
+    }
+    
+    applyFilters();
 }
 
 function renderFilteredActivities(activities) {
@@ -2421,6 +2456,16 @@ function renderFilteredActivities(activities) {
         });
     }
     
+    // Apply date range filter
+    if (currentDateFrom || currentDateTo) {
+        filtered = filtered.filter(a => {
+            const activityDate = new Date(a.timestamp);
+            if (currentDateFrom && activityDate < currentDateFrom) return false;
+            if (currentDateTo && activityDate > currentDateTo) return false;
+            return true;
+        });
+    }
+    
     // Apply search filter
     if (currentSearchQuery) {
         filtered = filtered.filter(a => {
@@ -2442,12 +2487,18 @@ function renderFilteredActivities(activities) {
     // Update filter stats
     const statsEl = document.getElementById('filterStats');
     if (statsEl) {
-        const isFiltered = currentTypeFilter !== 'all' || currentSearchQuery || currentTagFilter || currentWalletFilter;
+        const hasDateFilter = currentDateFrom || currentDateTo;
+        const isFiltered = currentTypeFilter !== 'all' || currentSearchQuery || currentTagFilter || currentWalletFilter || hasDateFilter;
         if (isFiltered) {
             const filterParts = [];
             if (currentTypeFilter !== 'all') filterParts.push(`type: ${currentTypeFilter}`);
             if (currentTagFilter) filterParts.push(`tag: ${currentTagFilter}`);
             if (currentWalletFilter) filterParts.push(`wallet: ${getWalletName(currentWalletFilter)}`);
+            if (hasDateFilter) {
+                const fromStr = currentDateFrom ? currentDateFrom.toLocaleDateString() : '...';
+                const toStr = currentDateTo ? currentDateTo.toLocaleDateString() : '...';
+                filterParts.push(`date: ${fromStr} → ${toStr}`);
+            }
             if (currentSearchQuery) filterParts.push(`search: "${currentSearchQuery}"`);
             statsEl.innerHTML = `Showing <span class="count">${filtered.length}</span> of ${activities.length} activities`;
             statsEl.classList.add('visible');
@@ -2459,13 +2510,14 @@ function renderFilteredActivities(activities) {
     // Render the filtered activities
     const feed = document.getElementById('feed');
     if (!filtered.length) {
-        const hasFilters = currentTypeFilter !== 'all' || currentSearchQuery || currentTagFilter || currentWalletFilter;
+        const hasDateFilter = currentDateFrom || currentDateTo;
+        const hasFilters = currentTypeFilter !== 'all' || currentSearchQuery || currentTagFilter || currentWalletFilter || hasDateFilter;
         feed.innerHTML = `
             <div class="empty-state">
                 <div class="empty-state-icon">${hasFilters ? '🔍' : '🤖'}</div>
                 <h4>${hasFilters ? 'No Matching Activities' : 'Agent Warming Up'}</h4>
                 <p>${hasFilters 
-                    ? `No activities match your current filters. Try adjusting your search, type, wallet, or tag filters.`
+                    ? `No activities match your current filters. Try adjusting your search, type, wallet, date range, or tag filters.`
                     : 'Activities will appear here as the agent works — commits, builds, trades, and more.'
                 }</p>
                 ${hasFilters ? `
@@ -2537,6 +2589,8 @@ function resetFilters() {
     currentSearchQuery = '';
     currentTagFilter = null;
     currentWalletFilter = null;
+    currentDateFrom = null;
+    currentDateTo = null;
     
     // Reset UI
     document.querySelectorAll('.type-filter').forEach(btn => {
@@ -2551,11 +2605,20 @@ function resetFilters() {
         btn.classList.remove('active');
     });
     
+    document.querySelectorAll('.date-quick-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
     const input = document.getElementById('activitySearch');
     if (input) input.value = '';
     
     const clearBtn = document.getElementById('searchClear');
     if (clearBtn) clearBtn.classList.remove('visible');
+    
+    const dateFromInput = document.getElementById('dateFrom');
+    const dateToInput = document.getElementById('dateTo');
+    if (dateFromInput) dateFromInput.value = '';
+    if (dateToInput) dateToInput.value = '';
     
     applyFilters();
 }
@@ -2578,3 +2641,187 @@ renderActivities = function(activities, highlightNew = false) {
         originalRenderActivities(activities, highlightNew);
     }
 };
+
+// ============================================
+// KEYBOARD SHORTCUTS
+// ============================================
+
+// Track if keyboard shortcuts modal is open
+let shortcutsModalOpen = false;
+
+// Define keyboard shortcuts
+const KEYBOARD_SHORTCUTS = {
+    '/': { action: 'focusSearch', description: 'Focus search box' },
+    'Escape': { action: 'clearFocus', description: 'Clear search / Close modal' },
+    '1': { action: () => switchTab('timeline'), description: 'Activity Feed tab' },
+    '2': { action: () => switchTab('milestones'), description: 'Milestones tab' },
+    '3': { action: () => switchTab('tweets'), description: 'Tweets tab' },
+    '4': { action: () => switchTab('decisions'), description: 'Key Decisions tab' },
+    '5': { action: () => switchTab('meta'), description: 'Meta Story tab' },
+    '6': { action: () => switchTab('verify'), description: 'Verify tab' },
+    'r': { action: 'resetFilters', description: 'Reset all filters' },
+    '?': { action: 'showShortcuts', description: 'Show keyboard shortcuts' },
+};
+
+// Create and inject shortcuts modal HTML
+function createShortcutsModal() {
+    if (document.getElementById('shortcuts-modal')) return;
+    
+    const modal = document.createElement('div');
+    modal.id = 'shortcuts-modal';
+    modal.className = 'shortcuts-modal';
+    modal.innerHTML = `
+        <div class="shortcuts-modal-content">
+            <div class="shortcuts-header">
+                <h3>⌨️ Keyboard Shortcuts</h3>
+                <button class="shortcuts-close" onclick="hideShortcutsModal()">×</button>
+            </div>
+            <div class="shortcuts-grid">
+                <div class="shortcut-section">
+                    <h4>Navigation</h4>
+                    <div class="shortcut-row"><kbd>/</kbd> Focus search</div>
+                    <div class="shortcut-row"><kbd>Esc</kbd> Clear search / Close modal</div>
+                    <div class="shortcut-row"><kbd>r</kbd> Reset all filters</div>
+                </div>
+                <div class="shortcut-section">
+                    <h4>Tabs</h4>
+                    <div class="shortcut-row"><kbd>1</kbd> Activity Feed</div>
+                    <div class="shortcut-row"><kbd>2</kbd> Milestones</div>
+                    <div class="shortcut-row"><kbd>3</kbd> Tweets</div>
+                    <div class="shortcut-row"><kbd>4</kbd> Key Decisions</div>
+                    <div class="shortcut-row"><kbd>5</kbd> Meta Story</div>
+                    <div class="shortcut-row"><kbd>6</kbd> Verify</div>
+                </div>
+                <div class="shortcut-section">
+                    <h4>Help</h4>
+                    <div class="shortcut-row"><kbd>?</kbd> Show this help</div>
+                </div>
+            </div>
+            <p class="shortcuts-tip">💡 Tip: Press <kbd>?</kbd> anytime to see shortcuts</p>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+// Show keyboard shortcuts modal
+function showShortcutsModal() {
+    createShortcutsModal();
+    const modal = document.getElementById('shortcuts-modal');
+    modal.classList.add('visible');
+    shortcutsModalOpen = true;
+}
+
+// Hide keyboard shortcuts modal
+function hideShortcutsModal() {
+    const modal = document.getElementById('shortcuts-modal');
+    if (modal) {
+        modal.classList.remove('visible');
+    }
+    shortcutsModalOpen = false;
+}
+
+// Focus the search input
+function focusSearchInput() {
+    const searchInput = document.getElementById('activitySearch');
+    if (searchInput) {
+        searchInput.focus();
+        searchInput.select();
+    }
+}
+
+// Handle keyboard shortcut actions
+function handleShortcutAction(action) {
+    if (typeof action === 'function') {
+        action();
+    } else if (action === 'focusSearch') {
+        focusSearchInput();
+    } else if (action === 'clearFocus') {
+        if (shortcutsModalOpen) {
+            hideShortcutsModal();
+        } else {
+            const searchInput = document.getElementById('activitySearch');
+            if (document.activeElement === searchInput) {
+                searchInput.blur();
+                clearSearch();
+            }
+        }
+    } else if (action === 'resetFilters') {
+        resetFilters();
+    } else if (action === 'showShortcuts') {
+        showShortcutsModal();
+    }
+}
+
+// Main keyboard event listener
+document.addEventListener('keydown', (e) => {
+    // Don't trigger shortcuts when typing in input fields (except for specific keys)
+    const isInputFocused = document.activeElement && 
+        (document.activeElement.tagName === 'INPUT' || 
+         document.activeElement.tagName === 'TEXTAREA' ||
+         document.activeElement.isContentEditable);
+    
+    // Always allow Escape
+    if (e.key === 'Escape') {
+        handleShortcutAction('clearFocus');
+        return;
+    }
+    
+    // Don't process other shortcuts when typing in inputs
+    if (isInputFocused) return;
+    
+    // Don't process if modifier keys are pressed (except for Shift+?)
+    if (e.ctrlKey || e.altKey || e.metaKey) return;
+    
+    // Handle ? key (Shift+/)
+    if (e.key === '?' || (e.shiftKey && e.key === '/')) {
+        e.preventDefault();
+        handleShortcutAction('showShortcuts');
+        return;
+    }
+    
+    // Handle / key for search
+    if (e.key === '/') {
+        e.preventDefault();
+        handleShortcutAction('focusSearch');
+        return;
+    }
+    
+    // Check for registered shortcuts
+    const shortcut = KEYBOARD_SHORTCUTS[e.key];
+    if (shortcut) {
+        e.preventDefault();
+        handleShortcutAction(shortcut.action);
+    }
+});
+
+// Close modal when clicking outside
+document.addEventListener('click', (e) => {
+    const modal = document.getElementById('shortcuts-modal');
+    if (modal && shortcutsModalOpen && e.target === modal) {
+        hideShortcutsModal();
+    }
+});
+
+// Add keyboard hint to header
+function addKeyboardHint() {
+    const header = document.querySelector('header');
+    if (!header) return;
+    
+    // Check if hint already exists
+    if (document.getElementById('keyboard-hint')) return;
+    
+    const hint = document.createElement('div');
+    hint.id = 'keyboard-hint';
+    hint.className = 'keyboard-hint';
+    hint.innerHTML = `<span class="keyboard-hint-text">Press <kbd>?</kbd> for keyboard shortcuts</span>`;
+    hint.onclick = showShortcutsModal;
+    
+    // Insert after the theme toggle buttons
+    const toggleContainer = header.querySelector('div[style*="display: flex"]');
+    if (toggleContainer) {
+        toggleContainer.appendChild(hint);
+    }
+}
+
+// Initialize keyboard shortcuts on load
+document.addEventListener('DOMContentLoaded', addKeyboardHint);

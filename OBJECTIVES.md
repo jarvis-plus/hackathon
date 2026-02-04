@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 18:31 PST
-**Cycle:** 140
+**Last Updated:** 2026-02-03 18:36 PST
+**Cycle:** 142
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -48,6 +48,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Multi-wallet support ✅ Cycle 140
 - [x] Activity search/filter on dashboard ✅ Cycle 131
 - [x] Activity categories/tags ✅ Cycle 139
+- [x] Date range filter ✅ Cycle 141
 
 ### 📝 Documentation
 - [x] Add inline code comments to server.ts ✅ Cycle 133
@@ -58,6 +59,19 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 141 (Date Range Filter)
+- Added date range filtering to activity feed
+- HTML: Date inputs (from/to), quick preset buttons (Today, Week, All)
+- CSS: ~100 lines for date filter styling with dark/light mode support
+- JavaScript: currentDateFrom/currentDateTo state variables
+- setQuickDateRange() function for preset date ranges
+- applyFilters() now reads date inputs and updates filter state
+- renderFilteredActivities() applies date range to activity filtering
+- resetFilters() clears date range and resets date input values
+- Filter stats display shows date range when active
+- Mobile responsive layout for date range inputs
+- 343 activities, all signed on-chain
 
 ### Cycle 140 (Multi-Wallet Support)
 - Added wallet field to Activity interface in types.ts
@@ -109,18 +123,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - Simplified README with compact Mermaid diagram + link to full docs
 - Replaced ASCII diagram with GitHub-native rendering
 - 328 activities, all signed on-chain
-
-### Cycle 136 (Collector API Documentation)
-- Updated README.md with comprehensive collector API documentation
-- Added architecture diagram showing collector → activity.json → state file flow
-- Documented shared types.ts: ActivityType, Activity interface, utility functions
-- Created table of all available collectors with purpose and run frequency
-- Added instructions for running collectors individually and via cron
-- Included new collector template code showing standard pattern
-- Documented logging helpers (log-browser.ts, message-tracker.ts)
-- Updated project structure section to reflect actual file layout
-- ~120 lines of documentation added to README
-- 325 activities, all signed on-chain
 
 ---
 

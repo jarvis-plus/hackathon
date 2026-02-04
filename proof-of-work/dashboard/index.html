@@ -258,6 +258,17 @@
                         <!-- Dynamically populated when multiple wallets exist -->
                     </div>
                 </div>
+                <div class="date-range-filters" id="dateRangeFilters">
+                    <span class="date-range-label">📅 Date Range:</span>
+                    <div class="date-range-inputs">
+                        <input type="date" id="dateFrom" class="date-input" onchange="applyFilters()" title="From date">
+                        <span class="date-separator">→</span>
+                        <input type="date" id="dateTo" class="date-input" onchange="applyFilters()" title="To date">
+                        <button class="date-quick-btn" onclick="setQuickDateRange('today')" title="Today">Today</button>
+                        <button class="date-quick-btn" onclick="setQuickDateRange('week')" title="Past 7 days">Week</button>
+                        <button class="date-quick-btn" onclick="setQuickDateRange('all')" title="All time">All</button>
+                    </div>
+                </div>
                 <div class="filter-stats" id="filterStats"></div>
             </div>
             <div id="feed" class="timeline" data-view="timeline">

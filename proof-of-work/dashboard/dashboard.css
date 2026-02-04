@@ -3248,3 +3248,329 @@
         padding: 0.1rem 0.4rem;
     }
 }
+
+/* Date range filter */
+.date-range-filters {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 0;
+    flex-wrap: wrap;
+}
+
+.date-range-label {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.date-range-inputs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.date-input {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.75rem;
+    font-family: inherit;
+    color: var(--text-primary);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.date-input:hover {
+    border-color: var(--accent-blue);
+}
+
+.date-input:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 2px rgba(0, 170, 255, 0.15);
+}
+
+/* Fix date picker icon color in dark mode */
+.date-input::-webkit-calendar-picker-indicator {
+    filter: invert(0.7);
+    cursor: pointer;
+}
+
+[data-theme="light"] .date-input::-webkit-calendar-picker-indicator {
+    filter: none;
+}
+
+.date-separator {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.date-quick-btn {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.7rem;
+    font-family: inherit;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.date-quick-btn:hover {
+    color: var(--text-primary);
+    border-color: var(--accent-blue);
+    background: rgba(0, 170, 255, 0.1);
+}
+
+.date-quick-btn.active {
+    color: #fff;
+    background: var(--accent-blue);
+    border-color: var(--accent-blue);
+}
+
+/* Mobile adjustments for date range */
+@media (max-width: 600px) {
+    .date-range-filters {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .date-range-inputs {
+        width: 100%;
+    }
+    
+    .date-input {
+        flex: 1;
+        min-width: 0;
+        font-size: 0.7rem;
+    }
+    
+    .date-quick-btn {
+        font-size: 0.65rem;
+        padding: 0.25rem 0.5rem;
+    }
+}
+
+/* ============================================
+   KEYBOARD SHORTCUTS
+   ============================================ */
+
+/* Keyboard hint in header */
+.keyboard-hint {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-left: 0.25rem;
+}
+
+.keyboard-hint:hover {
+    color: var(--text-secondary);
+    border-color: var(--accent-blue);
+    background: rgba(0, 170, 255, 0.1);
+}
+
+.keyboard-hint kbd {
+    display: inline-block;
+    padding: 0.1rem 0.35rem;
+    font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    margin: 0 0.15rem;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.2);
+}
+
+/* Shortcuts modal */
+.shortcuts-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.shortcuts-modal.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.shortcuts-modal-content {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    transform: scale(0.95);
+    transition: transform 0.2s ease;
+}
+
+.shortcuts-modal.visible .shortcuts-modal-content {
+    transform: scale(1);
+}
+
+.shortcuts-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.shortcuts-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.shortcuts-close {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: var(--text-muted);
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.shortcuts-close:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+}
+
+.shortcuts-grid {
+    display: grid;
+    gap: 1.25rem;
+}
+
+.shortcut-section h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.shortcut-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.4rem 0;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.shortcut-row kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 26px;
+    height: 26px;
+    padding: 0 0.4rem;
+    font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.2), inset 0 -1px 0 rgba(255,255,255,0.05);
+}
+
+.shortcuts-tip {
+    margin: 1.25rem 0 0 0;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.shortcuts-tip kbd {
+    display: inline-block;
+    padding: 0.1rem 0.35rem;
+    font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    margin: 0 0.1rem;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.2);
+}
+
+/* Light mode adjustments */
+.light-mode .shortcuts-modal {
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.light-mode .shortcuts-modal-content {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.light-mode .shortcut-row kbd,
+.light-mode .shortcuts-tip kbd,
+.light-mode .keyboard-hint kbd {
+    box-shadow: 0 2px 0 rgba(0,0,0,0.1), inset 0 -1px 0 rgba(0,0,0,0.05);
+}
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+    .keyboard-hint {
+        display: none;
+    }
+    
+    .shortcuts-modal-content {
+        padding: 1rem;
+        margin: 1rem;
+        width: calc(100% - 2rem);
+    }
+    
+    .shortcuts-header h3 {
+        font-size: 1rem;
+    }
+    
+    .shortcut-row {
+        font-size: 0.8rem;
+    }
+}

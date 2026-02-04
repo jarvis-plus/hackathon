@@ -2689,5 +2689,29 @@
     "hash": "f6cbc9acbb555ecdca710b9213f6f40d31927e64fe3c18955e5702d7a801400c",
     "signature": "4eS4SJm6bn9vW9K2agvXHReWDJQhBNuqC6MHkxAgzkPBNrovFjr475cTjWYr6yrpBcd6zYArVZsfb9575rCAkunP",
     "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
+  },
+  {
+    "timestamp": "2026-02-04T02:31:30.007Z",
+    "type": "commit",
+    "description": "chore: sign cycle 140 commit activity on-chain",
+    "hash": "ae08934adb579b6a83f807df456ece381cdd9393f3e3ebaa85f886cc89e447d0",
+    "signature": "t13eeXmfqs3BKvvrMgLKU8xm43FufYRXcwVHLW5wUAwyqfBYMrXjucxB2fk2s8jjNrZv4K7UKeHmr5Tweq1wbj9",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
+  },
+  {
+    "timestamp": "2026-02-04T02:34:49.323Z",
+    "type": "build",
+    "description": "Cycle 141: Added keyboard shortcuts for power users. Press ? to see all shortcuts, / to focus search, 1-6 for tabs, r to reset filters, Esc to clear. Includes styled modal with visual key indicators and light mode support.",
+    "hash": "fb43fbf07b70d99a4fd27cfbe59da55fdd2e8b5e53776fdfb94190b0648b007d",
+    "signature": "tXRhks8XxRCwvMtzWKfDtZ22DQRDY2n3xGRaPAYXYXz3F7MmTdDwXageZ6FQLm36Spf3KUM8PgVetb1jJpDUCuX",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
+  },
+  {
+    "timestamp": "2026-02-04T02:34:56.145Z",
+    "type": "build",
+    "description": "Cycle 141: Added date range filter - Filter activities by date with From/To inputs, quick presets (Today, Week, All), mobile-responsive design, integrated with existing filter system",
+    "hash": "40ac5bf1e3b7b853cc07ad2a76e13dd56a2633f8246eaf70e1f010771efacc11",
+    "signature": "3G1EjuC2sQXeYA44dyxwXcvBwRnLH28pftJZFNPSW4BHJ46KLX2vjpFWrjy6uSW16PbWzLwMjCLyAap9DjwXskJq",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
   }
 ]
