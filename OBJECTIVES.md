@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 21:35 PST
-**Cycle:** 178
+**Last Updated:** 2026-02-03 21:42 PST
+**Cycle:** 179
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -98,7 +98,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Focus Mode / Zen Mode (distraction-free view) ✅ Cycle 175
 - [x] Mini activity preview on hover (quick peek) ✅ Cycle 176
 - [x] Activity comparison mode (select 2 to compare) ✅ Cycle 178
-- [ ] Custom activity types (user-defined)
+- [x] Custom activity types (user-defined) ✅ Cycle 179
 - [ ] Activity attachment support (link files/images)
 - [ ] Dashboard tour/onboarding for new users
 - [ ] Activity importance scoring (auto-prioritize)
@@ -107,6 +107,38 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 179 (Custom Activity Types)
+- Implemented user-defined activity types beyond the built-in ones
+- **New API Endpoints**:
+  - `GET /api/activity-types` - List all types (built-in + custom) with usage counts
+  - `POST /api/activity-types` - Create new custom type
+  - `DELETE /api/activity-types/:id` - Delete custom type
+  - `PATCH /api/activity-types/:id` - Update custom type properties
+- **Built-in Types (14)**:
+  - commit, build, trade, message, email, calendar, tweet, decision
+  - heartbeat, browser, transfer, deploy, session, research
+- **Custom Type Properties**:
+  - id (auto-generated from name, lowercase/hyphenated)
+  - name (display name, max 50 chars)
+  - emoji (single emoji, default ⚡)
+  - color (hex code, default #6B7280)
+  - description (optional, max 200 chars)
+- **Dashboard UI**:
+  - "✨ Types" button in header controls
+  - Modal with built-in types grid (read-only)
+  - Custom types section with add form
+  - Form fields: name, emoji picker, color picker, description
+  - Delete button on hover for custom types
+  - Usage count displayed on each type card
+  - Color bar indicator at bottom of each card
+- **Validation**:
+  - Cannot create types with built-in names
+  - Unique ID enforcement for custom types
+  - Proper error messages for conflicts
+- **OpenAPI Updated**: Added ActivityTypes and CustomActivityType schemas
+- ~250 lines server.ts, ~230 lines CSS, ~180 lines JS
+- 464 activities, all signed on-chain
 
 ### Cycle 178 (Activity Comparison Mode)
 - Implemented ability to select any 2 activities and compare them side-by-side
@@ -228,33 +260,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - **HTML Changes**:
   - Added Focus button in header controls
 - 449 activities, all signed on-chain
-
-### Cycle 174 (Command Palette)
-- Implemented Cmd/Ctrl+K quick access UI (similar to VS Code, Figma, Linear)
-- **Features**:
-  - Fuzzy search across 30+ commands
-  - Keyboard navigation (↑↓ arrows, Enter to execute, Esc to close)
-  - 6 command groups: Navigation, Search & Filter, Export, Settings, Actions, Help
-  - Commands include: tab switching (1-6), type filters, theme selection, export, refresh, etc.
-  - Accessible: ARIA labels, role attributes, screen reader announcements
-  - Responsive design with mobile support
-- **CSS Changes (~250 lines)**:
-  - Overlay with blur backdrop
-  - Search input with icon and shortcut hint
-  - Grouped results with titles
-  - Selected item highlight with accent color
-  - Footer with navigation hints
-  - Light/dark theme support
-  - Mobile-optimized spacing
-- **JS Changes (~280 lines)**:
-  - `PALETTE_COMMANDS` array with 30+ command definitions
-  - `createCommandPalette()` - injects modal HTML
-  - `filterCommands()` - fuzzy search with title priority
-  - `renderCommandPaletteResults()` - grouped rendering
-  - `handleCommandPaletteKeydown()` - arrow/enter/escape handling
-  - `showCommandPalette()`, `hideCommandPalette()`, `toggleCommandPalette()`
-  - Updated keyboard hint to show ⌘K/Ctrl+K based on platform
-- 446 activities, all signed on-chain
 
 ---
 

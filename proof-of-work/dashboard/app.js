@@ -8738,3 +8738,540 @@ document.addEventListener('keydown', (e) => {
         toggleCompareMode();
     }
 });
+
+// ============================================
+// CUSTOM ACTIVITY TYPES MANAGEMENT
+// ============================================
+
+let activityTypesCache = null;
+
+/**
+ * Fetch all activity types from the API
+ */
+async function fetchActivityTypes() {
+    try {
+        const response = await fetch('/api/activity-types');
+        if (!response.ok) throw new Error('Failed to fetch activity types');
+        activityTypesCache = await response.json();
+        return activityTypesCache;
+    } catch (e) {
+        console.error('Failed to fetch activity types:', e);
+        return null;
+    }
+}
+
+/**
+ * Render a single type card
+ */
+function renderTypeCard(type, isCustom = false) {
+    const colorBar = type.color ? `<div class="type-color-bar" style="background: ${escapeHtml(type.color)};"></div>` : '';
+    const deleteBtn = isCustom ? `<button class="type-delete-btn" onclick="deleteCustomType('${escapeHtml(type.id)}')" title="Delete type" aria-label="Delete ${escapeHtml(type.name)}">&times;</button>` : '';
+    const usageText = type.usageCount !== undefined ? `${type.usageCount} ${type.usageCount === 1 ? 'activity' : 'activities'}` : '';
+    
+    return `
+        <div class="type-card ${isCustom ? 'custom' : 'builtin'}" data-type-id="${escapeHtml(type.id)}">
+            ${deleteBtn}
+            <span class="type-emoji">${type.emoji || '⚡'}</span>
+            <span class="type-name">${escapeHtml(type.name)}</span>
+            ${usageText ? `<span class="type-usage">${usageText}</span>` : ''}
+            ${colorBar}
+        </div>
+    `;
+}
+
+/**
+ * Render the custom types modal content
+ */
+async function renderCustomTypesModal() {
+    const data = await fetchActivityTypes();
+    if (!data) return;
+    
+    // Render built-in types
+    const builtinGrid = document.getElementById('builtinTypesList');
+    if (builtinGrid) {
+        builtinGrid.innerHTML = data.builtIn.map(t => renderTypeCard(t, false)).join('');
+    }
+    
+    // Render custom types
+    const customGrid = document.getElementById('customTypesList');
+    if (customGrid) {
+        if (data.custom.length === 0) {
+            customGrid.innerHTML = '<div class="no-custom-types">No custom types yet. Create one above!</div>';
+        } else {
+            customGrid.innerHTML = data.custom.map(t => renderTypeCard(t, true)).join('');
+        }
+    }
+}
+
+/**
+ * Open the custom types modal
+ */
+async function openCustomTypesModal() {
+    const modal = document.getElementById('customTypesModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        await renderCustomTypesModal();
+        // Trap focus
+        modal.querySelector('.modal-close')?.focus();
+    }
+}
+
+/**
+ * Close the custom types modal
+ */
+function closeCustomTypesModal() {
+    const modal = document.getElementById('customTypesModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+/**
+ * Handle adding a new custom type
+ */
+async function handleAddCustomType(event) {
+    event.preventDefault();
+    
+    const nameInput = document.getElementById('newTypeName');
+    const emojiInput = document.getElementById('newTypeEmoji');
+    const colorInput = document.getElementById('newTypeColor');
+    const descInput = document.getElementById('newTypeDesc');
+    
+    const name = nameInput?.value?.trim();
+    const emoji = emojiInput?.value?.trim() || '⚡';
+    const color = colorInput?.value || '#6B7280';
+    const description = descInput?.value?.trim() || '';
+    
+    if (!name) {
+        alert('Please enter a type name');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/activity-types', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, emoji, color, description })
+        });
+        
+        const result = await response.json();
+        
+        if (!response.ok) {
+            alert(result.error || 'Failed to create type');
+            return;
+        }
+        
+        // Clear form
+        if (nameInput) nameInput.value = '';
+        if (emojiInput) emojiInput.value = '';
+        if (colorInput) colorInput.value = '#6B7280';
+        if (descInput) descInput.value = '';
+        
+        // Refresh the list
+        await renderCustomTypesModal();
+        
+        // Show success
+        console.log('✨ Custom type created:', result);
+        
+    } catch (e) {
+        console.error('Failed to create custom type:', e);
+        alert('Failed to create custom type. Check console for details.');
+    }
+}
+
+/**
+ * Delete a custom type
+ */
+async function deleteCustomType(typeId) {
+    if (!typeId) return;
+    
+    // Get the type info for confirmation
+    const types = activityTypesCache?.custom || [];
+    const type = types.find(t => t.id === typeId);
+    const typeName = type?.name || typeId;
+    
+    const confirmed = confirm(`Delete custom type "${typeName}"?\n\nNote: Existing activities using this type will keep their type label.`);
+    if (!confirmed) return;
+    
+    try {
+        const response = await fetch(`/api/activity-types/${encodeURIComponent(typeId)}`, {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (!response.ok) {
+            alert(result.error || 'Failed to delete type');
+            return;
+        }
+        
+        // Refresh the list
+        await renderCustomTypesModal();
+        
+        console.log('🗑️ Custom type deleted:', result);
+        
+    } catch (e) {
+        console.error('Failed to delete custom type:', e);
+        alert('Failed to delete custom type. Check console for details.');
+    }
+}
+
+// Close modal on Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        const modal = document.getElementById('customTypesModal');
+        if (modal && modal.style.display !== 'none') {
+            closeCustomTypesModal();
+        }
+    }
+});
+
+// Close modal when clicking outside
+document.addEventListener('click', (e) => {
+    const modal = document.getElementById('customTypesModal');
+    if (e.target === modal) {
+        closeCustomTypesModal();
+    }
+});
+
+// Add to command palette if available
+if (typeof PALETTE_COMMANDS !== 'undefined') {
+    PALETTE_COMMANDS.push({
+        id: 'custom-types',
+        title: 'Manage Custom Types',
+        description: 'Create and manage custom activity types',
+        icon: '✨',
+        action: () => { openCustomTypesModal(); hideCommandPalette(); },
+        group: 'Settings'
+    });
+}
+
+// ==========================================
+// CUSTOM ACTIVITY TYPES MANAGEMENT
+// ==========================================
+
+// Global state for custom types
+let customTypesCache = [];
+let customTypesModalVisible = false;
+
+/**
+ * Load custom types from API and cache them.
+ */
+async function loadCustomTypes() {
+    try {
+        const response = await fetch('/api/custom-types');
+        if (!response.ok) throw new Error('Failed to load custom types');
+        const data = await response.json();
+        customTypesCache = data.custom || [];
+        updateCustomTypeFilters();
+        return customTypesCache;
+    } catch (e) {
+        console.error('Failed to load custom types:', e);
+        return [];
+    }
+}
+
+/**
+ * Update the type filter buttons with custom types.
+ */
+function updateCustomTypeFilters() {
+    const container = document.getElementById('customTypeFilters');
+    if (!container) return;
+    
+    if (customTypesCache.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    container.innerHTML = customTypesCache.map(type => `
+        <button class="type-filter custom-type-filter" 
+                data-type="${escapeHtml(type.id)}" 
+                onclick="setTypeFilter('${escapeHtml(type.id)}')"
+                aria-pressed="false"
+                style="${type.color ? `--custom-type-color: ${type.color}` : ''}">
+            ${type.emoji} ${escapeHtml(type.name)}
+        </button>
+    `).join('');
+}
+
+/**
+ * Get emoji for a type (including custom types).
+ */
+function getTypeEmoji(type) {
+    // Check custom types first
+    const customType = customTypesCache.find(t => t.id === type);
+    if (customType) return customType.emoji;
+    
+    // Built-in types
+    const builtIn = {
+        'commit': '📝',
+        'build': '🔨',
+        'trade': '💹',
+        'message': '💬',
+        'email': '📧',
+        'calendar': '📅',
+        'tweet': '🐦',
+        'decision': '🧠',
+        'heartbeat': '💓',
+        'browser': '🌐',
+        'transfer': '💸',
+        'deploy': '🚀',
+        'session': '🔌',
+        'research': '🔍'
+    };
+    return builtIn[type] || '⚡';
+}
+
+/**
+ * Open the custom types management modal.
+ */
+function openCustomTypesModal() {
+    // Remove existing modal if any
+    const existing = document.querySelector('.custom-types-modal');
+    if (existing) existing.remove();
+    
+    const modal = document.createElement('div');
+    modal.className = 'custom-types-modal';
+    modal.onclick = (e) => {
+        if (e.target === modal) closeCustomTypesModal();
+    };
+    
+    modal.innerHTML = `
+        <div class="custom-types-content" role="dialog" aria-modal="true" aria-labelledby="custom-types-title">
+            <div class="custom-types-header">
+                <h3 id="custom-types-title">📦 Custom Activity Types</h3>
+                <button class="custom-types-close" onclick="closeCustomTypesModal()" aria-label="Close">&times;</button>
+            </div>
+            <div class="custom-types-body">
+                <div class="custom-type-form">
+                    <h4>Create New Type</h4>
+                    <div class="form-row">
+                        <div class="form-group small">
+                            <label for="newTypeEmoji">Emoji</label>
+                            <input type="text" id="newTypeEmoji" class="emoji-input" placeholder="🎯" maxlength="4">
+                        </div>
+                        <div class="form-group">
+                            <label for="newTypeName">Name</label>
+                            <input type="text" id="newTypeName" placeholder="Code Review" maxlength="50">
+                        </div>
+                        <div class="form-group small">
+                            <label for="newTypeColor">Color</label>
+                            <input type="color" id="newTypeColor" class="color-input" value="#00ffaa">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="newTypeDesc">Description (optional)</label>
+                            <input type="text" id="newTypeDesc" placeholder="Activities related to reviewing code..." maxlength="200">
+                        </div>
+                    </div>
+                    <div class="custom-type-actions">
+                        <button class="create-type-btn" onclick="createCustomType()" id="createTypeBtn">
+                            ➕ Create Type
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="custom-types-list">
+                    <h4>Your Custom Types</h4>
+                    <div id="customTypesList">
+                        ${renderCustomTypesList()}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    customTypesModalVisible = true;
+    
+    // Focus the name input
+    setTimeout(() => {
+        document.getElementById('newTypeName')?.focus();
+    }, 100);
+    
+    // Escape key to close
+    document.addEventListener('keydown', handleCustomTypesEscape);
+}
+
+/**
+ * Close the custom types modal.
+ */
+function closeCustomTypesModal() {
+    const modal = document.querySelector('.custom-types-modal');
+    if (modal) {
+        modal.remove();
+    }
+    customTypesModalVisible = false;
+    document.removeEventListener('keydown', handleCustomTypesEscape);
+}
+
+function handleCustomTypesEscape(e) {
+    if (e.key === 'Escape' && customTypesModalVisible) {
+        closeCustomTypesModal();
+    }
+}
+
+/**
+ * Render the list of custom types.
+ */
+function renderCustomTypesList() {
+    if (customTypesCache.length === 0) {
+        return `
+            <div class="no-custom-types">
+                <span>📭</span>
+                No custom types yet. Create one above!
+            </div>
+        `;
+    }
+    
+    // Get activity counts per type
+    const typeCounts = {};
+    if (window.cachedActivities) {
+        window.cachedActivities.forEach(a => {
+            typeCounts[a.type] = (typeCounts[a.type] || 0) + 1;
+        });
+    }
+    
+    return customTypesCache.map(type => `
+        <div class="custom-type-item" data-type-id="${escapeHtml(type.id)}">
+            <span class="custom-type-emoji">${type.emoji}</span>
+            <div class="custom-type-info">
+                <div class="custom-type-name">
+                    ${escapeHtml(type.name)}
+                    ${type.color ? `<span class="custom-type-color-dot" style="background: ${type.color}"></span>` : ''}
+                </div>
+                <div class="custom-type-id">${escapeHtml(type.id)}</div>
+                ${type.description ? `<div class="custom-type-desc">${escapeHtml(type.description)}</div>` : ''}
+            </div>
+            <span class="custom-type-count">${typeCounts[type.id] || 0} activities</span>
+            <button class="custom-type-delete" onclick="deleteCustomType('${escapeHtml(type.id)}')" title="Delete type" aria-label="Delete ${escapeHtml(type.name)}">
+                🗑️
+            </button>
+        </div>
+    `).join('');
+}
+
+/**
+ * Create a new custom type.
+ */
+async function createCustomType() {
+    const nameInput = document.getElementById('newTypeName');
+    const emojiInput = document.getElementById('newTypeEmoji');
+    const colorInput = document.getElementById('newTypeColor');
+    const descInput = document.getElementById('newTypeDesc');
+    const btn = document.getElementById('createTypeBtn');
+    
+    const name = nameInput?.value.trim();
+    const emoji = emojiInput?.value.trim();
+    const color = colorInput?.value;
+    const description = descInput?.value.trim();
+    
+    if (!name || !emoji) {
+        announceToScreenReader('Please fill in both name and emoji');
+        return;
+    }
+    
+    // Disable button while creating
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Creating...';
+    }
+    
+    try {
+        const response = await fetch('/api/custom-types', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, emoji, color, description })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to create type');
+        }
+        
+        // Add to cache and refresh
+        customTypesCache.push(data.type);
+        updateCustomTypeFilters();
+        
+        // Update list in modal
+        const listEl = document.getElementById('customTypesList');
+        if (listEl) listEl.innerHTML = renderCustomTypesList();
+        
+        // Clear form
+        if (nameInput) nameInput.value = '';
+        if (emojiInput) emojiInput.value = '';
+        if (descInput) descInput.value = '';
+        
+        announceToScreenReader(`Custom type ${name} created successfully`);
+        
+    } catch (e) {
+        console.error('Failed to create custom type:', e);
+        announceToScreenReader(`Error: ${e.message}`);
+        alert(`Failed to create type: ${e.message}`);
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = '➕ Create Type';
+        }
+    }
+}
+
+/**
+ * Delete a custom type.
+ */
+async function deleteCustomType(id) {
+    const type = customTypesCache.find(t => t.id === id);
+    if (!type) return;
+    
+    if (!confirm(`Delete custom type "${type.name}"?\n\nExisting activities with this type will be preserved.`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/custom-types/${encodeURIComponent(id)}`, {
+            method: 'DELETE'
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to delete type');
+        }
+        
+        // Remove from cache and refresh
+        customTypesCache = customTypesCache.filter(t => t.id !== id);
+        updateCustomTypeFilters();
+        
+        // Update list in modal
+        const listEl = document.getElementById('customTypesList');
+        if (listEl) listEl.innerHTML = renderCustomTypesList();
+        
+        announceToScreenReader(`Custom type ${type.name} deleted`);
+        
+    } catch (e) {
+        console.error('Failed to delete custom type:', e);
+        announceToScreenReader(`Error: ${e.message}`);
+        alert(`Failed to delete type: ${e.message}`);
+    }
+}
+
+// Add to command palette
+if (typeof PALETTE_COMMANDS !== 'undefined' && Array.isArray(PALETTE_COMMANDS)) {
+    PALETTE_COMMANDS.push({
+        id: 'custom-types',
+        title: 'Manage Custom Types',
+        description: 'Create and manage custom activity types',
+        icon: '📦',
+        action: () => { openCustomTypesModal(); hideCommandPalette(); },
+        group: 'Settings'
+    });
+}
+
+// Load custom types on page load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadCustomTypes);
+} else {
+    setTimeout(loadCustomTypes, 300);
+}

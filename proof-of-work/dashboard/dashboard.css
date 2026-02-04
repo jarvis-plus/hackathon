@@ -10177,3 +10177,683 @@ body.compare-mode-active .activity-item.compare-selected {
 [data-theme="cyberpunk"] .compare-btn-primary {
     box-shadow: 0 0 12px rgba(170, 0, 255, 0.4);
 }
+
+/* ==========================================
+   CUSTOM ACTIVITY TYPES MANAGEMENT
+   ========================================== */
+
+/* Manage Types Button */
+.manage-types-btn {
+    background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%) !important;
+    border: 1px dashed var(--text-secondary) !important;
+    min-width: 36px !important;
+    padding: 0.4em 0.6em !important;
+    font-size: 0.9em;
+    opacity: 0.8;
+    transition: all 0.2s ease;
+}
+
+.manage-types-btn:hover {
+    opacity: 1;
+    border-style: solid !important;
+    background: linear-gradient(135deg, #5a6578 0%, #3d4758 100%) !important;
+    transform: translateY(-1px);
+}
+
+/* Custom Types Modal */
+.custom-types-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    animation: fadeIn 0.2s ease;
+}
+
+.custom-types-content {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 85vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.3s ease;
+}
+
+.custom-types-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.custom-types-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.custom-types-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+.custom-types-close:hover {
+    color: var(--text-primary);
+}
+
+.custom-types-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+}
+
+/* Create Form */
+.custom-type-form {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.custom-type-form h4 {
+    margin: 0 0 1rem 0;
+    font-size: 1rem;
+    color: var(--accent-primary);
+}
+
+.form-row {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.form-row:last-child {
+    margin-bottom: 0;
+}
+
+.form-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.form-group.small {
+    flex: 0 0 80px;
+}
+
+.form-group label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.form-group input {
+    background: var(--input-bg, rgba(0, 0, 0, 0.3));
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0.6rem 0.75rem;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+
+.form-group input::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.6;
+}
+
+.emoji-input {
+    text-align: center;
+    font-size: 1.2rem !important;
+}
+
+.color-input {
+    padding: 0.3rem !important;
+    cursor: pointer;
+    height: 38px;
+}
+
+.custom-type-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.create-type-btn {
+    flex: 1;
+    background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary, #00cc88) 100%);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    padding: 0.7rem 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.create-type-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 255, 170, 0.3);
+}
+
+.create-type-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Types List */
+.custom-types-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.custom-types-list h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    color: var(--text-secondary);
+}
+
+.custom-type-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.9rem 1rem;
+    background: rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    transition: all 0.2s;
+}
+
+.custom-type-item:hover {
+    border-color: var(--accent-primary);
+    background: rgba(0, 0, 0, 0.25);
+}
+
+.custom-type-emoji {
+    font-size: 1.5rem;
+    min-width: 40px;
+    text-align: center;
+}
+
+.custom-type-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.custom-type-name {
+    font-weight: 600;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.custom-type-color-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.custom-type-id {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+}
+
+.custom-type-desc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.custom-type-count {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    background: rgba(0, 0, 0, 0.2);
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+
+.custom-type-delete {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 0.4rem;
+    border-radius: 6px;
+    transition: all 0.2s;
+    opacity: 0.6;
+}
+
+.custom-type-delete:hover {
+    opacity: 1;
+    color: #ff6b6b;
+    background: rgba(255, 107, 107, 0.1);
+}
+
+.no-custom-types {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 2rem;
+    font-size: 0.95rem;
+}
+
+.no-custom-types span {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+/* Custom type filter buttons */
+.custom-type-filter {
+    position: relative;
+}
+
+.custom-type-filter::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 60%;
+    border-radius: 2px;
+}
+
+/* Mobile adjustments */
+@media (max-width: 640px) {
+    .custom-types-content {
+        max-height: 90vh;
+        border-radius: 12px 12px 0 0;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        max-width: 100%;
+    }
+    
+    .form-row {
+        flex-direction: column;
+    }
+    
+    .form-group.small {
+        flex: 1;
+    }
+    
+    .custom-type-item {
+        flex-wrap: wrap;
+    }
+    
+    .custom-type-count {
+        order: 10;
+        margin-top: 0.5rem;
+        width: 100%;
+        text-align: center;
+    }
+}
+
+/* Light theme */
+[data-theme="light"] .custom-types-modal {
+    background: rgba(255, 255, 255, 0.85);
+}
+
+[data-theme="light"] .custom-types-content {
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="light"] .custom-type-form {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+[data-theme="light"] .custom-type-item {
+    background: rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="light"] .custom-type-item:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+/* Cyberpunk theme */
+[data-theme="cyberpunk"] .custom-types-content {
+    border-color: var(--accent-purple);
+    box-shadow: 0 0 30px rgba(170, 0, 255, 0.3), 0 12px 48px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="cyberpunk"] .manage-types-btn:hover {
+    border-color: var(--accent-purple) !important;
+    box-shadow: 0 0 12px rgba(170, 0, 255, 0.3);
+}
+
+[data-theme="cyberpunk"] .create-type-btn {
+    background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-pink) 100%);
+    color: #fff;
+}
+
+[data-theme="cyberpunk"] .create-type-btn:hover {
+    box-shadow: 0 0 16px rgba(170, 0, 255, 0.5);
+}
+
+/* ============================================
+   CUSTOM ACTIVITY TYPES MODAL
+   ============================================ */
+
+.custom-types-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    animation: fadeIn 0.2s ease;
+}
+
+.custom-types-content {
+    background: var(--surface-color, #1a1a2e);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    max-width: 700px;
+    width: 100%;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+    animation: slideUp 0.3s ease;
+}
+
+.custom-types-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.custom-types-header h2 {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--text-primary, #fff);
+}
+
+.custom-types-body {
+    overflow-y: auto;
+    padding: 1.5rem;
+    flex: 1;
+}
+
+.custom-types-section {
+    margin-bottom: 2rem;
+}
+
+.custom-types-section:last-child {
+    margin-bottom: 0;
+}
+
+.custom-types-section h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary, #fff);
+    margin: 0 0 0.5rem 0;
+}
+
+.section-note {
+    font-size: 0.85rem;
+    color: var(--text-secondary, #888);
+    margin: 0 0 1rem 0;
+}
+
+.types-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.75rem;
+}
+
+.type-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.type-card:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.type-card.custom:hover {
+    border-color: var(--accent-color, #00ffaa);
+}
+
+.type-emoji {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.type-name {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-primary, #fff);
+    text-align: center;
+    word-break: break-word;
+}
+
+.type-usage {
+    font-size: 0.7rem;
+    color: var(--text-secondary, #888);
+}
+
+.type-color-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 0 0 10px 10px;
+}
+
+.type-delete-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(239, 68, 68, 0.2);
+    border: none;
+    color: #ef4444;
+    font-size: 0.7rem;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.type-card.custom:hover .type-delete-btn {
+    opacity: 1;
+}
+
+.type-delete-btn:hover {
+    background: #ef4444;
+    color: #fff;
+}
+
+/* Add Type Form */
+.add-type-form {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px dashed rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.form-row {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.form-row:last-child {
+    margin-bottom: 0;
+}
+
+.add-type-form input[type="text"] {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.9rem;
+    color: var(--text-primary, #fff);
+    transition: border-color 0.2s ease;
+}
+
+.add-type-form input[type="text"]:focus {
+    outline: none;
+    border-color: var(--accent-color, #00ffaa);
+}
+
+.add-type-form input[type="text"]::placeholder {
+    color: var(--text-secondary, #888);
+}
+
+#newTypeEmoji {
+    flex: 0 0 60px;
+    text-align: center;
+    font-size: 1.1rem;
+}
+
+.add-type-form input[type="color"] {
+    flex: 0 0 44px;
+    height: 38px;
+    padding: 2px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    cursor: pointer;
+}
+
+.add-type-btn {
+    flex: 0 0 auto;
+    padding: 0.6rem 1.25rem;
+    background: linear-gradient(135deg, var(--accent-color, #00ffaa), #00d4aa);
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #000;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.add-type-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 255, 170, 0.3);
+}
+
+.no-custom-types {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary, #888);
+}
+
+/* Light theme */
+[data-theme="light"] .custom-types-content {
+    background: #fff;
+    border-color: rgba(0, 0, 0, 0.1);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .type-card {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .add-type-form {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .add-type-form input[type="text"] {
+    background: #fff;
+    border-color: rgba(0, 0, 0, 0.15);
+}
+
+/* Cyberpunk theme */
+[data-theme="cyberpunk"] .custom-types-content {
+    border-color: var(--accent-purple);
+    box-shadow: 0 0 30px rgba(170, 0, 255, 0.2), 0 12px 48px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="cyberpunk"] .type-card.custom:hover {
+    border-color: var(--accent-purple);
+    box-shadow: 0 0 12px rgba(170, 0, 255, 0.3);
+}
+
+/* Mobile responsive */
+@media (max-width: 600px) {
+    .custom-types-content {
+        max-height: 90vh;
+    }
+    
+    .types-grid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    }
+    
+    .form-row {
+        flex-wrap: wrap;
+    }
+    
+    #newTypeName, #newTypeDesc {
+        flex-basis: 100%;
+    }
+    
+    .add-type-btn {
+        flex: 1;
+    }
+}

@@ -78,8 +78,44 @@
                 <button class="sound-toggle" id="focusModeToggle" onclick="toggleFocusMode()" title="Focus mode - distraction-free view (Z)" aria-pressed="false" aria-label="Toggle focus mode">
                     🎯 Focus
                 </button>
+                <button class="sound-toggle" id="customTypesBtn" onclick="openCustomTypesModal()" title="Manage custom activity types" aria-label="Manage custom activity types">
+                    ✨ Types
+                </button>
             </div>
         </header>
+        
+        <!-- Custom Activity Types Modal -->
+        <div id="customTypesModal" class="custom-types-modal" role="dialog" aria-labelledby="customTypesTitle" aria-modal="true" style="display: none;">
+            <div class="custom-types-content">
+                <div class="custom-types-header">
+                    <h2 id="customTypesTitle">✨ Activity Types</h2>
+                    <button class="modal-close" onclick="closeCustomTypesModal()" aria-label="Close modal">&times;</button>
+                </div>
+                <div class="custom-types-body">
+                    <div class="custom-types-section">
+                        <h3>📋 Built-in Types</h3>
+                        <p class="section-note">These types are pre-defined and cannot be modified.</p>
+                        <div id="builtinTypesList" class="types-grid"></div>
+                    </div>
+                    <div class="custom-types-section">
+                        <h3>✨ Custom Types</h3>
+                        <p class="section-note">Create your own activity types to categorize work.</p>
+                        <form id="addCustomTypeForm" class="add-type-form" onsubmit="handleAddCustomType(event)">
+                            <div class="form-row">
+                                <input type="text" id="newTypeName" placeholder="Type name (e.g., Code Review)" required maxlength="50" aria-label="New type name">
+                                <input type="text" id="newTypeEmoji" placeholder="🔧" maxlength="4" aria-label="Emoji">
+                                <input type="color" id="newTypeColor" value="#6B7280" aria-label="Color">
+                            </div>
+                            <div class="form-row">
+                                <input type="text" id="newTypeDesc" placeholder="Description (optional)" maxlength="200" aria-label="Description">
+                                <button type="submit" class="add-type-btn">+ Add Type</button>
+                            </div>
+                        </form>
+                        <div id="customTypesList" class="types-grid"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <div class="proof-banner">
             <div class="proof-banner-icon">🔐</div>
@@ -634,6 +670,11 @@
                     <button class="type-filter" data-type="decision" onclick="setTypeFilter('decision')" aria-pressed="false">🧠 Decisions</button>
                     <button class="type-filter" data-type="heartbeat" onclick="setTypeFilter('heartbeat')" aria-pressed="false">💓 Heartbeats</button>
                     <button class="type-filter" data-type="browser" onclick="setTypeFilter('browser')" aria-pressed="false">🌐 Browser</button>
+                    <!-- Custom type filters (dynamically populated) -->
+                    <span id="customTypeFilters"></span>
+                    <button class="type-filter manage-types-btn" onclick="openCustomTypesModal()" title="Manage custom activity types" aria-label="Manage custom activity types">
+                        <span>➕</span>
+                    </button>
                 </div>
                 <div class="tag-filters" id="tagFilters">
                     <span class="tag-filters-label">🏷️ Tags:</span>

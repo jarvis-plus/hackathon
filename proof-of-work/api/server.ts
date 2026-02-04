@@ -84,6 +84,106 @@ const WEBHOOKS_FILE = join(BASE_DIR, 'data', 'webhooks.json');
 /** Path to the digest subscriptions file */
 const DIGEST_FILE = join(BASE_DIR, 'data', 'digest-subscriptions.json');
 
+/** Path to the custom activity types file */
+const CUSTOM_TYPES_FILE = join(BASE_DIR, 'data', 'custom-types.json');
+
+// ==============================================
+// CUSTOM ACTIVITY TYPES SYSTEM
+// ==============================================
+
+/**
+ * Custom Activity Type Interface
+ * 
+ * Allows users to define their own activity types beyond the built-in ones.
+ * Each custom type includes:
+ * - id: Unique identifier (lowercase, no spaces, auto-generated)
+ * - name: Display name (e.g., "Code Review")
+ * - emoji: Single emoji for the type (e.g., "👁️")
+ * - color: Optional hex color for the type (e.g., "#ff6b6b")
+ * - description: Optional description of what this type represents
+ * - createdAt: When the type was created
+ */
+interface CustomActivityType {
+  id: string;
+  name: string;
+  emoji: string;
+  color?: string;
+  description?: string;
+  createdAt: string;
+}
+
+/**
+ * Built-in activity types that cannot be overridden or deleted.
+ * Custom types with these names will be rejected.
+ */
+const BUILT_IN_TYPES = [
+  'commit', 'build', 'trade', 'message', 'email', 
+  'calendar', 'tweet', 'decision', 'heartbeat', 'browser',
+  'transfer', 'deploy', 'session', 'research'
+];
+
+/**
+ * Load custom activity types from disk.
+ * Returns empty array if file doesn't exist or is invalid.
+ */
+function getCustomTypes(): CustomActivityType[] {
+  if (!existsSync(CUSTOM_TYPES_FILE)) return [];
+  try {
+    const data = readFileSync(CUSTOM_TYPES_FILE, 'utf-8');
+    return JSON.parse(data);
+  } catch (e) {
+    console.error('Failed to load custom types:', e);
+    return [];
+  }
+}
+
+/**
+ * Save custom activity types to disk.
+ */
+function saveCustomTypes(types: CustomActivityType[]): void {
+  try {
+    writeFileSync(CUSTOM_TYPES_FILE, JSON.stringify(types, null, 2));
+  } catch (e) {
+    console.error('Failed to save custom types:', e);
+  }
+}
+
+/**
+ * Generate a valid type ID from a name.
+ * Converts to lowercase, replaces spaces with hyphens, removes special chars.
+ */
+function generateTypeId(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .slice(0, 32);
+}
+
+/**
+ * Get emoji for built-in activity types.
+ */
+function getBuiltInTypeEmoji(type: string): string {
+  const emojiMap: Record<string, string> = {
+    'commit': '📝',
+    'build': '🔨',
+    'trade': '💹',
+    'message': '💬',
+    'email': '📧',
+    'calendar': '📅',
+    'tweet': '🐦',
+    'decision': '🧠',
+    'heartbeat': '💓',
+    'browser': '🌐',
+    'transfer': '💸',
+    'deploy': '🚀',
+    'session': '🔌',
+    'research': '🔍'
+  };
+  return emojiMap[type] || '⚡';
+}
+
 // ==============================================
 // WEBHOOK SYSTEM
 // ==============================================
@@ -2819,6 +2919,283 @@ const server = Bun.serve({
     }
 
     // ==========================================
+    // API: GET /api/activity-types
+    // Get all activity types (built-in + custom)
+    // ==========================================
+    if (path === '/api/activity-types' && req.method === 'GET') {
+      const customTypes = getCustomTypes();
+      const activities = getActivities();
+      
+      // Count usage for each type
+      const typeCounts: Record<string, number> = {};
+      for (const a of activities) {
+        const type = a.type || 'unknown';
+        typeCounts[type] = (typeCounts[type] || 0) + 1;
+      }
+      
+      // Built-in types with metadata
+      const builtInTypesWithMeta = BUILT_IN_TYPES.map(id => {
+        const typeConfig: Record<string, { name: string; emoji: string; color: string; description: string }> = {
+          commit: { name: 'Commit', emoji: '📝', color: '#6366F1', description: 'Code commits and changes' },
+          build: { name: 'Build', emoji: '🔨', color: '#10B981', description: 'Software builds and development' },
+          trade: { name: 'Trade', emoji: '💹', color: '#FFD700', description: 'Trades and transactions' },
+          message: { name: 'Message', emoji: '💬', color: '#A78BFA', description: 'Messages sent' },
+          email: { name: 'Email', emoji: '📧', color: '#3B82F6', description: 'Emails sent' },
+          calendar: { name: 'Calendar', emoji: '📅', color: '#EC4899', description: 'Calendar events' },
+          tweet: { name: 'Tweet', emoji: '🐦', color: '#1DA1F2', description: 'Social media posts' },
+          decision: { name: 'Decision', emoji: '🎯', color: '#F59E0B', description: 'Important decisions' },
+          heartbeat: { name: 'Heartbeat', emoji: '💓', color: '#E84393', description: 'System heartbeats' },
+          browser: { name: 'Browser', emoji: '🌐', color: '#14B8A6', description: 'Web browsing' },
+          transfer: { name: 'Transfer', emoji: '💸', color: '#FF9F43', description: 'Token transfers' },
+          deploy: { name: 'Deploy', emoji: '🚀', color: '#EF4444', description: 'Deployments and releases' },
+          session: { name: 'Session', emoji: '🎮', color: '#9333EA', description: 'Work sessions' },
+          research: { name: 'Research', emoji: '🔍', color: '#8B5CF6', description: 'Research and exploration' },
+        };
+        const config = typeConfig[id] || { name: id, emoji: '⚡', color: '#6B7280', description: '' };
+        return {
+          id,
+          ...config,
+          builtin: true,
+          usageCount: typeCounts[id] || 0
+        };
+      });
+      
+      // Custom types with usage counts
+      const customTypesWithMeta = customTypes.map(t => ({
+        ...t,
+        builtin: false,
+        usageCount: typeCounts[t.id] || 0
+      }));
+      
+      return Response.json({
+        builtIn: builtInTypesWithMeta,
+        custom: customTypesWithMeta,
+        all: [...builtInTypesWithMeta, ...customTypesWithMeta],
+        totalTypes: BUILT_IN_TYPES.length + customTypes.length,
+        totalCustom: customTypes.length
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: POST /api/activity-types
+    // Create a new custom activity type
+    // ==========================================
+    if (path === '/api/activity-types' && req.method === 'POST') {
+      try {
+        const body = await req.json() as { name: string; emoji?: string; color?: string; description?: string };
+        
+        // Validate required fields
+        if (!body.name || typeof body.name !== 'string' || body.name.trim().length === 0) {
+          return Response.json({ 
+            error: 'name is required and must be a non-empty string' 
+          }, { status: 400, headers: corsHeaders });
+        }
+        
+        const name = body.name.trim();
+        if (name.length > 50) {
+          return Response.json({ 
+            error: 'name cannot exceed 50 characters' 
+          }, { status: 400, headers: corsHeaders });
+        }
+        
+        // Generate ID from name
+        const id = generateTypeId(name);
+        if (!id || id.length < 2) {
+          return Response.json({ 
+            error: 'name must contain at least 2 alphanumeric characters' 
+          }, { status: 400, headers: corsHeaders });
+        }
+        
+        // Check for conflicts with built-in types
+        if (BUILT_IN_TYPES.includes(id)) {
+          return Response.json({ 
+            error: `Cannot create type "${id}" - it conflicts with a built-in type` 
+          }, { status: 409, headers: corsHeaders });
+        }
+        
+        // Check for existing custom type with same ID
+        const customTypes = getCustomTypes();
+        if (customTypes.some(t => t.id === id)) {
+          return Response.json({ 
+            error: `Custom type "${id}" already exists` 
+          }, { status: 409, headers: corsHeaders });
+        }
+        
+        // Validate emoji (single emoji or empty)
+        const emoji = (body.emoji || '⚡').trim();
+        if (emoji.length > 8) { // Allow for emoji with skin tones etc
+          return Response.json({ 
+            error: 'emoji should be a single emoji character' 
+          }, { status: 400, headers: corsHeaders });
+        }
+        
+        // Validate color (hex format)
+        const color = body.color || '#6B7280';
+        if (!/^#[0-9A-Fa-f]{6}$/.test(color)) {
+          return Response.json({ 
+            error: 'color must be a valid hex color (e.g., #FF5733)' 
+          }, { status: 400, headers: corsHeaders });
+        }
+        
+        // Create the new type
+        const newType: CustomActivityType = {
+          id,
+          name,
+          emoji,
+          color,
+          description: body.description?.trim()?.slice(0, 200) || '',
+          createdAt: new Date().toISOString()
+        };
+        
+        customTypes.push(newType);
+        saveCustomTypes(customTypes);
+        
+        console.log(`✨ Created custom activity type: ${emoji} ${name} (${id})`);
+        
+        return Response.json({
+          ...newType,
+          builtin: false,
+          usageCount: 0,
+          message: `Custom type "${name}" created successfully`
+        }, { status: 201, headers: corsHeaders });
+        
+      } catch (e) {
+        return Response.json({ 
+          error: 'Invalid JSON body' 
+        }, { status: 400, headers: corsHeaders });
+      }
+    }
+
+    // ==========================================
+    // API: DELETE /api/activity-types/:id
+    // Delete a custom activity type
+    // Cannot delete built-in types
+    // ==========================================
+    if (path.match(/^\/api\/activity-types\/[a-z0-9-]+$/) && req.method === 'DELETE') {
+      const typeId = path.split('/').pop()!;
+      
+      // Cannot delete built-in types
+      if (BUILT_IN_TYPES.includes(typeId)) {
+        return Response.json({ 
+          error: `Cannot delete built-in type "${typeId}"` 
+        }, { status: 403, headers: corsHeaders });
+      }
+      
+      const customTypes = getCustomTypes();
+      const index = customTypes.findIndex(t => t.id === typeId);
+      
+      if (index === -1) {
+        return Response.json({ 
+          error: `Custom type "${typeId}" not found` 
+        }, { status: 404, headers: corsHeaders });
+      }
+      
+      // Check if type is in use
+      const activities = getActivities();
+      const usageCount = activities.filter((a: any) => a.type === typeId).length;
+      
+      // Remove the type
+      const deleted = customTypes.splice(index, 1)[0];
+      saveCustomTypes(customTypes);
+      
+      console.log(`🗑️ Deleted custom activity type: ${deleted.emoji} ${deleted.name} (${deleted.id})`);
+      
+      return Response.json({
+        deleted: deleted,
+        usageCount,
+        warning: usageCount > 0 
+          ? `Note: ${usageCount} existing activities still use this type`
+          : undefined,
+        message: `Custom type "${deleted.name}" deleted successfully`
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: PATCH /api/activity-types/:id
+    // Update a custom activity type
+    // Cannot modify built-in types
+    // ==========================================
+    if (path.match(/^\/api\/activity-types\/[a-z0-9-]+$/) && req.method === 'PATCH') {
+      const typeId = path.split('/').pop()!;
+      
+      // Cannot modify built-in types
+      if (BUILT_IN_TYPES.includes(typeId)) {
+        return Response.json({ 
+          error: `Cannot modify built-in type "${typeId}"` 
+        }, { status: 403, headers: corsHeaders });
+      }
+      
+      try {
+        const body = await req.json() as { name?: string; emoji?: string; color?: string; description?: string };
+        
+        const customTypes = getCustomTypes();
+        const index = customTypes.findIndex(t => t.id === typeId);
+        
+        if (index === -1) {
+          return Response.json({ 
+            error: `Custom type "${typeId}" not found` 
+          }, { status: 404, headers: corsHeaders });
+        }
+        
+        const type = customTypes[index];
+        
+        // Update fields if provided
+        if (body.name !== undefined) {
+          const name = body.name.trim();
+          if (name.length === 0 || name.length > 50) {
+            return Response.json({ 
+              error: 'name must be 1-50 characters' 
+            }, { status: 400, headers: corsHeaders });
+          }
+          type.name = name;
+        }
+        
+        if (body.emoji !== undefined) {
+          const emoji = body.emoji.trim();
+          if (emoji.length > 8) {
+            return Response.json({ 
+              error: 'emoji should be a single emoji character' 
+            }, { status: 400, headers: corsHeaders });
+          }
+          type.emoji = emoji || '⚡';
+        }
+        
+        if (body.color !== undefined) {
+          if (!/^#[0-9A-Fa-f]{6}$/.test(body.color)) {
+            return Response.json({ 
+              error: 'color must be a valid hex color (e.g., #FF5733)' 
+            }, { status: 400, headers: corsHeaders });
+          }
+          type.color = body.color;
+        }
+        
+        if (body.description !== undefined) {
+          type.description = body.description.trim().slice(0, 200);
+        }
+        
+        saveCustomTypes(customTypes);
+        
+        console.log(`✏️ Updated custom activity type: ${type.emoji} ${type.name} (${type.id})`);
+        
+        // Get usage count
+        const activities = getActivities();
+        const usageCount = activities.filter((a: any) => a.type === typeId).length;
+        
+        return Response.json({
+          ...type,
+          builtin: false,
+          usageCount,
+          message: `Custom type "${type.name}" updated successfully`
+        }, { headers: corsHeaders });
+        
+      } catch (e) {
+        return Response.json({ 
+          error: 'Invalid JSON body' 
+        }, { status: 400, headers: corsHeaders });
+      }
+    }
+
+    // ==========================================
     // API: GET /api/health
     // Health check for monitoring systems
     // Returns 200 if healthy, 503 if degraded
@@ -4319,6 +4696,227 @@ Colosseum Agent Hackathon 2026`;
           url: webhook.url
         }, { status: 502, headers: corsHeaders });
       }
+    }
+
+    // ==========================================
+    // API: GET /api/custom-types
+    // List all custom activity types
+    // Returns both built-in and user-defined types
+    // ==========================================
+    if (path === '/api/custom-types' && req.method === 'GET') {
+      const customTypes = getCustomTypes();
+      
+      // Return with built-in types info for reference
+      return Response.json({
+        builtIn: BUILT_IN_TYPES.map(id => ({
+          id,
+          name: id.charAt(0).toUpperCase() + id.slice(1),
+          emoji: getBuiltInTypeEmoji(id),
+          isBuiltIn: true
+        })),
+        custom: customTypes,
+        total: BUILT_IN_TYPES.length + customTypes.length
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: POST /api/custom-types
+    // Create a new custom activity type
+    // Requires: name, emoji; Optional: color, description
+    // ==========================================
+    if (path === '/api/custom-types' && req.method === 'POST') {
+      try {
+        const body = await req.json() as { 
+          name: string; 
+          emoji: string; 
+          color?: string; 
+          description?: string 
+        };
+        
+        // Validate required fields
+        if (!body.name || typeof body.name !== 'string') {
+          return Response.json({ 
+            error: 'name is required and must be a string' 
+          }, { status: 400, headers: corsHeaders });
+        }
+        
+        if (!body.emoji || typeof body.emoji !== 'string') {
+          return Response.json({ 
+            error: 'emoji is required and must be a string' 
+          }, { status: 400, headers: corsHeaders });
+        }
+        
+        // Generate ID from name
+        const id = generateTypeId(body.name);
+        
+        if (!id) {
+          return Response.json({ 
+            error: 'name must contain at least one alphanumeric character' 
+          }, { status: 400, headers: corsHeaders });
+        }
+        
+        // Check for built-in conflict
+        if (BUILT_IN_TYPES.includes(id)) {
+          return Response.json({ 
+            error: `Cannot create type "${id}" - conflicts with built-in type` 
+          }, { status: 409, headers: corsHeaders });
+        }
+        
+        // Check for duplicate
+        const customTypes = getCustomTypes();
+        if (customTypes.some(t => t.id === id)) {
+          return Response.json({ 
+            error: `Type "${id}" already exists` 
+          }, { status: 409, headers: corsHeaders });
+        }
+        
+        // Validate color format if provided
+        if (body.color && !/^#[0-9A-Fa-f]{6}$/.test(body.color)) {
+          return Response.json({ 
+            error: 'color must be a valid hex color (e.g., #ff6b6b)' 
+          }, { status: 400, headers: corsHeaders });
+        }
+        
+        // Limit to 50 custom types
+        if (customTypes.length >= 50) {
+          return Response.json({ 
+            error: 'Maximum of 50 custom types allowed' 
+          }, { status: 400, headers: corsHeaders });
+        }
+        
+        const newType: CustomActivityType = {
+          id,
+          name: body.name.trim().slice(0, 50),
+          emoji: body.emoji.slice(0, 4), // Limit emoji length
+          color: body.color || undefined,
+          description: body.description?.slice(0, 200) || undefined,
+          createdAt: new Date().toISOString()
+        };
+        
+        customTypes.push(newType);
+        saveCustomTypes(customTypes);
+        
+        console.log(`📦 Custom type created: ${newType.emoji} ${newType.name} (${newType.id})`);
+        
+        return Response.json({
+          success: true,
+          type: newType,
+          message: `Custom type "${newType.name}" created successfully`
+        }, { status: 201, headers: corsHeaders });
+        
+      } catch (e) {
+        return Response.json({ 
+          error: 'Invalid JSON body' 
+        }, { status: 400, headers: corsHeaders });
+      }
+    }
+
+    // ==========================================
+    // API: PUT /api/custom-types/:id
+    // Update an existing custom activity type
+    // ==========================================
+    if (path.match(/^\/api\/custom-types\/[a-z0-9-]+$/) && req.method === 'PUT') {
+      const id = path.split('/').pop()!;
+      
+      // Cannot update built-in types
+      if (BUILT_IN_TYPES.includes(id)) {
+        return Response.json({ 
+          error: 'Cannot modify built-in types' 
+        }, { status: 403, headers: corsHeaders });
+      }
+      
+      try {
+        const body = await req.json() as { 
+          name?: string; 
+          emoji?: string; 
+          color?: string | null; 
+          description?: string | null 
+        };
+        
+        const customTypes = getCustomTypes();
+        const typeIndex = customTypes.findIndex(t => t.id === id);
+        
+        if (typeIndex === -1) {
+          return Response.json({ 
+            error: `Type "${id}" not found` 
+          }, { status: 404, headers: corsHeaders });
+        }
+        
+        const existingType = customTypes[typeIndex];
+        
+        // Validate color if provided
+        if (body.color && body.color !== null && !/^#[0-9A-Fa-f]{6}$/.test(body.color)) {
+          return Response.json({ 
+            error: 'color must be a valid hex color (e.g., #ff6b6b)' 
+          }, { status: 400, headers: corsHeaders });
+        }
+        
+        // Update fields
+        const updatedType: CustomActivityType = {
+          ...existingType,
+          name: body.name?.trim().slice(0, 50) || existingType.name,
+          emoji: body.emoji?.slice(0, 4) || existingType.emoji,
+          color: body.color === null ? undefined : (body.color || existingType.color),
+          description: body.description === null ? undefined : (body.description?.slice(0, 200) || existingType.description)
+        };
+        
+        customTypes[typeIndex] = updatedType;
+        saveCustomTypes(customTypes);
+        
+        console.log(`📦 Custom type updated: ${updatedType.emoji} ${updatedType.name} (${updatedType.id})`);
+        
+        return Response.json({
+          success: true,
+          type: updatedType,
+          message: `Custom type "${updatedType.name}" updated successfully`
+        }, { headers: corsHeaders });
+        
+      } catch (e) {
+        return Response.json({ 
+          error: 'Invalid JSON body' 
+        }, { status: 400, headers: corsHeaders });
+      }
+    }
+
+    // ==========================================
+    // API: DELETE /api/custom-types/:id
+    // Delete a custom activity type
+    // Note: This doesn't affect activities already tagged with this type
+    // ==========================================
+    if (path.match(/^\/api\/custom-types\/[a-z0-9-]+$/) && req.method === 'DELETE') {
+      const id = path.split('/').pop()!;
+      
+      // Cannot delete built-in types
+      if (BUILT_IN_TYPES.includes(id)) {
+        return Response.json({ 
+          error: 'Cannot delete built-in types' 
+        }, { status: 403, headers: corsHeaders });
+      }
+      
+      const customTypes = getCustomTypes();
+      const typeIndex = customTypes.findIndex(t => t.id === id);
+      
+      if (typeIndex === -1) {
+        return Response.json({ 
+          error: `Type "${id}" not found` 
+        }, { status: 404, headers: corsHeaders });
+      }
+      
+      const deletedType = customTypes.splice(typeIndex, 1)[0];
+      saveCustomTypes(customTypes);
+      
+      // Count activities using this type
+      const activities = getActivities();
+      const affectedCount = activities.filter((a: any) => a.type === id).length;
+      
+      console.log(`📦 Custom type deleted: ${deletedType.emoji} ${deletedType.name} (${id}), ${affectedCount} activities affected`);
+      
+      return Response.json({
+        success: true,
+        message: `Custom type "${deletedType.name}" deleted`,
+        affectedActivities: affectedCount,
+        note: 'Existing activities with this type are preserved but the type will appear as unknown.'
+      }, { headers: corsHeaders });
     }
 
     // ==========================================

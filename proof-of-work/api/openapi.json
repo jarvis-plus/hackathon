@@ -51,6 +51,10 @@
     {
       "name": "Digest",
       "description": "Email digest subscription management"
+    },
+    {
+      "name": "Custom Types",
+      "description": "User-defined activity type management"
     }
   ],
   "paths": {
@@ -448,6 +452,158 @@
           },
           "302": {
             "description": "Redirect to dashboard if activity not found"
+          }
+        }
+      }
+    },
+    "/api/activity-types": {
+      "get": {
+        "tags": ["Activities"],
+        "summary": "List all activity types",
+        "description": "Returns all activity types (built-in + custom) with usage counts.",
+        "operationId": "getActivityTypes",
+        "responses": {
+          "200": {
+            "description": "Activity types list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityTypes"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Activities"],
+        "summary": "Create a custom activity type",
+        "description": "Create a new custom activity type. Cannot override built-in types.",
+        "operationId": "createActivityType",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Display name for the type",
+                    "maxLength": 50
+                  },
+                  "emoji": {
+                    "type": "string",
+                    "description": "Emoji icon (default: ⚡)",
+                    "maxLength": 4
+                  },
+                  "color": {
+                    "type": "string",
+                    "description": "Hex color code (e.g., #FF5733)",
+                    "pattern": "^#[0-9A-Fa-f]{6}$"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Optional description",
+                    "maxLength": 200
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Custom type created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomActivityType"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "409": {
+            "description": "Type already exists or conflicts with built-in"
+          }
+        }
+      }
+    },
+    "/api/activity-types/{id}": {
+      "delete": {
+        "tags": ["Activities"],
+        "summary": "Delete a custom activity type",
+        "description": "Delete a custom activity type. Cannot delete built-in types.",
+        "operationId": "deleteActivityType",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Type ID (lowercase, hyphenated)",
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9-]+$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Type deleted successfully"
+          },
+          "403": {
+            "description": "Cannot delete built-in type"
+          },
+          "404": {
+            "description": "Custom type not found"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Activities"],
+        "summary": "Update a custom activity type",
+        "description": "Update properties of a custom activity type.",
+        "operationId": "updateActivityType",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Type ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string", "maxLength": 50 },
+                  "emoji": { "type": "string", "maxLength": 4 },
+                  "color": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+                  "description": { "type": "string", "maxLength": 200 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Type updated successfully"
+          },
+          "403": {
+            "description": "Cannot modify built-in type"
+          },
+          "404": {
+            "description": "Custom type not found"
           }
         }
       }
@@ -1075,6 +1231,185 @@
         }
       }
     },
+    "/api/custom-types": {
+      "get": {
+        "tags": ["Custom Types"],
+        "summary": "List all activity types",
+        "description": "Returns both built-in and user-defined custom activity types.",
+        "operationId": "getCustomTypes",
+        "responses": {
+          "200": {
+            "description": "List of activity types",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "builtIn": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ActivityType"
+                      }
+                    },
+                    "custom": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CustomActivityType"
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Custom Types"],
+        "summary": "Create custom type",
+        "description": "Create a new custom activity type. Cannot conflict with built-in types.",
+        "operationId": "createCustomType",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "emoji"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Display name for the type",
+                    "example": "Code Review"
+                  },
+                  "emoji": {
+                    "type": "string",
+                    "description": "Emoji icon for the type",
+                    "example": "👁️"
+                  },
+                  "color": {
+                    "type": "string",
+                    "description": "Hex color for the type",
+                    "pattern": "^#[0-9A-Fa-f]{6}$",
+                    "example": "#ff6b6b"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Description of what this type represents",
+                    "example": "Activities related to reviewing code"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Type created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "type": { "$ref": "#/components/schemas/CustomActivityType" },
+                    "message": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body"
+          },
+          "409": {
+            "description": "Type already exists or conflicts with built-in"
+          }
+        }
+      }
+    },
+    "/api/custom-types/{id}": {
+      "put": {
+        "tags": ["Custom Types"],
+        "summary": "Update custom type",
+        "description": "Update an existing custom activity type.",
+        "operationId": "updateCustomType",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "emoji": { "type": "string" },
+                  "color": { "type": "string" },
+                  "description": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Type updated"
+          },
+          "403": {
+            "description": "Cannot modify built-in types"
+          },
+          "404": {
+            "description": "Type not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Custom Types"],
+        "summary": "Delete custom type",
+        "description": "Delete a custom activity type. Existing activities are preserved.",
+        "operationId": "deleteCustomType",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Type deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "message": { "type": "string" },
+                    "affectedActivities": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Cannot delete built-in types"
+          },
+          "404": {
+            "description": "Type not found"
+          }
+        }
+      }
+    },
     "/api/backup": {
       "get": {
         "tags": ["Backup"],
@@ -1571,6 +1906,60 @@
           }
         }
       },
+      "ActivityType": {
+        "type": "object",
+        "description": "Built-in activity type",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Type identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name"
+          },
+          "emoji": {
+            "type": "string",
+            "description": "Type emoji icon"
+          },
+          "isBuiltIn": {
+            "type": "boolean",
+            "description": "Always true for built-in types"
+          }
+        }
+      },
+      "CustomActivityType": {
+        "type": "object",
+        "description": "User-defined custom activity type",
+        "required": ["id", "name", "emoji", "createdAt"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier (lowercase, no spaces)"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name (e.g., 'Code Review')"
+          },
+          "emoji": {
+            "type": "string",
+            "description": "Emoji icon for the type"
+          },
+          "color": {
+            "type": "string",
+            "description": "Hex color (e.g., '#ff6b6b')"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of what this type represents"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the type was created"
+          }
+        }
+      },
       "ActivityDiff": {
         "type": "object",
         "description": "Comparison between an activity and its previous same-type activity",
@@ -1877,6 +2266,80 @@
               "$ref": "#/components/schemas/AchievementBadge"
             },
             "description": "All badges in a flat array"
+          }
+        }
+      },
+      "CustomActivityType": {
+        "type": "object",
+        "description": "A custom user-defined activity type",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier (lowercase, hyphenated)"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name"
+          },
+          "emoji": {
+            "type": "string",
+            "description": "Emoji icon"
+          },
+          "color": {
+            "type": "string",
+            "description": "Hex color code"
+          },
+          "description": {
+            "type": "string",
+            "description": "Optional description"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the type was created"
+          },
+          "builtin": {
+            "type": "boolean",
+            "description": "Whether this is a built-in type (always false for custom)"
+          },
+          "usageCount": {
+            "type": "integer",
+            "description": "Number of activities using this type"
+          }
+        }
+      },
+      "ActivityTypes": {
+        "type": "object",
+        "description": "Complete list of activity types",
+        "properties": {
+          "builtIn": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomActivityType"
+            },
+            "description": "Built-in activity types"
+          },
+          "custom": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomActivityType"
+            },
+            "description": "User-defined custom types"
+          },
+          "all": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomActivityType"
+            },
+            "description": "All types combined"
+          },
+          "totalTypes": {
+            "type": "integer",
+            "description": "Total number of types available"
+          },
+          "totalCustom": {
+            "type": "integer",
+            "description": "Number of custom types"
           }
         }
       },
