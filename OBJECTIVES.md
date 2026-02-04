@@ -111,34 +111,34 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ### Cycle 179 (Custom Activity Types)
 - Implemented user-defined activity types beyond the built-in ones
 - **New API Endpoints**:
-  - `GET /api/activity-types` - List all types (built-in + custom) with usage counts
-  - `POST /api/activity-types` - Create new custom type
-  - `DELETE /api/activity-types/:id` - Delete custom type
-  - `PATCH /api/activity-types/:id` - Update custom type properties
-- **Built-in Types (14)**:
+  - `GET /api/custom-types` - List all types (built-in + custom)
+  - `POST /api/custom-types` - Create new custom type
+  - `PUT /api/custom-types/:id` - Update custom type properties
+  - `DELETE /api/custom-types/:id` - Delete custom type
+- **Built-in Types (14)** - Protected from modification:
   - commit, build, trade, message, email, calendar, tweet, decision
   - heartbeat, browser, transfer, deploy, session, research
 - **Custom Type Properties**:
   - id (auto-generated from name, lowercase/hyphenated)
   - name (display name, max 50 chars)
-  - emoji (single emoji, default ⚡)
-  - color (hex code, default #6B7280)
+  - emoji (single emoji icon)
+  - color (hex code, optional)
   - description (optional, max 200 chars)
 - **Dashboard UI**:
-  - "✨ Types" button in header controls
-  - Modal with built-in types grid (read-only)
-  - Custom types section with add form
-  - Form fields: name, emoji picker, color picker, description
-  - Delete button on hover for custom types
-  - Usage count displayed on each type card
-  - Color bar indicator at bottom of each card
+  - ➕ button in type filter section opens management modal
+  - Create form with emoji, name, color picker, description fields
+  - List of custom types with activity counts
+  - Delete button on each custom type
+  - Custom types appear as filter buttons in the activity list
+  - Dynamic filter integration with custom type buttons
 - **Validation**:
-  - Cannot create types with built-in names
+  - Cannot create types with built-in names (409 conflict)
   - Unique ID enforcement for custom types
-  - Proper error messages for conflicts
-- **OpenAPI Updated**: Added ActivityTypes and CustomActivityType schemas
-- ~250 lines server.ts, ~230 lines CSS, ~180 lines JS
-- 464 activities, all signed on-chain
+  - Proper error messages for all edge cases
+  - Max 50 custom types limit
+- **OpenAPI Updated**: Added Custom Types tag, ActivityType and CustomActivityType schemas
+- ~200 lines server.ts, ~280 lines CSS, ~320 lines JS
+- 466 activities, all signed on-chain
 
 ### Cycle 178 (Activity Comparison Mode)
 - Implemented ability to select any 2 activities and compare them side-by-side

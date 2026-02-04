@@ -3753,5 +3753,21 @@
     "description": "Cycle 179: Implemented custom activity types - API endpoints (GET/POST/DELETE/PATCH /api/activity-types), dashboard UI with modal for managing types, built-in types listing, and OpenAPI documentation. ~250 lines server.ts + ~230 lines CSS + ~180 lines JS.",
     "hash": "e38ad11bfc91d5c45c4a7c1d960e8aec67a07930be2421999f181bff62169c98",
     "signature": "2RBbxhVqMA7HkUBcG5xLwGEabw3YLDcigW2XXyoWNy2GLJHCxLBbQJXLPHyq2PRQNjyFEGSBcGiJvhCSmdErv4hD"
+  },
+  {
+    "timestamp": "2026-02-04T05:42:49.628Z",
+    "type": "commit",
+    "description": "Cycle 179: Custom activity types (user-defined)",
+    "hash": "504baa33e8f99d030c18b86d783f68c591d6692a7f0950c05f0149b45d9a9346",
+    "signature": "2QRMVhBPs9BsQhhNotALYdEwahH6s8PJv5zEwPPWGzeSdkBx3gNvwLRmQTxCEqVUPXjMFm3oErPnrBc3p2hWH4aK"
+  },
+  {
+    "timestamp": "2026-02-04T05:43:22Z",
+    "type": "build",
+    "description": "Cycle 179: Implemented custom activity types (user-defined). Added CRUD API endpoints for /api/custom-types, dashboard UI for managing custom types with create/delete functionality, dynamic filter buttons for custom types, full OpenAPI documentation. Includes 14 built-in types and support for up to 50 custom types with emoji, color, and description fields.",
+    "metadata": {},
+    "hash": "9b900ebd5517ddabc26614489a1c615fd827f1e8818e54f29caecf9d6c89fb99",
+    "signature": "DLJfF3Nfkz17jT1LSctMnpvJVS5qn5ASWiw53ETjrDQGzWbm9MdmDKFWThJ8cBAraEd8XLjz8oeP1rmDhT7PBCL",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
   }
 ]
