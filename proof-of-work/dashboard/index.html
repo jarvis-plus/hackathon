@@ -275,29 +275,31 @@
                         <!-- Dynamically populated when multiple wallets exist -->
                     </div>
                 </div>
-                <div class="date-range-filters" id="dateRangeFilters">
-                    <span class="date-range-label">📅 Date Range:</span>
+                <div class="date-range-filters" id="dateRangeFilters" role="group" aria-label="Filter by date range">
+                    <span class="date-range-label" id="dateRangeLabel">📅 Date Range:</span>
                     <div class="date-range-inputs">
-                        <input type="date" id="dateFrom" class="date-input" onchange="applyFilters()" title="From date">
-                        <span class="date-separator">→</span>
-                        <input type="date" id="dateTo" class="date-input" onchange="applyFilters()" title="To date">
-                        <button class="date-quick-btn" onclick="setQuickDateRange('today')" title="Today">Today</button>
-                        <button class="date-quick-btn" onclick="setQuickDateRange('week')" title="Past 7 days">Week</button>
-                        <button class="date-quick-btn" onclick="setQuickDateRange('all')" title="All time">All</button>
+                        <label for="dateFrom" class="sr-only">From date</label>
+                        <input type="date" id="dateFrom" class="date-input" onchange="applyFilters()" aria-label="Start date">
+                        <span class="date-separator" aria-hidden="true">→</span>
+                        <label for="dateTo" class="sr-only">To date</label>
+                        <input type="date" id="dateTo" class="date-input" onchange="applyFilters()" aria-label="End date">
+                        <button class="date-quick-btn" onclick="setQuickDateRange('today')" aria-label="Filter to today only">Today</button>
+                        <button class="date-quick-btn" onclick="setQuickDateRange('week')" aria-label="Filter to past 7 days">Week</button>
+                        <button class="date-quick-btn" onclick="setQuickDateRange('all')" aria-label="Show all dates">All</button>
                     </div>
                 </div>
-                <div class="filter-stats" id="filterStats"></div>
-                <div class="export-controls">
-                    <span class="export-label">📤 Export:</span>
-                    <button class="export-btn" onclick="exportActivities('json')" title="Download as JSON">
-                        <span class="export-icon">{ }</span> JSON
+                <div class="filter-stats" id="filterStats" role="status" aria-live="polite"></div>
+                <div class="export-controls" role="group" aria-label="Export activities">
+                    <span class="export-label" aria-hidden="true">📤 Export:</span>
+                    <button class="export-btn" onclick="exportActivities('json')" aria-label="Download activities as JSON">
+                        <span class="export-icon" aria-hidden="true">{ }</span> JSON
                     </button>
-                    <button class="export-btn" onclick="exportActivities('csv')" title="Download as CSV">
-                        <span class="export-icon">📊</span> CSV
+                    <button class="export-btn" onclick="exportActivities('csv')" aria-label="Download activities as CSV">
+                        <span class="export-icon" aria-hidden="true">📊</span> CSV
                     </button>
                 </div>
             </div>
-            <div id="feed" class="timeline" data-view="timeline">
+            <div id="feed" class="timeline" data-view="timeline" role="tabpanel" aria-labelledby="tab-timeline">
                 <div class="skeleton-activity">
                     <div class="skeleton-header">
                         <div class="skeleton skeleton-badge"></div>
@@ -333,13 +335,13 @@
                     <div class="skeleton skeleton-hash"></div>
                 </div>
             </div>
-            <div id="decisions-feed" class="timeline" data-view="decisions" style="display:none;">
+            <div id="decisions-feed" class="timeline" data-view="decisions" style="display:none;" role="tabpanel" aria-labelledby="tab-decisions">
                 <div class="empty-state">Loading decisions...</div>
             </div>
-            <div id="milestones-feed" data-view="milestones" style="display:none;">
+            <div id="milestones-feed" data-view="milestones" style="display:none;" role="tabpanel" aria-labelledby="tab-milestones">
                 <div class="empty-state">Loading milestones...</div>
             </div>
-            <div id="tweets-feed" data-view="tweets" style="display:none;">
+            <div id="tweets-feed" data-view="tweets" style="display:none;" role="tabpanel" aria-labelledby="tab-tweets">
                 <div class="tweets-content">
                     <div class="tweets-header">
                         <div class="tweets-avatar">🤖</div>
@@ -354,7 +356,7 @@
                     </div>
                 </div>
             </div>
-            <div id="meta-story" data-view="meta" style="display:none;">
+            <div id="meta-story" data-view="meta" style="display:none;" role="tabpanel" aria-labelledby="tab-meta">
                 <div class="meta-content">
                     <h3>🔄 The Recursive Meta-Story</h3>
                     <div class="meta-section">
@@ -431,7 +433,7 @@
                     </div>
                 </div>
             </div>
-            <div id="verify-feed" data-view="verify" style="display:none;">
+            <div id="verify-feed" data-view="verify" style="display:none;" role="tabpanel" aria-labelledby="tab-verify">
                 <div class="verify-content">
                     <h3>🔍 Verify Any Activity</h3>
                     <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
@@ -440,8 +442,9 @@
                     </p>
                     
                     <div class="verify-input-section">
-                        <input type="text" id="verify-hash-input" placeholder="Enter activity hash or hash prefix (min 8 chars)" class="verify-input">
-                        <button onclick="verifyHash()" class="verify-btn">🔍 Verify</button>
+                        <label for="verify-hash-input" class="sr-only">Activity hash to verify</label>
+                        <input type="text" id="verify-hash-input" placeholder="Enter activity hash or hash prefix (min 8 chars)" class="verify-input" aria-describedby="verify-result">
+                        <button onclick="verifyHash()" class="verify-btn" aria-label="Verify activity hash">🔍 Verify</button>
                     </div>
                     
                     <div id="verify-result" class="verify-result" style="display: none;"></div>
@@ -509,7 +512,9 @@
             </div>
         </div>
 
-        <footer>
+        </main>
+
+        <footer role="contentinfo">
             <div class="social-links">
                 <a href="https://github.com/jarvis-plus/hackathon" target="_blank" class="social-link github" title="View Source Code">
                     <svg viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
@@ -553,8 +558,8 @@
     </div>
 
     <!-- Scroll to top button -->
-    <button class="scroll-to-top" id="scrollToTop" onclick="scrollToTop()" title="Back to top (press T)">
-        <span class="scroll-top-icon">↑</span>
+    <button class="scroll-to-top" id="scrollToTop" onclick="scrollToTop()" title="Back to top (press T)" aria-label="Scroll to top of page">
+        <span class="scroll-top-icon" aria-hidden="true">↑</span>
         <span class="scroll-top-text">Top</span>
     </button>
 

@@ -101,6 +101,8 @@ function toggleSound() {
     if (btn) {
         btn.textContent = soundEnabled ? '🔔 Sounds On' : '🔕 Sounds Off';
         btn.classList.toggle('muted', !soundEnabled);
+        btn.setAttribute('aria-pressed', soundEnabled);
+        btn.setAttribute('aria-label', `Sound notifications: ${soundEnabled ? 'On' : 'Off'}`);
     }
     // Play a test sound when enabling
     if (soundEnabled) {
@@ -127,6 +129,8 @@ function updateThemeButton(theme) {
     const btn = document.getElementById('themeToggle');
     if (btn) {
         btn.textContent = theme === 'dark' ? '🌙 Dark' : '☀️ Light';
+        btn.setAttribute('aria-pressed', theme === 'dark');
+        btn.setAttribute('aria-label', `Dark mode: ${theme === 'dark' ? 'On' : 'Off'}`);
     }
 }
 
@@ -146,9 +150,11 @@ function toggleTheme() {
 // TAB SWITCHING (with smooth transitions)
 // ============================================
 function switchTab(tabName) {
-    // Update tab buttons
+    // Update tab buttons and ARIA states
     document.querySelectorAll('.feed-tab').forEach(tab => {
-        tab.classList.toggle('active', tab.dataset.tab === tabName);
+        const isActive = tab.dataset.tab === tabName;
+        tab.classList.toggle('active', isActive);
+        tab.setAttribute('aria-selected', isActive);
     });
     
     // Get all feed containers
@@ -2227,9 +2233,11 @@ const DEFAULT_WALLET = 'AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX';
 function setTypeFilter(type) {
     currentTypeFilter = type;
     
-    // Update active state on buttons
+    // Update active state and ARIA on buttons
     document.querySelectorAll('.type-filter').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.type === type);
+        const isActive = btn.dataset.type === type;
+        btn.classList.toggle('active', isActive);
+        btn.setAttribute('aria-pressed', isActive);
     });
     
     applyFilters();
@@ -3383,7 +3391,8 @@ function updateNotificationButton() {
     const btn = document.getElementById('notificationToggle');
     if (!btn) return;
     
-    if (notificationsEnabled && notificationPermission === 'granted') {
+    const isEnabled = notificationsEnabled && notificationPermission === 'granted';
+    if (isEnabled) {
         btn.textContent = '🔔 Notifs On';
         btn.classList.remove('muted');
         btn.title = 'Browser notifications enabled - click to disable';
@@ -3392,6 +3401,8 @@ function updateNotificationButton() {
         btn.classList.add('muted');
         btn.title = 'Browser notifications disabled - click to enable';
     }
+    btn.setAttribute('aria-pressed', isEnabled);
+    btn.setAttribute('aria-label', `Browser notifications: ${isEnabled ? 'On' : 'Off'}`);
 }
 
 /**
@@ -3944,3 +3955,92 @@ window.addEventListener('appinstalled', () => {
 
 // Register service worker on page load
 registerServiceWorker();
+
+// ============================================
+// ACCESSIBILITY HELPERS
+// ============================================
+
+/**
+ * Announce a message to screen readers
+ * @param {string} message - Message to announce
+ */
+function announceToScreenReader(message) {
+    const announcer = document.getElementById('sr-announcements');
+    if (announcer) {
+        // Clear and set new message (triggers ARIA live region)
+        announcer.textContent = '';
+        setTimeout(() => {
+            announcer.textContent = message;
+        }, 100);
+    }
+}
+
+/**
+ * Initialize keyboard navigation for tabs
+ */
+function initTabKeyboardNav() {
+    const tabList = document.querySelector('[role="tablist"]');
+    if (!tabList) return;
+    
+    tabList.addEventListener('keydown', (e) => {
+        const tabs = Array.from(tabList.querySelectorAll('[role="tab"]'));
+        const currentIndex = tabs.findIndex(tab => tab === document.activeElement);
+        
+        if (currentIndex === -1) return;
+        
+        let newIndex = currentIndex;
+        
+        switch (e.key) {
+            case 'ArrowRight':
+            case 'ArrowDown':
+                e.preventDefault();
+                newIndex = (currentIndex + 1) % tabs.length;
+                break;
+            case 'ArrowLeft':
+            case 'ArrowUp':
+                e.preventDefault();
+                newIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+                break;
+            case 'Home':
+                e.preventDefault();
+                newIndex = 0;
+                break;
+            case 'End':
+                e.preventDefault();
+                newIndex = tabs.length - 1;
+                break;
+            default:
+                return;
+        }
+        
+        // Focus and activate the new tab
+        tabs[newIndex].focus();
+        const tabName = tabs[newIndex].dataset.tab;
+        if (tabName) {
+            switchTab(tabName);
+            announceToScreenReader(`${tabName} tab selected`);
+        }
+    });
+}
+
+/**
+ * Initialize all accessibility features
+ */
+function initAccessibility() {
+    initTabKeyboardNav();
+    
+    // Announce initial page load
+    setTimeout(() => {
+        const count = window.cachedActivities?.length || 0;
+        if (count > 0) {
+            announceToScreenReader(`Dashboard loaded with ${count} activities`);
+        }
+    }, 2000);
+}
+
+// Initialize accessibility on DOM ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAccessibility);
+} else {
+    initAccessibility();
+}

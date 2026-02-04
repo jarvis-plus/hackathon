@@ -2903,5 +2903,12 @@
     "description": "chore: sign latest activity on-chain",
     "hash": "149c791d150ae9e1a449f5eebe3ae0ffe1a221957f35e8fc729675d2108584e5",
     "signature": "3ZaQR3egb8gM3yVnzHyGsZidLPQ1wnAbaaGmWb5daadTNEeJYfPCNV3Js7WcmTk2cmrmCYKqWzpoZXnRgqUY4d1r"
+  },
+  {
+    "timestamp": "2026-02-04T02:59:18.367Z",
+    "type": "commit",
+    "description": "chore: sign activity 366",
+    "hash": "e6916aa0cf174d9d478b30a36f39ed0d7c96dfaa392040c2cb3ac2a771c24df3",
+    "signature": "5sNqc9Y4QrU7UzNpFLAYm4DZR2EiDqX2CN4sage9ywELSPHv376tWz4EmuJiXJ2LMFhzyB981gLNPnXtGNNTRygJ"
   }
 ]
