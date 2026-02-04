@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 21:57 PST
-**Cycle:** 180
+**Last Updated:** 2026-02-03 22:02 PST
+**Cycle:** 181
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -100,13 +100,46 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Activity comparison mode (select 2 to compare) ✅ Cycle 178
 - [x] Custom activity types (user-defined) ✅ Cycle 179
 - [x] Activity attachment support (link files/images) ✅ Cycle 180
-- [ ] Dashboard tour/onboarding for new users
+- [x] Dashboard tour/onboarding for new users ✅ Cycle 181
 - [ ] Activity importance scoring (auto-prioritize)
 - [ ] Voice input for activity logging (web speech API)
 
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 181 (Dashboard Tour/Onboarding)
+- Implemented guided onboarding tour for new visitors
+- **12 Tour Steps** covering all dashboard features:
+  1. Welcome introduction
+  2. Activity Statistics (stat cards)
+  3. Activity Streak
+  4. Cryptographic Verification banner
+  5. Analytics & Insights section
+  6. Achievement Badges panel
+  7. Activity Views tabs
+  8. Filter & Search controls
+  9. Sound & Notifications
+  10. Theme Selection
+  11. Focus Mode
+  12. Final summary with shortcuts
+- **Auto-trigger**: Tour starts automatically for first-time visitors after 2s delay
+- **Persistence**: Uses localStorage with version tracking to not re-show
+- **Navigation**: Arrow keys (←/→), Enter for next, Escape to skip
+- **Visual Features**:
+  - Floating tooltip with arrow pointing to target
+  - Glowing highlight ring around target element (pulsing animation)
+  - Progress bar showing completion percentage
+  - Step indicator (e.g., "Step 3 of 12")
+  - Semi-transparent overlay darkening background
+- **Theme Support**: Full styling for all 6 themes (Dark, Light, Ocean, Forest, Sunset, Cyberpunk)
+- **Mobile Responsive**: Full-width tooltip on small screens
+- **UI Additions**:
+  - 🎓 Tour button in header to restart tour
+  - Command palette: "Start Dashboard Tour" and "Reset Tour" commands
+- **Accessibility**: ARIA attributes, screen reader announcements
+- **Code**: ~380 lines JS, ~350 lines CSS
+- 471 activities, all signed on-chain
 
 ### Cycle 180 (Activity Attachment Support)
 - Implemented ability to attach images, files, and links to activities
@@ -243,30 +276,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - **OpenAPI Updated**: Added AchievementBadge and Achievements schemas
 - ~250 lines server.ts, ~350 lines CSS, ~120 lines JS
 - 453 activities, all signed on-chain
-
-### Cycle 176 (Mini Activity Preview on Hover)
-- Implemented floating tooltip that appears when hovering over activity cards
-- **Features**:
-  - Type emoji with styled header (commit yellow, trade red, etc.)
-  - Description preview (3 lines max with ellipsis)
-  - Timestamp (relative "5m ago" + full date on hover)
-  - On-chain status badge (verified green, pending yellow)
-  - Wallet address (truncated), tags, pinned/notes indicators
-  - Smart positioning (flips when near viewport edges)
-  - Disabled on touch devices via `@media (hover: none)`
-  - 200ms debounce for smooth UX
-- **CSS Changes (~180 lines)**:
-  - `.activity-preview` floating tooltip with backdrop blur
-  - Arrow indicator that flips based on position
-  - Theme support (light, cyberpunk with glow)
-  - Mobile responsive sizing
-- **JS Changes (~190 lines)**:
-  - `initActivityPreview()` - creates preview element, attaches listeners
-  - `handleActivityHover/Leave/Move()` - event handlers
-  - `showActivityPreview()`, `hideActivityPreview()` - toggle visibility
-  - `positionPreview()` - smart viewport-aware positioning
-  - `renderPreviewContent()` - builds tooltip HTML with activity data
-- 451 activities, all signed on-chain
 
 ---
 

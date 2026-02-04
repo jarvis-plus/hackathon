@@ -9334,3 +9334,443 @@ if (document.readyState === 'loading') {
 } else {
     setTimeout(loadCustomTypes, 300);
 }
+
+// ============================================
+// DASHBOARD ONBOARDING TOUR
+// ============================================
+
+const TOUR_STORAGE_KEY = 'pow-tour-completed';
+const TOUR_VERSION = 1; // Increment to force re-show tour for new features
+
+/**
+ * Tour steps configuration
+ * Each step targets a specific element and shows an explanation
+ */
+const TOUR_STEPS = [
+    {
+        target: '.logo-section',
+        title: 'Welcome to Proof of Work! 🎉',
+        content: 'This dashboard shows real-time activity from Jarvis, an autonomous AI agent. Every action is cryptographically signed and verifiable on the Solana blockchain.',
+        position: 'bottom'
+    },
+    {
+        target: '.stats',
+        title: 'Activity Statistics 📊',
+        content: 'These cards show key metrics: total actions, on-chain verification rate, commits, builds, trades, and more. All stats update in real-time as new activities come in.',
+        position: 'bottom'
+    },
+    {
+        target: '#streak-card',
+        title: 'Activity Streak 🔥',
+        content: 'Track consecutive days of activity. The streak counter shows how many days in a row the agent has been active.',
+        position: 'top'
+    },
+    {
+        target: '.proof-banner',
+        title: 'Cryptographic Verification 🔐',
+        content: 'Every activity is hashed using SHA-256, signed with Ed25519, and the proof is stored on Solana mainnet. This ensures complete transparency and immutability.',
+        position: 'bottom'
+    },
+    {
+        target: '.charts-section',
+        title: 'Analytics & Insights 📈',
+        content: 'Dive deep into activity patterns with interactive charts, heatmaps, and insights. See peak hours, weekly comparisons, and set daily goals.',
+        position: 'top',
+        scrollTo: true
+    },
+    {
+        target: '#achievements-panel',
+        title: 'Achievement Badges 🏅',
+        content: 'Earn badges by reaching milestones! Categories include Activity, Streak, On-Chain, Diversity, and Special achievements with 5 tiers from Bronze to Diamond.',
+        position: 'top',
+        scrollTo: true
+    },
+    {
+        target: '.feed-tabs',
+        title: 'Activity Views 📋',
+        content: 'Switch between different views: Activity Feed shows all actions, Milestones highlights achievements, Tweets shows social posts, and Verify lets you check on-chain proofs.',
+        position: 'bottom',
+        scrollTo: true
+    },
+    {
+        target: '.feed-filters',
+        title: 'Filter & Search 🔍',
+        content: 'Search activities by keyword, filter by type, tags, date range, or wallet. Use the timeline slider for visual time selection. Export your filtered results as JSON or CSV.',
+        position: 'top'
+    },
+    {
+        target: '#soundToggle',
+        title: 'Sound & Notifications 🔔',
+        content: 'Enable sound notifications to hear when new activities arrive. You can also enable browser notifications to stay updated even when the tab is in the background.',
+        position: 'bottom'
+    },
+    {
+        target: '#themeToggle',
+        title: 'Theme Selection 🎨',
+        content: 'Choose from 6 color themes: Dark, Light, Ocean, Forest, Sunset, and Cyberpunk. Your preference is saved automatically.',
+        position: 'bottom'
+    },
+    {
+        target: '#focusModeToggle',
+        title: 'Focus Mode 🎯',
+        content: 'Toggle Focus Mode (Z) for a distraction-free view. It hides stats and charts, showing only the activity feed.',
+        position: 'bottom'
+    },
+    {
+        target: null, // Final step with no target
+        title: 'You\'re All Set! 🚀',
+        content: 'Explore the dashboard and watch the AI work in real-time. Press ? for keyboard shortcuts, Ctrl+K for the command palette, and C to compare activities. Enjoy!',
+        position: 'center'
+    }
+];
+
+let currentTourStep = 0;
+let tourOverlay = null;
+let tourTooltip = null;
+let tourHighlight = null;
+let tourActive = false;
+
+/**
+ * Check if tour should auto-start for new visitors
+ */
+function shouldShowTour() {
+    const stored = localStorage.getItem(TOUR_STORAGE_KEY);
+    if (!stored) return true;
+    
+    try {
+        const data = JSON.parse(stored);
+        // Show if version is outdated
+        return data.version < TOUR_VERSION;
+    } catch {
+        return true;
+    }
+}
+
+/**
+ * Mark tour as completed
+ */
+function completeTour() {
+    localStorage.setItem(TOUR_STORAGE_KEY, JSON.stringify({
+        completed: true,
+        version: TOUR_VERSION,
+        completedAt: new Date().toISOString()
+    }));
+}
+
+/**
+ * Create tour overlay and tooltip elements
+ */
+function createTourElements() {
+    // Overlay
+    tourOverlay = document.createElement('div');
+    tourOverlay.className = 'tour-overlay';
+    tourOverlay.setAttribute('role', 'dialog');
+    tourOverlay.setAttribute('aria-modal', 'true');
+    tourOverlay.setAttribute('aria-label', 'Dashboard tour');
+    
+    // Highlight ring
+    tourHighlight = document.createElement('div');
+    tourHighlight.className = 'tour-highlight';
+    
+    // Tooltip
+    tourTooltip = document.createElement('div');
+    tourTooltip.className = 'tour-tooltip';
+    tourTooltip.innerHTML = `
+        <div class="tour-tooltip-content">
+            <div class="tour-header">
+                <span class="tour-step-indicator"></span>
+                <button class="tour-close" onclick="endTour()" aria-label="Close tour">&times;</button>
+            </div>
+            <h3 class="tour-title"></h3>
+            <p class="tour-content"></p>
+            <div class="tour-footer">
+                <div class="tour-progress">
+                    <div class="tour-progress-bar"></div>
+                </div>
+                <div class="tour-buttons">
+                    <button class="tour-btn tour-btn-skip" onclick="endTour()">Skip Tour</button>
+                    <button class="tour-btn tour-btn-prev" onclick="prevTourStep()">← Back</button>
+                    <button class="tour-btn tour-btn-next" onclick="nextTourStep()">Next →</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(tourOverlay);
+    document.body.appendChild(tourHighlight);
+    document.body.appendChild(tourTooltip);
+}
+
+/**
+ * Start the tour
+ */
+function startTour() {
+    if (tourActive) return;
+    
+    tourActive = true;
+    currentTourStep = 0;
+    
+    // Create elements if not exist
+    if (!tourOverlay) {
+        createTourElements();
+    }
+    
+    // Show overlay
+    tourOverlay.classList.add('active');
+    document.body.classList.add('tour-active');
+    
+    // Show first step
+    showTourStep(currentTourStep);
+    
+    // Add keyboard listener
+    document.addEventListener('keydown', handleTourKeydown);
+    
+    announceToScreenReader('Dashboard tour started. Press Escape to skip, Enter or Right Arrow for next step.');
+}
+
+/**
+ * End the tour
+ */
+function endTour() {
+    if (!tourActive) return;
+    
+    tourActive = false;
+    
+    // Hide elements
+    if (tourOverlay) tourOverlay.classList.remove('active');
+    if (tourHighlight) tourHighlight.classList.remove('active');
+    if (tourTooltip) tourTooltip.classList.remove('active');
+    document.body.classList.remove('tour-active');
+    
+    // Mark as completed
+    completeTour();
+    
+    // Remove keyboard listener
+    document.removeEventListener('keydown', handleTourKeydown);
+    
+    announceToScreenReader('Tour completed');
+}
+
+/**
+ * Show a specific tour step
+ */
+function showTourStep(stepIndex) {
+    const step = TOUR_STEPS[stepIndex];
+    if (!step) {
+        endTour();
+        return;
+    }
+    
+    // Update tooltip content
+    const title = tourTooltip.querySelector('.tour-title');
+    const content = tourTooltip.querySelector('.tour-content');
+    const indicator = tourTooltip.querySelector('.tour-step-indicator');
+    const progressBar = tourTooltip.querySelector('.tour-progress-bar');
+    const prevBtn = tourTooltip.querySelector('.tour-btn-prev');
+    const nextBtn = tourTooltip.querySelector('.tour-btn-next');
+    const skipBtn = tourTooltip.querySelector('.tour-btn-skip');
+    
+    title.textContent = step.title;
+    content.textContent = step.content;
+    indicator.textContent = `Step ${stepIndex + 1} of ${TOUR_STEPS.length}`;
+    progressBar.style.width = `${((stepIndex + 1) / TOUR_STEPS.length) * 100}%`;
+    
+    // Show/hide nav buttons
+    prevBtn.style.display = stepIndex === 0 ? 'none' : 'inline-block';
+    
+    // Last step shows "Finish" instead of "Next"
+    if (stepIndex === TOUR_STEPS.length - 1) {
+        nextBtn.textContent = 'Finish ✓';
+        skipBtn.style.display = 'none';
+    } else {
+        nextBtn.textContent = 'Next →';
+        skipBtn.style.display = 'inline-block';
+    }
+    
+    // Position highlight and tooltip
+    if (step.target) {
+        const targetEl = document.querySelector(step.target);
+        
+        if (targetEl) {
+            // Scroll to element if needed
+            if (step.scrollTo) {
+                targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Wait for scroll then position
+                setTimeout(() => positionTourElements(targetEl, step.position), 400);
+            } else {
+                positionTourElements(targetEl, step.position);
+            }
+            
+            tourHighlight.classList.add('active');
+        } else {
+            // Target not found, center tooltip
+            positionCenteredTooltip();
+            tourHighlight.classList.remove('active');
+        }
+    } else {
+        // No target - center tooltip (final step)
+        positionCenteredTooltip();
+        tourHighlight.classList.remove('active');
+    }
+    
+    tourTooltip.classList.add('active');
+    
+    // Announce to screen reader
+    announceToScreenReader(`${step.title}. ${step.content}`);
+}
+
+/**
+ * Position tour elements around target
+ */
+function positionTourElements(targetEl, position) {
+    const rect = targetEl.getBoundingClientRect();
+    const padding = 8;
+    
+    // Position highlight
+    tourHighlight.style.top = `${rect.top + window.scrollY - padding}px`;
+    tourHighlight.style.left = `${rect.left - padding}px`;
+    tourHighlight.style.width = `${rect.width + padding * 2}px`;
+    tourHighlight.style.height = `${rect.height + padding * 2}px`;
+    
+    // Position tooltip
+    const tooltipRect = tourTooltip.getBoundingClientRect();
+    const tooltipWidth = 360;
+    const tooltipHeight = tooltipRect.height || 220;
+    const gap = 16;
+    
+    let top, left;
+    
+    switch (position) {
+        case 'top':
+            top = rect.top + window.scrollY - tooltipHeight - gap;
+            left = rect.left + rect.width / 2 - tooltipWidth / 2;
+            tourTooltip.setAttribute('data-position', 'top');
+            break;
+        case 'bottom':
+            top = rect.bottom + window.scrollY + gap;
+            left = rect.left + rect.width / 2 - tooltipWidth / 2;
+            tourTooltip.setAttribute('data-position', 'bottom');
+            break;
+        case 'left':
+            top = rect.top + window.scrollY + rect.height / 2 - tooltipHeight / 2;
+            left = rect.left - tooltipWidth - gap;
+            tourTooltip.setAttribute('data-position', 'left');
+            break;
+        case 'right':
+            top = rect.top + window.scrollY + rect.height / 2 - tooltipHeight / 2;
+            left = rect.right + gap;
+            tourTooltip.setAttribute('data-position', 'right');
+            break;
+        default:
+            top = rect.bottom + window.scrollY + gap;
+            left = rect.left + rect.width / 2 - tooltipWidth / 2;
+            tourTooltip.setAttribute('data-position', 'bottom');
+    }
+    
+    // Keep tooltip on screen
+    left = Math.max(16, Math.min(left, window.innerWidth - tooltipWidth - 16));
+    top = Math.max(16, top);
+    
+    tourTooltip.style.top = `${top}px`;
+    tourTooltip.style.left = `${left}px`;
+}
+
+/**
+ * Position tooltip centered on screen
+ */
+function positionCenteredTooltip() {
+    tourTooltip.style.top = '50%';
+    tourTooltip.style.left = '50%';
+    tourTooltip.style.transform = 'translate(-50%, -50%)';
+    tourTooltip.setAttribute('data-position', 'center');
+}
+
+/**
+ * Go to next tour step
+ */
+function nextTourStep() {
+    if (currentTourStep >= TOUR_STEPS.length - 1) {
+        endTour();
+        return;
+    }
+    
+    currentTourStep++;
+    tourTooltip.style.transform = '';
+    showTourStep(currentTourStep);
+}
+
+/**
+ * Go to previous tour step
+ */
+function prevTourStep() {
+    if (currentTourStep <= 0) return;
+    
+    currentTourStep--;
+    tourTooltip.style.transform = '';
+    showTourStep(currentTourStep);
+}
+
+/**
+ * Handle keyboard navigation in tour
+ */
+function handleTourKeydown(e) {
+    if (!tourActive) return;
+    
+    switch (e.key) {
+        case 'Escape':
+            endTour();
+            break;
+        case 'Enter':
+        case 'ArrowRight':
+            nextTourStep();
+            break;
+        case 'ArrowLeft':
+            prevTourStep();
+            break;
+    }
+}
+
+/**
+ * Reset tour to show again
+ */
+function resetTour() {
+    localStorage.removeItem(TOUR_STORAGE_KEY);
+    announceToScreenReader('Tour has been reset. It will show on next page load, or start it now.');
+}
+
+// Add tour button to command palette
+if (typeof PALETTE_COMMANDS !== 'undefined' && Array.isArray(PALETTE_COMMANDS)) {
+    PALETTE_COMMANDS.push({
+        id: 'start-tour',
+        title: 'Start Dashboard Tour',
+        description: 'Take a guided tour of dashboard features',
+        icon: '🎓',
+        action: () => { startTour(); hideCommandPalette(); },
+        group: 'Help'
+    });
+    PALETTE_COMMANDS.push({
+        id: 'reset-tour',
+        title: 'Reset Tour',
+        description: 'Reset tour to show again for new users',
+        icon: '🔄',
+        action: () => { resetTour(); hideCommandPalette(); },
+        group: 'Help'
+    });
+}
+
+// Auto-start tour for new visitors (after a brief delay for page to load)
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+            if (shouldShowTour()) {
+                startTour();
+            }
+        }, 2000);
+    });
+} else {
+    setTimeout(() => {
+        if (shouldShowTour()) {
+            startTour();
+        }
+    }, 2000);
+}
