@@ -1455,8 +1455,58 @@
 
         .empty-state {
             text-align: center;
-            padding: 3rem 1rem;
+            padding: 3rem 1.5rem;
             color: var(--text-muted);
+            background: var(--bg-card);
+            border: 1px dashed var(--border);
+            border-radius: 12px;
+            margin: 1rem 0;
+        }
+        
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.6;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        .empty-state h4 {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .empty-state p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            max-width: 300px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+        
+        .empty-state-hint {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            opacity: 0.7;
+        }
+        
+        .empty-state-hint code {
+            background: rgba(0,0,0,0.3);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+        }
+        
+        [data-theme="light"] .empty-state {
+            background: linear-gradient(135deg, #f8f9fa, #f0f4f8);
+        }
+        
+        [data-theme="light"] .empty-state-hint code {
+            background: rgba(0,0,0,0.06);
         }
 
         /* Footer */
@@ -3526,7 +3576,16 @@
             const feed = document.getElementById('decisions-feed');
             
             if (!decisions.length) {
-                feed.innerHTML = '<div class="empty-state">No key decisions recorded yet.</div>';
+                feed.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🧠</div>
+                        <h4>No Key Decisions Yet</h4>
+                        <p>Strategic decisions and their rationales will appear here as the agent makes them.</p>
+                        <div class="empty-state-hint">
+                            Decisions include architecture choices, trading strategies, and project pivots.
+                        </div>
+                    </div>
+                `;
                 return;
             }
             
@@ -3856,7 +3915,16 @@
         function renderActivities(activities, highlightNew = false) {
             const feed = document.getElementById('feed');
             if (!activities.length) {
-                feed.innerHTML = '<div class="empty-state">No activities yet. The agent is warming up... 🤖</div>';
+                feed.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🤖</div>
+                        <h4>Agent Warming Up</h4>
+                        <p>Activities will appear here as the agent works — commits, builds, trades, and more.</p>
+                        <div class="empty-state-hint">
+                            Every action is cryptographically signed and verified on <code>Solana</code>
+                        </div>
+                    </div>
+                `;
                 return;
             }
             
@@ -4189,6 +4257,17 @@
             
             // Get last 15 activities with hashes
             const withHashes = activities.filter(a => a.hash || a.proof?.hash).slice(-15).reverse();
+            
+            if (!withHashes.length) {
+                container.innerHTML = `
+                    <div class="empty-state" style="padding: 1.5rem; margin: 0;">
+                        <div class="empty-state-icon" style="font-size: 2rem; margin-bottom: 0.5rem;">🔐</div>
+                        <h4 style="font-size: 0.95rem;">No Hashes to Verify</h4>
+                        <p style="font-size: 0.8rem;">Activity hashes will appear here once the agent starts logging work.</p>
+                    </div>
+                `;
+                return;
+            }
             
             // Muted color palette for verification badges
             const typeColors = {
@@ -5027,8 +5106,16 @@
                     renderCharts(activities);
                     renderHeatmap(activities);
                 } catch (e2) {
-                    document.getElementById('feed').innerHTML = 
-                        '<div class="empty-state">No activities yet. The agent is warming up... 🤖</div>';
+                    document.getElementById('feed').innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📡</div>
+                            <h4>Connecting to Agent</h4>
+                            <p>Unable to load activities. The agent may be offline or the connection is unavailable.</p>
+                            <div class="empty-state-hint">
+                                Try refreshing or check back in a moment.
+                            </div>
+                        </div>
+                    `;
                 }
             }
         }
