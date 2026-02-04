@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 18:20 PST
-**Cycle:** 138
+**Last Updated:** 2026-02-03 18:25 PST
+**Cycle:** 139
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -47,7 +47,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Calendar event tracking ✅ Cycle 135
 - [ ] Multi-wallet support
 - [x] Activity search/filter on dashboard ✅ Cycle 131
-- [ ] Activity categories/tags
+- [x] Activity categories/tags ✅ Cycle 139
 
 ### 📝 Documentation
 - [x] Add inline code comments to server.ts ✅ Cycle 133
@@ -58,6 +58,20 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 139 (Activity Categories/Tags System)
+- Added optional `tags` field to Activity interface in types.ts
+- Added TAG_PRESETS constant with common tag categories (hackathon, infra, trading, etc.)
+- Updated createActivity() to accept optional tags parameter
+- Added tag filter UI section in dashboard with dynamic buttons populated from activity tags
+- Tags display on activity cards as colored badges with click-to-filter
+- Search now includes tags in query matching
+- Tag-specific color styling (hackathon=red, infra=blue, trading=coral, etc.)
+- Full mobile responsiveness for tag filters and tag badges
+- Reset filters now clears tag selection too
+- Fixed duplicate filter functions, updated renderActivities to trigger tag filtering
+- Files: types.ts, app.js (~80 lines added/fixed), dashboard.css (~120 lines), index.html
+- 335 activities, all signed on-chain
 
 ### Cycle 138 (CONTRIBUTING.md Open Source Guide)
 - Created comprehensive CONTRIBUTING.md (~350 lines)
@@ -103,19 +117,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - Updated both typeColors maps in app.js
 - Integrated into cron-runner.sh (step 6)
 - 323 activities, all signed on-chain
-
-### Cycle 134 (Browser Activity Tracking)
-- Created collectors/browser-tracker.ts for web research tracking
-- Added collectors/log-browser.ts helper for easy activity logging
-- Supports 4 action types: search, fetch, browse, screenshot
-- Added BrowserMetadata and BrowserState interfaces to types.ts
-- Added 'browser' to ActivityType union
-- Updated dashboard: added browser filter button (#3498db bright blue)
-- Updated both typeColors maps in app.js (verify section and charts)
-- Integrated into cron-runner.sh (step 5)
-- Created data/browser-log.json for queued entries
-- Logged 2 sample browser activities, all signed on-chain
-- 319 activities, all signed on-chain
 
 ---
 
