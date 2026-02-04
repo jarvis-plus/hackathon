@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 18:57 PST
-**Cycle:** 149
+**Last Updated:** 2026-02-03 19:04 PST
+**Cycle:** 150
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -32,7 +32,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Activity export (JSON/CSV download with filter support) ✅ Cycle 147
 - [x] Activity grouping by day (collapsible sections) ✅ Cycle 148
 - [x] Webhook notifications API for external integrations ✅ Cycle 149
-- [ ] Accessibility improvements (ARIA labels, focus states)
+- [x] Accessibility improvements (ARIA labels, focus states) ✅ Cycle 150
 
 ### 🎨 Design (see docs/DESIGN-INSPIRATION.md)
 - [x] Dark/light mode toggle ✅ Cycle 116
@@ -68,6 +68,25 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 150 (Accessibility Improvements)
+- Comprehensive accessibility overhaul for WCAG compliance
+- **Skip link** for keyboard users to bypass navigation
+- **ARIA labels** on all interactive elements (buttons, toggles, tabs)
+- **Tablist/tabpanel roles** with aria-selected for proper tab semantics
+- **Focus-visible states** for keyboard navigation (green outline ring)
+- **Screen reader announcements** via ARIA live region for dynamic content
+- **Form labels** for search input, date pickers, and verify input
+- **High contrast mode** support via @media (prefers-contrast: high)
+- **Reduced motion** support via @media (prefers-reduced-motion)
+- **Arrow key navigation** between tabs (Left/Right, Home/End)
+- **Touch target sizes** minimum 44x44px on mobile (pointer: coarse)
+- **Modal accessibility** (role=dialog, aria-modal, aria-labelledby)
+- **Chart/stat card focus** states for screen reader navigation
+- Additional: error state styling, filter stats live region animation
+- ~230 lines CSS, ~80 lines JS added
+- Files: index.html, dashboard.css, app.js
+- 370 activities, all signed on-chain
 
 ### Cycle 149 (Webhook Notifications API)
 - Added webhook notifications API for external integrations
@@ -134,21 +153,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - ~80 lines CSS for update toast styling
 - Files: manifest.json, sw.js, icon-*.svg, app.js, dashboard.css, index.html
 - 354 activities, all signed on-chain
-
-### Cycle 145 (Scroll-to-Top Button)
-- Added floating scroll-to-top button that appears when scrolling past 400px
-- ↑ Button in bottom-right corner with smooth hover animation
-- Keyboard shortcut `T` for quick scroll to top
-- Throttled scroll event handler for performance (100ms debounce)
-- Smooth scroll behavior with subtle notification sound feedback
-- Mobile responsive: smaller button on screens <600px
-- Updated keyboard shortcuts modal to include new `t` shortcut
-- CSS includes dark/light mode support and hover effects
-- Button has spring-like bounce animation on appear/hover
-- ~100 lines of JavaScript for scroll handling
-- ~100 lines of CSS with animations
-- Files: app.js, dashboard.css, index.html
-- 349 activities, all signed on-chain
 
 ---
 

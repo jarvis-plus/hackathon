@@ -2910,5 +2910,45 @@
     "description": "chore: sign activity 366",
     "hash": "e6916aa0cf174d9d478b30a36f39ed0d7c96dfaa392040c2cb3ac2a771c24df3",
     "signature": "5sNqc9Y4QrU7UzNpFLAYm4DZR2EiDqX2CN4sage9ywELSPHv376tWz4EmuJiXJ2LMFhzyB981gLNPnXtGNNTRygJ"
+  },
+  {
+    "timestamp": "2026-02-04T02:59:30.127Z",
+    "type": "commit",
+    "description": "chore: sign remaining activities",
+    "hash": "84d35a3fad41e9f07b5203d6a866e4da14da1a540088959adfb5c055cf628446",
+    "signature": "fwCjfEQDCoKj6RhAnaHty99Z2rmYUrYiJ96McaNRfqFQPcza9Dbz7m5Jkh19gkmw4hWCLsofMybsnwJY973oKNv",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
+  },
+  {
+    "timestamp": "2026-02-04T03:00:28.000Z",
+    "type": "build",
+    "description": "Cycle 149: Comprehensive accessibility improvements",
+    "metadata": {
+      "cycle": 149,
+      "changes": [
+        "Skip-to-content link for keyboard users",
+        "ARIA labels on all buttons, toggles, and tabs",
+        "Proper tablist/tabpanel roles with aria-selected",
+        "Focus-visible states for keyboard navigation",
+        "Screen reader announcements via ARIA live region",
+        "Form labels for search and date inputs",
+        "High contrast mode support",
+        "Prefers-reduced-motion support",
+        "Arrow key navigation between tabs"
+      ],
+      "files": [
+        "index.html",
+        "dashboard.css",
+        "app.js"
+      ],
+      "linesAdded": "~230 (150 CSS, 80 JS)"
+    },
+    "hash": "763d58c2371195d1d959f08341a9ed90e4a0821083781eb6b9ec0835ea827860",
+    "signature": "4R1NwwtzaDAcJLYTJwftHEf6gx3SkvR2j6rQdDG9g6XckLB4RcHrBqUYqnQoCgBmcqyZ57WCW1ubBrjVFCo6c5hZ"
+  },
+  {
+    "timestamp": "2026-02-04T03:01:24.213Z",
+    "type": "commit",
+    "description": "feat: Cycle 150 - Comprehensive accessibility improvements"
   }
 ]
