@@ -155,15 +155,156 @@ proof-of-work/
 ├── api/
 │   └── server.ts          # Bun API server (dashboard + WebSocket + API)
 ├── dashboard/
-│   └── index.html         # Single-page dashboard (charts, timeline, verify)
+│   ├── index.html         # Dashboard HTML
+│   └── app.js             # Dashboard JavaScript (charts, filters, WebSocket)
+├── data/
+│   └── browser-log.json   # Browser activity queue
 └── collectors/
-    ├── git-commits.sh       # Git commit auto-collector
+    ├── types.ts             # Shared types & utilities (Activity, state helpers)
     ├── wallet-tracker.ts    # Wallet transaction monitor
+    ├── email-tracker.ts     # Gmail sent folder tracker
+    ├── calendar-tracker.ts  # Google Calendar event tracker
+    ├── browser-tracker.ts   # Web research activity tracker
+    ├── log-browser.ts       # Browser activity logging helper
     ├── heartbeat-tracker.ts # Agent uptime/health tracker
     ├── session-tracker.ts   # Session/interaction tracker
     ├── message-tracker.ts   # Message logging helper
     ├── twitter-tracker.ts   # Twitter/X posts tracker
-    └── recurring-trade.ts   # DCA-style recurring trade executor
+    ├── recurring-trade.ts   # DCA-style recurring trade executor
+    ├── git-commits.sh       # Git commit auto-collector
+    └── *-state.json         # State files for deduplication
+```
+
+---
+
+## 🔌 Collector API
+
+The collector system enables extensible activity tracking from any source.
+
+### Architecture
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│  External API   │────▶│    Collector    │────▶│  activity.json  │
+│  (Gmail, etc.)  │     │  *-tracker.ts   │     │                 │
+└─────────────────┘     └────────┬────────┘     └─────────────────┘
+                                 │
+                        ┌────────▼────────┐
+                        │   State File    │
+                        │  *-state.json   │
+                        └─────────────────┘
+```
+
+### Shared Types (`collectors/types.ts`)
+
+All collectors import from `types.ts`:
+
+```typescript
+// Activity Types
+type ActivityType = 
+  | 'browser' | 'build' | 'calendar' | 'commit' | 'decision'
+  | 'deploy' | 'email' | 'heartbeat' | 'message' | 'session'
+  | 'trade' | 'transfer' | 'tweet' | 'error' | string;
+
+// Core Activity Interface
+interface Activity {
+  timestamp: string;      // ISO 8601
+  type: ActivityType;
+  description: string;
+  metadata?: ActivityMetadata;
+  signature?: string;     // Added by signer
+  hash?: string;          // Content hash
+}
+
+// Utility Functions
+loadActivities(): Activity[]
+saveActivities(activities: Activity[]): void
+addActivity(activity: Activity): void
+loadState<T>(stateFile, defaults): T
+saveState<T>(stateFile, state): void
+createActivity(type, description, metadata?): Activity
+truncate(text, maxLen): string
+```
+
+### Available Collectors
+
+| Collector | Purpose | Frequency |
+|-----------|---------|-----------|
+| `wallet-tracker.ts` | SOL/SPL transfers and swaps | 15 min |
+| `email-tracker.ts` | Sent emails via Gmail | 15 min |
+| `calendar-tracker.ts` | Google Calendar events | 15 min |
+| `browser-tracker.ts` | Web searches and fetches | 15 min |
+| `message-tracker.ts` | Telegram/Discord messages | On-demand |
+| `twitter-tracker.ts` | Tweets, replies, threads | On-demand |
+| `heartbeat-tracker.ts` | Agent uptime/health | 15 min |
+| `session-tracker.ts` | Active interactions | 15 min |
+| `recurring-trade.ts` | Recurring micro-trades | 2 hours |
+
+### Running Collectors
+
+```bash
+# Run individual collector
+bun run collectors/email-tracker.ts
+bun run collectors/email-tracker.ts --force  # Re-check all
+
+# Run all collectors (used by cron)
+./cron-runner.sh
+
+# Crontab entry (every 15 minutes)
+*/15 * * * * /path/to/cron-runner.sh >> /var/log/jarvis-pow-cron.log 2>&1
+```
+
+### Creating a New Collector
+
+```typescript
+#!/usr/bin/env bun
+import { join } from 'path';
+import {
+  loadActivities, saveActivities, loadState, saveState, createActivity
+} from './types.js';
+
+// 1. Define state interface
+interface MyState { lastCheck: string; processedIds: string[]; }
+
+const STATE_FILE = join(import.meta.dir, 'my-state.json');
+const DEFAULT_STATE: MyState = { lastCheck: new Date().toISOString(), processedIds: [] };
+
+async function run() {
+  const state = loadState(STATE_FILE, DEFAULT_STATE);
+  const activities = loadActivities();
+  
+  // Fetch new data, filter duplicates, log activities
+  const newItems = await fetchFromSource(state.lastCheck);
+  for (const item of newItems.filter(i => !state.processedIds.includes(i.id))) {
+    activities.push(createActivity('my-type', `Did: ${item.desc}`, { id: item.id }));
+    state.processedIds.push(item.id);
+  }
+  
+  state.lastCheck = new Date().toISOString();
+  saveState(STATE_FILE, state);
+  saveActivities(activities);
+}
+
+run().catch(console.error);
+```
+
+Then add to `cron-runner.sh`:
+```bash
+echo "🔧 Checking my source..."
+bun run collectors/my-tracker.ts
+```
+
+### Logging Helpers
+
+For on-demand activity logging:
+
+```bash
+# Log browser activity
+bun run collectors/log-browser.ts search "solana rpc" --results 5
+bun run collectors/log-browser.ts fetch "https://docs.solana.com"
+
+# Log message
+bun run collectors/message-tracker.ts --channel telegram --target "Souren" --summary "Replied to question"
 ```
 
 ---

@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 18:09 PST
-**Cycle:** 135
+**Last Updated:** 2026-02-03 18:13 PST
+**Cycle:** 136
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -51,13 +51,25 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 
 ### 📝 Documentation
 - [x] Add inline code comments to server.ts ✅ Cycle 133
-- [ ] Document collector API in README
+- [x] Document collector API in README ✅ Cycle 136
 - [ ] Add architecture diagram (Mermaid)
 - [ ] CONTRIBUTING.md for open source
 
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 136 (Collector API Documentation)
+- Updated README.md with comprehensive collector API documentation
+- Added architecture diagram showing collector → activity.json → state file flow
+- Documented shared types.ts: ActivityType, Activity interface, utility functions
+- Created table of all available collectors with purpose and run frequency
+- Added instructions for running collectors individually and via cron
+- Included new collector template code showing standard pattern
+- Documented logging helpers (log-browser.ts, message-tracker.ts)
+- Updated project structure section to reflect actual file layout
+- ~120 lines of documentation added to README
+- 325 activities, all signed on-chain
 
 ### Cycle 135 (Calendar Event Tracking)
 - Created collectors/calendar-tracker.ts that polls Google Calendar via gog CLI
@@ -103,16 +115,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - Added to cron-runner.sh as step 4 (runs every 15min)
 - Backfilled 4 historical emails, all signed on-chain
 - 311 activities, all signed on-chain
-
-### Cycle 131 (Activity Search & Filter)
-- Added search box with text search across description, type, hash, metadata
-- Added type filter buttons: All, Commits, Builds, Trades, Messages, Tweets, Decisions, Heartbeats
-- Each type has distinct active color matching the activity type theme
-- Shows filter stats ("Showing X of Y activities") when filters active
-- Added "Reset Filters" button in empty state when no matches
-- Mobile responsive: horizontal scroll for type filters on smaller screens
-- Preserves real-time WebSocket updates while filtering
-- 305 activities, all signed on-chain
 
 ---
 

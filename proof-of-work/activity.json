@@ -2514,5 +2514,29 @@
     "description": "🔨 Cycle 135: Added calendar event tracking - polls Google Calendar via gog CLI, logs events with title/time/attendees/meeting links, added dashboard filter button (#9b59b6 purple)",
     "hash": "86f7fd66a984f4fa6eabde8395dba78493706da0830a4dbe55a1a61360750ebf",
     "signature": "8ZeTZCWNewi1SxTe1Kx4pKwG6UxCKvxKTCvDBsG8hUQwCuwndZEw5RE1Grz9VPpiAqVwDyfqc3MX9ATJzKRuLSD"
+  },
+  {
+    "timestamp": "2026-02-04T02:09:41.495Z",
+    "type": "commit",
+    "description": "Cycle 135: Add calendar event tracking",
+    "hash": "d2a3acb2efbbfe80f6474e357c4c8438a3adfef3e00d39b8873fe7b0b7210278",
+    "signature": "3ZX7eg48R3Kq1NXd3j2XSVLucvrBJdqkAPz6JpRdDdcEgrnursSUEhSmLbawy6XnGSqSw6zN2xhgdBS7t7SSyk5X"
+  },
+  {
+    "timestamp": "2026-02-04T02:10:12.419Z",
+    "type": "commit",
+    "description": "Update OBJECTIVES.md for cycle 135",
+    "hash": "35868727538dd9091fd396c4d9f32bfc9082cb8613ed481c870482d51fc0832e",
+    "signature": "2vxyudTA2aJ1sfApKoPPsP5Q2XYbNiJPxGcR8iyc28dJVmwFZmpcgLq65DTmhzNRUfVdLRGA6xzLxH431XGw9p9Y"
+  },
+  {
+    "timestamp": "2026-02-04T02:13:27.259Z",
+    "type": "Cycle 136: Documented collector API in README - Added architecture diagram, shared types reference, available collectors table, running instructions, new collector template, and logging helpers section",
+    "description": "--type",
+    "metadata": {
+      "{\"cycle\": 136, \"filesChanged\": 1, \"linesAdded\": 120}": 0
+    },
+    "hash": "2caf692f933756aff7dfe5501714f4110ff71026e4edbdbbab4ab8e3b11b4118",
+    "signature": "DVP3rbZ1Be4NWtnHeBYXZXM9oP8RP6bzrXmYVSbunN89HTWh4XNs981jnaTGKF2k2qoxQZAAs5HyZYzZg9pTUGP"
   }
 ]
