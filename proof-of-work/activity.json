@@ -5465,5 +5465,41 @@
     "description": "Cycle 219: Implemented Presentation Mode - cinematic full-screen view for demos and pitches. Features: auto-cycling activities with play/pause, prev/next navigation, configurable speed (2-15s), animated progress bar, keyboard shortcuts (P=toggle, Space=play/pause, arrows=nav, +/-=speed, Esc=exit), background particle effects, responsive design with all 7 themes support. Perfect for hackathon demo day presentations.",
     "hash": "4e7a0cf4bf3ce88c80149616c084daa32f7b808631dae0608eff5f753b973738",
     "signature": "22F1n3iPDBaxcJh86wPZBEQNGkxbb84CgqrnK2jqNbT9nsrCiURL3JtHnVHqiKJ24VxufXQJDmvyMpzAagXn5DNk"
+  },
+  {
+    "timestamp": "2026-02-04T20:37:40.443Z",
+    "type": "commit",
+    "description": "Cycle 219: Presentation Mode - cinematic full-screen for demos",
+    "hash": "643f034cc7782d323c8c4f17a9341bd90b1b1f9d27aaf0e6ccabadd108470b10",
+    "signature": "2bD78UoFEM9KSNd9JSqPVLvdzPzxoL7uoF6F7QgA16jHYDMt6szFgu3fUtpdsmAA2r3XGH1d7vyBYtxm46AfGS7G"
+  },
+  {
+    "timestamp": "2026-02-04T20:41:36.973Z",
+    "type": "build",
+    "description": "Cycle 220: Implemented QR Code Sharing feature - Generate scannable QR codes for any activity to share on-chain verification. Includes modal with activity info, dashboard/Solana links, download PNG, and Web Share API integration. Context menu option + Q keyboard shortcut + command palette. 7 theme support.",
+    "metadata": {
+      "cycle": 220,
+      "feature": "QR Code Sharing",
+      "files_modified": [
+        "index.html",
+        "dashboard.css",
+        "app.js"
+      ],
+      "lines_added": "~450",
+      "components": [
+        "QR modal",
+        "Context menu",
+        "Command palette",
+        "Keyboard shortcuts"
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-02-04T20:41:40.775Z",
+    "type": "build",
+    "description": "Cycle 220: Implemented QR Code Sharing feature - Generate scannable QR codes for any activity to share on-chain verification. Includes modal with activity info, dashboard/Solana links, download PNG, and Web Share API integration. Context menu option + Q keyboard shortcut + command palette. 7 theme support.",
+    "hash": "f1a4e009dbb3b56ee7faaaf204bd05086fc52d55c5efaf832c8c0fc630f02918",
+    "signature": "2Dpth7zMkejEo1eLuXsTxvNkzEGi6B2rB5ECbYsMB6pXLWWeY2zGypCSMkS5vnNYZDw2h4JJrUa83mZnuFhwFHCt",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
   }
 ]

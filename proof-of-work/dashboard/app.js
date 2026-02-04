@@ -8562,6 +8562,7 @@ const PALETTE_COMMANDS = [
     { id: 'quick-note', title: 'Quick Note', description: 'Focus quick note on first visible activity', icon: '📝', shortcut: 'N', action: () => { focusFirstQuickNote(); hideCommandPalette(); }, group: 'Actions' },
     { id: 'celebrate', title: 'Celebrate! 🎉', description: 'Fire confetti to celebrate milestones', icon: '🎊', shortcut: 'Y', action: () => { celebrate('normal'); hideCommandPalette(); }, group: 'Actions' },
     { id: 'celebrate-epic', title: 'Epic Celebration! 🎆', description: 'Fire epic confetti cannons from both sides', icon: '🎇', action: () => { celebrate('epic'); hideCommandPalette(); }, group: 'Actions' },
+    { id: 'qr-code', title: 'Show QR Code', description: 'Generate QR code for focused activity (for sharing)', icon: '📱', shortcut: 'Q', action: () => { const card = document.querySelector('.activity-card:focus, .activity-card.focused'); if (card?.dataset?.hash) { openQRCodeModal(card.dataset.hash); } hideCommandPalette(); }, group: 'Actions' },
     
     // Help
     { id: 'shortcuts', title: 'Keyboard Shortcuts', description: 'View all keyboard shortcuts', icon: '⌨️', shortcut: '?', action: () => { showShortcutsModal(); hideCommandPalette(); }, group: 'Help' },
@@ -21178,3 +21179,337 @@ style.textContent = \`
 document.head.appendChild(style);
 
 console.log('🎬 Presentation Mode loaded - Press P to present');
+
+// ========================== //
+// QR Code Modal              //
+// ========================== //
+
+/**
+ * QR Code state
+ */
+const qrCodeState = {
+    currentHash: null,
+    currentActivity: null
+};
+
+/**
+ * Open QR Code modal for an activity
+ * @param {string} hash - Activity hash
+ */
+function openQRCodeModal(hash) {
+    const modal = document.getElementById('qrCodeModal');
+    if (!modal) return;
+    
+    // Find the activity
+    const activity = cachedActivities.find(a => a.hash === hash);
+    if (!activity) {
+        showToast('Activity not found', 'error');
+        return;
+    }
+    
+    qrCodeState.currentHash = hash;
+    qrCodeState.currentActivity = activity;
+    
+    // Update activity info display
+    updateQRCodeActivityInfo(activity);
+    
+    // Generate links
+    const dashboardLink = `${window.location.origin}/pow/#${hash}`;
+    const solanaLink = activity.onChain && activity.signature 
+        ? `https://explorer.solana.com/tx/${activity.signature}?cluster=mainnet-beta`
+        : null;
+    
+    document.getElementById('qrDashboardLink').value = dashboardLink;
+    
+    const solanaRow = document.getElementById('qrSolanaRow');
+    const solanaInput = document.getElementById('qrSolanaLink');
+    if (solanaLink) {
+        solanaRow.style.display = 'block';
+        solanaInput.value = solanaLink;
+    } else {
+        solanaRow.style.display = 'none';
+    }
+    
+    // Generate QR code
+    updateQRCode();
+    
+    // Show modal
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    
+    // Announce for screen readers
+    announce('QR code modal opened for activity');
+}
+
+/**
+ * Close QR Code modal
+ */
+function closeQRCodeModal() {
+    const modal = document.getElementById('qrCodeModal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+    qrCodeState.currentHash = null;
+    qrCodeState.currentActivity = null;
+}
+
+/**
+ * Update activity info in QR code modal
+ * @param {Object} activity - Activity object
+ */
+function updateQRCodeActivityInfo(activity) {
+    // Type badge
+    const typeDisplay = document.getElementById('qrActivityType');
+    if (typeDisplay) {
+        const typeInfo = getTypeInfo(activity.type);
+        typeDisplay.innerHTML = `<span class="qr-type-badge" style="background: ${typeInfo.color}; color: ${getContrastColor(typeInfo.color)}">${typeInfo.emoji} ${activity.type}</span>`;
+    }
+    
+    // Description
+    const descDisplay = document.getElementById('qrActivityDesc');
+    if (descDisplay) {
+        descDisplay.textContent = activity.description || 'No description';
+    }
+    
+    // Time
+    const timeDisplay = document.getElementById('qrActivityTime');
+    if (timeDisplay) {
+        const date = new Date(activity.timestamp);
+        timeDisplay.textContent = date.toLocaleString();
+    }
+}
+
+/**
+ * Get type info for an activity type
+ * @param {string} type - Activity type
+ * @returns {Object} - Type info with color and emoji
+ */
+function getTypeInfo(type) {
+    const types = {
+        build: { color: '#f59e0b', emoji: '🔨' },
+        commit: { color: '#3b82f6', emoji: '📝' },
+        decision: { color: '#8b5cf6', emoji: '🧠' },
+        research: { color: '#06b6d4', emoji: '🔬' },
+        message: { color: '#10b981', emoji: '💬' },
+        email: { color: '#ec4899', emoji: '📧' },
+        trade: { color: '#f97316', emoji: '💹' },
+        deploy: { color: '#ef4444', emoji: '🚀' },
+        session: { color: '#6366f1', emoji: '💻' },
+        tweet: { color: '#1d9bf0', emoji: '🐦' },
+        calendar: { color: '#a855f7', emoji: '📅' },
+        browser: { color: '#6b7280', emoji: '🌐' }
+    };
+    return types[type] || { color: '#6b7280', emoji: '📋' };
+}
+
+/**
+ * Get contrasting text color for background
+ * @param {string} hexColor - Background color in hex
+ * @returns {string} - Black or white
+ */
+function getContrastColor(hexColor) {
+    const r = parseInt(hexColor.slice(1, 3), 16);
+    const g = parseInt(hexColor.slice(3, 5), 16);
+    const b = parseInt(hexColor.slice(5, 7), 16);
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.5 ? '#000000' : '#ffffff';
+}
+
+/**
+ * Update/regenerate QR code based on current settings
+ */
+function updateQRCode() {
+    if (!qrCodeState.currentHash) return;
+    
+    const linkType = document.getElementById('qrLinkType')?.value || 'dashboard';
+    const size = parseInt(document.getElementById('qrSize')?.value || '300');
+    
+    let url;
+    if (linkType === 'solana' && qrCodeState.currentActivity?.onChain && qrCodeState.currentActivity?.signature) {
+        url = `https://explorer.solana.com/tx/${qrCodeState.currentActivity.signature}?cluster=mainnet-beta`;
+    } else {
+        url = `${window.location.origin}/pow/#${qrCodeState.currentHash}`;
+    }
+    
+    // Generate QR code using the library
+    const canvas = document.getElementById('qrCodeCanvas');
+    if (!canvas) return;
+    
+    // Check if QRCode library is available
+    if (typeof QRCode === 'undefined') {
+        console.error('QRCode library not loaded');
+        return;
+    }
+    
+    // Generate QR code
+    QRCode.toCanvas(canvas, url, {
+        width: size,
+        margin: 2,
+        color: {
+            dark: '#000000',
+            light: '#ffffff'
+        },
+        errorCorrectionLevel: 'M'
+    }, function(error) {
+        if (error) {
+            console.error('QR code generation error:', error);
+        }
+    });
+}
+
+/**
+ * Copy QR link to clipboard
+ * @param {string} type - 'dashboard' or 'solana'
+ */
+function copyQRLink(type) {
+    const inputId = type === 'solana' ? 'qrSolanaLink' : 'qrDashboardLink';
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    
+    navigator.clipboard.writeText(input.value)
+        .then(() => {
+            showToast('Link copied to clipboard!', 'success');
+        })
+        .catch(err => {
+            console.error('Copy failed:', err);
+            // Fallback
+            input.select();
+            document.execCommand('copy');
+            showToast('Link copied!', 'success');
+        });
+}
+
+/**
+ * Download QR code as PNG
+ */
+function downloadQRCode() {
+    const canvas = document.getElementById('qrCodeCanvas');
+    if (!canvas) return;
+    
+    const link = document.createElement('a');
+    link.download = `jarvis-pow-${qrCodeState.currentHash?.substring(0, 8) || 'activity'}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    
+    showToast('QR code downloaded!', 'success');
+}
+
+/**
+ * Share QR code using Web Share API
+ */
+async function shareQRCode() {
+    if (!navigator.share) {
+        // Fallback to copying link
+        copyQRLink('dashboard');
+        return;
+    }
+    
+    const canvas = document.getElementById('qrCodeCanvas');
+    if (!canvas) return;
+    
+    try {
+        // Convert canvas to blob
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        const file = new File([blob], 'jarvis-pow-qr.png', { type: 'image/png' });
+        
+        const activity = qrCodeState.currentActivity;
+        const shareData = {
+            title: 'Jarvis Proof of Work',
+            text: activity ? `${activity.type}: ${activity.description?.substring(0, 100)}` : 'Verified on-chain activity',
+            url: `${window.location.origin}/pow/#${qrCodeState.currentHash}`,
+            files: [file]
+        };
+        
+        // Check if files can be shared
+        if (navigator.canShare && navigator.canShare(shareData)) {
+            await navigator.share(shareData);
+        } else {
+            // Share without file
+            delete shareData.files;
+            await navigator.share(shareData);
+        }
+    } catch (err) {
+        if (err.name !== 'AbortError') {
+            console.error('Share failed:', err);
+            copyQRLink('dashboard');
+        }
+    }
+}
+
+/**
+ * Handle context menu QR code action
+ */
+function handleContextMenuQRCode() {
+    const hash = window.contextMenuTargetHash;
+    if (hash) {
+        openQRCodeModal(hash);
+        hideContextMenu();
+    }
+}
+
+// Register context menu handler
+(function() {
+    // Wait for DOM
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initQRCodeContextMenu);
+    } else {
+        initQRCodeContextMenu();
+    }
+})();
+
+function initQRCodeContextMenu() {
+    const ctxQRCode = document.getElementById('ctxQRCode');
+    if (ctxQRCode) {
+        ctxQRCode.addEventListener('click', handleContextMenuQRCode);
+    }
+}
+
+// Add 'Q' keyboard shortcut to show QR code for focused activity
+(function() {
+    document.addEventListener('keydown', function(e) {
+        // Don't trigger in inputs/textareas
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        
+        // Q for QR code
+        if ((e.key === 'q' || e.key === 'Q') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            // Check if we have a focused activity
+            const focusedCard = document.querySelector('.activity-card:focus, .activity-card.focused');
+            if (focusedCard) {
+                const hash = focusedCard.dataset.hash;
+                if (hash) {
+                    e.preventDefault();
+                    openQRCodeModal(hash);
+                }
+            }
+        }
+    });
+})();
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const modal = document.getElementById('qrCodeModal');
+        if (modal && modal.style.display === 'flex') {
+            closeQRCodeModal();
+        }
+    }
+});
+
+// Close modal when clicking outside
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('qrCodeModal');
+    if (modal && modal.style.display === 'flex' && e.target === modal) {
+        closeQRCodeModal();
+    }
+});
+
+// Export functions globally
+window.openQRCodeModal = openQRCodeModal;
+window.closeQRCodeModal = closeQRCodeModal;
+window.updateQRCode = updateQRCode;
+window.copyQRLink = copyQRLink;
+window.downloadQRCode = downloadQRCode;
+window.shareQRCode = shareQRCode;
+
+console.log('📱 QR Code sharing loaded - Press Q on focused activity or use context menu');
