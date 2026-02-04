@@ -2632,6 +2632,320 @@ function renderWeeklyBars(containerId, dailyCounts, label, peakIndex) {
     html += '</div>';
     container.innerHTML = html;
 }
+
+// ============================================
+// DAILY GOAL TRACKING
+// ============================================
+
+const GOAL_STORAGE_KEY = 'jarvis-pow-daily-goal';
+const GOAL_HISTORY_KEY = 'jarvis-pow-goal-history';
+
+/**
+ * Load goal settings from localStorage
+ */
+function loadGoalSettings() {
+    const stored = localStorage.getItem(GOAL_STORAGE_KEY);
+    if (stored) {
+        try {
+            return JSON.parse(stored);
+        } catch (e) {
+            console.warn('Failed to parse goal settings:', e);
+        }
+    }
+    return { target: 10, lastUpdated: null };
+}
+
+/**
+ * Save goal settings to localStorage
+ */
+function saveGoalSettings(settings) {
+    localStorage.setItem(GOAL_STORAGE_KEY, JSON.stringify(settings));
+}
+
+/**
+ * Load goal history from localStorage
+ * Format: { "YYYY-MM-DD": { achieved: boolean, count: number, target: number } }
+ */
+function loadGoalHistory() {
+    const stored = localStorage.getItem(GOAL_HISTORY_KEY);
+    if (stored) {
+        try {
+            return JSON.parse(stored);
+        } catch (e) {
+            console.warn('Failed to parse goal history:', e);
+        }
+    }
+    return {};
+}
+
+/**
+ * Save goal history to localStorage
+ */
+function saveGoalHistory(history) {
+    localStorage.setItem(GOAL_HISTORY_KEY, JSON.stringify(history));
+}
+
+/**
+ * Get today's date string (YYYY-MM-DD)
+ */
+function getTodayStr() {
+    return new Date().toISOString().split('T')[0];
+}
+
+/**
+ * Set daily goal from input
+ */
+function setDailyGoal() {
+    const input = document.getElementById('goalInput');
+    const value = parseInt(input.value, 10);
+    
+    if (isNaN(value) || value < 1 || value > 500) {
+        input.classList.add('error');
+        setTimeout(() => input.classList.remove('error'), 500);
+        return;
+    }
+    
+    const settings = loadGoalSettings();
+    settings.target = value;
+    settings.lastUpdated = getTodayStr();
+    saveGoalSettings(settings);
+    
+    // Re-render goal tracker with cached activities
+    if (window.cachedActivities) {
+        renderGoalTracker(window.cachedActivities);
+    }
+    
+    // Visual feedback
+    input.classList.add('success');
+    setTimeout(() => input.classList.remove('success'), 500);
+    
+    playNotificationSound('new');
+}
+
+/**
+ * Set goal to preset value
+ */
+function setGoalPreset(value) {
+    const input = document.getElementById('goalInput');
+    input.value = value;
+    setDailyGoal();
+}
+
+/**
+ * Calculate goal streak (consecutive days goal was met)
+ */
+function calculateGoalStreak(history) {
+    const today = getTodayStr();
+    const days = Object.keys(history).sort().reverse();
+    
+    let streak = 0;
+    let checkDate = new Date();
+    checkDate.setDate(checkDate.getDate() - 1); // Start from yesterday (today might not be done yet)
+    
+    for (let i = 0; i < 365; i++) {
+        const dateStr = checkDate.toISOString().split('T')[0];
+        const dayData = history[dateStr];
+        
+        if (dayData && dayData.achieved) {
+            streak++;
+        } else if (dayData && !dayData.achieved) {
+            break; // Streak broken
+        } else {
+            // No data for this day, skip (might be before tracking started)
+            break;
+        }
+        
+        checkDate.setDate(checkDate.getDate() - 1);
+    }
+    
+    // Check if today's goal is met and add to streak
+    const todayData = history[today];
+    if (todayData && todayData.achieved) {
+        streak++;
+    }
+    
+    return streak;
+}
+
+/**
+ * Calculate best streak ever
+ */
+function calculateBestStreak(history) {
+    const days = Object.keys(history).sort();
+    let bestStreak = 0;
+    let currentStreak = 0;
+    let prevDate = null;
+    
+    for (const dateStr of days) {
+        const dayData = history[dateStr];
+        const date = new Date(dateStr + 'T12:00:00');
+        
+        if (dayData && dayData.achieved) {
+            if (prevDate) {
+                const diff = (date - prevDate) / (1000 * 60 * 60 * 24);
+                if (diff === 1) {
+                    currentStreak++;
+                } else {
+                    currentStreak = 1;
+                }
+            } else {
+                currentStreak = 1;
+            }
+            
+            if (currentStreak > bestStreak) {
+                bestStreak = currentStreak;
+            }
+            prevDate = date;
+        } else {
+            currentStreak = 0;
+            prevDate = null;
+        }
+    }
+    
+    return bestStreak;
+}
+
+/**
+ * Render the goal tracker with current data
+ */
+function renderGoalTracker(activities) {
+    if (!activities) return;
+    
+    const settings = loadGoalSettings();
+    const history = loadGoalHistory();
+    const today = getTodayStr();
+    
+    // Count today's activities
+    const todayActivities = activities.filter(a => {
+        const date = new Date(a.timestamp).toISOString().split('T')[0];
+        return date === today;
+    });
+    const todayCount = todayActivities.length;
+    const target = settings.target;
+    const progress = Math.min(100, (todayCount / target) * 100);
+    const achieved = todayCount >= target;
+    
+    // Update history for today
+    history[today] = {
+        achieved,
+        count: todayCount,
+        target
+    };
+    saveGoalHistory(history);
+    
+    // Calculate streaks
+    const currentStreak = calculateGoalStreak(history);
+    const bestStreak = calculateBestStreak(history);
+    const remaining = Math.max(0, target - todayCount);
+    
+    // Update UI elements
+    const currentEl = document.getElementById('goalCurrent');
+    const targetEl = document.getElementById('goalTarget');
+    const ringFill = document.getElementById('goalRingFill');
+    const progressRing = document.getElementById('goalProgressRing');
+    const statusEl = document.getElementById('goalStatus');
+    const streakEl = document.getElementById('goalStreak');
+    const bestStreakEl = document.getElementById('goalBestStreak');
+    const remainingEl = document.getElementById('goalRemaining');
+    const inputEl = document.getElementById('goalInput');
+    
+    if (currentEl) currentEl.textContent = todayCount;
+    if (targetEl) targetEl.textContent = target;
+    if (inputEl) inputEl.value = target;
+    
+    // Animate progress ring
+    if (ringFill) {
+        const circumference = 326.73; // 2 * PI * 52
+        const offset = circumference - (progress / 100) * circumference;
+        ringFill.style.strokeDashoffset = offset;
+        
+        // Color based on progress
+        if (achieved) {
+            ringFill.style.stroke = 'var(--accent-green)';
+        } else if (progress >= 75) {
+            ringFill.style.stroke = 'var(--accent-yellow)';
+        } else if (progress >= 50) {
+            ringFill.style.stroke = 'var(--accent-blue)';
+        } else {
+            ringFill.style.stroke = 'var(--accent-purple)';
+        }
+    }
+    
+    if (progressRing) {
+        progressRing.setAttribute('aria-valuenow', Math.round(progress));
+        progressRing.classList.toggle('achieved', achieved);
+    }
+    
+    // Update status
+    if (statusEl) {
+        if (achieved) {
+            statusEl.innerHTML = '<span class="goal-status-icon">🎉</span><span class="goal-status-text">Goal Achieved!</span>';
+            statusEl.classList.add('achieved');
+        } else if (progress >= 75) {
+            statusEl.innerHTML = '<span class="goal-status-icon">🔥</span><span class="goal-status-text">Almost There!</span>';
+            statusEl.classList.remove('achieved');
+        } else if (progress >= 50) {
+            statusEl.innerHTML = '<span class="goal-status-icon">💪</span><span class="goal-status-text">Halfway There</span>';
+            statusEl.classList.remove('achieved');
+        } else {
+            statusEl.innerHTML = '<span class="goal-status-icon">⏳</span><span class="goal-status-text">In Progress</span>';
+            statusEl.classList.remove('achieved');
+        }
+    }
+    
+    // Update stats
+    if (streakEl) streakEl.textContent = currentStreak;
+    if (bestStreakEl) bestStreakEl.textContent = bestStreak;
+    if (remainingEl) remainingEl.textContent = remaining;
+    
+    // Render history bars
+    renderGoalHistory(activities, history, target);
+}
+
+/**
+ * Render 7-day goal history visualization
+ */
+function renderGoalHistory(activities, history, currentTarget) {
+    const container = document.getElementById('goalHistoryBars');
+    if (!container) return;
+    
+    const bars = [];
+    const today = new Date();
+    
+    // Get last 7 days
+    for (let i = 6; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(today.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        
+        // Count activities for this day
+        const dayActivities = activities.filter(a => {
+            const aDate = new Date(a.timestamp).toISOString().split('T')[0];
+            return aDate === dateStr;
+        });
+        const count = dayActivities.length;
+        
+        // Get target for that day (use stored target or current)
+        const dayData = history[dateStr];
+        const target = dayData?.target || currentTarget;
+        const achieved = count >= target;
+        const percent = Math.min(100, (count / target) * 100);
+        const isToday = i === 0;
+        
+        bars.push(`
+            <div class="goal-history-bar ${achieved ? 'achieved' : ''} ${isToday ? 'today' : ''}"
+                 style="height: ${Math.max(percent, 8)}%"
+                 data-tooltip="${count}/${target} activities"
+                 role="img"
+                 aria-label="${isToday ? 'Today' : i + ' days ago'}: ${count} of ${target} activities${achieved ? ' (goal met)' : ''}">
+                ${achieved ? '<span class="goal-check">✓</span>' : ''}
+            </div>
+        `);
+    }
+    
+    container.innerHTML = bars.join('');
+}
+
 // Store activities globally for export
 let cachedActivities = [];
 
@@ -2653,6 +2967,7 @@ async function loadActivities() {
         renderInsights(activities);
         renderWeeklyComparison(activities);
         renderVelocityChart(activities);
+        renderGoalTracker(activities);
         populateTagFilters(activities);
     } catch (e) {
         try {
@@ -2669,6 +2984,7 @@ async function loadActivities() {
             renderInsights(activities);
             renderWeeklyComparison(activities);
             renderVelocityChart(activities);
+            renderGoalTracker(activities);
             populateTagFilters(activities);
         } catch (e2) {
             document.getElementById('feed').innerHTML = `
@@ -2854,6 +3170,7 @@ function connectWebSocket() {
                     renderHeatmap(msg.data.activities);
                     renderInsights(msg.data.activities);
                     renderVelocityChart(msg.data.activities);
+                    renderGoalTracker(msg.data.activities);
                     populateTagFilters(msg.data.activities);
                     
                     // Flash notification + sound for new activities
