@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 18:05 PST
-**Cycle:** 134
+**Last Updated:** 2026-02-03 18:09 PST
+**Cycle:** 135
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -44,7 +44,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ### ⚡ Capability
 - [x] Email activity tracking (log emails sent) ✅ Cycle 132
 - [x] Browser activity tracking (log web research) ✅ Cycle 134
-- [ ] Calendar event tracking
+- [x] Calendar event tracking ✅ Cycle 135
 - [ ] Multi-wallet support
 - [x] Activity search/filter on dashboard ✅ Cycle 131
 - [ ] Activity categories/tags
@@ -58,6 +58,17 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 135 (Calendar Event Tracking)
+- Created collectors/calendar-tracker.ts that polls Google Calendar via gog CLI
+- Tracks events from jarvis@avo.so and souren@avo.so accounts
+- Logs event title, time, attendees, organizer, meeting links
+- Added CalendarMetadata and CalendarState to types.ts with full typing
+- Added 'calendar' to ActivityType union
+- Added Calendar filter button to dashboard (#9b59b6 purple)
+- Updated both typeColors maps in app.js
+- Integrated into cron-runner.sh (step 6)
+- 323 activities, all signed on-chain
 
 ### Cycle 134 (Browser Activity Tracking)
 - Created collectors/browser-tracker.ts for web research tracking
@@ -102,16 +113,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - Mobile responsive: horizontal scroll for type filters on smaller screens
 - Preserves real-time WebSocket updates while filtering
 - 305 activities, all signed on-chain
-
-### Cycle 130 (TypeScript Types for Collectors)
-- Created collectors/types.ts with 200+ lines of shared type definitions
-- Defined Activity type with all metadata variants (Trade, Message, Tweet, Heartbeat, Session, Commit, Build)
-- Added state interfaces: HeartbeatState, SessionState, MessageState, TwitterState, WalletState, TradeState
-- Added utility functions: loadActivities, saveActivities, loadState, saveState, truncate, createActivity
-- Refactored all 6 collectors to import from types.ts instead of duplicating definitions
-- Removes ~180 lines of duplicated code across collectors
-- All collectors tested and verified working
-- 301 activities, all signed on-chain
 
 ---
 
