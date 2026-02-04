@@ -3698,7 +3698,9 @@
   {
     "timestamp": "2026-02-04T05:35:06.757Z",
     "type": "commit",
-    "description": "Cycle 178: Activity Comparison Mode - select any 2 activities to compare side-by-side"
+    "description": "Cycle 178: Activity Comparison Mode - select any 2 activities to compare side-by-side",
+    "hash": "09f596cddf82cccf06b4a21d6cae562979a5041300e25afdf82ae5cfbcbeaa92",
+    "signature": "5VjqgUaqbYTP13wGyXoGiERgoLMSnDPBfth73422NHKCbWAmK8CDQhhhPk8BvxtS42ScHoa5g9hAWd1ZNBE6fYUn"
   },
   {
     "timestamp": "2026-02-04T05:35:49.871Z",
@@ -3707,5 +3709,19 @@
     "hash": "2f8d2447c5dc08e84706874344ca61cdb68715bc2ec703721da4e2447f96a0b7",
     "signature": "3WPVFFTftaMmRZg7Jj6Dvx4trBWizKH1txE6LuMwJFi7sZY5rCfVPppXyPTEmT15wWGEsNWtS5anFjWaNnrEcnzg",
     "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
+  },
+  {
+    "timestamp": "2026-02-04T05:35:58.814Z",
+    "type": "commit",
+    "description": "docs: update OBJECTIVES.md for Cycle 178",
+    "hash": "6c5e32d934b96ef659ca84f4e90fadeea943fbc97cfc6dd8524fb56769d0318b",
+    "signature": "2bRLmjFpyYu4jqdUcLh16G8UPJ1QJUcDejYy57aToD4facdTsafxT8KrsxHQbmpEHKVRCnnuAZRn5A6dM6itisoM"
+  },
+  {
+    "timestamp": "2026-02-04T05:36:06.453Z",
+    "type": "build",
+    "description": "Cycle 178: Activity Comparison Mode - Select 2 activities to compare side-by-side. Added compare mode toggle button, floating compare bar, comparison modal with side-by-side view, selection UI, and keyboard shortcut (C). Fixed duplicate implementation issues.",
+    "hash": "9b9b76778966f215884d507ccfe48890684b83d0d1888c49dbfdf3bd7efe2227",
+    "signature": "2UujZhQiLYnJDNsdR4WegjdoEbeyNiZSnRPZPWe8gfkrGahobCXckk5d2WdSpc6fMASDkuMyGY9g92iQ7Mbprzd1"
   }
 ]
