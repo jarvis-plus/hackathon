@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 20:18 PST
-**Cycle:** 158
+**Last Updated:** 2026-02-03 20:23 PST
+**Cycle:** 159
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -76,12 +76,27 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ### 🔒 Security & Infrastructure
 - [x] API authentication (optional API keys) ✅ Cycle 157
 - [x] Activity rate limiting per IP ✅ Cycle 158
-- [ ] Backup/restore for activity data
+- [x] Backup/restore for activity data ✅ Cycle 159
 - [ ] Docker deployment
 
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 159 (Backup/Restore API)
+- Implemented backup/restore API for activity data
+- **GET /api/backup**: Exports all activities + metadata as downloadable JSON
+- **POST /api/backup/validate**: Validates backup format without importing
+- **POST /api/restore**: Import with merge/replace modes
+- **Mode Options**: `merge` (skip duplicates by hash) or `replace` (full overwrite)
+- **Dry Run**: Add `?dry_run=true` to preview changes without writing
+- **Webhook Backup**: Add `?webhooks=true` to include webhooks (secrets excluded)
+- **Validation**: Checks version, format, activity structure (timestamp, type, description)
+- **Download Headers**: Content-Disposition for automatic file download
+- Added `validateBackup()` helper function (~60 lines)
+- ~180 lines added to server.ts
+- Service restarted and tested all endpoints
+- 400 activities, all signed on-chain
 
 ### Cycle 158 (Per-IP Rate Limiting for Webhooks)
 - Implemented endpoint-specific rate limiting for webhook operations
@@ -147,26 +162,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - Accessibility: ARIA labels with current/peak/avg velocity stats
 - Service restarted to pick up dashboard changes
 - 391 activities, all signed on-chain
-
-### Cycle 154 (Weekly Activity Comparison)
-- Implemented side-by-side comparison of this week vs last week
-- **Activity Count**: Shows this week vs last week with % change
-- **On-Chain Rate**: Compares signing rates with percentage point change
-- **Peak Day**: Shows busiest day for each week
-- **Daily Average**: Adjusted for days passed this week
-- **Visual Bar Charts**: Side-by-side daily distribution for both weeks
-- **Change Indicators**: ↑ green for positive, ↓ red for negative
-- **Peak Highlighting**: Peak day bars have glow effect
-- **Interactive Tooltips**: Hover on bars shows exact counts
-- **Responsive**: Stacks vertically on mobile
-- **Theme Support**: Works in both dark and light modes
-- `renderWeeklyComparison()` calculates all weekly metrics
-- `updateChangeIndicator()` updates +/- styling for comparisons
-- `renderWeeklyBars()` creates the bar chart for each week
-- ~150 lines JavaScript for calculations and rendering
-- ~220 lines CSS with animations and theming
-- Files: index.html, dashboard.css, app.js
-- 388 activities, all signed on-chain
 
 ---
 
