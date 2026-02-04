@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 20:14 PST
-**Cycle:** 157
+**Last Updated:** 2026-02-03 20:18 PST
+**Cycle:** 158
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -75,13 +75,30 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 
 ### 🔒 Security & Infrastructure
 - [x] API authentication (optional API keys) ✅ Cycle 157
-- [ ] Activity rate limiting per IP
+- [x] Activity rate limiting per IP ✅ Cycle 158
 - [ ] Backup/restore for activity data
 - [ ] Docker deployment
 
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 158 (Per-IP Rate Limiting for Webhooks)
+- Implemented endpoint-specific rate limiting for webhook operations
+- **New Limits**: Webhook POST/DELETE = 5/min, Webhook Tests = 10/min
+- **Environment Variables**: `WEBHOOK_WRITE_LIMIT`, `WEBHOOK_TEST_LIMIT` to customize
+- **Rate Limit Endpoint**: `/api/ratelimit` shows current usage across all categories
+- **Categories Tracked**: api, websocket, webhookWrite, webhookTest
+- **Response Details**: Shows used/remaining/resetIn for each category
+- Applied rate limiting to POST /api/webhooks, DELETE /api/webhooks/:id, POST /api/webhooks/:id/test
+- Added `webhookWriteRateLimitStore` and `webhookTestRateLimitStore` Maps
+- Added `getRateLimitStatus()` function for comprehensive status reporting
+- Updated `rateLimitResponse()` to accept limit and category parameters
+- Startup logging now shows all rate limit values
+- ~80 lines added to server.ts
+- Tested: 5 webhook registrations succeed, 6th gets 429
+- Service restarted with new rate limit logging
+- 397 activities, all signed on-chain
 
 ### Cycle 157 (API Authentication)
 - Implemented optional API authentication for the Proof of Work API
@@ -150,25 +167,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - ~220 lines CSS with animations and theming
 - Files: index.html, dashboard.css, app.js
 - 388 activities, all signed on-chain
-
-### Cycle 153 (Infinite Scroll / Lazy Loading)
-- Implemented infinite scroll for the activity feed
-- **Initial load**: Only first 50 activities render (huge performance win)
-- **Auto-loading**: IntersectionObserver triggers load when scrolling near bottom
-- **Load More button**: Manual control with count of remaining activities
-- **Activity counter**: "Showing X of Y" in day-group-controls
-- **Keyboard shortcut**: Press `l` to load more activities
-- **Loading state**: Animated spinner while fetching more
-- **All-loaded state**: Shows "✅ All N activities loaded" when complete
-- **Accessibility**: Screen reader announces loaded count changes
-- `renderGroupedActivitiesLimited()` renders activities up to current limit
-- `loadMoreActivities()` increments displayCount by 50 and re-renders
-- `initInfiniteScroll()` sets up IntersectionObserver on sentinel element
-- ~200 lines JavaScript for infinite scroll logic
-- ~120 lines CSS with dark/light mode support
-- Updated keyboard shortcuts modal with 'l' shortcut
-- Files: dashboard/app.js, dashboard/dashboard.css
-- 382 activities, all signed on-chain
 
 ---
 

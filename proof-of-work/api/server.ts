@@ -314,14 +314,26 @@ const rateLimitStore = new Map<string, RateLimitEntry>();
 /** Rate limit store for WebSocket connections (separate pool) */
 const WS_RATE_LIMIT_STORE = new Map<string, RateLimitEntry>();
 
+/** Rate limit store for webhook write operations (POST/DELETE) */
+const webhookWriteRateLimitStore = new Map<string, RateLimitEntry>();
+
+/** Rate limit store for webhook test operations */
+const webhookTestRateLimitStore = new Map<string, RateLimitEntry>();
+
 /** Duration of the sliding window in milliseconds (1 minute) */
 const RATE_LIMIT_WINDOW_MS = 60 * 1000;
 
 /** Maximum API requests allowed per IP within the window */
-const API_RATE_LIMIT = 100;
+const API_RATE_LIMIT = parseInt(process.env.API_RATE_LIMIT || '100');
 
 /** Maximum WebSocket connections allowed per IP within the window */
-const WS_RATE_LIMIT = 10;
+const WS_RATE_LIMIT = parseInt(process.env.WS_RATE_LIMIT || '10');
+
+/** Maximum webhook write operations (POST/DELETE) per IP within the window */
+const WEBHOOK_WRITE_LIMIT = parseInt(process.env.WEBHOOK_WRITE_LIMIT || '5');
+
+/** Maximum webhook test operations per IP within the window */
+const WEBHOOK_TEST_LIMIT = parseInt(process.env.WEBHOOK_TEST_LIMIT || '10');
 
 /**
  * Periodic cleanup of expired rate limit entries.
@@ -345,6 +357,22 @@ setInterval(() => {
     entry.timestamps = entry.timestamps.filter(t => t > cutoff);
     if (entry.timestamps.length === 0) {
       WS_RATE_LIMIT_STORE.delete(ip);
+    }
+  }
+  
+  // Clean up webhook write rate limit store
+  for (const [ip, entry] of webhookWriteRateLimitStore.entries()) {
+    entry.timestamps = entry.timestamps.filter(t => t > cutoff);
+    if (entry.timestamps.length === 0) {
+      webhookWriteRateLimitStore.delete(ip);
+    }
+  }
+  
+  // Clean up webhook test rate limit store
+  for (const [ip, entry] of webhookTestRateLimitStore.entries()) {
+    entry.timestamps = entry.timestamps.filter(t => t > cutoff);
+    if (entry.timestamps.length === 0) {
+      webhookTestRateLimitStore.delete(ip);
     }
   }
 }, 5 * 60 * 1000);
@@ -433,23 +461,56 @@ function checkRateLimit(
  * Includes proper headers for rate limit information.
  * 
  * @param resetIn - Seconds until rate limit resets
+ * @param limit - The rate limit that was exceeded (for headers)
+ * @param category - Optional category name for the error message
  * @returns HTTP 429 Response with JSON body
  */
-function rateLimitResponse(resetIn: number): Response {
+function rateLimitResponse(resetIn: number, limit: number = API_RATE_LIMIT, category?: string): Response {
+  const categoryMsg = category ? ` for ${category}` : '';
   return new Response(JSON.stringify({
     error: 'Too Many Requests',
-    message: `Rate limit exceeded. Try again in ${resetIn} seconds.`,
-    retryAfter: resetIn
+    message: `Rate limit${categoryMsg} exceeded. Try again in ${resetIn} seconds.`,
+    retryAfter: resetIn,
+    category: category || 'api'
   }), {
     status: 429,
     headers: {
       'Content-Type': 'application/json',
       'Retry-After': String(resetIn),
-      'X-RateLimit-Limit': String(API_RATE_LIMIT),
+      'X-RateLimit-Limit': String(limit),
       'X-RateLimit-Remaining': '0',
       'X-RateLimit-Reset': String(Math.ceil(Date.now() / 1000) + resetIn)
     }
   });
+}
+
+/**
+ * Get rate limit status for an IP across all categories.
+ * 
+ * @param ip - The client's IP address
+ * @returns Object with rate limit status for each category
+ */
+function getRateLimitStatus(ip: string): Record<string, { used: number; limit: number; remaining: number; resetIn: number }> {
+  const now = Date.now();
+  const cutoff = now - RATE_LIMIT_WINDOW_MS;
+  
+  const getStatus = (store: Map<string, RateLimitEntry>, limit: number) => {
+    const entry = store.get(ip);
+    const validTimestamps = entry?.timestamps.filter(t => t > cutoff) || [];
+    const used = validTimestamps.length;
+    const remaining = Math.max(0, limit - used);
+    const resetIn = validTimestamps.length > 0 
+      ? Math.ceil((validTimestamps[0] + RATE_LIMIT_WINDOW_MS - now) / 1000)
+      : 60;
+    return { used, limit, remaining, resetIn };
+  };
+  
+  return {
+    api: getStatus(rateLimitStore, API_RATE_LIMIT),
+    websocket: getStatus(WS_RATE_LIMIT_STORE, WS_RATE_LIMIT),
+    webhookWrite: getStatus(webhookWriteRateLimitStore, WEBHOOK_WRITE_LIMIT),
+    webhookTest: getStatus(webhookTestRateLimitStore, WEBHOOK_TEST_LIMIT),
+  };
 }
 
 // ==============================================
@@ -849,10 +910,55 @@ const server = Bun.serve({
           ? 'API authentication is enabled. Use Authorization: Bearer <key> or X-API-Key: <key> header.'
           : 'API authentication is disabled. All endpoints are public.',
         endpoints: {
-          publicAlways: ['/api/auth/status', '/api/health'],
+          publicAlways: ['/api/auth/status', '/api/health', '/api/ratelimit'],
           requiresAuthForWrites: ['/api/webhooks'],
           configurable: ['/api/activities', '/api/stats', '/api/verify/*']
         }
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: GET /api/ratelimit
+    // Check rate limit status for the requesting IP
+    // Always public - helps clients manage their usage
+    // ==========================================
+    if (path === '/api/ratelimit') {
+      const status = getRateLimitStatus(clientIP);
+      return Response.json({
+        ip: clientIP,
+        windowMs: RATE_LIMIT_WINDOW_MS,
+        windowSeconds: RATE_LIMIT_WINDOW_MS / 1000,
+        limits: {
+          api: {
+            description: 'General API requests',
+            limit: API_RATE_LIMIT,
+            used: status.api.used,
+            remaining: status.api.remaining,
+            resetIn: status.api.resetIn
+          },
+          websocket: {
+            description: 'WebSocket connections',
+            limit: WS_RATE_LIMIT,
+            used: status.websocket.used,
+            remaining: status.websocket.remaining,
+            resetIn: status.websocket.resetIn
+          },
+          webhookWrite: {
+            description: 'Webhook registration/deletion',
+            limit: WEBHOOK_WRITE_LIMIT,
+            used: status.webhookWrite.used,
+            remaining: status.webhookWrite.remaining,
+            resetIn: status.webhookWrite.resetIn
+          },
+          webhookTest: {
+            description: 'Webhook test deliveries',
+            limit: WEBHOOK_TEST_LIMIT,
+            used: status.webhookTest.used,
+            remaining: status.webhookTest.remaining,
+            resetIn: status.webhookTest.resetIn
+          }
+        },
+        hint: 'Rate limits are per-IP using a sliding window. Different endpoints have different limits.'
       }, { headers: corsHeaders });
     }
 
@@ -1182,8 +1288,15 @@ Colosseum Agent Hackathon 2026`;
     // ==========================================
     // API: POST /api/webhooks
     // Register a new webhook subscription
+    // Rate limited to prevent webhook spam
     // ==========================================
     if (path === '/api/webhooks' && req.method === 'POST') {
+      // Apply stricter rate limit for webhook writes
+      const webhookRateCheck = checkRateLimit(clientIP, webhookWriteRateLimitStore, WEBHOOK_WRITE_LIMIT);
+      if (!webhookRateCheck.allowed) {
+        return rateLimitResponse(webhookRateCheck.resetIn, WEBHOOK_WRITE_LIMIT, 'webhook registration');
+      }
+      
       try {
         const body = await req.json() as { url?: string; secret?: string; events?: string[] };
         
@@ -1286,8 +1399,15 @@ Colosseum Agent Hackathon 2026`;
     // ==========================================
     // API: DELETE /api/webhooks/:id
     // Remove a webhook subscription
+    // Rate limited to prevent abuse
     // ==========================================
     if (path.startsWith('/api/webhooks/') && req.method === 'DELETE') {
+      // Apply stricter rate limit for webhook writes
+      const webhookRateCheck = checkRateLimit(clientIP, webhookWriteRateLimitStore, WEBHOOK_WRITE_LIMIT);
+      if (!webhookRateCheck.allowed) {
+        return rateLimitResponse(webhookRateCheck.resetIn, WEBHOOK_WRITE_LIMIT, 'webhook deletion');
+      }
+      
       const id = path.replace('/api/webhooks/', '');
       
       if (!id) {
@@ -1382,8 +1502,15 @@ Colosseum Agent Hackathon 2026`;
     // ==========================================
     // API: POST /api/webhooks/:id/test
     // Send a test payload to a webhook
+    // Rate limited to prevent abuse
     // ==========================================
     if (path.match(/^\/api\/webhooks\/[^/]+\/test$/) && req.method === 'POST') {
+      // Apply rate limit for webhook tests
+      const testRateCheck = checkRateLimit(clientIP, webhookTestRateLimitStore, WEBHOOK_TEST_LIMIT);
+      if (!testRateCheck.allowed) {
+        return rateLimitResponse(testRateCheck.resetIn, WEBHOOK_TEST_LIMIT, 'webhook test');
+      }
+      
       const id = path.replace('/api/webhooks/', '').replace('/test', '');
       
       const webhooks = getWebhooks();
@@ -1500,3 +1627,4 @@ Colosseum Agent Hackathon 2026`;
 console.log(`🚀 Proof of Work server running at http://localhost:${PORT}`);
 console.log(`🔌 WebSocket endpoint: ws://localhost:${PORT}/ws`);
 console.log(`🔐 API Auth: ${API_KEY ? 'ENABLED' : 'disabled'}${API_KEY && API_AUTH_READ ? ' (read auth required)' : ''}`);
+console.log(`⏱️  Rate limits: API=${API_RATE_LIMIT}/min, WS=${WS_RATE_LIMIT}/min, Webhook=${WEBHOOK_WRITE_LIMIT}/min, Test=${WEBHOOK_TEST_LIMIT}/min`);
