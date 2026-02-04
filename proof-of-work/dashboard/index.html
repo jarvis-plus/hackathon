@@ -31,6 +31,11 @@
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#00ffaa">
+    
+    <!-- RSS/Atom Feed Autodiscovery -->
+    <link rel="alternate" type="application/rss+xml" title="Jarvis Proof of Work - RSS Feed" href="/pow/api/feed.rss">
+    <link rel="alternate" type="application/atom+xml" title="Jarvis Proof of Work - Atom Feed" href="/pow/api/feed.atom">
+    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Jarvis PoW">
@@ -98,6 +103,29 @@
                 <button class="sound-toggle" id="relationshipsBtn" onclick="openRelationshipsModal()" title="View activity relationships (L)" aria-label="View activity relationships">
                     🔗 Links
                 </button>
+                <div class="feed-subscribe-dropdown" style="position: relative;">
+                    <button class="sound-toggle" id="feedSubscribeBtn" onclick="toggleFeedDropdown()" title="Subscribe to activity feed" aria-expanded="false" aria-haspopup="listbox" aria-label="Subscribe to feed">
+                        📡 Subscribe
+                    </button>
+                    <div id="feedDropdown" class="feed-dropdown" role="listbox" aria-label="Feed subscription options">
+                        <a class="feed-option" href="/pow/api/feed.rss" target="_blank" rel="noopener" role="option">
+                            <span class="feed-icon">📰</span>
+                            <span class="feed-text">RSS Feed</span>
+                        </a>
+                        <a class="feed-option" href="/pow/api/feed.atom" target="_blank" rel="noopener" role="option">
+                            <span class="feed-icon">⚛️</span>
+                            <span class="feed-text">Atom Feed</span>
+                        </a>
+                        <button class="feed-option" onclick="copyFeedUrl('rss')" role="option">
+                            <span class="feed-icon">📋</span>
+                            <span class="feed-text">Copy RSS URL</span>
+                        </button>
+                        <button class="feed-option" onclick="copyFeedUrl('atom')" role="option">
+                            <span class="feed-icon">📋</span>
+                            <span class="feed-text">Copy Atom URL</span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </header>
         

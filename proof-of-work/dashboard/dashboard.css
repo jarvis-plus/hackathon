@@ -2166,6 +2166,93 @@
             background: var(--border);
         }
 
+        /* Feed Subscribe Dropdown */
+        .feed-subscribe-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .feed-dropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% + 5px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.5rem 0;
+            min-width: 160px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            animation: dropdownFade 0.2s ease-out;
+        }
+        
+        .feed-dropdown.open {
+            display: block;
+        }
+        
+        .feed-option {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 0.6rem 1rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 0.85rem;
+            text-align: left;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        
+        .feed-option:hover {
+            background: var(--border);
+            color: var(--text-primary);
+        }
+        
+        .feed-option:focus {
+            outline: none;
+            background: var(--border);
+        }
+        
+        .feed-icon {
+            font-size: 1rem;
+            width: 1.2rem;
+            text-align: center;
+        }
+        
+        .feed-text {
+            flex: 1;
+        }
+        
+        .feed-copied-toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent-green);
+            color: #000;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            z-index: 10000;
+            animation: toastSlideUp 0.3s ease-out, toastFadeOut 0.3s ease-in 2s forwards;
+        }
+        
+        @keyframes toastSlideUp {
+            from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+        
+        @keyframes toastFadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
         /* Social Links */
         .social-links {
             display: flex;

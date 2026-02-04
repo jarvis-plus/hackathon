@@ -577,6 +577,58 @@ function closeThemeDropdown() {
     }
 }
 
+// ============================================
+// FEED SUBSCRIPTION DROPDOWN
+// ============================================
+function toggleFeedDropdown() {
+    const dropdown = document.getElementById('feedDropdown');
+    const btn = document.getElementById('feedSubscribeBtn');
+    if (dropdown) {
+        const isOpen = dropdown.classList.toggle('open');
+        btn?.setAttribute('aria-expanded', isOpen);
+    }
+}
+
+function closeFeedDropdown() {
+    const dropdown = document.getElementById('feedDropdown');
+    const btn = document.getElementById('feedSubscribeBtn');
+    if (dropdown) {
+        dropdown.classList.remove('open');
+        btn?.setAttribute('aria-expanded', 'false');
+    }
+}
+
+function copyFeedUrl(type) {
+    const baseUrl = window.location.origin + '/pow/api/feed.';
+    const url = baseUrl + type;
+    
+    navigator.clipboard.writeText(url).then(() => {
+        // Show toast notification
+        const toast = document.createElement('div');
+        toast.className = 'feed-copied-toast';
+        toast.textContent = `${type.toUpperCase()} URL copied to clipboard!`;
+        document.body.appendChild(toast);
+        
+        // Remove toast after animation
+        setTimeout(() => toast.remove(), 2300);
+        
+        // Close the dropdown
+        closeFeedDropdown();
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+        // Fallback: show URL in alert
+        alert(`Feed URL: ${url}`);
+    });
+}
+
+// Close feed dropdown when clicking outside
+document.addEventListener('click', (e) => {
+    const feedWrapper = e.target.closest('.feed-subscribe-dropdown');
+    if (!feedWrapper) {
+        closeFeedDropdown();
+    }
+});
+
 // Legacy toggle function for keyboard shortcut (cycles through themes)
 function toggleTheme() {
     const current = document.documentElement.getAttribute('data-theme') || 'dark';

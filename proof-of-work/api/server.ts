@@ -36,7 +36,8 @@
  * - GET /api/performance          - Response times, memory usage, endpoint stats
  * - GET /api/verify/:hash         - Verify a specific activity by hash
  * - GET /api/badge                - Compact summary for sharing
- * - GET /api/feed.rss             - RSS feed of recent activities
+ * - GET /api/feed.rss             - RSS 2.0 feed of recent activities
+ * - GET /api/feed.atom            - Atom 1.0 feed of recent activities
  * - GET /api/digest               - Email-ready digest (daily/weekly/monthly)
  * - GET /metrics                  - Prometheus-compatible metrics
  * - GET /api/openapi.json         - OpenAPI 3.0 specification
@@ -5630,6 +5631,107 @@ ${items}
         headers: { 
           ...corsHeaders, 
           'Content-Type': 'application/rss+xml; charset=utf-8',
+          'Cache-Control': 'max-age=60' // Cache for 1 minute
+        }
+      });
+    }
+
+    // ==========================================
+    // API: GET /api/feed.atom
+    // Atom 1.0 feed for activity subscriptions
+    // Alternative to RSS with richer semantics
+    // ==========================================
+    if (path === '/api/feed.atom' || path === '/api/atom' || path === '/atom.xml') {
+      const activities = getActivities();
+      const recentActivities = activities.slice(-50).reverse(); // Last 50, newest first
+      
+      // XML escape helper
+      const escapeXml = (str: string) => str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+      
+      // Get the most recent activity timestamp for feed updated time
+      const lastUpdated = recentActivities.length > 0 
+        ? new Date(recentActivities[0].timestamp).toISOString()
+        : new Date().toISOString();
+      
+      // Generate Atom entries
+      const entries = recentActivities.map((a: any) => {
+        const hash = a.hash || a.proof?.hash || '';
+        const signature = a.signature || a.proof?.txSignature || '';
+        const link = signature 
+          ? `https://solscan.io/tx/${signature}`
+          : `https://jarvis.tail6a9bde.ts.net/pow/#${hash}`;
+        const published = new Date(a.timestamp).toISOString();
+        const updated = a.signedAt ? new Date(a.signedAt).toISOString() : published;
+        
+        // Type emoji mapping
+        const typeEmoji: Record<string, string> = {
+          'build': '🔨',
+          'commit': '📝',
+          'decision': '🎯',
+          'research': '🔍',
+          'email': '📧',
+          'calendar': '📅',
+          'browser': '🌐',
+          'trade': '💹',
+          'tweet': '🐦',
+          'heartbeat': '💓'
+        };
+        const emoji = typeEmoji[a.type] || '⚡';
+        
+        return `  <entry>
+    <id>urn:jarvis-pow:activity:${hash || a.timestamp}</id>
+    <title>${emoji} [${escapeXml(a.type)}] ${escapeXml(a.description.slice(0, 100))}</title>
+    <link href="${escapeXml(link)}" rel="alternate" type="text/html"/>
+    <link href="https://jarvis.tail6a9bde.ts.net/pow/#${hash}" rel="related" type="text/html"/>
+    <published>${published}</published>
+    <updated>${updated}</updated>
+    <author>
+      <name>Jarvis AI Agent</name>
+      <uri>https://jarvis.tail6a9bde.ts.net/pow/</uri>
+    </author>
+    <category term="${escapeXml(a.type)}" label="${escapeXml(a.type)}"/>
+    <summary type="text">${escapeXml(a.description)}</summary>
+    <content type="html"><![CDATA[
+      <p><strong>Type:</strong> ${a.type}</p>
+      <p><strong>Description:</strong> ${a.description}</p>
+      <p><strong>Hash:</strong> <code>${hash}</code></p>
+      <p><strong>On-Chain:</strong> ${signature ? '✅ Yes - <a href="https://solscan.io/tx/' + signature + '">View on Solscan</a>' : '⏳ Pending'}</p>
+      ${a.metadata ? '<p><strong>Metadata:</strong> ' + escapeXml(JSON.stringify(a.metadata)) + '</p>' : ''}
+    ]]></content>
+    ${signature ? `<link href="https://solscan.io/tx/${signature}" rel="enclosure" type="text/html" title="On-chain verification"/>` : ''}
+  </entry>`;
+      }).join('\n');
+      
+      // Build full Atom document
+      const atom = `<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <id>urn:jarvis-pow:feed</id>
+  <title>Jarvis Proof of Work - Activity Feed</title>
+  <subtitle>Live activity feed from Jarvis AI agent - Colosseum Agent Hackathon 2026. Every action cryptographically signed and anchored on Solana.</subtitle>
+  <link href="https://jarvis.tail6a9bde.ts.net/pow/" rel="alternate" type="text/html"/>
+  <link href="https://jarvis.tail6a9bde.ts.net/pow/api/feed.atom" rel="self" type="application/atom+xml"/>
+  <link href="https://jarvis.tail6a9bde.ts.net/pow/api/feed.rss" rel="alternate" type="application/rss+xml" title="RSS Feed"/>
+  <updated>${lastUpdated}</updated>
+  <author>
+    <name>Jarvis AI Agent</name>
+    <uri>https://jarvis.tail6a9bde.ts.net/pow/</uri>
+  </author>
+  <icon>https://jarvis.tail6a9bde.ts.net/pow/favicon.svg</icon>
+  <logo>https://jarvis.tail6a9bde.ts.net/pow/icon.png</logo>
+  <rights>MIT License - Jarvis AI Agent</rights>
+  <generator uri="https://jarvis.tail6a9bde.ts.net/pow/" version="1.0">Jarvis Proof of Work API</generator>
+${entries}
+</feed>`;
+      
+      return new Response(atom, { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/atom+xml; charset=utf-8',
           'Cache-Control': 'max-age=60' // Cache for 1 minute
         }
       });
