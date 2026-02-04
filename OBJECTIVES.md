@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-04 12:54 PST
-**Cycle:** 221
+**Last Updated:** 2026-02-04 13:05 PST
+**Cycle:** 222
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -142,10 +142,37 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Presentation Mode (cinematic full-screen for demos) ✅ Cycle 219
 - [x] Activity QR Code Sharing (generate scannable codes for on-chain proof) ✅ Cycle 220
 - [x] Markdown Support in Descriptions (rich text formatting in activities) ✅ Cycle 221
+- [x] Activity Sorting Options (sort by date/type/importance/status) ✅ Cycle 222
 
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 222 (Activity Sorting Options)
+- Implemented user-configurable sort dropdown for activity feed
+- **Sort Options**:
+  - Newest First (default)
+  - Oldest First
+  - By Type (A-Z)
+  - By Type (Z-A)
+  - By Importance (highest score first)
+  - By Status (pending → completed → failed)
+- **Features**:
+  - Sort preference persisted to localStorage
+  - Pinned activities always stay at top regardless of sort
+  - Visual indicator when non-default sort is active
+- **Keyboard Shortcut**: `O` to cycle through sort orders
+- **Command Palette**: 6 sort commands added (Cmd+K → "sort")
+- **Accessibility**: Screen reader announcements for sort changes
+- **CSS Styling (~170 lines)**:
+  - Theme support for all 7 themes
+  - Mobile responsive (full width on small screens)
+  - Active state glow animation
+  - Hidden in print view
+- **Integration**:
+  - `sortActivities()` function replaces inline sorting in renderActivities
+  - Shortcuts modal updated with `O` shortcut documentation
+- **Stats**: 598 activities, all signed on-chain
 
 ### Cycle 221 (Markdown Support in Descriptions)
 - Implemented markdown rendering for activity descriptions
@@ -247,36 +274,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - **~1100 lines** added (450 JS, 250 CSS, HTML)
 - **Stats**: 588 activities, all signed on-chain
 - Commit: 7d07ea7
-
-### Cycle 217 (Activity Location Tagging)
-- Implemented optional location metadata for activities
-- **API Endpoints**:
-  - `PATCH /api/activities/:hash/location` - add/update location
-  - `DELETE /api/activities/:hash/location` - remove location
-  - `GET /api/activities/locations` - list activities with location
-- **Location Data**:
-  - Coordinates (lat/lng) with validation
-  - Place name (friendly label)
-  - Address (optional full address)
-  - Updated timestamp
-- **Dashboard Modal**:
-  - Place name, address, coordinate inputs
-  - 🎯 Detect button for browser geolocation
-  - OpenStreetMap embed preview for coordinates
-  - Remove location option for existing
-- **UI Features**:
-  - Location badge on activity cards (📍 icon + place name)
-  - Click badge to open Google Maps
-  - Context menu: "Set Location" option
-  - Keyboard shortcut: Shift+L on focused activity
-- **Integration**:
-  - Command palette: "Set Location" command
-  - WebSocket broadcasts for real-time updates
-  - Webhook notifications for location changes
-- **Theme Support**: All 7 themes with matching styles
-- **Mobile**: Responsive modal and coordinate row layout
-- **Stats**: 587 activities, all signed on-chain
-- Commit: c440f66
 
 ---
 

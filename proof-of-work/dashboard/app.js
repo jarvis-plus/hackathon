@@ -1491,16 +1491,10 @@ function renderActivities(activities, highlightNew = false) {
         return;
     }
     
-    // Separate pinned and unpinned activities
-    const pinned = activities.filter(a => a.pinned);
-    const unpinned = activities.filter(a => !a.pinned);
-    
-    // Sort pinned by pinnedAt (most recently pinned first), unpinned by timestamp (most recent first)
-    pinned.sort((a, b) => new Date(b.pinnedAt || 0) - new Date(a.pinnedAt || 0));
-    unpinned.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    
-    // Combine: pinned first, then recent unpinned
-    const sorted = [...pinned, ...unpinned];
+    // Apply current sort order (pinned always first, then sorted by user preference)
+    const sorted = typeof sortActivities === 'function' 
+        ? sortActivities(activities) 
+        : activities;
     
     const newCount = sorted.length - lastRenderedCount;
     const shouldHighlight = highlightNew && newCount > 0;
@@ -4512,6 +4506,7 @@ let currentStatusFilter = 'all'; // 'all', 'pending', 'completed', 'failed'
 let currentDateFrom = null; // null means no start date filter
 let currentDateTo = null; // null means no end date filter
 let availableTags = new Set();
+let currentSortOrder = localStorage.getItem('pow_sort_order') || 'newest'; // 'newest', 'oldest', 'type', 'type-desc', 'importance', 'status'
 
 // Default wallet for signing (matches first wallet in KNOWN_WALLETS above)
 const DEFAULT_WALLET = 'AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX';
@@ -4737,6 +4732,9 @@ function initFuzzySearchIndicator() {
 // Initialize fuzzy search indicator on DOM load
 document.addEventListener('DOMContentLoaded', initFuzzySearchIndicator);
 
+// Initialize sort dropdown on DOM load
+document.addEventListener('DOMContentLoaded', initSortDropdown);
+
 function setTypeFilter(type) {
     currentTypeFilter = type;
     
@@ -4781,6 +4779,113 @@ function setStatusFilter(status) {
     });
     
     applyFilters();
+}
+
+/**
+ * Set sort order for activities
+ * @param {string} order - Sort order: 'newest', 'oldest', 'type', 'type-desc', 'importance', 'status'
+ */
+function setSortOrder(order) {
+    currentSortOrder = order;
+    localStorage.setItem('pow_sort_order', order);
+    
+    // Update dropdown visual state
+    const dropdown = document.querySelector('.sort-dropdown');
+    if (dropdown) {
+        dropdown.classList.toggle('active-sort', order !== 'newest');
+    }
+    
+    // Re-render activities with new sort
+    if (window.allActivities) {
+        applyFilters();
+    }
+    
+    // Announce to screen readers
+    const orderLabels = {
+        'newest': 'Newest first',
+        'oldest': 'Oldest first',
+        'type': 'By type A to Z',
+        'type-desc': 'By type Z to A',
+        'importance': 'By importance',
+        'status': 'By status'
+    };
+    announceToScreenReader(`Activities sorted by ${orderLabels[order] || order}`);
+}
+
+/**
+ * Apply sort order to activities array
+ * @param {Array} activities - Activities to sort
+ * @returns {Array} Sorted activities (new array, original unchanged)
+ */
+function sortActivities(activities) {
+    // Always keep pinned at top, then sort rest
+    const pinned = activities.filter(a => a.pinned);
+    const unpinned = activities.filter(a => !a.pinned);
+    
+    // Sort pinned by pinnedAt (most recent first)
+    pinned.sort((a, b) => new Date(b.pinnedAt || 0) - new Date(a.pinnedAt || 0));
+    
+    // Sort unpinned by selected criteria
+    switch (currentSortOrder) {
+        case 'oldest':
+            unpinned.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            break;
+        case 'type':
+            unpinned.sort((a, b) => {
+                const typeCompare = (a.type || '').localeCompare(b.type || '');
+                if (typeCompare !== 0) return typeCompare;
+                // Secondary sort by timestamp (newest first) within same type
+                return new Date(b.timestamp) - new Date(a.timestamp);
+            });
+            break;
+        case 'type-desc':
+            unpinned.sort((a, b) => {
+                const typeCompare = (b.type || '').localeCompare(a.type || '');
+                if (typeCompare !== 0) return typeCompare;
+                return new Date(b.timestamp) - new Date(a.timestamp);
+            });
+            break;
+        case 'importance':
+            unpinned.sort((a, b) => {
+                const impA = a.importance?.score || 0;
+                const impB = b.importance?.score || 0;
+                if (impB !== impA) return impB - impA; // Higher importance first
+                return new Date(b.timestamp) - new Date(a.timestamp);
+            });
+            break;
+        case 'status':
+            unpinned.sort((a, b) => {
+                // Order: pending > completed > failed
+                const statusOrder = { pending: 0, completed: 1, failed: 2 };
+                const statusA = statusOrder[a.status || 'completed'] ?? 1;
+                const statusB = statusOrder[b.status || 'completed'] ?? 1;
+                if (statusA !== statusB) return statusA - statusB;
+                return new Date(b.timestamp) - new Date(a.timestamp);
+            });
+            break;
+        case 'newest':
+        default:
+            unpinned.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            break;
+    }
+    
+    return [...pinned, ...unpinned];
+}
+
+/**
+ * Initialize sort dropdown on page load
+ */
+function initSortDropdown() {
+    const select = document.getElementById('activitySort');
+    if (select) {
+        select.value = currentSortOrder;
+        
+        // Update visual state
+        const dropdown = document.querySelector('.sort-dropdown');
+        if (dropdown) {
+            dropdown.classList.toggle('active-sort', currentSortOrder !== 'newest');
+        }
+    }
 }
 
 // Extract all unique tags from activities and populate filter buttons
@@ -8243,6 +8348,7 @@ const KEYBOARD_SHORTCUTS = {
     'Y': { action: 'celebrateEpic', description: 'Fire epic confetti cannons' },
     'f': { action: 'toggleFuzzySearch', description: 'Toggle fuzzy search (typo tolerance)' },
     's': { action: 'cycleSentiment', description: 'Cycle sentiment filter (all → positive → neutral → negative)' },
+    'o': { action: 'cycleSortOrder', description: 'Cycle sort order (newest → oldest → type → importance → status)' },
     'a': { action: 'toggleAISummaries', description: 'Toggle AI-generated summaries' },
     'g': { action: 'toggleSuggestions', description: 'Toggle smart suggestions dropdown' },
     'n': { action: 'focusQuickNote', description: 'Focus quick note on first visible activity' },
@@ -8273,6 +8379,7 @@ function createShortcutsModal() {
                     <div class="shortcut-row"><kbd>r</kbd> Reset all filters</div>
                     <div class="shortcut-row"><kbd>f</kbd> Toggle fuzzy search</div>
                     <div class="shortcut-row"><kbd>s</kbd> Cycle sentiment filter</div>
+                    <div class="shortcut-row"><kbd>o</kbd> Cycle sort order</div>
                     <div class="shortcut-row"><kbd>a</kbd> Toggle AI summaries</div>
                     <div class="shortcut-row"><kbd>g</kbd> Smart suggestions</div>
                 </div>
@@ -8413,6 +8520,8 @@ function handleShortcutAction(action) {
         toggleSuggestionsDropdown();
     } else if (action === 'focusQuickNote') {
         focusFirstQuickNote();
+    } else if (action === 'cycleSortOrder') {
+        cycleSortOrder();
     }
 }
 
@@ -8451,6 +8560,24 @@ function cycleSentimentFilter() {
     const currentIndex = sentiments.indexOf(currentSentimentFilter || 'all');
     const nextIndex = (currentIndex + 1) % sentiments.length;
     setSentimentFilter(sentiments[nextIndex]);
+}
+
+/**
+ * Cycle through sort orders: newest → oldest → type → type-desc → importance → status → newest
+ */
+function cycleSortOrder() {
+    const orders = ['newest', 'oldest', 'type', 'type-desc', 'importance', 'status'];
+    const currentIndex = orders.indexOf(currentSortOrder || 'newest');
+    const nextIndex = (currentIndex + 1) % orders.length;
+    const nextOrder = orders[nextIndex];
+    
+    // Update the dropdown to match
+    const select = document.getElementById('activitySort');
+    if (select) {
+        select.value = nextOrder;
+    }
+    
+    setSortOrder(nextOrder);
 }
 
 // Main keyboard event listener
@@ -8568,6 +8695,14 @@ const PALETTE_COMMANDS = [
     { id: 'filter-sentiment-positive', title: 'Sentiment: Positive', description: 'Show only positive sentiment activities', icon: '😊', action: () => { setSentimentFilter('positive'); hideCommandPalette(); }, group: 'Search & Filter' },
     { id: 'filter-sentiment-neutral', title: 'Sentiment: Neutral', description: 'Show only neutral sentiment activities', icon: '😐', action: () => { setSentimentFilter('neutral'); hideCommandPalette(); }, group: 'Search & Filter' },
     { id: 'filter-sentiment-negative', title: 'Sentiment: Negative', description: 'Show only negative sentiment activities', icon: '😟', action: () => { setSentimentFilter('negative'); hideCommandPalette(); }, group: 'Search & Filter' },
+    
+    // Sorting
+    { id: 'sort-newest', title: 'Sort: Newest First', description: 'Sort activities by date (newest first)', icon: '⬇️', shortcut: 'O', action: () => { setSortOrder('newest'); hideCommandPalette(); }, group: 'Sorting' },
+    { id: 'sort-oldest', title: 'Sort: Oldest First', description: 'Sort activities by date (oldest first)', icon: '⬆️', action: () => { setSortOrder('oldest'); hideCommandPalette(); }, group: 'Sorting' },
+    { id: 'sort-type', title: 'Sort: By Type (A-Z)', description: 'Sort activities alphabetically by type', icon: '🔤', action: () => { setSortOrder('type'); hideCommandPalette(); }, group: 'Sorting' },
+    { id: 'sort-type-desc', title: 'Sort: By Type (Z-A)', description: 'Sort activities reverse alphabetically by type', icon: '🔠', action: () => { setSortOrder('type-desc'); hideCommandPalette(); }, group: 'Sorting' },
+    { id: 'sort-importance', title: 'Sort: By Importance', description: 'Sort by importance score (highest first)', icon: '⚡', action: () => { setSortOrder('importance'); hideCommandPalette(); }, group: 'Sorting' },
+    { id: 'sort-status', title: 'Sort: By Status', description: 'Sort by status (pending → completed → failed)', icon: '📊', action: () => { setSortOrder('status'); hideCommandPalette(); }, group: 'Sorting' },
     
     // Export
     { id: 'export-json', title: 'Export as JSON', description: 'Download activities as JSON file', icon: '📄', shortcut: 'E', action: () => exportActivities('json'), group: 'Export' },

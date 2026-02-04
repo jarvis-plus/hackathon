@@ -1406,6 +1406,20 @@
                         🔍 Fuzzy
                     </button>
                 </div>
+                <div class="sort-control-container">
+                    <label for="activitySort" class="sr-only">Sort activities by</label>
+                    <div class="sort-dropdown">
+                        <span class="sort-icon" aria-hidden="true">↕️</span>
+                        <select id="activitySort" class="sort-select" onchange="setSortOrder(this.value)" title="Sort activities (S)">
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                            <option value="type">By Type (A-Z)</option>
+                            <option value="type-desc">By Type (Z-A)</option>
+                            <option value="importance">By Importance</option>
+                            <option value="status">By Status</option>
+                        </select>
+                    </div>
+                </div>
                 <div class="voice-input-container">
                     <button class="voice-input-btn" id="voiceInputBtn" onclick="toggleVoiceInput()" 
                             title="Log activity by voice (V)" 

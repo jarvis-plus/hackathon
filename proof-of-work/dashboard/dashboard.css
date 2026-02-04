@@ -12444,6 +12444,189 @@ body.tour-active {
 }
 
 /* ============================================
+   ACTIVITY SORT CONTROL
+   ============================================ */
+
+.sort-control-container {
+    display: flex;
+    align-items: center;
+}
+
+.sort-dropdown {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.sort-dropdown:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.sort-dropdown:focus-within {
+    border-color: var(--accent, #7c3aed);
+    box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2);
+}
+
+.sort-icon {
+    font-size: 1rem;
+    padding-left: 0.5rem;
+}
+
+.sort-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background: transparent;
+    border: none;
+    color: var(--text, #e8e8e8);
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 0.4rem 2rem 0.4rem 0.3rem;
+    cursor: pointer;
+    outline: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 12px;
+    min-width: 130px;
+}
+
+.sort-select option {
+    background: var(--bg-primary, #1a1a2e);
+    color: var(--text, #e8e8e8);
+    padding: 0.5rem;
+}
+
+/* Sort indicator for active non-default sort */
+.sort-dropdown.active-sort {
+    background: rgba(124, 58, 237, 0.15);
+    border-color: var(--accent, #7c3aed);
+}
+
+.sort-dropdown.active-sort .sort-icon {
+    animation: sort-glow 2s ease-in-out infinite;
+}
+
+@keyframes sort-glow {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
+}
+
+/* Light theme */
+[data-theme="light"] .sort-dropdown {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .sort-dropdown:hover {
+    background: rgba(0, 0, 0, 0.06);
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="light"] .sort-select {
+    color: var(--text, #1a1a2e);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23444' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+}
+
+[data-theme="light"] .sort-select option {
+    background: #fff;
+    color: #1a1a2e;
+}
+
+/* Solarized theme */
+[data-theme="solarized"] .sort-dropdown {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(101, 123, 131, 0.3);
+}
+
+[data-theme="solarized"] .sort-select option {
+    background: #fdf6e3;
+    color: #657b83;
+}
+
+/* Dracula theme */
+[data-theme="dracula"] .sort-dropdown {
+    background: rgba(68, 71, 90, 0.3);
+    border-color: rgba(98, 114, 164, 0.3);
+}
+
+[data-theme="dracula"] .sort-select option {
+    background: #282a36;
+    color: #f8f8f2;
+}
+
+/* Nord theme */
+[data-theme="nord"] .sort-dropdown {
+    background: rgba(46, 52, 64, 0.3);
+    border-color: rgba(76, 86, 106, 0.3);
+}
+
+[data-theme="nord"] .sort-select option {
+    background: #2e3440;
+    color: #eceff4;
+}
+
+/* Monokai theme */
+[data-theme="monokai"] .sort-dropdown {
+    background: rgba(39, 40, 34, 0.3);
+    border-color: rgba(117, 113, 94, 0.3);
+}
+
+[data-theme="monokai"] .sort-select option {
+    background: #272822;
+    color: #f8f8f2;
+}
+
+/* Cyberpunk theme */
+[data-theme="cyberpunk"] .sort-dropdown {
+    background: rgba(15, 15, 35, 0.5);
+    border-color: rgba(0, 255, 255, 0.3);
+}
+
+[data-theme="cyberpunk"] .sort-select {
+    color: #00ffff;
+}
+
+[data-theme="cyberpunk"] .sort-select option {
+    background: #0f0f23;
+    color: #00ffff;
+}
+
+[data-theme="cyberpunk"] .sort-dropdown.active-sort {
+    background: rgba(255, 0, 255, 0.15);
+    border-color: #ff00ff;
+    box-shadow: 0 0 8px rgba(255, 0, 255, 0.3);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .sort-control-container {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .sort-dropdown {
+        width: 100%;
+    }
+    
+    .sort-select {
+        width: 100%;
+    }
+}
+
+/* Print styles */
+@media print {
+    .sort-control-container {
+        display: none;
+    }
+}
+
+/* ============================================
    VOICE INPUT SYSTEM
    ============================================ */
 

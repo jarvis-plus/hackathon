@@ -11,8 +11,8 @@ You are executing a build cycle for the Proof of Work dashboard.
    - Cycle instructions
 
 2. **Quick health check** (30 sec max)
-   - `systemctl status jarvis-pow` - service running?
-   - `curl -s localhost:3456/api/activities | jq length` - API responding?
+   - `curl -s localhost:3457/api/stats | jq .total` - API responding?
+   - `curl -s localhost:3457/api/activities | jq length` - Activities loading?
    - Any unsigned activities? Sign them.
 
 3. **Pick ONE backlog item** - this is the main work
@@ -20,7 +20,18 @@ You are executing a build cycle for the Proof of Work dashboard.
    - Implement it fully (code, test, verify)
    - Mark it ✅ in OBJECTIVES.md backlog
 
-4. **Log, sign, commit**
+4. **Visual check** (REQUIRED after UI changes)
+   ```bash
+   cd /root/clawd/hackathon/proof-of-work
+   PLAYWRIGHT_BROWSERS_PATH=/root/.cache/ms-playwright node visual-check.js
+   ```
+   - Takes full-page screenshot
+   - Checks for console errors
+   - Verifies key elements load (title, stats, activities)
+   - **If check fails**: Fix the issue before committing!
+   - Screenshots saved to `screenshots/` dir for comparison
+
+5. **Log, sign, commit**
    - Log a build activity describing what you did
    - Sign on-chain
    - Commit and push

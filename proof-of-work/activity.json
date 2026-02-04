@@ -5492,7 +5492,9 @@
         "Command palette",
         "Keyboard shortcuts"
       ]
-    }
+    },
+    "hash": "91bd9b96d4a03aa366141580838622fc95de3b504db0d285e6eafd65713dc4c9",
+    "signature": "3z552Cwf67X586JwzoUcTS4zv1X7ScyrsQRscnYBeLp9DwYgMsr5Zjznmg6fRnM9MdkkUVXzBmYbV3FkzEtZ3Wux"
   },
   {
     "timestamp": "2026-02-04T20:41:40.775Z",
@@ -5517,5 +5519,20 @@
     "hash": "31b282a159fb1e28b88a664ec6932d0795d3c4befacc856fdc18b8dc244a5798",
     "signature": "38ce3JT697xxq5j8j32Pa22vsgq6RCRV1KPRGv9JQyAvLjmGh2asQxf6nTYg4PoqdoVD5khApfN9zdeFSDJVLByQ",
     "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
+  },
+  {
+    "timestamp": "2026-02-04T20:55:01.369Z",
+    "type": "commit",
+    "description": "Cycle 221: Markdown Support in Activity Descriptions",
+    "hash": "306ba3a3b84852b091138138db660bad013b573f3e0299cff1b7c445d1b362ca",
+    "signature": "2bjSQtDF7WLcWvGvzq5TEp6s78a4ogHcE3K6JawvXaTKAL5e3CGGpjgkrYhXpog9nJrqCHFRGWnXzEa7GJjSgBE1",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
+  },
+  {
+    "timestamp": "2026-02-04T21:05:07.088Z",
+    "type": "build",
+    "description": "Cycle 222: Activity Sorting Options - dropdown to sort by date/type/importance/status, keyboard shortcut O to cycle, command palette integration, localStorage persistence, theme support",
+    "hash": "054b31dfe9a5fa9ace4ceac2b3ef36e599c07c5cb571938a1939afecd8c65d37",
+    "signature": "44qQp4Si3DoU9WX6q6TNjRSECsymjUqsGSGnkUwPPSARHP3G4xWwGvDWRD2BXxcizisQqnP7pDu34w4wxkGqyzWG"
   }
 ]
