@@ -182,6 +182,9 @@ export interface Activity {
   /** Type-specific metadata */
   metadata?: ActivityMetadata;
   
+  /** Optional tags for categorization (e.g., 'hackathon', 'trading', 'infra') */
+  tags?: string[];
+  
   /** On-chain signature (added by sign-activity.ts) */
   signature?: string;
   
@@ -385,12 +388,38 @@ export function isWithinDuration(ts1: string | Date, ts2: string | Date, duratio
 export function createActivity(
   type: ActivityType,
   description: string,
-  metadata?: ActivityMetadata
+  metadata?: ActivityMetadata,
+  tags?: string[]
 ): Activity {
   return {
     timestamp: new Date().toISOString(),
     type,
     description,
     ...(metadata && { metadata }),
+    ...(tags && tags.length > 0 && { tags }),
   };
 }
+
+/**
+ * Pre-defined tag categories for consistency
+ */
+export const TAG_PRESETS = {
+  // Project context
+  hackathon: 'hackathon',
+  infrastructure: 'infra',
+  trading: 'trading',
+  social: 'social',
+  research: 'research',
+  
+  // Priority/importance
+  milestone: 'milestone',
+  critical: 'critical',
+  routine: 'routine',
+  
+  // Source
+  automated: 'auto',
+  manual: 'manual',
+  scheduled: 'scheduled',
+} as const;
+
+export type TagPreset = typeof TAG_PRESETS[keyof typeof TAG_PRESETS];

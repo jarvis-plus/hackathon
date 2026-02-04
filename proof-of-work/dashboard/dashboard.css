@@ -2965,3 +2965,175 @@
                 font-size: 0.55rem;
             }
         }
+
+/* ============================================
+   TAG FILTERS AND DISPLAY
+   ============================================ */
+
+.tag-filters {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+}
+
+.tag-filters-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+.tag-filter-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.tag-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.6rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tag-filter:hover {
+    color: var(--text-primary);
+    border-color: var(--accent-blue);
+    background: rgba(0, 170, 255, 0.1);
+}
+
+.tag-filter.active {
+    color: #fff;
+    background: linear-gradient(135deg, #00aaff, #0066cc);
+    border-color: transparent;
+}
+
+.tag-filter .tag-count {
+    font-size: 0.65rem;
+    padding: 0.1rem 0.35rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+}
+
+.tag-filter.active .tag-count {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Activity card tags display */
+.activity-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.5rem;
+}
+
+.activity-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.activity-tag:hover {
+    color: var(--accent-blue);
+    border-color: var(--accent-blue);
+}
+
+/* Tag color presets */
+.activity-tag[data-tag="hackathon"] {
+    color: #ffd700;
+    border-color: #ffd70044;
+    background: #ffd70011;
+}
+
+.activity-tag[data-tag="infra"] {
+    color: #00ffaa;
+    border-color: #00ffaa44;
+    background: #00ffaa11;
+}
+
+.activity-tag[data-tag="trading"] {
+    color: #ff6b6b;
+    border-color: #ff6b6b44;
+    background: #ff6b6b11;
+}
+
+.activity-tag[data-tag="social"] {
+    color: #00aaff;
+    border-color: #00aaff44;
+    background: #00aaff11;
+}
+
+.activity-tag[data-tag="milestone"] {
+    color: #aa00ff;
+    border-color: #aa00ff44;
+    background: #aa00ff11;
+}
+
+.activity-tag[data-tag="auto"] {
+    color: #888;
+    border-color: #88888844;
+    background: #88888811;
+}
+
+.activity-tag[data-tag="scheduled"] {
+    color: #ffaa00;
+    border-color: #ffaa0044;
+    background: #ffaa0011;
+}
+
+.activity-tag[data-tag="research"] {
+    color: #9b87f5;
+    border-color: #9b87f544;
+    background: #9b87f511;
+}
+
+.activity-tag[data-tag="critical"] {
+    color: #ff4444;
+    border-color: #ff444444;
+    background: #ff444411;
+}
+
+/* No tags message */
+.no-tags {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+    .tag-filters {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .tag-filter {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+    }
+    
+    .activity-tag {
+        font-size: 0.6rem;
+    }
+}

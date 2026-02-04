@@ -246,6 +246,12 @@
                     <button class="type-filter" data-type="heartbeat" onclick="setTypeFilter('heartbeat')">💓 Heartbeats</button>
                     <button class="type-filter" data-type="browser" onclick="setTypeFilter('browser')">🌐 Browser</button>
                 </div>
+                <div class="tag-filters" id="tagFilters">
+                    <span class="tag-filters-label">🏷️ Tags:</span>
+                    <div class="tag-filter-buttons" id="tagFilterButtons">
+                        <!-- Dynamically populated from available tags -->
+                    </div>
+                </div>
                 <div class="filter-stats" id="filterStats"></div>
             </div>
             <div id="feed" class="timeline" data-view="timeline">

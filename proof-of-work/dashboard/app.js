@@ -641,6 +641,7 @@ function renderActivities(activities, highlightNew = false) {
         const hash = a.hash || a.proof?.hash;
         const hashDisplay = hash ? `SHA256: ${hash.slice(0, 12)}...${hash.slice(-6)}` : '';
         const isNew = shouldHighlight && i < newCount;
+        const tagsHtml = renderActivityTags(a.tags);
         
         return `
         <div class="activity-item ${a.type}${isNew ? ' new-activity' : ''}" style="animation-delay: ${i * 0.04}s">
@@ -652,6 +653,7 @@ function renderActivities(activities, highlightNew = false) {
                 <div class="activity-time">${formatTime(a.timestamp)}</div>
             </div>
             <div class="activity-desc">${escapeHtml(a.description)}</div>
+            ${tagsHtml}
             ${hashDisplay ? `<div class="activity-hash">${hashDisplay}</div>` : ''}
         </div>
     `}).join('');
@@ -1837,6 +1839,7 @@ async function loadActivities() {
         updateStats(activities);
         renderCharts(activities);
         renderHeatmap(activities);
+        populateTagFilters(activities);
     } catch (e) {
         try {
             const res = await fetch(basePath + '/activity.json');
@@ -1849,6 +1852,7 @@ async function loadActivities() {
             updateStats(activities);
             renderCharts(activities);
             renderHeatmap(activities);
+            populateTagFilters(activities);
         } catch (e2) {
             document.getElementById('feed').innerHTML = `
                 <div class="empty-state">
@@ -2031,6 +2035,7 @@ function connectWebSocket() {
                     updateStats(msg.data.activities);
                     renderCharts(msg.data.activities);
                     renderHeatmap(msg.data.activities);
+                    populateTagFilters(msg.data.activities);
                     
                     // Flash notification + sound for new activities
                     if (isNewActivity) {
@@ -2139,6 +2144,9 @@ setInterval(() => {
 // ============================================
 let currentTypeFilter = 'all';
 let currentSearchQuery = '';
+let currentTagFilter = 'all';
+let currentTagFilter = null; // null means "all tags"
+let availableTags = new Set();
 
 function setTypeFilter(type) {
     currentTypeFilter = type;
@@ -2149,6 +2157,66 @@ function setTypeFilter(type) {
     });
     
     applyFilters();
+}
+
+function setTagFilter(tag) {
+    // Toggle off if clicking same tag, or 'all' clears filter
+    if (tag === 'all' || currentTagFilter === tag) {
+        currentTagFilter = null;
+    } else {
+        currentTagFilter = tag;
+    }
+    
+    // Update active state on tag buttons
+    document.querySelectorAll('.tag-filter').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tag === currentTagFilter);
+    });
+    
+    applyFilters();
+}
+
+// Extract all unique tags from activities and populate filter buttons
+function populateTagFilters(activities) {
+    const tagCounts = {};
+    
+    activities.forEach(a => {
+        if (a.tags && Array.isArray(a.tags)) {
+            a.tags.forEach(tag => {
+                tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+            });
+        }
+    });
+    
+    const container = document.getElementById('tagFilterButtons');
+    const tagFiltersDiv = document.getElementById('tagFilters');
+    
+    if (!container || !tagFiltersDiv) return;
+    
+    // Hide if no tags exist in activities
+    if (Object.keys(tagCounts).length === 0) {
+        tagFiltersDiv.style.display = 'none';
+        return;
+    }
+    
+    tagFiltersDiv.style.display = 'flex';
+    
+    // Sort tags by count (most used first)
+    const sortedTags = Object.entries(tagCounts)
+        .sort((a, b) => b[1] - a[1])
+        .map(([tag]) => tag);
+    
+    // Build buttons - each tag as a clickable filter
+    const html = sortedTags.map(tag => {
+        const isActive = currentTagFilter === tag;
+        return `<button class="tag-filter${isActive ? ' active' : ''}" 
+                data-tag="${escapeHtml(tag)}" 
+                onclick="setTagFilter('${escapeHtml(tag)}')">
+            ${escapeHtml(tag)}
+            <span class="tag-count">${tagCounts[tag]}</span>
+        </button>`;
+    }).join('');
+    
+    container.innerHTML = html;
 }
 
 function clearSearch() {
@@ -2184,6 +2252,13 @@ function renderFilteredActivities(activities) {
         filtered = filtered.filter(a => a.type === currentTypeFilter);
     }
     
+    // Apply tag filter
+    if (currentTagFilter) {
+        filtered = filtered.filter(a => 
+            a.tags && Array.isArray(a.tags) && a.tags.includes(currentTagFilter)
+        );
+    }
+    
     // Apply search filter
     if (currentSearchQuery) {
         filtered = filtered.filter(a => {
@@ -2191,18 +2266,24 @@ function renderFilteredActivities(activities) {
             const type = (a.type || '').toLowerCase();
             const hash = (a.hash || '').toLowerCase();
             const metadata = JSON.stringify(a.metadata || {}).toLowerCase();
+            const tags = (a.tags || []).join(' ').toLowerCase();
             return desc.includes(currentSearchQuery) || 
                    type.includes(currentSearchQuery) ||
                    hash.includes(currentSearchQuery) ||
-                   metadata.includes(currentSearchQuery);
+                   metadata.includes(currentSearchQuery) ||
+                   tags.includes(currentSearchQuery);
         });
     }
     
     // Update filter stats
     const statsEl = document.getElementById('filterStats');
     if (statsEl) {
-        const isFiltered = currentTypeFilter !== 'all' || currentSearchQuery;
+        const isFiltered = currentTypeFilter !== 'all' || currentSearchQuery || currentTagFilter;
         if (isFiltered) {
+            const filterParts = [];
+            if (currentTypeFilter !== 'all') filterParts.push(`type: ${currentTypeFilter}`);
+            if (currentTagFilter) filterParts.push(`tag: ${currentTagFilter}`);
+            if (currentSearchQuery) filterParts.push(`search: "${currentSearchQuery}"`);
             statsEl.innerHTML = `Showing <span class="count">${filtered.length}</span> of ${activities.length} activities`;
             statsEl.classList.add('visible');
         } else {
@@ -2213,13 +2294,13 @@ function renderFilteredActivities(activities) {
     // Render the filtered activities
     const feed = document.getElementById('feed');
     if (!filtered.length) {
-        const hasFilters = currentTypeFilter !== 'all' || currentSearchQuery;
+        const hasFilters = currentTypeFilter !== 'all' || currentSearchQuery || currentTagFilter;
         feed.innerHTML = `
             <div class="empty-state">
                 <div class="empty-state-icon">${hasFilters ? '🔍' : '🤖'}</div>
                 <h4>${hasFilters ? 'No Matching Activities' : 'Agent Warming Up'}</h4>
                 <p>${hasFilters 
-                    ? `No activities match your current filters. Try adjusting your search or type filter.`
+                    ? `No activities match your current filters. Try adjusting your search, type, or tag filters.`
                     : 'Activities will appear here as the agent works — commits, builds, trades, and more.'
                 }</p>
                 ${hasFilters ? `
@@ -2237,6 +2318,7 @@ function renderFilteredActivities(activities) {
     feed.innerHTML = sorted.map((a, i) => {
         const hash = a.hash || a.proof?.hash;
         const hashDisplay = hash ? `SHA256: ${hash.slice(0, 12)}...${hash.slice(-6)}` : '';
+        const tagsHtml = renderActivityTags(a.tags);
         
         return `
         <div class="activity-item ${a.type}" style="animation-delay: ${Math.min(i, 10) * 0.04}s">
@@ -2248,18 +2330,32 @@ function renderFilteredActivities(activities) {
                 <div class="activity-time">${formatTime(a.timestamp)}</div>
             </div>
             <div class="activity-desc">${escapeHtml(a.description)}</div>
+            ${tagsHtml}
             ${hashDisplay ? `<div class="activity-hash">${hashDisplay}</div>` : ''}
         </div>
     `}).join('');
 }
 
+function renderActivityTags(tags) {
+    if (!tags || !Array.isArray(tags) || tags.length === 0) return '';
+    
+    return `<div class="activity-tags">${tags.map(tag => 
+        `<span class="activity-tag" data-tag="${escapeHtml(tag)}" onclick="setTagFilter('${escapeHtml(tag)}')">${escapeHtml(tag)}</span>`
+    ).join('')}</div>`;
+}
+
 function resetFilters() {
     currentTypeFilter = 'all';
     currentSearchQuery = '';
+    currentTagFilter = null;
     
     // Reset UI
     document.querySelectorAll('.type-filter').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.type === 'all');
+    });
+    
+    document.querySelectorAll('.tag-filter').forEach(btn => {
+        btn.classList.remove('active');
     });
     
     const input = document.getElementById('activitySearch');
@@ -2277,8 +2373,11 @@ renderActivities = function(activities, highlightNew = false) {
     // Cache activities for filtering
     window.cachedActivities = activities;
     
+    // Update tag filter buttons when activities change
+    populateTagFilters(activities);
+    
     // If filters are active, use filtered rendering
-    if (currentTypeFilter !== 'all' || currentSearchQuery) {
+    if (currentTypeFilter !== 'all' || currentSearchQuery || currentTagFilter) {
         renderFilteredActivities(activities);
     } else {
         // Use original rendering
