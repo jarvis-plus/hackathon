@@ -31,6 +31,11 @@ echo ""
 echo "📧 Checking sent emails..."
 bun run collectors/email-tracker.ts
 
+# 5. Track browser activity
+echo ""
+echo "🌐 Checking browser activity..."
+bun run collectors/browser-tracker.ts
+
 # 6. Execute recurring micro-trade (every ~2 hours to preserve SOL)
 # Check if enough time has passed since last trade
 LAST_TRADE_FILE="/tmp/jarvis-last-dca-trade"

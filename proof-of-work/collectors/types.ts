@@ -16,6 +16,7 @@ import { join, dirname } from 'path';
  * Supported activity types logged by the system
  */
 export type ActivityType =
+  | 'browser'     // Web research (searches, fetches)
   | 'build'       // Development/build cycle work
   | 'commit'      // Git commits
   | 'decision'    // Agent decisions
@@ -144,6 +145,7 @@ export type ActivityMetadata =
   | SessionMetadata
   | CommitMetadata
   | BuildMetadata
+  | BrowserMetadata
   | Record<string, unknown>;
 
 /**
@@ -250,6 +252,30 @@ export interface EmailState extends BaseState {
   lastCheck: string;
   knownThreadIds: string[];
   totalEmails: number;
+}
+
+/**
+ * Metadata for browser/research activities
+ */
+export interface BrowserMetadata {
+  action: 'search' | 'fetch' | 'browse' | 'screenshot';
+  query?: string;
+  url?: string;
+  domain?: string;
+  resultCount?: number;
+  contentLength?: number;
+  source?: string;
+  topic?: string;
+}
+
+/**
+ * Browser tracker state
+ */
+export interface BrowserState extends BaseState {
+  lastCheck: string;
+  processedIds: string[];
+  totalSearches: number;
+  totalFetches: number;
 }
 
 // ============================================================================
