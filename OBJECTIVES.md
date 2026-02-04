@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 22:02 PST
-**Cycle:** 181
+**Last Updated:** 2026-02-03 22:32 PST
+**Cycle:** 182
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -101,12 +101,45 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Custom activity types (user-defined) ✅ Cycle 179
 - [x] Activity attachment support (link files/images) ✅ Cycle 180
 - [x] Dashboard tour/onboarding for new users ✅ Cycle 181
-- [ ] Activity importance scoring (auto-prioritize)
+- [x] Activity importance scoring (auto-prioritize) ✅ Cycle 182
 - [ ] Voice input for activity logging (web speech API)
 
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 182 (Activity Importance Scoring)
+- Implemented auto-prioritization system for activities
+- **Scoring Algorithm (5 Factors, 100 points max)**:
+  - Type Weight (0-30): Activity types ranked by importance
+    - deploy/decision: 30, build: 28, commit/trade: 25
+    - email: 20, calendar: 18, research: 15
+    - message/tweet: 10, heartbeat: 5
+  - Keyword Boost (0-25): Important keywords detected
+    - critical/urgent/emergency: +15
+    - milestone/deployed/shipped: +12
+    - fix/bug/security: +10
+    - feature/implement: +8
+  - Metadata Richness (0-15): Detail level of activity
+  - On-Chain Bonus (0-15): Cryptographic verification
+  - Time Pattern (0-15): Work hours + weekend dedication
+- **5 Importance Levels**:
+  - 🔴 Critical (80-100)
+  - 🟠 High (60-79)
+  - 🟡 Medium (40-59)
+  - 🟢 Low (20-39)
+  - ⚪ Minimal (0-19)
+- **New API Endpoints**:
+  - `GET /api/activities/importance` - Bulk scores with stats & filtering
+  - `GET /api/activities/:hash/importance` - Single activity score
+- **Dashboard UI**:
+  - Importance badges displayed on each activity card
+  - Shows emoji + score (e.g., "🟠 65")
+  - Tooltip shows "Importance: 65/100 (high)"
+- **Theme Support**: All 6 themes (cyberpunk gets neon glow effects)
+- **OpenAPI Updated**: ImportanceScore schema, 2 new endpoints
+- **Stats**: 473 activities, avg score 55, 4 critical, 116 high, 345 medium
+- Commit: da54199
 
 ### Cycle 181 (Dashboard Tour/Onboarding)
 - Implemented guided onboarding tour for new visitors
@@ -247,35 +280,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
   - Added to command palette with 'C' shortcut
   - Updated both keyboard shortcuts modals
 - 456 activities, all signed on-chain
-
-### Cycle 177 (Achievement Badges System)
-- Implemented gamification through 30 achievement badges
-- **New Endpoint**: `GET /api/achievements`
-- **Badge Categories (5)**:
-  - Activity: First Step, Getting Started, Half Century, Centurion, Prolific, Powerhouse, Legendary, Mythical
-  - Streak: Streak Starter, Week Warrior, Fortnight Focus, Monthly Master, Two Month Titan, Quarter Champion, Half Year Hero, Year Legend
-  - On-Chain: First Proof, Chain Starter, Proof Collector, Century Chain, Blockchain Builder, Crypto Champion, Solana Sage
-  - Diversity: Versatile, Multi-Talented, Renaissance Agent
-  - Special: Early Bird, Night Owl, Perfectionist, Weekend Warrior
-- **Tier System**: Bronze (10pts), Silver (25pts), Gold (50pts), Platinum (100pts), Diamond (250pts)
-- **Rank Progression**: Beginner → Bronze Agent → Silver Agent → Gold Agent → Platinum Agent → Diamond Agent
-- **API Response**:
-  - `summary`: totalBadges, earnedBadges, totalPoints, rank, rankEmoji, completionPercent
-  - `nextToUnlock`: Top 3 badges closest to unlock with progress %
-  - `byCategory`: Badges organized by category
-  - `allBadges`: Flat array with full badge details
-- **Dashboard UI**:
-  - Achievements panel in charts section
-  - Rank display with emoji, earned/total count, points
-  - Progress bar showing completion percentage
-  - "Next to Unlock" preview cards with progress bars
-  - Category filter buttons (All, Activity, Streak, On-Chain, Diversity, Special)
-  - Badge grid with tier indicators, progress bars, earned checkmarks
-  - Grayscale effect on unearned badges
-  - Light/dark theme support, mobile responsive
-- **OpenAPI Updated**: Added AchievementBadge and Achievements schemas
-- ~250 lines server.ts, ~350 lines CSS, ~120 lines JS
-- 453 activities, all signed on-chain
 
 ---
 
