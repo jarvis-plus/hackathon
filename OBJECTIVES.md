@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-04 04:24 PST
-**Cycle:** 193
+**Last Updated:** 2026-02-04 04:52 PST
+**Cycle:** 194
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -114,7 +114,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Undo button toast (quick undo after delete) ✅ Cycle 192
 - [x] Auto theme mode (follow OS dark/light preference) ✅ Cycle 192
 - [x] Activity status indicator (pending/completed/failed states) ✅ Cycle 193
-- [ ] Batch restore from trash (restore multiple at once)
+- [x] Batch restore from trash (restore multiple at once) ✅ Cycle 194
 - [ ] Activity quick actions menu (right-click context menu)
 - [ ] Dashboard widgets (customizable stat cards)
 - [ ] Activity reminder system (set reminders for follow-ups)
@@ -122,6 +122,25 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 194 (Batch Restore from Trash)
+- Implemented bulk restore for restoring multiple activities from trash at once
+- **New API Endpoint**:
+  - `POST /api/activities/bulk-restore` - Accept array of hashes, restore all
+  - Returns detailed results: restored, notFound, notDeleted counts
+  - Validation: max 100 hashes, valid hash format required
+- **Dashboard UI**:
+  - Selection bar in trash modal with checkboxes
+  - Select All toggle with indeterminate state support
+  - "Restore Selected (N)" button with count indicator
+  - Visual highlighting for selected items (.selected class)
+  - Selection resets on modal open/reload
+- **Command Palette**: Added "Restore Selected from Trash" command
+- **WebSocket/Webhook Events**: activities_bulk_restored event with hash list
+- **Theme Support**: All 7 themes (Auto, Dark, Light, Ocean, Forest, Sunset, Cyberpunk)
+- **OpenAPI Updated**: BulkRestoreResult schema, new endpoint documented
+- **Stats**: 519 activities, all signed on-chain
+- Commit: 45b6698
 
 ### Cycle 193 (Activity Status Indicator)
 - Implemented activity status tracking (pending/completed/failed)
@@ -195,30 +214,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - **Accessibility**: Descriptive title attributes for screen readers
 - **Stats**: 504 activities, all signed on-chain
 - Commit: 6cc680e
-
-### Cycle 189 (Activity Scheduled Deletion)
-- Implemented configurable auto-empty for trash items
-- **New API Endpoints**:
-  - `GET /api/settings/trash` - Get trash retention settings and stats
-  - `PATCH /api/settings/trash` - Update retention period and auto-cleanup settings
-  - `POST /api/activities/trash/cleanup` - Manually run cleanup of expired items
-- **Settings System**:
-  - `retentionDays`: 0=disabled, -1=never, 1-365 days (default: 30)
-  - `autoCleanOnStartup`: Run cleanup when server starts
-  - Stats tracking: totalCleaned, lastCleanup, expiredCount
-- **Dashboard UI**:
-  - ⚙️ Collapsible settings panel in trash modal
-  - Dropdown for retention period selection
-  - Checkbox for auto-clean on startup
-  - Cleanup stats display
-  - 🧹 Cleanup Expired button
-- **Startup Behavior**: Auto-cleans expired trash on server start (if enabled)
-- **Theme Support**: All 6 themes (Dark, Light, Ocean, Forest, Sunset, Cyberpunk)
-- **Command Palette**: Added "Cleanup Expired Trash" and "Trash Settings" commands
-- **OpenAPI Updated**: TrashSettings, TrashCleanupResult, TrashSettingsUpdateResult schemas
-- **WebSocket/Webhook Events**: trash_cleaned event
-- **Stats**: 499 activities, all signed on-chain
-- Commit: 481d12f
 
 ---
 
