@@ -1527,6 +1527,7 @@ function renderActivities(activities, highlightNew = false) {
         const bulkSelected = typeof bulkSelections !== 'undefined' && bulkSelections.includes(hash);
         const bulkCheckboxHtml = typeof renderBulkCheckbox === 'function' ? renderBulkCheckbox(hash) : '';
         const importanceBadgeHtml = renderImportanceBadge(a);
+        const sentimentBadgeHtml = typeof renderSentimentBadge === 'function' ? renderSentimentBadge(a) : '';
         const linksIndicatorHtml = renderLinksIndicator(a);
         
         return `
@@ -1555,6 +1556,7 @@ function renderActivities(activities, highlightNew = false) {
                     ${statusBadgeHtml}
                     <span class="activity-type">${a.type}</span>
                     ${importanceBadgeHtml}
+                    ${sentimentBadgeHtml}
                     ${getProofBadge(a)}
                     ${walletHtml}
                 </div>
@@ -4903,7 +4905,8 @@ function updateExportFilterIndicator() {
         currentDateFrom !== null ||
         currentDateTo !== null ||
         window.bookmarkFilterActive ||
-        currentStatusFilter !== 'all';
+        currentStatusFilter !== 'all' ||
+        (typeof currentSentimentFilter !== 'undefined' && currentSentimentFilter !== 'all');
     
     if (hasActiveFilters) {
         indicator.style.display = 'inline-flex';
@@ -4923,6 +4926,7 @@ function updateExportFilterIndicator() {
         if (currentTagFilter) activeFilters.push(`Tag: ${currentTagFilter}`);
         if (currentWalletFilter) activeFilters.push(`Wallet: ${currentWalletFilter.slice(0, 8)}...`);
         if (currentStatusFilter !== 'all') activeFilters.push(`Status: ${currentStatusFilter}`);
+        if (typeof currentSentimentFilter !== 'undefined' && currentSentimentFilter !== 'all') activeFilters.push(`Sentiment: ${currentSentimentFilter}`);
         if (currentDateFrom || currentDateTo) {
             const from = currentDateFrom ? currentDateFrom.toLocaleDateString() : 'start';
             const to = currentDateTo ? currentDateTo.toLocaleDateString() : 'now';
@@ -5566,6 +5570,14 @@ function renderFilteredActivities(activities) {
         filtered = filtered.filter(a => {
             const activityStatus = a.status || 'completed';
             return activityStatus === currentStatusFilter;
+        });
+    }
+    
+    // Apply sentiment filter
+    if (typeof currentSentimentFilter !== 'undefined' && currentSentimentFilter !== 'all') {
+        filtered = filtered.filter(a => {
+            const { sentiment } = analyzeSentiment(a);
+            return sentiment === currentSentimentFilter;
         });
     }
     
@@ -6462,6 +6474,198 @@ function renderImportanceBadge(activity) {
     return `<span class="importance-badge importance-${level}" title="Importance: ${score}/100 (${level})">${emoji} ${score}</span>`;
 }
 
+// ============================================
+// SENTIMENT ANALYSIS
+// ============================================
+
+/**
+ * Positive sentiment words and their weights
+ * Higher weight = stronger positive signal
+ */
+const SENTIMENT_POSITIVE_WORDS = {
+    // Success indicators
+    'success': 3, 'successful': 3, 'succeeded': 3, 'complete': 2, 'completed': 2,
+    'accomplish': 3, 'accomplished': 3, 'achieve': 3, 'achieved': 3, 'done': 1,
+    'finished': 2, 'win': 3, 'won': 3, 'perfect': 3, 'excellent': 3,
+    // Improvement
+    'improve': 2, 'improved': 2, 'improvement': 2, 'better': 2, 'enhance': 2,
+    'enhanced': 2, 'upgrade': 2, 'upgraded': 2, 'optimize': 2, 'optimized': 2,
+    // Creation/Building
+    'create': 2, 'created': 2, 'build': 2, 'built': 2, 'implement': 2,
+    'implemented': 2, 'add': 1, 'added': 1, 'new': 1, 'launch': 3, 'launched': 3,
+    'ship': 2, 'shipped': 2, 'deploy': 2, 'deployed': 2, 'release': 2, 'released': 2,
+    // Fix/Resolution
+    'fix': 2, 'fixed': 2, 'resolve': 2, 'resolved': 2, 'solve': 2, 'solved': 2,
+    'repair': 2, 'repaired': 2, 'patch': 1, 'patched': 1,
+    // Positive emotions
+    'great': 2, 'good': 1, 'nice': 1, 'awesome': 3, 'amazing': 3, 'fantastic': 3,
+    'wonderful': 3, 'happy': 2, 'excited': 2, 'proud': 2, 'love': 2, 'loved': 2,
+    // Progress
+    'progress': 2, 'advance': 2, 'advanced': 2, 'forward': 1, 'growth': 2,
+    'grow': 2, 'grew': 2, 'expand': 2, 'expanded': 2, 'increase': 1, 'increased': 1,
+    // Positive outcomes
+    'profit': 3, 'gain': 2, 'gains': 2, 'earn': 2, 'earned': 2, 'reward': 2,
+    'bonus': 2, 'milestone': 2, 'achievement': 3, 'breakthrough': 3,
+    // Verification
+    'verified': 2, 'confirmed': 2, 'approved': 2, 'passed': 2, 'valid': 1,
+    // Productivity
+    'productive': 2, 'efficient': 2, 'effective': 2, 'working': 1, 'works': 2
+};
+
+/**
+ * Negative sentiment words and their weights
+ * Higher weight = stronger negative signal
+ */
+const SENTIMENT_NEGATIVE_WORDS = {
+    // Failure indicators
+    'fail': 3, 'failed': 3, 'failure': 3, 'error': 2, 'errors': 2,
+    'bug': 2, 'bugs': 2, 'issue': 1, 'issues': 1, 'problem': 2, 'problems': 2,
+    'broken': 3, 'break': 2, 'broke': 2, 'crash': 3, 'crashed': 3, 'crashes': 3,
+    // Negative outcomes
+    'loss': 3, 'lost': 2, 'lose': 2, 'losing': 2, 'miss': 1, 'missed': 2,
+    'missing': 2, 'reject': 2, 'rejected': 3, 'deny': 2, 'denied': 2,
+    // Difficulty
+    'difficult': 1, 'hard': 1, 'struggle': 2, 'struggling': 2, 'stuck': 2,
+    'block': 1, 'blocked': 2, 'blocker': 2, 'obstacle': 2,
+    // Destruction
+    'delete': 1, 'deleted': 1, 'remove': 1, 'removed': 1, 'destroy': 2,
+    'destroyed': 2, 'revert': 2, 'reverted': 2, 'rollback': 2, 'undo': 1,
+    // Negative emotions
+    'bad': 2, 'terrible': 3, 'awful': 3, 'horrible': 3, 'worst': 3,
+    'wrong': 2, 'sad': 2, 'angry': 2, 'frustrated': 2, 'annoyed': 2,
+    'worried': 1, 'concern': 1, 'concerned': 1, 'anxious': 2,
+    // Problems
+    'warning': 1, 'warnings': 1, 'critical': 2, 'severe': 3, 'urgent': 2,
+    'emergency': 3, 'alert': 1, 'alarm': 2, 'danger': 2, 'risk': 1, 'risky': 2,
+    // Technical issues
+    'timeout': 2, 'exception': 2, 'invalid': 2, 'malformed': 2, 'corrupt': 3,
+    'corrupted': 3, 'overflow': 2, 'leak': 2, 'vulnerability': 3, 'exploit': 3,
+    // Delays
+    'delay': 1, 'delayed': 2, 'slow': 1, 'slower': 2, 'late': 1, 'overdue': 2,
+    // Decline
+    'decline': 2, 'declined': 2, 'decrease': 1, 'decreased': 1, 'drop': 1, 'dropped': 2,
+    'down': 1, 'downgrade': 2, 'downgraded': 2, 'regression': 3
+};
+
+/**
+ * Current sentiment filter state
+ */
+let currentSentimentFilter = 'all';
+
+/**
+ * Analyze sentiment of an activity.
+ * @param {Object} activity - The activity object
+ * @returns {Object} Sentiment analysis result { sentiment, score, emoji, confidence }
+ */
+function analyzeSentiment(activity) {
+    const text = ((activity.description || '') + ' ' + 
+                  JSON.stringify(activity.metadata || {})).toLowerCase();
+    
+    let positiveScore = 0;
+    let negativeScore = 0;
+    let positiveMatches = 0;
+    let negativeMatches = 0;
+    
+    // Count positive words
+    for (const [word, weight] of Object.entries(SENTIMENT_POSITIVE_WORDS)) {
+        const regex = new RegExp(`\\b${word}\\b`, 'gi');
+        const matches = (text.match(regex) || []).length;
+        if (matches > 0) {
+            positiveScore += weight * matches;
+            positiveMatches += matches;
+        }
+    }
+    
+    // Count negative words
+    for (const [word, weight] of Object.entries(SENTIMENT_NEGATIVE_WORDS)) {
+        const regex = new RegExp(`\\b${word}\\b`, 'gi');
+        const matches = (text.match(regex) || []).length;
+        if (matches > 0) {
+            negativeScore += weight * matches;
+            negativeMatches += matches;
+        }
+    }
+    
+    // Calculate net score (-100 to +100)
+    const totalMatches = positiveMatches + negativeMatches;
+    const netScore = positiveScore - negativeScore;
+    
+    // Determine confidence (0-1) based on number of matched words
+    const confidence = Math.min(totalMatches / 5, 1);
+    
+    // Determine sentiment category
+    let sentiment, emoji;
+    if (totalMatches === 0) {
+        // No sentiment words found - neutral
+        sentiment = 'neutral';
+        emoji = '😐';
+    } else if (netScore > 3) {
+        sentiment = 'positive';
+        emoji = '😊';
+    } else if (netScore < -3) {
+        sentiment = 'negative';
+        emoji = '😟';
+    } else {
+        sentiment = 'neutral';
+        emoji = '😐';
+    }
+    
+    return {
+        sentiment,
+        score: netScore,
+        emoji,
+        confidence,
+        positiveScore,
+        negativeScore,
+        positiveMatches,
+        negativeMatches
+    };
+}
+
+/**
+ * Render sentiment badge for an activity.
+ * @param {Object} activity - The activity object
+ * @returns {string} HTML string for sentiment badge
+ */
+function renderSentimentBadge(activity) {
+    const { sentiment, score, emoji, confidence } = analyzeSentiment(activity);
+    
+    // Only show badge if we have some confidence
+    if (confidence < 0.2) {
+        return `<span class="sentiment-badge sentiment-neutral" title="Sentiment: neutral (low confidence)">😐</span>`;
+    }
+    
+    const scoreDisplay = score > 0 ? `+${score}` : score;
+    const confidencePercent = Math.round(confidence * 100);
+    const tooltip = `Sentiment: ${sentiment} (score: ${scoreDisplay}, confidence: ${confidencePercent}%)`;
+    
+    return `<span class="sentiment-badge sentiment-${sentiment}" title="${tooltip}">${emoji}</span>`;
+}
+
+/**
+ * Set the sentiment filter and re-render activities.
+ * @param {string} sentiment - 'all', 'positive', 'negative', or 'neutral'
+ */
+function setSentimentFilter(sentiment) {
+    currentSentimentFilter = sentiment;
+    
+    // Update button states
+    document.querySelectorAll('.sentiment-filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.sentiment === sentiment);
+        btn.setAttribute('aria-pressed', btn.dataset.sentiment === sentiment);
+    });
+    
+    applyFilters();
+    
+    // Announce for screen readers
+    announceToScreenReader(`Filtered to ${sentiment === 'all' ? 'all sentiments' : sentiment + ' activities'}`);
+}
+
+// Make sentiment functions globally available
+window.setSentimentFilter = setSentimentFilter;
+window.analyzeSentiment = analyzeSentiment;
+window.renderSentimentBadge = renderSentimentBadge;
+
 /**
  * Render links indicator for an activity.
  * Shows a badge when activity has relationships to other activities.
@@ -6874,6 +7078,7 @@ function resetFilters() {
     currentWalletFilter = null;
     currentDateFrom = null;
     currentDateTo = null;
+    currentSentimentFilter = 'all';
     
     // Reset UI
     document.querySelectorAll('.type-filter').forEach(btn => {
@@ -6890,6 +7095,12 @@ function resetFilters() {
     
     document.querySelectorAll('.date-quick-btn').forEach(btn => {
         btn.classList.remove('active');
+    });
+    
+    // Reset sentiment filter buttons
+    document.querySelectorAll('.sentiment-filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.sentiment === 'all');
+        btn.setAttribute('aria-pressed', btn.dataset.sentiment === 'all');
     });
     
     const input = document.getElementById('activitySearch');
@@ -7522,6 +7733,7 @@ const KEYBOARD_SHORTCUTS = {
     'y': { action: 'celebrate', description: 'Fire confetti celebration' },
     'Y': { action: 'celebrateEpic', description: 'Fire epic confetti cannons' },
     'f': { action: 'toggleFuzzySearch', description: 'Toggle fuzzy search (typo tolerance)' },
+    's': { action: 'cycleSentiment', description: 'Cycle sentiment filter (all → positive → neutral → negative)' },
     '?': { action: 'showShortcuts', description: 'Show keyboard shortcuts' },
 };
 
@@ -7548,6 +7760,7 @@ function createShortcutsModal() {
                     <div class="shortcut-row"><kbd>Esc</kbd> Clear search / Close modal</div>
                     <div class="shortcut-row"><kbd>r</kbd> Reset all filters</div>
                     <div class="shortcut-row"><kbd>f</kbd> Toggle fuzzy search</div>
+                    <div class="shortcut-row"><kbd>s</kbd> Cycle sentiment filter</div>
                 </div>
                 <div class="shortcut-section">
                     <h4>Tabs</h4>
@@ -7675,7 +7888,19 @@ function handleShortcutAction(action) {
         toggleDashboardEditMode();
     } else if (action === 'toggleFuzzySearch') {
         toggleFuzzySearch();
+    } else if (action === 'cycleSentiment') {
+        cycleSentimentFilter();
     }
+}
+
+/**
+ * Cycle through sentiment filters: all → positive → neutral → negative → all
+ */
+function cycleSentimentFilter() {
+    const sentiments = ['all', 'positive', 'neutral', 'negative'];
+    const currentIndex = sentiments.indexOf(currentSentimentFilter || 'all');
+    const nextIndex = (currentIndex + 1) % sentiments.length;
+    setSentimentFilter(sentiments[nextIndex]);
 }
 
 // Main keyboard event listener
@@ -7788,6 +8013,9 @@ const PALETTE_COMMANDS = [
     { id: 'filter-trade', title: 'Filter: Trades', description: 'Show only trade activities', icon: '💰', action: () => { setTypeFilter('trade'); hideCommandPalette(); }, group: 'Search & Filter' },
     { id: 'filter-tweet', title: 'Filter: Tweets', description: 'Show only tweet activities', icon: '🐦', action: () => { setTypeFilter('tweet'); hideCommandPalette(); }, group: 'Search & Filter' },
     { id: 'filter-message', title: 'Filter: Messages', description: 'Show only message activities', icon: '💬', action: () => { setTypeFilter('message'); hideCommandPalette(); }, group: 'Search & Filter' },
+    { id: 'filter-sentiment-positive', title: 'Sentiment: Positive', description: 'Show only positive sentiment activities', icon: '😊', action: () => { setSentimentFilter('positive'); hideCommandPalette(); }, group: 'Search & Filter' },
+    { id: 'filter-sentiment-neutral', title: 'Sentiment: Neutral', description: 'Show only neutral sentiment activities', icon: '😐', action: () => { setSentimentFilter('neutral'); hideCommandPalette(); }, group: 'Search & Filter' },
+    { id: 'filter-sentiment-negative', title: 'Sentiment: Negative', description: 'Show only negative sentiment activities', icon: '😟', action: () => { setSentimentFilter('negative'); hideCommandPalette(); }, group: 'Search & Filter' },
     
     // Export
     { id: 'export-json', title: 'Export as JSON', description: 'Download activities as JSON file', icon: '📄', shortcut: 'E', action: () => exportActivities('json'), group: 'Export' },

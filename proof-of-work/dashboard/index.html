@@ -1320,6 +1320,15 @@
                         <button class="status-filter-btn" data-status="failed" onclick="setStatusFilter('failed')" aria-pressed="false">❌ Failed</button>
                     </div>
                 </div>
+                <div class="sentiment-filters" id="sentimentFilters" role="group" aria-label="Filter by sentiment">
+                    <span class="sentiment-filters-label">🎭 Sentiment:</span>
+                    <div class="sentiment-filter-buttons" id="sentimentFilterButtons">
+                        <button class="sentiment-filter-btn active" data-sentiment="all" onclick="setSentimentFilter('all')" aria-pressed="true">All</button>
+                        <button class="sentiment-filter-btn" data-sentiment="positive" onclick="setSentimentFilter('positive')" aria-pressed="false">😊 Positive</button>
+                        <button class="sentiment-filter-btn" data-sentiment="neutral" onclick="setSentimentFilter('neutral')" aria-pressed="false">😐 Neutral</button>
+                        <button class="sentiment-filter-btn" data-sentiment="negative" onclick="setSentimentFilter('negative')" aria-pressed="false">😟 Negative</button>
+                    </div>
+                </div>
                 <div class="date-range-filters" id="dateRangeFilters" role="group" aria-label="Filter by date range">
                     <span class="date-range-label" id="dateRangeLabel">📅 Date Range:</span>
                     <div class="date-range-inputs">

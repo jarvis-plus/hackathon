@@ -5076,6 +5076,119 @@
     }
 }
 
+/* ============================================ */
+/* SENTIMENT FILTER BUTTONS                     */
+/* ============================================ */
+.sentiment-filters {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+}
+
+.sentiment-filters-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+.sentiment-filter-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.sentiment-filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.6rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sentiment-filter-btn:hover {
+    color: var(--text-primary);
+    border-color: var(--accent);
+    background: rgba(0, 170, 255, 0.1);
+}
+
+.sentiment-filter-btn.active {
+    color: #fff;
+    background: linear-gradient(135deg, var(--accent), var(--accent-blue));
+    border-color: transparent;
+}
+
+/* Sentiment-specific active colors */
+.sentiment-filter-btn[data-sentiment="positive"].active {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+.sentiment-filter-btn[data-sentiment="neutral"].active {
+    background: linear-gradient(135deg, #64748b, #475569);
+}
+
+.sentiment-filter-btn[data-sentiment="negative"].active {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+/* Mobile adjustments for sentiment */
+@media (max-width: 768px) {
+    .sentiment-filters {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .sentiment-filter-btn {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+    }
+}
+
+/* ============================================ */
+/* SENTIMENT BADGES                             */
+/* ============================================ */
+.sentiment-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    font-size: 12px;
+    cursor: help;
+    transition: all 0.2s ease;
+    margin-left: 4px;
+}
+
+.sentiment-badge:hover {
+    transform: scale(1.15);
+}
+
+.sentiment-badge.sentiment-positive {
+    background: rgba(34, 197, 94, 0.2);
+    border: 1px solid rgba(34, 197, 94, 0.4);
+}
+
+.sentiment-badge.sentiment-neutral {
+    background: rgba(100, 116, 139, 0.2);
+    border: 1px solid rgba(100, 116, 139, 0.4);
+}
+
+.sentiment-badge.sentiment-negative {
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
 /* Activity card tags display */
 .activity-tags {
     display: flex;
