@@ -3405,5 +3405,22 @@
     "hash": "ddd36f04ee97605c6cdf9f73dd1ba7defc156febb1a9d0876b873a96b947cab3",
     "signature": "4tW4vje5yuX2xZDK3whU65qx2kRHW2i3C578R1XCeT6qAdPRcccUn1ibJ7bwoWaU7DZAHvKeYMudpDWibXeY1qax",
     "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
+  },
+  {
+    "timestamp": "2026-02-04T04:53:10.008Z",
+    "type": "commit",
+    "description": "Cycle 165: Email digest subscriptions API",
+    "hash": "278ad14cd8667105fdde356a2566792dd98ebb835119fd31235676f18f45bbbb",
+    "signature": "32eRN2wYEsU9KyryEBVrzPdbsHh2qwmhffnrMXYefa4aKV481zCM53jzw9Y2fxggqnJGxs491kLKmeiUEQ4aNte8",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
+  },
+  {
+    "timestamp": "2026-02-04T04:53:32Z",
+    "type": "build",
+    "description": "Cycle 166: Slack/Discord webhook integration - Added format field to webhooks supporting json (default), slack (Block Kit), and discord (Embed) payload formats. Updated WebhookSubscription interface, deliverWebhook formatter logic, POST/GET endpoints, and OpenAPI spec.",
+    "metadata": {},
+    "hash": "5b5ee8730e604507ebce57a43c1701aaad4145a01b47d2b2616b252ef68f3d57",
+    "signature": "63QkLCW6tPy7RfiqNKqujM43i24jJD9fomUzsjBMEJNLHdFNkZB7jwcsxgmrCSs6FqMDmK9zQ6JWiDSXEezXnB6u",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
   }
 ]

@@ -9,17 +9,6 @@
     "createdAt": "2026-02-04T02:57:07.204Z",
     "failureCount": 0,
     "active": true,
-    "lastDelivery": "2026-02-04T04:53:00.356Z"
-  },
-  {
-    "id": "d7bc713f-f36f-49f3-a74b-7d654d872ca7",
-    "url": "https://hooks.slack.com/test-slack-123",
-    "events": [
-      "activity.new"
-    ],
-    "format": "slack",
-    "createdAt": "2026-02-04T04:53:07.662Z",
-    "failureCount": 0,
-    "active": true
+    "lastDelivery": "2026-02-04T04:53:33.830Z"
   }
 ]

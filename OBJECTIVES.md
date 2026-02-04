@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 20:49 PST
-**Cycle:** 165
+**Last Updated:** 2026-02-03 20:55 PST
+**Cycle:** 166
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -84,7 +84,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] OpenAPI/Swagger documentation (auto-generated API docs) ✅ Cycle 162
 - [x] Activity comments/notes (add notes to activities) ✅ Cycle 163
 - [x] Activity pinning (pin important activities to top) ✅ Cycle 164
-- [x] Email digest (daily/weekly summary emails) ✅ Cycle 165
+- [x] Email digest (daily/weekly summary emails) ✅ Cycle 165-166
 - [ ] Slack/Discord bot integration
 - [ ] Activity diff view (show changes between activities)
 - [ ] Performance dashboard (response times, memory usage)
@@ -95,6 +95,28 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 166 (Email Digest Subscriptions API)
+- Extended email digest with subscription management system
+- **New Endpoints**:
+  - `GET /api/digest/subscriptions` - List all subscriptions
+  - `POST /api/digest/subscriptions` - Subscribe an email
+  - `GET /api/digest/subscriptions/:id` - Get subscription details
+  - `PATCH /api/digest/subscriptions/:id` - Update frequency/status
+  - `DELETE /api/digest/subscriptions/:id` - Unsubscribe
+- **send-digest.ts Script**:
+  - Cron-compatible script for sending email digests
+  - Integrates with gog/Gmail for email delivery
+  - Supports --dry-run, --frequency, --force flags
+  - Tracks lastSent timestamp per subscription
+  - Exponential backoff for delivery timing
+- **Data Storage**: `data/digest-subscriptions.json`
+- **Validation**: Email format, frequency enum (daily/weekly/monthly)
+- **Privacy**: Emails masked in API responses (te***@example.com)
+- **OpenAPI Updated**: Added DigestSubscription, DigestData schemas
+- **README Updated**: Full documentation for digest API
+- ~200 lines in server.ts, ~350 lines in send-digest.ts
+- 425 activities, all signed on-chain
 
 ### Cycle 165 (Email Digest API)
 - Implemented email digest endpoint for generating activity summaries
@@ -172,31 +194,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
   - Dark gradient header matching dashboard theme
 - ~100 lines added to server.ts, ~900 lines in openapi.json
 - 407 activities, all signed on-chain
-
-### Cycle 161 (Prometheus Metrics Endpoint)
-- Implemented Prometheus-compatible metrics endpoint for monitoring integration
-- **Endpoints**: `/metrics` and `/api/metrics` (both work)
-- **15+ Metrics Exposed**:
-  - `jarvis_pow_activities_total` - Total activities count
-  - `jarvis_pow_activities_onchain` - On-chain verified count
-  - `jarvis_pow_activities_unsigned` - Pending signatures
-  - `jarvis_pow_onchain_ratio` - Verification rate (0-1)
-  - `jarvis_pow_activities_by_type{type="..."}` - Breakdown by activity type
-  - `jarvis_pow_activities_last_hour` - Hourly activity count
-  - `jarvis_pow_activities_last_day` - Daily activity count
-  - `jarvis_pow_active_days` - Total unique days with activity
-  - `jarvis_pow_last_activity_timestamp` - Unix timestamp of latest activity
-  - `jarvis_pow_first_activity_timestamp` - Unix timestamp of first activity
-  - `jarvis_pow_websocket_clients` - Connected WebSocket clients
-  - `jarvis_pow_webhooks_total` / `jarvis_pow_webhooks_active` - Webhook counts
-  - `jarvis_pow_server_uptime_seconds` - Server uptime
-  - `jarvis_pow_info{version, wallet, hackathon}` - Server metadata
-- **Format**: Standard Prometheus text format (text/plain; version=0.0.4)
-- **Headers**: No-cache to ensure fresh metrics on each scrape
-- **Documentation**: Updated server.ts header comments
-- ~120 lines added to server.ts
-- Compatible with Prometheus, Grafana, and other monitoring tools
-- 405 activities, all signed on-chain
 
 ---
 
