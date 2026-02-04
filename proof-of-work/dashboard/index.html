@@ -36,6 +36,7 @@
     <meta name="apple-mobile-web-app-title" content="Jarvis PoW">
     <link rel="stylesheet" href="dashboard.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 </head>
 <body>
     <!-- Skip link for keyboard navigation -->
@@ -740,6 +741,65 @@
                         <div class="heatmap-cell level-4"></div>
                         <span class="heatmap-legend-label">More</span>
                     </div>
+                </div>
+            </div>
+            
+            <!-- Relationship Network Graph -->
+            <div class="chart-card" style="margin-top: 1.5rem;" id="relationship-graph-card" aria-busy="true">
+                <div class="graph-header">
+                    <h3 id="relationship-graph-title">🕸️ Activity Relationship Network</h3>
+                    <div class="graph-controls">
+                        <button class="graph-control-btn" id="graphResetBtn" onclick="resetGraphZoom()" title="Reset zoom (R)">
+                            <span>↺</span> Reset
+                        </button>
+                        <button class="graph-control-btn" id="graphFullscreenBtn" onclick="toggleGraphFullscreen()" title="Toggle fullscreen (F)">
+                            <span>⛶</span> Expand
+                        </button>
+                    </div>
+                </div>
+                <p class="chart-subtitle">Interactive network showing how activities connect. Drag nodes to rearrange. Scroll to zoom.</p>
+                <div class="graph-legend">
+                    <div class="legend-item">
+                        <span class="legend-dot" style="background: #10b981;"></span>
+                        <span>follows-up</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-dot" style="background: #6366f1;"></span>
+                        <span>related-to</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-dot" style="background: #f59e0b;"></span>
+                        <span>fixes</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-dot" style="background: #ef4444;"></span>
+                        <span>blocks</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-dot" style="background: #8b5cf6;"></span>
+                        <span>implements</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-dot" style="background: #ec4899;"></span>
+                        <span>supersedes</span>
+                    </div>
+                </div>
+                <div class="graph-container" id="relationshipGraphContainer" style="position: relative; height: 400px;">
+                    <div class="chart-loading" id="graph-loading">
+                        <div class="loading-spinner"></div>
+                        <span class="loading-text">Loading relationship graph...</span>
+                    </div>
+                    <svg id="relationshipGraph" width="100%" height="100%"></svg>
+                    <div class="graph-empty" id="graphEmpty" style="display: none;">
+                        <div class="empty-icon">🔗</div>
+                        <p>No relationships yet</p>
+                        <p class="empty-hint">Link activities using the context menu or press L to view relationships</p>
+                    </div>
+                </div>
+                <div class="graph-stats" id="graphStats">
+                    <span class="graph-stat">Nodes: <strong id="graphNodeCount">0</strong></span>
+                    <span class="graph-stat">Connections: <strong id="graphEdgeCount">0</strong></span>
+                    <span class="graph-stat">Clusters: <strong id="graphClusterCount">0</strong></span>
                 </div>
             </div>
             

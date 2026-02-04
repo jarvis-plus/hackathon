@@ -6798,6 +6798,7 @@ const PALETTE_COMMANDS = [
     { id: 'reminders', title: 'View Reminders', description: 'Manage activity reminders and follow-ups', icon: '⏰', shortcut: 'R', action: () => { openRemindersModal(); hideCommandPalette(); }, group: 'Actions' },
     { id: 'new-reminder', title: 'New Reminder', description: 'Create a new reminder', icon: '➕', action: () => { openReminderFormModal(); hideCommandPalette(); }, group: 'Actions' },
     { id: 'relationships', title: 'View Relationships', description: 'Browse activity links and connections', icon: '🔗', shortcut: 'L', action: () => { openRelationshipsModal(); hideCommandPalette(); }, group: 'Actions' },
+    { id: 'relationship-graph', title: 'View Relationship Network', description: 'Interactive force-directed graph of activity connections', icon: '🕸️', shortcut: 'G', action: () => { document.getElementById('relationship-graph-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); hideCommandPalette(); }, group: 'Actions' },
     { id: 'theme-auto', title: 'Theme: Auto (System)', description: 'Follow system dark/light preference', icon: '🔄', action: () => { setTheme('auto'); hideCommandPalette(); }, group: 'Settings' },
     { id: 'theme-dark', title: 'Theme: Dark', description: 'Switch to dark theme', icon: '🌙', action: () => { setTheme('dark'); hideCommandPalette(); }, group: 'Settings' },
     { id: 'theme-light', title: 'Theme: Light', description: 'Switch to light theme', icon: '☀️', action: () => { setTheme('light'); hideCommandPalette(); }, group: 'Settings' },
@@ -14324,3 +14325,347 @@ document.addEventListener('click', (e) => {
         closeLinkActivityModal();
     }
 });
+
+// ========================================
+// RELATIONSHIP NETWORK GRAPH
+// ========================================
+
+let graphSimulation = null;
+let graphSvg = null;
+let graphZoom = null;
+let graphData = { nodes: [], links: [] };
+
+// Initialize the relationship graph
+async function initRelationshipGraph() {
+    const container = document.getElementById('relationshipGraphContainer');
+    const svg = d3.select('#relationshipGraph');
+    const loading = document.getElementById('graph-loading');
+    const empty = document.getElementById('graphEmpty');
+    
+    if (!container || !svg.node()) return;
+    
+    try {
+        // Fetch graph data
+        const response = await fetch('/api/relationships/graph');
+        if (!response.ok) throw new Error('Failed to fetch graph data');
+        
+        const data = await response.json();
+        graphData = data;
+        
+        // Hide loading
+        if (loading) loading.style.display = 'none';
+        
+        // Check if empty
+        if (!data.nodes || data.nodes.length === 0) {
+            if (empty) empty.style.display = 'block';
+            updateGraphStats(0, 0, 0);
+            return;
+        }
+        
+        if (empty) empty.style.display = 'none';
+        
+        // Render the graph
+        renderRelationshipGraph(data);
+        
+        // Update stats
+        const clusters = countClusters(data.nodes, data.edges || []);
+        updateGraphStats(data.nodes.length, (data.edges || []).length, clusters);
+        
+    } catch (error) {
+        console.error('Failed to load relationship graph:', error);
+        if (loading) loading.innerHTML = '<span class="error-text">Failed to load graph</span>';
+    }
+}
+
+function renderRelationshipGraph(data) {
+    const container = document.getElementById('relationshipGraphContainer');
+    const svg = d3.select('#relationshipGraph');
+    
+    // Clear existing content
+    svg.selectAll('*').remove();
+    
+    const width = container.clientWidth;
+    const height = container.clientHeight || 400;
+    
+    // Create zoom behavior
+    graphZoom = d3.zoom()
+        .scaleExtent([0.2, 4])
+        .on('zoom', (event) => {
+            g.attr('transform', event.transform);
+        });
+    
+    svg.call(graphZoom);
+    
+    // Create main group for zoom/pan
+    const g = svg.append('g');
+    graphSvg = g;
+    
+    // Map node hashes to node objects
+    const nodeMap = new Map(data.nodes.map(n => [n.hash, n]));
+    
+    // Prepare links (edges)
+    const links = (data.edges || []).map(e => ({
+        source: e.source,
+        target: e.target,
+        type: e.type,
+        description: e.description
+    })).filter(l => nodeMap.has(l.source) && nodeMap.has(l.target));
+    
+    // Prepare nodes
+    const nodes = data.nodes.map(n => ({
+        id: n.hash,
+        type: n.type || 'default',
+        description: n.description || n.hash.slice(0, 8),
+        timestamp: n.timestamp
+    }));
+    
+    // Color scale for link types
+    const linkColors = {
+        'follows-up': '#10b981',
+        'related-to': '#6366f1',
+        'fixes': '#f59e0b',
+        'blocks': '#ef4444',
+        'implements': '#8b5cf6',
+        'supersedes': '#ec4899'
+    };
+    
+    // Color scale for node types
+    const nodeColors = {
+        'commit': '#10b981',
+        'build': '#6366f1',
+        'trade': '#f59e0b',
+        'tweet': '#1da1f2',
+        'message': '#8b5cf6',
+        'email': '#ef4444',
+        'browse': '#ec4899',
+        'calendar': '#14b8a6',
+        'default': '#6b7280'
+    };
+    
+    // Create arrow markers for directed edges
+    const defs = svg.append('defs');
+    Object.entries(linkColors).forEach(([type, color]) => {
+        defs.append('marker')
+            .attr('id', `arrow-${type}`)
+            .attr('viewBox', '0 -5 10 10')
+            .attr('refX', 20)
+            .attr('refY', 0)
+            .attr('markerWidth', 6)
+            .attr('markerHeight', 6)
+            .attr('orient', 'auto')
+            .append('path')
+            .attr('fill', color)
+            .attr('d', 'M0,-5L10,0L0,5');
+    });
+    
+    // Create force simulation
+    graphSimulation = d3.forceSimulation(nodes)
+        .force('link', d3.forceLink(links).id(d => d.id).distance(80))
+        .force('charge', d3.forceManyBody().strength(-200))
+        .force('center', d3.forceCenter(width / 2, height / 2))
+        .force('collision', d3.forceCollide().radius(30));
+    
+    // Create links
+    const link = g.append('g')
+        .attr('class', 'links')
+        .selectAll('line')
+        .data(links)
+        .join('line')
+        .attr('class', d => `graph-link link-${d.type}`)
+        .attr('stroke', d => linkColors[d.type] || '#6b7280')
+        .attr('stroke-width', 2)
+        .attr('marker-end', d => `url(#arrow-${d.type})`);
+    
+    // Create node groups
+    const node = g.append('g')
+        .attr('class', 'nodes')
+        .selectAll('g')
+        .data(nodes)
+        .join('g')
+        .attr('class', 'graph-node')
+        .call(d3.drag()
+            .on('start', dragStarted)
+            .on('drag', dragged)
+            .on('end', dragEnded));
+    
+    // Add circles to nodes
+    node.append('circle')
+        .attr('r', 12)
+        .attr('fill', d => nodeColors[d.type] || nodeColors.default)
+        .attr('class', d => `node-${d.type || 'default'}`);
+    
+    // Add labels to nodes
+    node.append('text')
+        .attr('dy', 25)
+        .attr('text-anchor', 'middle')
+        .text(d => truncateText(d.description, 15));
+    
+    // Add tooltip
+    const tooltip = d3.select('body').append('div')
+        .attr('class', 'graph-tooltip')
+        .style('display', 'none');
+    
+    node.on('mouseover', (event, d) => {
+        tooltip.style('display', 'block')
+            .style('left', (event.pageX + 10) + 'px')
+            .style('top', (event.pageY - 10) + 'px')
+            .html(`
+                <div class="tooltip-type">${getTypeEmoji(d.type)} ${d.type || 'activity'}</div>
+                <div class="tooltip-desc">${d.description}</div>
+                <div class="tooltip-hash" style="font-size: 0.7rem; color: #888; margin-top: 0.3rem;">${d.id.slice(0, 16)}...</div>
+            `);
+    })
+    .on('mousemove', (event) => {
+        tooltip.style('left', (event.pageX + 10) + 'px')
+            .style('top', (event.pageY - 10) + 'px');
+    })
+    .on('mouseout', () => {
+        tooltip.style('display', 'none');
+    })
+    .on('click', (event, d) => {
+        event.stopPropagation();
+        jumpToActivity(d.id);
+    });
+    
+    // Update positions on simulation tick
+    graphSimulation.on('tick', () => {
+        link
+            .attr('x1', d => d.source.x)
+            .attr('y1', d => d.source.y)
+            .attr('x2', d => d.target.x)
+            .attr('y2', d => d.target.y);
+        
+        node.attr('transform', d => `translate(${d.x},${d.y})`);
+    });
+    
+    // Drag functions
+    function dragStarted(event, d) {
+        if (!event.active) graphSimulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+    }
+    
+    function dragged(event, d) {
+        d.fx = event.x;
+        d.fy = event.y;
+    }
+    
+    function dragEnded(event, d) {
+        if (!event.active) graphSimulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+    }
+}
+
+// Count clusters using union-find
+function countClusters(nodes, edges) {
+    if (nodes.length === 0) return 0;
+    
+    const parent = {};
+    nodes.forEach(n => parent[n.hash] = n.hash);
+    
+    function find(x) {
+        if (parent[x] !== x) parent[x] = find(parent[x]);
+        return parent[x];
+    }
+    
+    function union(x, y) {
+        const px = find(x);
+        const py = find(y);
+        if (px !== py) parent[px] = py;
+    }
+    
+    edges.forEach(e => {
+        if (parent[e.source] && parent[e.target]) {
+            union(e.source, e.target);
+        }
+    });
+    
+    const roots = new Set(nodes.map(n => find(n.hash)));
+    return roots.size;
+}
+
+// Update graph stats
+function updateGraphStats(nodes, edges, clusters) {
+    const nodeEl = document.getElementById('graphNodeCount');
+    const edgeEl = document.getElementById('graphEdgeCount');
+    const clusterEl = document.getElementById('graphClusterCount');
+    
+    if (nodeEl) nodeEl.textContent = nodes;
+    if (edgeEl) edgeEl.textContent = edges;
+    if (clusterEl) clusterEl.textContent = clusters;
+}
+
+// Truncate text helper
+function truncateText(text, maxLen) {
+    if (!text) return '';
+    return text.length > maxLen ? text.slice(0, maxLen) + '...' : text;
+}
+
+// Reset graph zoom
+function resetGraphZoom() {
+    const svg = d3.select('#relationshipGraph');
+    if (graphZoom) {
+        svg.transition().duration(500).call(graphZoom.transform, d3.zoomIdentity);
+    }
+}
+
+// Toggle fullscreen
+function toggleGraphFullscreen() {
+    const container = document.getElementById('relationshipGraphContainer');
+    const btn = document.getElementById('graphFullscreenBtn');
+    
+    if (!container) return;
+    
+    container.classList.toggle('fullscreen');
+    
+    if (container.classList.contains('fullscreen')) {
+        btn.innerHTML = '<span>⛶</span> Exit';
+        // Re-render at new size
+        setTimeout(() => {
+            if (graphData.nodes && graphData.nodes.length > 0) {
+                renderRelationshipGraph(graphData);
+            }
+        }, 100);
+    } else {
+        btn.innerHTML = '<span>⛶</span> Expand';
+        setTimeout(() => {
+            if (graphData.nodes && graphData.nodes.length > 0) {
+                renderRelationshipGraph(graphData);
+            }
+        }, 100);
+    }
+}
+
+// Escape fullscreen on Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        const container = document.getElementById('relationshipGraphContainer');
+        if (container && container.classList.contains('fullscreen')) {
+            toggleGraphFullscreen();
+        }
+    }
+});
+
+// Add G keyboard shortcut for graph focus
+document.addEventListener('keydown', (e) => {
+    if (e.target.matches('input, textarea, select')) return;
+    
+    if (e.key.toLowerCase() === 'g' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const graphCard = document.getElementById('relationship-graph-card');
+        if (graphCard) {
+            graphCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+});
+
+// Initialize graph when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    // Delay initialization to allow other charts to load first
+    setTimeout(initRelationshipGraph, 1500);
+});
+
+// Refresh graph when relationships change
+function refreshRelationshipGraph() {
+    initRelationshipGraph();
+}
