@@ -1,0 +1,10 @@
+[
+  {
+    "id": "adb73384-4079-4f58-8835-60a65dec1fcd",
+    "sourceHash": "5b6bdf297218ef537051fb92c64e4ba16cc23637a83aadc3a3acdfc100be3427",
+    "targetHash": "74cec5ce4baafb8f97ffda605e4df018b76968be1ab6ed7c47dc1feb319f333b",
+    "type": "follows-up",
+    "description": "Test relationship",
+    "createdAt": "2026-02-04T14:06:19.265Z"
+  }
+]

@@ -6797,6 +6797,7 @@ const PALETTE_COMMANDS = [
     { id: 'widgets', title: 'Customize Widgets', description: 'Configure dashboard stat cards', icon: '🧩', shortcut: 'W', action: () => { openWidgetsModal(); hideCommandPalette(); }, group: 'Settings' },
     { id: 'reminders', title: 'View Reminders', description: 'Manage activity reminders and follow-ups', icon: '⏰', shortcut: 'R', action: () => { openRemindersModal(); hideCommandPalette(); }, group: 'Actions' },
     { id: 'new-reminder', title: 'New Reminder', description: 'Create a new reminder', icon: '➕', action: () => { openReminderFormModal(); hideCommandPalette(); }, group: 'Actions' },
+    { id: 'relationships', title: 'View Relationships', description: 'Browse activity links and connections', icon: '🔗', shortcut: 'L', action: () => { openRelationshipsModal(); hideCommandPalette(); }, group: 'Actions' },
     { id: 'theme-auto', title: 'Theme: Auto (System)', description: 'Follow system dark/light preference', icon: '🔄', action: () => { setTheme('auto'); hideCommandPalette(); }, group: 'Settings' },
     { id: 'theme-dark', title: 'Theme: Dark', description: 'Switch to dark theme', icon: '🌙', action: () => { setTheme('dark'); hideCommandPalette(); }, group: 'Settings' },
     { id: 'theme-light', title: 'Theme: Light', description: 'Switch to light theme', icon: '☀️', action: () => { setTheme('light'); hideCommandPalette(); }, group: 'Settings' },
@@ -6808,7 +6809,7 @@ const PALETTE_COMMANDS = [
     { id: 'toggle-notifs', title: 'Toggle Browser Notifications', description: 'Enable/disable browser notifications', icon: '🔕', action: () => { toggleNotifications(); hideCommandPalette(); }, group: 'Settings' },
     
     // Actions
-    { id: 'load-more', title: 'Load More Activities', description: 'Load additional activities', icon: '⬇️', shortcut: 'L', action: () => loadMoreActivities(), group: 'Actions' },
+    { id: 'load-more', title: 'Load More Activities', description: 'Load additional activities', icon: '⬇️', action: () => loadMoreActivities(), group: 'Actions' },
     { id: 'scroll-top', title: 'Scroll to Top', description: 'Jump to top of page', icon: '⬆️', shortcut: 'T', action: () => { window.scrollTo({ top: 0, behavior: 'smooth' }); hideCommandPalette(); }, group: 'Actions' },
     { id: 'refresh', title: 'Refresh Data', description: 'Reload activity data', icon: '🔃', action: () => { fetchActivities(); hideCommandPalette(); }, group: 'Actions' },
     
@@ -13355,6 +13356,12 @@ function handleContextMenuAction(actionId) {
                 openReminderForActivity(targetHash, targetActivity);
             }
             break;
+            
+        case 'ctxLinkActivity':
+            if (typeof openLinkActivityModal === 'function') {
+                openLinkActivityModal(targetHash);
+            }
+            break;
     }
     
     hideContextMenu();
@@ -13983,4 +13990,337 @@ document.addEventListener('keydown', (e) => {
 // Initialize reminders on page load
 document.addEventListener('DOMContentLoaded', () => {
     initReminders();
+});
+
+// ==================================
+// ACTIVITY RELATIONSHIPS
+// ==================================
+
+// Cache for relationships
+let relationshipsCache = [];
+let activitiesForLinking = [];
+
+// Load relationships from API
+async function loadRelationships() {
+    try {
+        const response = await fetch('/api/relationships');
+        const data = await response.json();
+        relationshipsCache = data.relationships || [];
+        return relationshipsCache;
+    } catch (e) {
+        console.error('Failed to load relationships:', e);
+        return [];
+    }
+}
+
+// Open relationships modal
+function openRelationshipsModal() {
+    const modal = document.getElementById('relationshipsModal');
+    if (!modal) return;
+    
+    modal.style.display = 'flex';
+    loadRelationships().then(() => {
+        renderRelationshipsList();
+    });
+    
+    announceToScreenReader('Relationships modal opened');
+}
+
+// Close relationships modal
+function closeRelationshipsModal() {
+    const modal = document.getElementById('relationshipsModal');
+    if (modal) modal.style.display = 'none';
+}
+
+// Render relationships list
+async function renderRelationshipsList() {
+    const list = document.getElementById('relationshipsList');
+    const statsTotal = document.getElementById('relTotal');
+    const statsTypes = document.getElementById('relTypes');
+    
+    if (!list) return;
+    
+    if (relationshipsCache.length === 0) {
+        list.innerHTML = '<div class="empty-state">No relationships yet. Link activities from the context menu (right-click).</div>';
+        if (statsTotal) statsTotal.textContent = '0';
+        if (statsTypes) statsTypes.textContent = '-';
+        return;
+    }
+    
+    // Update stats
+    if (statsTotal) statsTotal.textContent = relationshipsCache.length;
+    
+    const types = [...new Set(relationshipsCache.map(r => r.type))];
+    if (statsTypes) statsTypes.textContent = types.join(', ');
+    
+    // Fetch activity details for enrichment
+    let activities = [];
+    try {
+        const res = await fetch('/api/activities');
+        activities = await res.json();
+    } catch (e) {}
+    
+    const activityMap = new Map(activities.map(a => [a.hash, a]));
+    
+    const typeLabels = {
+        'follows-up': '➡️ Follows up',
+        'related-to': '🔗 Related to',
+        'fixes': '🔧 Fixes',
+        'blocks': '🚫 Blocks',
+        'implements': '✨ Implements',
+        'supersedes': '⬆️ Supersedes'
+    };
+    
+    list.innerHTML = relationshipsCache.map(rel => {
+        const source = activityMap.get(rel.sourceHash);
+        const target = activityMap.get(rel.targetHash);
+        
+        const sourceDesc = source ? `${getTypeEmoji(source.type)} ${(source.description || '').slice(0, 40)}...` : rel.sourceHash.slice(0, 12);
+        const targetDesc = target ? `${getTypeEmoji(target.type)} ${(target.description || '').slice(0, 40)}...` : rel.targetHash.slice(0, 12);
+        
+        return `
+            <div class="relationship-item" data-id="${rel.id}">
+                <div class="rel-header">
+                    <span class="rel-type">${typeLabels[rel.type] || rel.type}</span>
+                    <button class="rel-delete" onclick="deleteRelationship('${rel.id}')" title="Delete relationship">&times;</button>
+                </div>
+                <div class="rel-activities">
+                    <span class="rel-activity" onclick="jumpToActivity('${rel.sourceHash}')" title="Click to view">${sourceDesc}</span>
+                    <span class="rel-arrow">→</span>
+                    <span class="rel-activity" onclick="jumpToActivity('${rel.targetHash}')" title="Click to view">${targetDesc}</span>
+                </div>
+                ${rel.description ? `<div class="rel-description">"${escapeHtml(rel.description)}"</div>` : ''}
+            </div>
+        `;
+    }).join('');
+}
+
+// Delete a relationship
+async function deleteRelationship(id) {
+    if (!confirm('Delete this relationship?')) return;
+    
+    try {
+        const response = await fetch(`/api/relationships/${id}`, { method: 'DELETE' });
+        if (response.ok) {
+            relationshipsCache = relationshipsCache.filter(r => r.id !== id);
+            renderRelationshipsList();
+            showToast('Relationship deleted', 'success');
+        } else {
+            showToast('Failed to delete relationship', 'error');
+        }
+    } catch (e) {
+        console.error('Failed to delete relationship:', e);
+        showToast('Error deleting relationship', 'error');
+    }
+}
+
+// Open link activity modal
+function openLinkActivityModal(sourceHash) {
+    const modal = document.getElementById('linkActivityModal');
+    if (!modal) return;
+    
+    // Set source hash
+    document.getElementById('linkSourceHash').value = sourceHash;
+    
+    // Load activities for searching
+    loadActivitiesForLinking().then(() => {
+        // Find source activity and display it
+        const source = activitiesForLinking.find(a => a.hash === sourceHash);
+        const display = document.getElementById('linkSourceDisplay');
+        if (display && source) {
+            display.innerHTML = `
+                <span class="activity-type-badge">${source.type}</span>
+                <span class="activity-desc">${escapeHtml((source.description || '').slice(0, 60))}</span>
+            `;
+        }
+    });
+    
+    // Reset form
+    document.getElementById('linkType').value = '';
+    document.getElementById('linkTargetSearch').value = '';
+    document.getElementById('linkTargetHash').value = '';
+    document.getElementById('linkDescription').value = '';
+    document.getElementById('linkTargetResults').style.display = 'none';
+    
+    modal.style.display = 'flex';
+    announceToScreenReader('Link activity modal opened');
+}
+
+// Close link activity modal
+function closeLinkActivityModal() {
+    const modal = document.getElementById('linkActivityModal');
+    if (modal) modal.style.display = 'none';
+}
+
+// Load activities for linking dropdown
+async function loadActivitiesForLinking() {
+    try {
+        const response = await fetch('/api/activities');
+        activitiesForLinking = await response.json();
+    } catch (e) {
+        console.error('Failed to load activities for linking:', e);
+        activitiesForLinking = [];
+    }
+}
+
+// Handle target search input
+document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('linkTargetSearch');
+    const resultsDiv = document.getElementById('linkTargetResults');
+    
+    if (searchInput && resultsDiv) {
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            const sourceHash = document.getElementById('linkSourceHash').value;
+            
+            if (query.length < 2) {
+                resultsDiv.style.display = 'none';
+                return;
+            }
+            
+            // Filter activities matching query (exclude source)
+            const matches = activitiesForLinking
+                .filter(a => a.hash !== sourceHash)
+                .filter(a => 
+                    (a.description || '').toLowerCase().includes(query) ||
+                    (a.hash || '').toLowerCase().includes(query) ||
+                    (a.type || '').toLowerCase().includes(query)
+                )
+                .slice(0, 10);
+            
+            if (matches.length === 0) {
+                resultsDiv.innerHTML = '<div class="target-option">No matches found</div>';
+            } else {
+                resultsDiv.innerHTML = matches.map(a => `
+                    <div class="target-option" data-hash="${a.hash}" onclick="selectLinkTarget('${a.hash}', '${escapeHtml((a.description || '').slice(0, 50))}')">
+                        <span class="target-type">${a.type}</span>
+                        <span class="target-desc">${escapeHtml((a.description || '').slice(0, 60))}</span>
+                    </div>
+                `).join('');
+            }
+            
+            resultsDiv.style.display = 'block';
+        });
+        
+        // Close results when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.form-group') || e.target.matches('.target-option')) {
+                if (resultsDiv) resultsDiv.style.display = 'none';
+            }
+        });
+    }
+});
+
+// Select a target activity
+function selectLinkTarget(hash, description) {
+    document.getElementById('linkTargetHash').value = hash;
+    document.getElementById('linkTargetSearch').value = description;
+    document.getElementById('linkTargetResults').style.display = 'none';
+}
+
+// Handle link activity form submit
+async function handleLinkActivitySubmit(event) {
+    event.preventDefault();
+    
+    const sourceHash = document.getElementById('linkSourceHash').value;
+    const targetHash = document.getElementById('linkTargetHash').value;
+    const type = document.getElementById('linkType').value;
+    const description = document.getElementById('linkDescription').value.trim();
+    
+    if (!sourceHash || !targetHash || !type) {
+        showToast('Please select a relationship type and target activity', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/relationships', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                sourceHash,
+                targetHash,
+                type,
+                description: description || undefined
+            })
+        });
+        
+        if (response.ok) {
+            const relationship = await response.json();
+            relationshipsCache.push(relationship);
+            closeLinkActivityModal();
+            showToast('Relationship created!', 'success');
+        } else {
+            const err = await response.json();
+            showToast(err.error || 'Failed to create relationship', 'error');
+        }
+    } catch (e) {
+        console.error('Failed to create relationship:', e);
+        showToast('Error creating relationship', 'error');
+    }
+}
+
+// Helper: get type emoji
+function getTypeEmoji(type) {
+    const emojis = {
+        'commit': '💾',
+        'build': '🔨',
+        'deploy': '🚀',
+        'trade': '💹',
+        'transfer': '💸',
+        'message': '💬',
+        'tweet': '🐦',
+        'decision': '🎯',
+        'research': '🔍',
+        'email': '📧',
+        'calendar': '📅',
+        'browser': '🌐',
+        'session': '⚡',
+        'heartbeat': '💓'
+    };
+    return emojis[type] || '📌';
+}
+
+// Jump to an activity (reuse existing functionality if available)
+function jumpToActivity(hash) {
+    closeRelationshipsModal();
+    
+    // Try to scroll to activity in the feed
+    const activityEl = document.querySelector(`[data-hash="${hash}"]`);
+    if (activityEl) {
+        activityEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        activityEl.classList.add('highlighted');
+        setTimeout(() => activityEl.classList.remove('highlighted'), 2000);
+    } else {
+        // Navigate via deep link
+        window.location.hash = hash.slice(0, 8);
+    }
+}
+
+// Add keyboard shortcut for relationships (L key)
+document.addEventListener('keydown', (e) => {
+    // Skip if typing in an input
+    if (e.target.matches('input, textarea, select')) return;
+    
+    if (e.key.toLowerCase() === 'l' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        openRelationshipsModal();
+    }
+});
+
+// Close modals on escape
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeRelationshipsModal();
+        closeLinkActivityModal();
+    }
+});
+
+// Close modals when clicking backdrop
+document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('relationships-modal')) {
+        closeRelationshipsModal();
+    }
+    if (e.target.classList.contains('link-activity-modal')) {
+        closeLinkActivityModal();
+    }
 });

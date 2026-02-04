@@ -106,7 +106,10 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["type", "description"],
+                "required": [
+                  "type",
+                  "description"
+                ],
                 "properties": {
                   "type": {
                     "type": "string",
@@ -498,7 +501,9 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["hashes"],
+                "required": [
+                  "hashes"
+                ],
                 "properties": {
                   "hashes": {
                     "type": "array",
@@ -561,7 +566,9 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["hashes"],
+                "required": [
+                  "hashes"
+                ],
                 "properties": {
                   "hashes": {
                     "type": "array",
@@ -1054,11 +1061,17 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["status"],
+                "required": [
+                  "status"
+                ],
                 "properties": {
                   "status": {
                     "type": "string",
-                    "enum": ["pending", "completed", "failed"],
+                    "enum": [
+                      "pending",
+                      "completed",
+                      "failed"
+                    ],
                     "description": "New status for the activity"
                   }
                 }
@@ -1116,7 +1129,11 @@
             "description": "Status to filter by",
             "schema": {
               "type": "string",
-              "enum": ["pending", "completed", "failed"]
+              "enum": [
+                "pending",
+                "completed",
+                "failed"
+              ]
             }
           }
         ],
@@ -1130,7 +1147,11 @@
                   "properties": {
                     "status": {
                       "type": "string",
-                      "enum": ["pending", "completed", "failed"]
+                      "enum": [
+                        "pending",
+                        "completed",
+                        "failed"
+                      ]
                     },
                     "count": {
                       "type": "integer",
@@ -2626,7 +2647,9 @@
     },
     "/api/reminders": {
       "get": {
-        "tags": ["Reminders"],
+        "tags": [
+          "Reminders"
+        ],
         "summary": "List reminders",
         "description": "Get all reminders with optional filtering by activity hash or status.",
         "operationId": "listReminders",
@@ -2635,7 +2658,9 @@
             "name": "activityHash",
             "in": "query",
             "description": "Filter by linked activity hash",
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           },
           {
             "name": "status",
@@ -2643,14 +2668,22 @@
             "description": "Filter by status",
             "schema": {
               "type": "string",
-              "enum": ["pending", "completed", "due", "upcoming"]
+              "enum": [
+                "pending",
+                "completed",
+                "due",
+                "upcoming"
+              ]
             }
           },
           {
             "name": "hours",
             "in": "query",
             "description": "Hours ahead for upcoming filter (default 24)",
-            "schema": { "type": "integer", "default": 24 }
+            "schema": {
+              "type": "integer",
+              "default": 24
+            }
           }
         ],
         "responses": {
@@ -2661,13 +2694,23 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "count": { "type": "integer" },
-                    "due": { "type": "integer" },
-                    "upcoming": { "type": "integer" },
-                    "completed": { "type": "integer" },
+                    "count": {
+                      "type": "integer"
+                    },
+                    "due": {
+                      "type": "integer"
+                    },
+                    "upcoming": {
+                      "type": "integer"
+                    },
+                    "completed": {
+                      "type": "integer"
+                    },
                     "reminders": {
                       "type": "array",
-                      "items": { "$ref": "#/components/schemas/Reminder" }
+                      "items": {
+                        "$ref": "#/components/schemas/Reminder"
+                      }
                     }
                   }
                 }
@@ -2677,7 +2720,9 @@
         }
       },
       "post": {
-        "tags": ["Reminders"],
+        "tags": [
+          "Reminders"
+        ],
         "summary": "Create reminder",
         "description": "Create a new reminder, optionally linked to an activity.",
         "operationId": "createReminder",
@@ -2687,20 +2732,43 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["title", "remindAt"],
+                "required": [
+                  "title",
+                  "remindAt"
+                ],
                 "properties": {
-                  "title": { "type": "string", "maxLength": 100 },
-                  "message": { "type": "string", "maxLength": 500 },
-                  "remindAt": { "type": "string", "format": "date-time" },
-                  "activityHash": { "type": "string" },
+                  "title": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "message": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "remindAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "activityHash": {
+                    "type": "string"
+                  },
                   "repeat": {
                     "type": "string",
-                    "enum": ["none", "daily", "weekly", "monthly"],
+                    "enum": [
+                      "none",
+                      "daily",
+                      "weekly",
+                      "monthly"
+                    ],
                     "default": "none"
                   },
                   "priority": {
                     "type": "string",
-                    "enum": ["low", "normal", "high"],
+                    "enum": [
+                      "low",
+                      "normal",
+                      "high"
+                    ],
                     "default": "normal"
                   }
                 }
@@ -2713,18 +2781,26 @@
             "description": "Reminder created",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/Reminder" }
+                "schema": {
+                  "$ref": "#/components/schemas/Reminder"
+                }
               }
             }
           },
-          "400": { "description": "Invalid request" },
-          "404": { "description": "Activity not found (if activityHash provided)" }
+          "400": {
+            "description": "Invalid request"
+          },
+          "404": {
+            "description": "Activity not found (if activityHash provided)"
+          }
         }
       }
     },
     "/api/reminders/due": {
       "get": {
-        "tags": ["Reminders"],
+        "tags": [
+          "Reminders"
+        ],
         "summary": "Get due reminders",
         "description": "Get all reminders that are currently due (past remindAt, not completed).",
         "operationId": "getDueReminders",
@@ -2736,10 +2812,14 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "count": { "type": "integer" },
+                    "count": {
+                      "type": "integer"
+                    },
                     "reminders": {
                       "type": "array",
-                      "items": { "$ref": "#/components/schemas/ReminderWithMeta" }
+                      "items": {
+                        "$ref": "#/components/schemas/ReminderWithMeta"
+                      }
                     }
                   }
                 }
@@ -2751,7 +2831,9 @@
     },
     "/api/reminders/upcoming": {
       "get": {
-        "tags": ["Reminders"],
+        "tags": [
+          "Reminders"
+        ],
         "summary": "Get upcoming reminders",
         "description": "Get reminders due in the next N hours.",
         "operationId": "getUpcomingReminders",
@@ -2760,7 +2842,10 @@
             "name": "hours",
             "in": "query",
             "description": "Hours to look ahead (default 24)",
-            "schema": { "type": "integer", "default": 24 }
+            "schema": {
+              "type": "integer",
+              "default": 24
+            }
           }
         ],
         "responses": {
@@ -2771,11 +2856,17 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "count": { "type": "integer" },
-                    "hoursAhead": { "type": "integer" },
+                    "count": {
+                      "type": "integer"
+                    },
+                    "hoursAhead": {
+                      "type": "integer"
+                    },
                     "reminders": {
                       "type": "array",
-                      "items": { "$ref": "#/components/schemas/ReminderWithMeta" }
+                      "items": {
+                        "$ref": "#/components/schemas/ReminderWithMeta"
+                      }
                     }
                   }
                 }
@@ -2787,7 +2878,9 @@
     },
     "/api/reminders/{id}": {
       "get": {
-        "tags": ["Reminders"],
+        "tags": [
+          "Reminders"
+        ],
         "summary": "Get reminder",
         "description": "Get a specific reminder by ID.",
         "operationId": "getReminder",
@@ -2796,7 +2889,10 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "responses": {
@@ -2804,15 +2900,21 @@
             "description": "Reminder details",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ReminderWithMeta" }
+                "schema": {
+                  "$ref": "#/components/schemas/ReminderWithMeta"
+                }
               }
             }
           },
-          "404": { "description": "Reminder not found" }
+          "404": {
+            "description": "Reminder not found"
+          }
         }
       },
       "patch": {
-        "tags": ["Reminders"],
+        "tags": [
+          "Reminders"
+        ],
         "summary": "Update reminder",
         "description": "Update an existing reminder.",
         "operationId": "updateReminder",
@@ -2821,7 +2923,10 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "requestBody": {
@@ -2830,11 +2935,33 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "title": { "type": "string" },
-                  "message": { "type": "string" },
-                  "remindAt": { "type": "string", "format": "date-time" },
-                  "repeat": { "type": "string", "enum": ["none", "daily", "weekly", "monthly"] },
-                  "priority": { "type": "string", "enum": ["low", "normal", "high"] }
+                  "title": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "remindAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "repeat": {
+                    "type": "string",
+                    "enum": [
+                      "none",
+                      "daily",
+                      "weekly",
+                      "monthly"
+                    ]
+                  },
+                  "priority": {
+                    "type": "string",
+                    "enum": [
+                      "low",
+                      "normal",
+                      "high"
+                    ]
+                  }
                 }
               }
             }
@@ -2845,15 +2972,21 @@
             "description": "Reminder updated",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/Reminder" }
+                "schema": {
+                  "$ref": "#/components/schemas/Reminder"
+                }
               }
             }
           },
-          "404": { "description": "Reminder not found" }
+          "404": {
+            "description": "Reminder not found"
+          }
         }
       },
       "delete": {
-        "tags": ["Reminders"],
+        "tags": [
+          "Reminders"
+        ],
         "summary": "Delete reminder",
         "description": "Permanently delete a reminder.",
         "operationId": "deleteReminder",
@@ -2862,18 +2995,27 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "responses": {
-          "200": { "description": "Reminder deleted" },
-          "404": { "description": "Reminder not found" }
+          "200": {
+            "description": "Reminder deleted"
+          },
+          "404": {
+            "description": "Reminder not found"
+          }
         }
       }
     },
     "/api/reminders/{id}/complete": {
       "patch": {
-        "tags": ["Reminders"],
+        "tags": [
+          "Reminders"
+        ],
         "summary": "Complete reminder",
         "description": "Mark a reminder as completed. If the reminder has a repeat pattern, creates the next occurrence.",
         "operationId": "completeReminder",
@@ -2882,7 +3024,10 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "responses": {
@@ -2893,23 +3038,37 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
-                    "completed": { "$ref": "#/components/schemas/Reminder" },
-                    "next": { "$ref": "#/components/schemas/Reminder" },
-                    "message": { "type": "string" }
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "completed": {
+                      "$ref": "#/components/schemas/Reminder"
+                    },
+                    "next": {
+                      "$ref": "#/components/schemas/Reminder"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
                   }
                 }
               }
             }
           },
-          "400": { "description": "Reminder already completed" },
-          "404": { "description": "Reminder not found" }
+          "400": {
+            "description": "Reminder already completed"
+          },
+          "404": {
+            "description": "Reminder not found"
+          }
         }
       }
     },
     "/api/reminders/{id}/snooze": {
       "patch": {
-        "tags": ["Reminders"],
+        "tags": [
+          "Reminders"
+        ],
         "summary": "Snooze reminder",
         "description": "Postpone a reminder by a specified number of minutes.",
         "operationId": "snoozeReminder",
@@ -2918,13 +3077,21 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           },
           {
             "name": "minutes",
             "in": "query",
             "description": "Minutes to snooze (1-10080, default 15)",
-            "schema": { "type": "integer", "default": 15, "minimum": 1, "maximum": 10080 }
+            "schema": {
+              "type": "integer",
+              "default": 15,
+              "minimum": 1,
+              "maximum": 10080
+            }
           }
         ],
         "responses": {
@@ -2935,17 +3102,30 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
-                    "reminder": { "$ref": "#/components/schemas/Reminder" },
-                    "snoozedFor": { "type": "integer" },
-                    "newRemindAt": { "type": "string", "format": "date-time" }
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "reminder": {
+                      "$ref": "#/components/schemas/Reminder"
+                    },
+                    "snoozedFor": {
+                      "type": "integer"
+                    },
+                    "newRemindAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
                   }
                 }
               }
             }
           },
-          "400": { "description": "Invalid snooze duration or reminder already completed" },
-          "404": { "description": "Reminder not found" }
+          "400": {
+            "description": "Invalid snooze duration or reminder already completed"
+          },
+          "404": {
+            "description": "Reminder not found"
+          }
         }
       }
     },
@@ -3465,6 +3645,282 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/relationships": {
+      "get": {
+        "summary": "List relationships",
+        "description": "Get all activity relationships with optional filters",
+        "tags": [
+          "Relationships"
+        ],
+        "parameters": [
+          {
+            "name": "source",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by source hash"
+          },
+          {
+            "name": "target",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by target hash"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by relationship type"
+          },
+          {
+            "name": "activity",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by activity (source OR target)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of relationships",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "total": {
+                      "type": "integer"
+                    },
+                    "relationships": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ActivityRelationship"
+                      }
+                    },
+                    "types": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create relationship",
+        "description": "Create a new relationship between two activities",
+        "tags": [
+          "Relationships"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sourceHash": {
+                    "type": "string"
+                  },
+                  "targetHash": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "follows-up",
+                      "related-to",
+                      "fixes",
+                      "blocks",
+                      "implements",
+                      "supersedes"
+                    ]
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "sourceHash",
+                  "targetHash",
+                  "type"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Relationship created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityRelationship"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "409": {
+            "description": "Relationship already exists"
+          }
+        }
+      }
+    },
+    "/api/relationships/{id}": {
+      "get": {
+        "summary": "Get relationship",
+        "tags": [
+          "Relationships"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityRelationship"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete relationship",
+        "tags": [
+          "Relationships"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/relationships/graph": {
+      "get": {
+        "summary": "Get relationship graph",
+        "description": "Get nodes and edges for graph visualization",
+        "tags": [
+          "Relationships"
+        ],
+        "responses": {
+          "200": {
+            "description": "Relationship graph",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "nodes": {
+                      "type": "array"
+                    },
+                    "edges": {
+                      "type": "array"
+                    },
+                    "stats": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/activities/{hash}/relationships": {
+      "get": {
+        "summary": "Get activity relationships",
+        "description": "Get all relationships for a specific activity",
+        "tags": [
+          "Relationships"
+        ],
+        "parameters": [
+          {
+            "name": "hash",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activity relationships",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "activityHash": {
+                      "type": "string"
+                    },
+                    "outgoing": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ActivityRelationship"
+                      }
+                    },
+                    "incoming": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ActivityRelationship"
+                      }
+                    },
+                    "totalRelationships": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Activity not found"
           }
         }
       }
@@ -4837,19 +5293,30 @@
           },
           "repeat": {
             "type": "string",
-            "enum": ["none", "daily", "weekly", "monthly"],
+            "enum": [
+              "none",
+              "daily",
+              "weekly",
+              "monthly"
+            ],
             "description": "Repeat pattern"
           },
           "priority": {
             "type": "string",
-            "enum": ["low", "normal", "high"],
+            "enum": [
+              "low",
+              "normal",
+              "high"
+            ],
             "description": "Reminder priority level"
           }
         }
       },
       "ReminderWithMeta": {
         "allOf": [
-          { "$ref": "#/components/schemas/Reminder" },
+          {
+            "$ref": "#/components/schemas/Reminder"
+          },
           {
             "type": "object",
             "properties": {
@@ -4857,9 +5324,16 @@
                 "type": "object",
                 "nullable": true,
                 "properties": {
-                  "type": { "type": "string" },
-                  "description": { "type": "string" },
-                  "timestamp": { "type": "string", "format": "date-time" }
+                  "type": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "timestamp": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
                 },
                 "description": "Linked activity summary"
               },
@@ -4992,42 +5466,16 @@
           "success": {
             "type": "boolean"
           },
-          "dryRun": {
-            "type": "boolean"
-          },
-          "mode": {
+          "hash": {
             "type": "string"
           },
-          "activities": {
-            "type": "object",
-            "properties": {
-              "before": {
-                "type": "integer"
-              },
-              "after": {
-                "type": "integer"
-              },
-              "added": {
-                "type": "integer"
-              },
-              "skipped": {
-                "type": "integer"
-              },
-              "replaced": {
-                "type": "integer"
-              }
-            }
+          "restoredAt": {
+            "type": "string",
+            "format": "date-time"
           },
-          "webhooks": {
-            "type": "object",
-            "properties": {
-              "added": {
-                "type": "integer"
-              },
-              "skipped": {
-                "type": "integer"
-              }
-            }
+          "previouslyDeletedAt": {
+            "type": "string",
+            "format": "date-time"
           },
           "message": {
             "type": "string"
@@ -5061,7 +5509,11 @@
           },
           "status": {
             "type": "string",
-            "enum": ["pending", "completed", "failed"],
+            "enum": [
+              "pending",
+              "completed",
+              "failed"
+            ],
             "description": "New status value"
           },
           "statusUpdatedAt": {
@@ -5073,28 +5525,6 @@
           "message": {
             "type": "string",
             "description": "Success message"
-          }
-        }
-      },
-      "RestoreResult": {
-        "type": "object",
-        "properties": {
-          "success": {
-            "type": "boolean"
-          },
-          "hash": {
-            "type": "string"
-          },
-          "restoredAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "previouslyDeletedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "message": {
-            "type": "string"
           }
         }
       },
@@ -5795,6 +6225,50 @@
             }
           }
         }
+      },
+      "ActivityRelationship": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique relationship ID"
+          },
+          "sourceHash": {
+            "type": "string",
+            "description": "Hash of the source activity"
+          },
+          "targetHash": {
+            "type": "string",
+            "description": "Hash of the target activity"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "follows-up",
+              "related-to",
+              "fixes",
+              "blocks",
+              "implements",
+              "supersedes"
+            ],
+            "description": "Type of relationship"
+          },
+          "description": {
+            "type": "string",
+            "description": "Optional description"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "sourceHash",
+          "targetHash",
+          "type",
+          "createdAt"
+        ]
       }
     }
   }

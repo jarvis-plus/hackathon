@@ -102,6 +102,9 @@ const SETTINGS_FILE = join(BASE_DIR, 'data', 'settings.json');
 /** Path to the reminders file */
 const REMINDERS_FILE = join(BASE_DIR, 'data', 'reminders.json');
 
+/** Path to the activity relationships file */
+const RELATIONSHIPS_FILE = join(BASE_DIR, 'data', 'relationships.json');
+
 // ==============================================
 // SETTINGS SYSTEM (including trash retention)
 // ==============================================
@@ -512,6 +515,96 @@ function completeReminder(reminder: Reminder): { completed: Reminder; next?: Rem
   };
   
   return { completed, next };
+}
+
+// ==============================================
+// ACTIVITY RELATIONSHIPS SYSTEM
+// ==============================================
+
+/**
+ * Activity Relationship Interface
+ * 
+ * Links two activities with a typed relationship.
+ * Enables tracking of work chains, dependencies, and connections.
+ * 
+ * Relationship types:
+ * - follows-up: This activity is a follow-up to another
+ * - related-to: Activities are related but independent
+ * - fixes: This activity fixes an issue from another
+ * - blocks: This activity blocks another from proceeding
+ * - implements: This activity implements something planned in another
+ * - supersedes: This activity replaces/supersedes another
+ */
+interface ActivityRelationship {
+  id: string;
+  sourceHash: string;        // The activity creating the relationship
+  targetHash: string;        // The activity being linked to
+  type: 'follows-up' | 'related-to' | 'fixes' | 'blocks' | 'implements' | 'supersedes';
+  description?: string;      // Optional description of the relationship
+  createdAt: string;
+  createdBy?: string;        // Who/what created this relationship
+}
+
+/**
+ * Load relationships from disk.
+ * Returns empty array if file doesn't exist or is invalid.
+ */
+function getRelationships(): ActivityRelationship[] {
+  if (!existsSync(RELATIONSHIPS_FILE)) return [];
+  try {
+    const data = readFileSync(RELATIONSHIPS_FILE, 'utf-8');
+    return JSON.parse(data);
+  } catch (e) {
+    console.error('Failed to load relationships:', e);
+    return [];
+  }
+}
+
+/**
+ * Save relationships to disk.
+ */
+function saveRelationships(relationships: ActivityRelationship[]): void {
+  try {
+    writeFileSync(RELATIONSHIPS_FILE, JSON.stringify(relationships, null, 2));
+  } catch (e) {
+    console.error('Failed to save relationships:', e);
+  }
+}
+
+/**
+ * Get all relationships for a specific activity (as source or target).
+ */
+function getActivityRelationships(hash: string): { outgoing: ActivityRelationship[]; incoming: ActivityRelationship[] } {
+  const relationships = getRelationships();
+  return {
+    outgoing: relationships.filter(r => r.sourceHash === hash),
+    incoming: relationships.filter(r => r.targetHash === hash)
+  };
+}
+
+/**
+ * Get the relationship graph for visualization.
+ * Returns nodes (activities with relationships) and edges (relationships).
+ */
+function getRelationshipGraph(): { nodes: string[]; edges: { source: string; target: string; type: string }[] } {
+  const relationships = getRelationships();
+  const nodeSet = new Set<string>();
+  const edges: { source: string; target: string; type: string }[] = [];
+  
+  for (const rel of relationships) {
+    nodeSet.add(rel.sourceHash);
+    nodeSet.add(rel.targetHash);
+    edges.push({
+      source: rel.sourceHash,
+      target: rel.targetHash,
+      type: rel.type
+    });
+  }
+  
+  return {
+    nodes: Array.from(nodeSet),
+    edges
+  };
 }
 
 // ==============================================
@@ -7885,6 +7978,275 @@ Colosseum Agent Hackathon 2026`;
       return Response.json({
         success: true,
         message: `Reminder "${deletedReminder.title}" deleted`
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: GET /api/relationships
+    // List all activity relationships with optional filters
+    // Query params: ?source=hash, ?target=hash, ?type=follows-up
+    // ==========================================
+    if (path === '/api/relationships' && req.method === 'GET') {
+      let relationships = getRelationships();
+      
+      // Filter by source activity
+      const sourceFilter = url.searchParams.get('source');
+      if (sourceFilter) {
+        relationships = relationships.filter(r => r.sourceHash.startsWith(sourceFilter));
+      }
+      
+      // Filter by target activity
+      const targetFilter = url.searchParams.get('target');
+      if (targetFilter) {
+        relationships = relationships.filter(r => r.targetHash.startsWith(targetFilter));
+      }
+      
+      // Filter by type
+      const typeFilter = url.searchParams.get('type');
+      if (typeFilter) {
+        relationships = relationships.filter(r => r.type === typeFilter);
+      }
+      
+      // Filter by activity hash (as source OR target)
+      const activityFilter = url.searchParams.get('activity');
+      if (activityFilter) {
+        relationships = relationships.filter(r => 
+          r.sourceHash.startsWith(activityFilter) || r.targetHash.startsWith(activityFilter)
+        );
+      }
+      
+      return Response.json({
+        total: relationships.length,
+        relationships,
+        types: ['follows-up', 'related-to', 'fixes', 'blocks', 'implements', 'supersedes']
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: POST /api/relationships
+    // Create a new relationship between activities
+    // Body: { sourceHash, targetHash, type, description? }
+    // ==========================================
+    if (path === '/api/relationships' && req.method === 'POST') {
+      // Authentication required for writes
+      if (API_KEY && !authenticateRequest(req)) {
+        return Response.json({ error: 'Unauthorized' }, { 
+          status: 401, 
+          headers: corsHeaders 
+        });
+      }
+      
+      let body;
+      try {
+        body = await req.json();
+      } catch (e) {
+        return Response.json({ error: 'Invalid JSON body' }, { 
+          status: 400, 
+          headers: corsHeaders 
+        });
+      }
+      
+      const { sourceHash, targetHash, type, description } = body;
+      
+      // Validation
+      if (!sourceHash || !targetHash || !type) {
+        return Response.json({ 
+          error: 'Missing required fields: sourceHash, targetHash, type' 
+        }, { status: 400, headers: corsHeaders });
+      }
+      
+      const validTypes = ['follows-up', 'related-to', 'fixes', 'blocks', 'implements', 'supersedes'];
+      if (!validTypes.includes(type)) {
+        return Response.json({ 
+          error: `Invalid type. Must be one of: ${validTypes.join(', ')}` 
+        }, { status: 400, headers: corsHeaders });
+      }
+      
+      if (sourceHash === targetHash) {
+        return Response.json({ 
+          error: 'Cannot create relationship to self' 
+        }, { status: 400, headers: corsHeaders });
+      }
+      
+      // Verify both activities exist
+      const activities = getActivities();
+      const sourceExists = activities.some((a: any) => a.hash?.startsWith(sourceHash));
+      const targetExists = activities.some((a: any) => a.hash?.startsWith(targetHash));
+      
+      if (!sourceExists || !targetExists) {
+        return Response.json({ 
+          error: 'Source or target activity not found' 
+        }, { status: 404, headers: corsHeaders });
+      }
+      
+      // Check for duplicate relationship
+      const relationships = getRelationships();
+      const exists = relationships.some(r => 
+        r.sourceHash === sourceHash && 
+        r.targetHash === targetHash && 
+        r.type === type
+      );
+      
+      if (exists) {
+        return Response.json({ 
+          error: 'Relationship already exists' 
+        }, { status: 409, headers: corsHeaders });
+      }
+      
+      const relationship: ActivityRelationship = {
+        id: randomUUID(),
+        sourceHash,
+        targetHash,
+        type,
+        description: description || undefined,
+        createdAt: new Date().toISOString()
+      };
+      
+      relationships.push(relationship);
+      saveRelationships(relationships);
+      
+      // Broadcast creation
+      broadcastUpdate('relationship_created', relationship);
+      
+      console.log(`🔗 Relationship created: ${sourceHash.slice(0, 8)} --${type}--> ${targetHash.slice(0, 8)}`);
+      
+      return Response.json(relationship, { 
+        status: 201, 
+        headers: corsHeaders 
+      });
+    }
+
+    // ==========================================
+    // API: GET /api/relationships/:id
+    // Get a specific relationship by ID
+    // ==========================================
+    if (path.match(/^\/api\/relationships\/[a-f0-9-]{36}$/) && req.method === 'GET') {
+      const id = path.split('/').pop()!;
+      const relationships = getRelationships();
+      const relationship = relationships.find(r => r.id === id);
+      
+      if (!relationship) {
+        return Response.json({ error: 'Relationship not found' }, { 
+          status: 404, 
+          headers: corsHeaders 
+        });
+      }
+      
+      return Response.json(relationship, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: DELETE /api/relationships/:id
+    // Delete a relationship
+    // ==========================================
+    if (path.match(/^\/api\/relationships\/[a-f0-9-]{36}$/) && req.method === 'DELETE') {
+      // Authentication required for writes
+      if (API_KEY && !authenticateRequest(req)) {
+        return Response.json({ error: 'Unauthorized' }, { 
+          status: 401, 
+          headers: corsHeaders 
+        });
+      }
+      
+      const id = path.split('/').pop()!;
+      const relationships = getRelationships();
+      const index = relationships.findIndex(r => r.id === id);
+      
+      if (index === -1) {
+        return Response.json({ error: 'Relationship not found' }, { 
+          status: 404, 
+          headers: corsHeaders 
+        });
+      }
+      
+      const deleted = relationships.splice(index, 1)[0];
+      saveRelationships(relationships);
+      
+      // Broadcast deletion
+      broadcastUpdate('relationship_deleted', { id });
+      
+      console.log(`🔗 Relationship deleted: ${deleted.sourceHash.slice(0, 8)} --${deleted.type}--> ${deleted.targetHash.slice(0, 8)}`);
+      
+      return Response.json({
+        success: true,
+        message: 'Relationship deleted'
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: GET /api/relationships/graph
+    // Get the relationship graph for visualization
+    // Returns nodes and edges for graph rendering
+    // ==========================================
+    if (path === '/api/relationships/graph' && req.method === 'GET') {
+      const graph = getRelationshipGraph();
+      const activities = getActivities();
+      
+      // Enrich nodes with activity info
+      const enrichedNodes = graph.nodes.map(hash => {
+        const activity = activities.find((a: any) => a.hash === hash);
+        return {
+          hash,
+          type: activity?.type || 'unknown',
+          description: activity?.description?.slice(0, 50) || 'Unknown activity',
+          timestamp: activity?.timestamp
+        };
+      });
+      
+      return Response.json({
+        nodes: enrichedNodes,
+        edges: graph.edges,
+        stats: {
+          nodeCount: graph.nodes.length,
+          edgeCount: graph.edges.length,
+          typeDistribution: graph.edges.reduce((acc, e) => {
+            acc[e.type] = (acc[e.type] || 0) + 1;
+            return acc;
+          }, {} as Record<string, number>)
+        }
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: GET /api/activities/:hash/relationships
+    // Get all relationships for a specific activity
+    // ==========================================
+    const activityRelMatch = path.match(/^\/api\/activities\/([a-f0-9]+)\/relationships$/);
+    if (activityRelMatch && req.method === 'GET') {
+      const hash = activityRelMatch[1];
+      const activities = getActivities();
+      const activity = activities.find((a: any) => a.hash?.startsWith(hash));
+      
+      if (!activity) {
+        return Response.json({ error: 'Activity not found' }, { 
+          status: 404, 
+          headers: corsHeaders 
+        });
+      }
+      
+      const { outgoing, incoming } = getActivityRelationships(activity.hash);
+      
+      // Enrich with activity details
+      const enrichRelationship = (rel: ActivityRelationship, direction: 'outgoing' | 'incoming') => {
+        const otherHash = direction === 'outgoing' ? rel.targetHash : rel.sourceHash;
+        const otherActivity = activities.find((a: any) => a.hash === otherHash);
+        return {
+          ...rel,
+          direction,
+          linkedActivity: otherActivity ? {
+            hash: otherActivity.hash,
+            type: otherActivity.type,
+            description: otherActivity.description?.slice(0, 100),
+            timestamp: otherActivity.timestamp
+          } : null
+        };
+      };
+      
+      return Response.json({
+        activityHash: activity.hash,
+        outgoing: outgoing.map(r => enrichRelationship(r, 'outgoing')),
+        incoming: incoming.map(r => enrichRelationship(r, 'incoming')),
+        totalRelationships: outgoing.length + incoming.length
       }, { headers: corsHeaders });
     }
 

@@ -94,6 +94,9 @@
                 <button class="sound-toggle reminders-badge" id="remindersBtn" onclick="openRemindersModal()" title="View reminders (R)" aria-label="View reminders">
                     ⏰ <span class="reminders-count" style="display: none;">0</span>
                 </button>
+                <button class="sound-toggle" id="relationshipsBtn" onclick="openRelationshipsModal()" title="View activity relationships (L)" aria-label="View activity relationships">
+                    🔗 Links
+                </button>
             </div>
         </header>
         
@@ -198,6 +201,77 @@
                     <div class="form-actions">
                         <button type="button" class="cancel-btn" onclick="closeReminderFormModal()">Cancel</button>
                         <button type="submit" class="submit-btn" id="reminderSubmitBtn">Set Reminder</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Relationships Modal -->
+        <div id="relationshipsModal" class="relationships-modal" role="dialog" aria-labelledby="relationshipsTitle" aria-modal="true" style="display: none;">
+            <div class="relationships-content">
+                <div class="relationships-header">
+                    <h2 id="relationshipsTitle">🔗 Activity Relationships</h2>
+                    <button class="modal-close" onclick="closeRelationshipsModal()" aria-label="Close modal">&times;</button>
+                </div>
+                <div class="relationships-body">
+                    <p class="section-note">Track how activities relate to each other - follow-ups, fixes, implementations, and more.</p>
+                    <div class="relationships-stats" id="relationshipsStats">
+                        <span class="rel-stat">Total: <strong id="relTotal">0</strong></span>
+                        <span class="rel-stat">Types: <span id="relTypes">-</span></span>
+                    </div>
+                    <div id="relationshipsList" class="relationships-list" role="list">
+                        <div class="empty-state">Loading relationships...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Link Activity Modal -->
+        <div id="linkActivityModal" class="link-activity-modal" role="dialog" aria-labelledby="linkActivityTitle" aria-modal="true" style="display: none;">
+            <div class="link-activity-content">
+                <div class="link-activity-header">
+                    <h2 id="linkActivityTitle">🔗 Link Activity</h2>
+                    <button class="modal-close" onclick="closeLinkActivityModal()" aria-label="Close modal">&times;</button>
+                </div>
+                <form id="linkActivityForm" class="link-activity-form" onsubmit="handleLinkActivitySubmit(event)">
+                    <input type="hidden" id="linkSourceHash" value="">
+                    
+                    <div class="form-group">
+                        <label>From Activity</label>
+                        <div class="source-activity-display" id="linkSourceDisplay">
+                            <span class="activity-type-badge">-</span>
+                            <span class="activity-desc">Select an activity</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="linkType">Relationship Type *</label>
+                        <select id="linkType" required>
+                            <option value="">Select type...</option>
+                            <option value="follows-up">➡️ Follows up (this continues that)</option>
+                            <option value="related-to">🔗 Related to (general connection)</option>
+                            <option value="fixes">🔧 Fixes (this solves an issue from that)</option>
+                            <option value="blocks">🚫 Blocks (that depends on this)</option>
+                            <option value="implements">✨ Implements (this realizes that)</option>
+                            <option value="supersedes">⬆️ Supersedes (this replaces that)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="linkTargetSearch">Target Activity *</label>
+                        <input type="text" id="linkTargetSearch" placeholder="Search by description or hash..." autocomplete="off">
+                        <div id="linkTargetResults" class="link-target-results" style="display: none;"></div>
+                        <input type="hidden" id="linkTargetHash" value="">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="linkDescription">Description (optional)</label>
+                        <input type="text" id="linkDescription" placeholder="Brief note about this relationship..." maxlength="200">
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="cancel-btn" onclick="closeLinkActivityModal()">Cancel</button>
+                        <button type="submit" class="submit-btn" id="linkSubmitBtn">Create Link</button>
                     </div>
                 </form>
             </div>
@@ -1580,6 +1654,11 @@
         <div class="context-menu-item" id="ctxReminder" role="menuitem" tabindex="-1">
             <span class="context-menu-icon">⏰</span>
             <span class="context-menu-label">Set Reminder</span>
+        </div>
+        <div class="context-menu-item" id="ctxLinkActivity" role="menuitem" tabindex="-1">
+            <span class="context-menu-icon">🔗</span>
+            <span class="context-menu-label">Link Activity</span>
+            <span class="context-menu-shortcut">L</span>
         </div>
         <div class="context-menu-divider" id="ctxCompareDivider" style="display: none;"></div>
         <div class="context-menu-item" id="ctxCompare" role="menuitem" tabindex="-1" style="display: none;">
