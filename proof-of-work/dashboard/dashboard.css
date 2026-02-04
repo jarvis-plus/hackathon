@@ -546,6 +546,7 @@
         .type-filter[data-type="build"].active { background: var(--accent-blue); border-color: var(--accent-blue); }
         .type-filter[data-type="trade"].active { background: var(--accent-red); border-color: var(--accent-red); }
         .type-filter[data-type="message"].active { background: var(--accent-green); border-color: var(--accent-green); }
+        .type-filter[data-type="email"].active { background: #e67e22; border-color: #e67e22; }
         .type-filter[data-type="tweet"].active { background: #1da1f2; border-color: #1da1f2; }
         .type-filter[data-type="decision"].active { background: var(--accent-purple); border-color: var(--accent-purple); }
         .type-filter[data-type="heartbeat"].active { background: #ff6b9d; border-color: #ff6b9d; }

@@ -20,6 +20,7 @@ export type ActivityType =
   | 'commit'      // Git commits
   | 'decision'    // Agent decisions
   | 'deploy'      // Deployments
+  | 'email'       // Emails sent
   | 'heartbeat'   // Periodic health checks
   | 'message'     // Messages sent via channels
   | 'session'     // Agent interaction sessions
@@ -63,6 +64,18 @@ export interface TweetMetadata {
   replyTo?: string;
   mediaCount?: number;
   threadPosition?: number;
+}
+
+/**
+ * Metadata for email activities
+ */
+export interface EmailMetadata {
+  to: string;
+  subject: string;
+  from: string;
+  threadId: string;
+  messageCount?: number;
+  account?: string;
 }
 
 /**
@@ -126,6 +139,7 @@ export type ActivityMetadata =
   | TradeMetadata
   | MessageMetadata
   | TweetMetadata
+  | EmailMetadata
   | HeartbeatMetadata
   | SessionMetadata
   | CommitMetadata
@@ -227,6 +241,15 @@ export interface TradeState extends BaseState {
     amount: number;
     txSignature?: string;
   }>;
+}
+
+/**
+ * Email tracker state
+ */
+export interface EmailState extends BaseState {
+  lastCheck: string;
+  knownThreadIds: string[];
+  totalEmails: number;
 }
 
 // ============================================================================

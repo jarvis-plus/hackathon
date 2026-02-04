@@ -26,7 +26,12 @@ echo ""
 echo "🔄 Checking session activity..."
 bun run collectors/session-tracker.ts
 
-# 4. Execute recurring micro-trade (every ~2 hours to preserve SOL)
+# 4. Track sent emails
+echo ""
+echo "📧 Checking sent emails..."
+bun run collectors/email-tracker.ts
+
+# 6. Execute recurring micro-trade (every ~2 hours to preserve SOL)
 # Check if enough time has passed since last trade
 LAST_TRADE_FILE="/tmp/jarvis-last-dca-trade"
 TRADE_INTERVAL=7200  # 2 hours in seconds

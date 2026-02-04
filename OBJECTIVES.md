@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 17:50 PST
-**Cycle:** 131
+**Last Updated:** 2026-02-03 17:54 PST
+**Cycle:** 132
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -42,7 +42,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Better empty states for tabs with no data ✅ Cycle 127
 
 ### ⚡ Capability
-- [ ] Email activity tracking (log emails sent)
+- [x] Email activity tracking (log emails sent) ✅ Cycle 132
 - [ ] Browser activity tracking (log web research)
 - [ ] Calendar event tracking
 - [ ] Multi-wallet support
@@ -58,6 +58,16 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 132 (Email Activity Tracking)
+- Created collectors/email-tracker.ts that polls Gmail sent folder via gog CLI
+- Added 'email' activity type to types.ts with EmailMetadata and EmailState interfaces
+- Logs email recipient, subject, threadId, messageCount as metadata
+- Deduplicates via knownThreadIds state, limits to last 100 threads
+- Added email to dashboard: orange (#e67e22) filter button, typeColors in both charts and verify
+- Added to cron-runner.sh as step 4 (runs every 15min)
+- Backfilled 4 historical emails, all signed on-chain
+- 311 activities, all signed on-chain
 
 ### Cycle 131 (Activity Search & Filter)
 - Added search box with text search across description, type, hash, metadata
@@ -98,15 +108,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - Added window resize handler for orientation change re-rendering
 - Hides axis titles on mobile to reduce visual clutter
 - 296 activities, all signed on-chain
-
-### Cycle 127 (Empty States Polish)
-- Added polished empty states for all tabs with styled containers
-- Card background with dashed border, animated icons
-- Engaging headlines with helpful descriptions
-- Hint text provides context about what to expect
-- Covers: activity feed, decisions, verify hashes, error states
-- Light theme support for all empty states
-- 293 activities, all signed on-chain
 
 ---
 

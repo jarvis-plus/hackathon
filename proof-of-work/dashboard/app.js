@@ -980,6 +980,7 @@ function renderRecentHashes(activities) {
         decision: '#9b87f5',
         tweet: '#5a9fd4',
         message: '#5abd8c',
+        email: '#e67e22',
         heartbeat: '#c47ab8',
         session: '#5ac4b8',
         transfer: '#d47a7a'
@@ -1319,6 +1320,7 @@ function renderCharts(activities) {
         'deploy': '#5a9fd4',     // muted blue
         'trade': '#d47a7a',      // muted coral
         'transfer': '#d47a7a',   // muted coral
+        'email': '#e67e22',      // muted orange
         'heartbeat': '#c47ab8',  // muted magenta
         'session': '#5ac4b8',    // muted teal
         'message': '#5abd8c',    // muted green
