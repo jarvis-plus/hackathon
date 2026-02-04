@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-04 11:31 PST
-**Cycle:** 215
+**Last Updated:** 2026-02-04 11:59 PST
+**Cycle:** 216
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -136,13 +136,37 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Activity Focus Timer (productivity stopwatch with pomodoro milestones) ✅ Cycle 213
 - [x] Activity Collections (group activities into named folders/collections) ✅ Cycle 214
 - [x] Activity Quick Notes (inline note editing without modal) ✅ Cycle 215
-- [ ] Print-friendly view (optimized CSS for printing activity reports)
+- [x] Print-friendly view (optimized CSS for printing activity reports) ✅ Cycle 216
 - [ ] Activity Location Tagging (optional location metadata)
 - [ ] Dashboard Analytics Tab (time breakdown, productivity insights)
 
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 216 (Print-Friendly View)
+- Implemented comprehensive print styles for activity reports
+- **Print Button**:
+  - Added to header with 🖨️ icon
+  - Uses `screen-only` class (hidden when printing)
+  - Opens native print dialog
+- **Print CSS (~500 lines)**:
+  - Clean white background for paper
+  - Hidden interactive elements (buttons, modals, charts, tooltips)
+  - Activity cards optimized for paper layout
+  - Stats grid in 4-column layout
+  - Full activity descriptions (no truncation)
+  - Proper page breaks (avoid splitting activities/day groups)
+- **Print Header**:
+  - Shows title, subtitle, generation date/time
+  - Border accent at bottom
+  - Only visible when printing (`print-only` class)
+- **Integration**:
+  - Command palette: "Print Activity Report" command
+  - Keyboard shortcuts updated (Ctrl+P documented)
+  - Screen/print-only CSS classes for visibility control
+- **Stats**: 584 activities, all signed on-chain
+- Commit: 66af8cf
 
 ### Cycle 215 (Activity Quick Notes)
 - Implemented inline note editing without modal dialogs
@@ -239,32 +263,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - **Integration**: Command palette "Add Reaction" command
 - **Stats**: 573 activities, all signed on-chain
 - Commit: 2541e5b
-
-### Cycle 211 (Activity Minimap Sidebar)
-- Implemented visual scroll navigation sidebar for activity feed
-- **Visual Features**:
-  - Fixed sidebar on right side of screen
-  - Color-coded bars for each activity type (12 types supported)
-  - Gradient backgrounds matching activity type colors
-  - Viewport indicator showing current scroll position
-  - Tooltips on hover with activity type, description, and time
-- **Navigation**:
-  - Click bar to scroll to that activity in feed
-  - Activity highlights briefly when navigated to
-  - Keyboard navigation with arrow keys when focused
-- **Controls**:
-  - Collapsible with toggle button
-  - Keyboard shortcut: M to toggle minimap
-  - State persisted in localStorage
-- **UI Features**:
-  - Activity count display in stats area
-  - Limits to 200 bars for performance
-  - Scroll indicator tracks viewport position in real-time
-- **Theme Support**: All 7 themes with matching colors
-- **Accessibility**: ARIA labels, keyboard navigation, focus states
-- **Responsive**: Hidden on mobile (<900px)
-- **Stats**: 570 activities, all signed on-chain
-- Commit: daf0b71
 
 ---
 
