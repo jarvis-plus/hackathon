@@ -91,6 +91,9 @@
                 <button class="sound-toggle" id="widgetsBtn" onclick="openWidgetsModal()" title="Customize dashboard widgets (W)" aria-label="Customize dashboard widgets">
                     🧩 Widgets
                 </button>
+                <button class="sound-toggle reminders-badge" id="remindersBtn" onclick="openRemindersModal()" title="View reminders (R)" aria-label="View reminders">
+                    ⏰ <span class="reminders-count" style="display: none;">0</span>
+                </button>
             </div>
         </header>
         
@@ -109,6 +112,94 @@
                         <button class="widgets-save-btn" onclick="saveAndCloseWidgets()">✅ Save & Close</button>
                     </div>
                 </div>
+            </div>
+        </div>
+        
+        <!-- Reminders Modal -->
+        <div id="remindersModal" class="reminders-modal" role="dialog" aria-labelledby="remindersTitle" aria-modal="true" style="display: none;">
+            <div class="reminders-content">
+                <div class="reminders-header">
+                    <h2 id="remindersTitle">⏰ Reminders</h2>
+                    <button class="modal-close" onclick="closeRemindersModal()" aria-label="Close modal">&times;</button>
+                </div>
+                <div class="reminders-body">
+                    <div class="reminders-tabs">
+                        <button class="reminder-tab active" data-tab="due" onclick="switchReminderTab('due')">🔔 Due (<span id="dueCount">0</span>)</button>
+                        <button class="reminder-tab" data-tab="upcoming" onclick="switchReminderTab('upcoming')">📅 Upcoming</button>
+                        <button class="reminder-tab" data-tab="completed" onclick="switchReminderTab('completed')">✅ Completed</button>
+                    </div>
+                    <div id="remindersList" class="reminders-list" role="list">
+                        <div class="empty-state">Loading reminders...</div>
+                    </div>
+                    <div class="reminders-actions">
+                        <button class="add-reminder-btn" onclick="openAddReminderForm()">➕ New Reminder</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Add/Edit Reminder Modal -->
+        <div id="reminderFormModal" class="reminder-form-modal" role="dialog" aria-labelledby="reminderFormTitle" aria-modal="true" style="display: none;">
+            <div class="reminder-form-content">
+                <div class="reminder-form-header">
+                    <h2 id="reminderFormTitle">⏰ Set Reminder</h2>
+                    <button class="modal-close" onclick="closeReminderFormModal()" aria-label="Close modal">&times;</button>
+                </div>
+                <form id="reminderForm" class="reminder-form" onsubmit="handleReminderSubmit(event)">
+                    <input type="hidden" id="reminderActivityHash" value="">
+                    <input type="hidden" id="reminderEditId" value="">
+                    
+                    <div class="form-group">
+                        <label for="reminderTitle">Title *</label>
+                        <input type="text" id="reminderTitle" required maxlength="100" placeholder="e.g., Follow up on this" autocomplete="off">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="reminderMessage">Message (optional)</label>
+                        <textarea id="reminderMessage" maxlength="500" rows="2" placeholder="Additional notes..."></textarea>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="reminderDate">Date *</label>
+                            <input type="date" id="reminderDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="reminderTime">Time *</label>
+                            <input type="time" id="reminderTime" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="reminderRepeat">Repeat</label>
+                            <select id="reminderRepeat">
+                                <option value="none">No repeat</option>
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="reminderPriority">Priority</label>
+                            <select id="reminderPriority">
+                                <option value="low">🟢 Low</option>
+                                <option value="normal" selected>🟡 Normal</option>
+                                <option value="high">🔴 High</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div id="reminderActivityInfo" class="reminder-activity-info" style="display: none;">
+                        <span class="activity-link-icon">🔗</span>
+                        <span id="reminderActivityDesc">Linked to activity</span>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="cancel-btn" onclick="closeReminderFormModal()">Cancel</button>
+                        <button type="submit" class="submit-btn" id="reminderSubmitBtn">Set Reminder</button>
+                    </div>
+                </form>
             </div>
         </div>
         
@@ -1485,6 +1576,10 @@
                     <span class="context-menu-label">Failed</span>
                 </div>
             </div>
+        </div>
+        <div class="context-menu-item" id="ctxReminder" role="menuitem" tabindex="-1">
+            <span class="context-menu-icon">⏰</span>
+            <span class="context-menu-label">Set Reminder</span>
         </div>
         <div class="context-menu-divider" id="ctxCompareDivider" style="display: none;"></div>
         <div class="context-menu-item" id="ctxCompare" role="menuitem" tabindex="-1" style="display: none;">

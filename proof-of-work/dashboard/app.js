@@ -6795,6 +6795,8 @@ const PALETTE_COMMANDS = [
     
     // Settings
     { id: 'widgets', title: 'Customize Widgets', description: 'Configure dashboard stat cards', icon: '🧩', shortcut: 'W', action: () => { openWidgetsModal(); hideCommandPalette(); }, group: 'Settings' },
+    { id: 'reminders', title: 'View Reminders', description: 'Manage activity reminders and follow-ups', icon: '⏰', shortcut: 'R', action: () => { openRemindersModal(); hideCommandPalette(); }, group: 'Actions' },
+    { id: 'new-reminder', title: 'New Reminder', description: 'Create a new reminder', icon: '➕', action: () => { openReminderFormModal(); hideCommandPalette(); }, group: 'Actions' },
     { id: 'theme-auto', title: 'Theme: Auto (System)', description: 'Follow system dark/light preference', icon: '🔄', action: () => { setTheme('auto'); hideCommandPalette(); }, group: 'Settings' },
     { id: 'theme-dark', title: 'Theme: Dark', description: 'Switch to dark theme', icon: '🌙', action: () => { setTheme('dark'); hideCommandPalette(); }, group: 'Settings' },
     { id: 'theme-light', title: 'Theme: Light', description: 'Switch to light theme', icon: '☀️', action: () => { setTheme('light'); hideCommandPalette(); }, group: 'Settings' },
@@ -13347,6 +13349,12 @@ function handleContextMenuAction(actionId) {
                 deleteActivity(targetHash);
             }
             break;
+            
+        case 'ctxReminder':
+            if (typeof openReminderForActivity === 'function') {
+                openReminderForActivity(targetHash, targetActivity);
+            }
+            break;
     }
     
     hideContextMenu();
@@ -13443,3 +13451,536 @@ if (typeof commandPaletteCommands !== 'undefined') {
         }}
     );
 }
+
+// ===================================
+// REMINDERS SYSTEM
+// ===================================
+
+// Reminders state
+let remindersCache = [];
+let currentReminderTab = 'due';
+let reminderCheckInterval = null;
+let reminderToasts = [];
+
+// Initialize reminders system
+function initReminders() {
+    loadReminders();
+    
+    // Check for due reminders every 60 seconds
+    reminderCheckInterval = setInterval(checkDueReminders, 60000);
+    
+    // Initial check
+    setTimeout(checkDueReminders, 3000);
+    
+    // Listen for WebSocket updates
+    if (typeof window.addEventListener === 'function') {
+        window.addEventListener('ws_reminder_created', () => loadReminders());
+        window.addEventListener('ws_reminder_updated', () => loadReminders());
+        window.addEventListener('ws_reminder_completed', () => loadReminders());
+        window.addEventListener('ws_reminder_deleted', () => loadReminders());
+        window.addEventListener('ws_reminder_snoozed', () => loadReminders());
+    }
+}
+
+// Load reminders from API
+async function loadReminders() {
+    try {
+        const response = await fetch('/api/reminders');
+        if (!response.ok) throw new Error('Failed to load reminders');
+        const data = await response.json();
+        remindersCache = data.reminders || [];
+        updateReminderBadge(data.due || 0);
+        
+        // If modal is open, refresh the list
+        const modal = document.getElementById('remindersModal');
+        if (modal && modal.style.display !== 'none') {
+            renderRemindersList();
+        }
+        
+        return data;
+    } catch (err) {
+        console.error('Error loading reminders:', err);
+        return { reminders: [], due: 0 };
+    }
+}
+
+// Update the reminder badge count in the header
+function updateReminderBadge(count) {
+    const badge = document.querySelector('.reminders-count');
+    if (badge) {
+        badge.textContent = count;
+        badge.style.display = count > 0 ? 'flex' : 'none';
+    }
+    
+    const dueCountEl = document.getElementById('dueCount');
+    if (dueCountEl) {
+        dueCountEl.textContent = count;
+    }
+}
+
+// Check for due reminders and show notifications
+async function checkDueReminders() {
+    try {
+        const response = await fetch('/api/reminders/due');
+        if (!response.ok) return;
+        const data = await response.json();
+        
+        // Show toast for each due reminder
+        for (const reminder of (data.reminders || [])) {
+            // Skip if toast already shown for this reminder recently
+            if (reminderToasts.includes(reminder.id)) continue;
+            
+            showReminderToast(reminder);
+            reminderToasts.push(reminder.id);
+            
+            // Also try browser notification if permitted
+            showBrowserNotification(reminder);
+        }
+        
+        updateReminderBadge(data.count || 0);
+    } catch (err) {
+        console.error('Error checking due reminders:', err);
+    }
+}
+
+// Show a toast notification for a due reminder
+function showReminderToast(reminder) {
+    // Remove existing toast for this reminder
+    const existing = document.querySelector(`.reminder-toast[data-id="${reminder.id}"]`);
+    if (existing) existing.remove();
+    
+    const toast = document.createElement('div');
+    toast.className = 'reminder-toast';
+    toast.dataset.id = reminder.id;
+    
+    const priorityEmoji = { high: '🔴', normal: '🟡', low: '🟢' }[reminder.priority] || '🔔';
+    
+    toast.innerHTML = `
+        <div class="reminder-toast-header">
+            <span class="reminder-toast-title">${priorityEmoji} ${escapeHtml(reminder.title)}</span>
+            <button class="reminder-toast-close" onclick="dismissReminderToast('${reminder.id}')">&times;</button>
+        </div>
+        ${reminder.message ? `<div class="reminder-toast-message">${escapeHtml(reminder.message)}</div>` : ''}
+        <div class="reminder-toast-actions">
+            <button class="reminder-toast-snooze" onclick="snoozeReminder('${reminder.id}', 15)">⏸️ Snooze 15m</button>
+            <button class="reminder-toast-complete" onclick="completeReminder('${reminder.id}')">✅ Done</button>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Auto-dismiss after 30 seconds
+    setTimeout(() => {
+        if (toast.parentNode) toast.remove();
+    }, 30000);
+}
+
+// Dismiss a reminder toast
+function dismissReminderToast(id) {
+    const toast = document.querySelector(`.reminder-toast[data-id="${id}"]`);
+    if (toast) toast.remove();
+}
+
+// Show browser notification if permitted
+function showBrowserNotification(reminder) {
+    if (!('Notification' in window)) return;
+    if (Notification.permission !== 'granted') return;
+    
+    const priorityEmoji = { high: '🔴', normal: '🟡', low: '🟢' }[reminder.priority] || '🔔';
+    
+    new Notification(`${priorityEmoji} Reminder: ${reminder.title}`, {
+        body: reminder.message || 'You have a reminder due',
+        icon: '/pow/favicon.svg',
+        tag: `reminder-${reminder.id}`,
+        requireInteraction: true
+    });
+}
+
+// Open reminders modal
+function openRemindersModal() {
+    const modal = document.getElementById('remindersModal');
+    if (!modal) return;
+    
+    modal.style.display = 'flex';
+    loadReminders().then(() => {
+        renderRemindersList();
+    });
+    
+    announceToScreenReader('Reminders modal opened');
+}
+
+// Close reminders modal
+function closeRemindersModal() {
+    const modal = document.getElementById('remindersModal');
+    if (modal) modal.style.display = 'none';
+}
+
+// Switch reminder tabs
+function switchReminderTab(tab) {
+    currentReminderTab = tab;
+    
+    // Update tab buttons
+    document.querySelectorAll('.reminder-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+    
+    renderRemindersList();
+}
+
+// Render the reminders list based on current tab
+function renderRemindersList() {
+    const list = document.getElementById('remindersList');
+    if (!list) return;
+    
+    let filtered = [];
+    const now = new Date();
+    
+    switch (currentReminderTab) {
+        case 'due':
+            filtered = remindersCache.filter(r => r.isDue && !r.completed);
+            break;
+        case 'upcoming':
+            filtered = remindersCache.filter(r => !r.isDue && !r.completed);
+            break;
+        case 'completed':
+            filtered = remindersCache.filter(r => r.completed);
+            break;
+    }
+    
+    if (filtered.length === 0) {
+        const emptyMessages = {
+            due: 'No reminders due right now! 🎉',
+            upcoming: 'No upcoming reminders scheduled.',
+            completed: 'No completed reminders yet.'
+        };
+        list.innerHTML = `<div class="empty-state">${emptyMessages[currentReminderTab]}</div>`;
+        return;
+    }
+    
+    list.innerHTML = filtered.map(r => renderReminderItem(r)).join('');
+}
+
+// Render a single reminder item
+function renderReminderItem(reminder) {
+    const remindAt = new Date(reminder.remindAt);
+    const now = new Date();
+    const isOverdue = !reminder.completed && remindAt < now;
+    const diffMs = remindAt.getTime() - now.getTime();
+    const diffMins = Math.abs(Math.floor(diffMs / 60000));
+    
+    let timeText = '';
+    if (reminder.completed) {
+        timeText = `Completed ${formatRelativeTime(reminder.completedAt)}`;
+    } else if (isOverdue) {
+        timeText = `Overdue by ${formatDuration(diffMins)}`;
+    } else {
+        timeText = `Due ${formatRelativeTime(reminder.remindAt)}`;
+    }
+    
+    const priorityLabels = { high: 'High', normal: 'Normal', low: 'Low' };
+    const repeatLabels = { none: '', daily: '🔄 Daily', weekly: '🔄 Weekly', monthly: '🔄 Monthly' };
+    
+    let classes = 'reminder-item';
+    if (isOverdue) classes += ' due';
+    if (reminder.completed) classes += ' completed';
+    if (reminder.priority === 'high') classes += ' high-priority';
+    
+    return `
+        <div class="${classes}" data-id="${reminder.id}">
+            <div class="reminder-header">
+                <span class="reminder-title">${escapeHtml(reminder.title)}</span>
+                <span class="reminder-priority ${reminder.priority}">${priorityLabels[reminder.priority]}</span>
+            </div>
+            ${reminder.message ? `<div class="reminder-message">${escapeHtml(reminder.message)}</div>` : ''}
+            <div class="reminder-meta">
+                <span class="reminder-time ${isOverdue ? 'overdue' : ''}">
+                    ${isOverdue ? '⚠️' : '🕐'} ${timeText}
+                    ${repeatLabels[reminder.repeat] ? ` • ${repeatLabels[reminder.repeat]}` : ''}
+                </span>
+                ${reminder.activity ? `
+                    <a class="reminder-activity-link" href="#${reminder.activityHash}" onclick="jumpToActivity('${reminder.activityHash}'); closeRemindersModal();">
+                        🔗 ${reminder.activity.type}
+                    </a>
+                ` : ''}
+            </div>
+            <div class="reminder-actions">
+                ${!reminder.completed ? `
+                    <button class="reminder-action-btn" onclick="snoozeReminder('${reminder.id}', 15)">⏸️ 15m</button>
+                    <button class="reminder-action-btn" onclick="snoozeReminder('${reminder.id}', 60)">⏸️ 1h</button>
+                    <button class="reminder-action-btn complete" onclick="completeReminder('${reminder.id}')">✅ Done</button>
+                ` : ''}
+                <button class="reminder-action-btn danger" onclick="deleteReminder('${reminder.id}')">🗑️</button>
+            </div>
+        </div>
+    `;
+}
+
+// Format duration in human-readable format
+function formatDuration(minutes) {
+    if (minutes < 60) return `${minutes}m`;
+    if (minutes < 1440) return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+    return `${Math.floor(minutes / 1440)}d`;
+}
+
+// Open the add reminder form
+function openAddReminderForm() {
+    openReminderFormModal(null, null);
+}
+
+// Open reminder form for a specific activity
+function openReminderForActivity(hash, activity) {
+    openReminderFormModal(hash, activity);
+}
+
+// Open the reminder form modal
+function openReminderFormModal(activityHash = null, activity = null) {
+    const modal = document.getElementById('reminderFormModal');
+    if (!modal) return;
+    
+    // Reset form
+    const form = document.getElementById('reminderForm');
+    form.reset();
+    
+    document.getElementById('reminderActivityHash').value = activityHash || '';
+    document.getElementById('reminderEditId').value = '';
+    
+    // Set default date/time to 1 hour from now
+    const defaultTime = new Date(Date.now() + 60 * 60 * 1000);
+    document.getElementById('reminderDate').value = defaultTime.toISOString().split('T')[0];
+    document.getElementById('reminderTime').value = defaultTime.toTimeString().slice(0, 5);
+    
+    // Show/hide activity info
+    const activityInfo = document.getElementById('reminderActivityInfo');
+    const activityDesc = document.getElementById('reminderActivityDesc');
+    if (activityHash && activity) {
+        activityInfo.style.display = 'flex';
+        const type = activity.type || 'Activity';
+        const desc = activity.description ? activity.description.substring(0, 50) : '';
+        activityDesc.textContent = `${type}: ${desc}${desc.length < activity.description?.length ? '...' : ''}`;
+        
+        // Pre-fill title with activity reference
+        document.getElementById('reminderTitle').value = `Follow up: ${type}`;
+    } else {
+        activityInfo.style.display = 'none';
+    }
+    
+    // Update title and button
+    document.getElementById('reminderFormTitle').textContent = '⏰ Set Reminder';
+    document.getElementById('reminderSubmitBtn').textContent = 'Set Reminder';
+    
+    modal.style.display = 'flex';
+    document.getElementById('reminderTitle').focus();
+    
+    announceToScreenReader('Set reminder form opened');
+}
+
+// Close the reminder form modal
+function closeReminderFormModal() {
+    const modal = document.getElementById('reminderFormModal');
+    if (modal) modal.style.display = 'none';
+}
+
+// Handle reminder form submission
+async function handleReminderSubmit(event) {
+    event.preventDefault();
+    
+    const title = document.getElementById('reminderTitle').value.trim();
+    const message = document.getElementById('reminderMessage').value.trim();
+    const date = document.getElementById('reminderDate').value;
+    const time = document.getElementById('reminderTime').value;
+    const repeat = document.getElementById('reminderRepeat').value;
+    const priority = document.getElementById('reminderPriority').value;
+    const activityHash = document.getElementById('reminderActivityHash').value || null;
+    const editId = document.getElementById('reminderEditId').value || null;
+    
+    if (!title || !date || !time) {
+        showToast('Please fill in all required fields', 'error');
+        return;
+    }
+    
+    const remindAt = new Date(`${date}T${time}`);
+    if (isNaN(remindAt.getTime())) {
+        showToast('Invalid date/time', 'error');
+        return;
+    }
+    
+    const submitBtn = document.getElementById('reminderSubmitBtn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Saving...';
+    
+    try {
+        const url = editId ? `/api/reminders/${editId}` : '/api/reminders';
+        const method = editId ? 'PATCH' : 'POST';
+        
+        const response = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                title,
+                message: message || undefined,
+                remindAt: remindAt.toISOString(),
+                repeat,
+                priority,
+                activityHash
+            })
+        });
+        
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error || 'Failed to save reminder');
+        }
+        
+        const reminder = await response.json();
+        
+        showToast(editId ? 'Reminder updated!' : `Reminder set for ${remindAt.toLocaleString()}`, 'success');
+        closeReminderFormModal();
+        loadReminders();
+        
+    } catch (err) {
+        showToast(err.message, 'error');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = editId ? 'Update Reminder' : 'Set Reminder';
+    }
+}
+
+// Complete a reminder
+async function completeReminder(id) {
+    try {
+        const response = await fetch(`/api/reminders/${id}/complete`, {
+            method: 'PATCH'
+        });
+        
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error || 'Failed to complete reminder');
+        }
+        
+        const result = await response.json();
+        
+        // Remove toast if shown
+        dismissReminderToast(id);
+        
+        // Remove from shown toasts list
+        reminderToasts = reminderToasts.filter(t => t !== id);
+        
+        showToast(result.next 
+            ? `Reminder completed! Next: ${new Date(result.next.remindAt).toLocaleString()}`
+            : 'Reminder completed!', 'success');
+        
+        loadReminders();
+        
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+// Snooze a reminder
+async function snoozeReminder(id, minutes) {
+    try {
+        const response = await fetch(`/api/reminders/${id}/snooze?minutes=${minutes}`, {
+            method: 'PATCH'
+        });
+        
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error || 'Failed to snooze reminder');
+        }
+        
+        const result = await response.json();
+        
+        // Remove toast
+        dismissReminderToast(id);
+        
+        // Remove from shown toasts list so it can show again when due
+        reminderToasts = reminderToasts.filter(t => t !== id);
+        
+        showToast(`Snoozed for ${minutes} minutes`, 'success');
+        loadReminders();
+        
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+// Delete a reminder
+async function deleteReminder(id) {
+    if (!confirm('Delete this reminder?')) return;
+    
+    try {
+        const response = await fetch(`/api/reminders/${id}`, {
+            method: 'DELETE'
+        });
+        
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error || 'Failed to delete reminder');
+        }
+        
+        showToast('Reminder deleted', 'success');
+        loadReminders();
+        
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+// Jump to an activity by hash
+function jumpToActivity(hash) {
+    if (!hash) return;
+    
+    // Update URL hash
+    window.location.hash = hash;
+    
+    // Find and scroll to the activity
+    const activityItem = document.querySelector(`[data-hash="${hash}"]`);
+    if (activityItem) {
+        activityItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        activityItem.classList.add('highlighted');
+        setTimeout(() => activityItem.classList.remove('highlighted'), 2000);
+    }
+}
+
+// Helper: escape HTML
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Helper: format relative time
+function formatRelativeTime(dateStr) {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = date.getTime() - now.getTime();
+    const diffMins = Math.floor(Math.abs(diffMs) / 60000);
+    const isPast = diffMs < 0;
+    
+    if (diffMins < 1) return isPast ? 'just now' : 'now';
+    if (diffMins < 60) return isPast ? `${diffMins}m ago` : `in ${diffMins}m`;
+    
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return isPast ? `${diffHours}h ago` : `in ${diffHours}h`;
+    
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return isPast ? `${diffDays}d ago` : `in ${diffDays}d`;
+    
+    return date.toLocaleDateString();
+}
+
+// Add keyboard shortcut for reminders (R key)
+document.addEventListener('keydown', (e) => {
+    // Skip if typing in an input
+    if (e.target.matches('input, textarea, select')) return;
+    
+    if (e.key.toLowerCase() === 'r' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        openRemindersModal();
+    }
+});
+
+// Initialize reminders on page load
+document.addEventListener('DOMContentLoaded', () => {
+    initReminders();
+});

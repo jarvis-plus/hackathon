@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-04 04:56 PST
-**Cycle:** 195
+**Last Updated:** 2026-02-04 05:29 PST
+**Cycle:** 196
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -116,12 +116,32 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Activity status indicator (pending/completed/failed states) ✅ Cycle 193
 - [x] Batch restore from trash (restore multiple at once) ✅ Cycle 194
 - [x] Activity quick actions menu (right-click context menu) ✅ Cycle 195
-- [ ] Dashboard widgets (customizable stat cards)
+- [x] Dashboard widgets (customizable stat cards) ✅ Cycle 196
 - [ ] Activity reminder system (set reminders for follow-ups)
 
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 196 (Dashboard Widgets - Customizable Stat Cards)
+- Implemented fully customizable dashboard stat card widgets
+- **Widget Configuration Modal**:
+  - Drag-and-drop reordering of widgets
+  - Toggle visibility for each widget
+  - LocalStorage persistence of configuration
+  - Reset to default button
+  - Save & Close with instant application
+- **12 Configurable Widgets**:
+  - Total Actions, On-Chain, Commits, Builds, Trades, Messages
+  - Tweets, Uptime, Trade Volume, Day Streak, Agent Mood, Net SOL
+- **Keyboard Shortcut**: `W` opens widgets modal
+- **Command Palette**: Added "Customize Widgets" command
+- **Dynamic Stat Card Generation**: Stats render based on saved config order/visibility
+- **Theme Support**: All 7 themes (Auto, Dark, Light, Ocean, Forest, Sunset, Cyberpunk)
+- **Mobile Responsive**: Proper touch targets, descriptions hidden on small screens
+- **Accessibility**: ARIA labels, role attributes, keyboard navigation
+- **Stats**: 524 activities, all signed on-chain
+- Commit: e308eeb
 
 ### Cycle 195 (Activity Quick Actions Context Menu)
 - Implemented right-click context menu for activity items
@@ -197,24 +217,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - **Theme Support**: All 7 themes (Auto, Dark, Light, Ocean, Forest, Sunset, Cyberpunk)
 - **Stats**: 513 activities, all signed on-chain
 - Commit: 0a21a98
-
-### Cycle 191 (Activity Bulk Delete)
-- Implemented bulk delete feature for deleting multiple activities at once
-- **New API Endpoint**:
-  - `POST /api/activities/bulk-delete` - Accept array of hashes, soft-delete all
-  - Returns detailed results: deleted, notFound, alreadyDeleted counts
-  - Validation: max 100 hashes, valid hash format required
-- **Dashboard UI**:
-  - 🗑️ Delete button added to bulk bar actions
-  - Confirmation dialog before deletion
-  - Updates trash badge count after deletion
-  - Toast notifications for success/failure
-- **Command Palette**: Added "Delete Selected Activities" command
-- **WebSocket/Webhook Events**: activities_bulk_deleted event with hash list
-- **Theme Support**: All 6 themes (Dark, Light, Ocean, Forest, Sunset, Cyberpunk)
-- **OpenAPI Updated**: BulkDeleteResult schema, new endpoint documented
-- **Stats**: 506 activities, all signed on-chain
-- Commit: e45bc38
 
 ---
 

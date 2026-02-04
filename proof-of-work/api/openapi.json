@@ -59,6 +59,10 @@
     {
       "name": "Settings",
       "description": "Application settings (trash retention, cleanup, etc.)"
+    },
+    {
+      "name": "Reminders",
+      "description": "Activity reminder and follow-up management"
     }
   ],
   "paths": {
@@ -2620,6 +2624,331 @@
         }
       }
     },
+    "/api/reminders": {
+      "get": {
+        "tags": ["Reminders"],
+        "summary": "List reminders",
+        "description": "Get all reminders with optional filtering by activity hash or status.",
+        "operationId": "listReminders",
+        "parameters": [
+          {
+            "name": "activityHash",
+            "in": "query",
+            "description": "Filter by linked activity hash",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by status",
+            "schema": {
+              "type": "string",
+              "enum": ["pending", "completed", "due", "upcoming"]
+            }
+          },
+          {
+            "name": "hours",
+            "in": "query",
+            "description": "Hours ahead for upcoming filter (default 24)",
+            "schema": { "type": "integer", "default": 24 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reminders list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "count": { "type": "integer" },
+                    "due": { "type": "integer" },
+                    "upcoming": { "type": "integer" },
+                    "completed": { "type": "integer" },
+                    "reminders": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Reminder" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Reminders"],
+        "summary": "Create reminder",
+        "description": "Create a new reminder, optionally linked to an activity.",
+        "operationId": "createReminder",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title", "remindAt"],
+                "properties": {
+                  "title": { "type": "string", "maxLength": 100 },
+                  "message": { "type": "string", "maxLength": 500 },
+                  "remindAt": { "type": "string", "format": "date-time" },
+                  "activityHash": { "type": "string" },
+                  "repeat": {
+                    "type": "string",
+                    "enum": ["none", "daily", "weekly", "monthly"],
+                    "default": "none"
+                  },
+                  "priority": {
+                    "type": "string",
+                    "enum": ["low", "normal", "high"],
+                    "default": "normal"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Reminder created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Reminder" }
+              }
+            }
+          },
+          "400": { "description": "Invalid request" },
+          "404": { "description": "Activity not found (if activityHash provided)" }
+        }
+      }
+    },
+    "/api/reminders/due": {
+      "get": {
+        "tags": ["Reminders"],
+        "summary": "Get due reminders",
+        "description": "Get all reminders that are currently due (past remindAt, not completed).",
+        "operationId": "getDueReminders",
+        "responses": {
+          "200": {
+            "description": "Due reminders list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "count": { "type": "integer" },
+                    "reminders": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/ReminderWithMeta" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reminders/upcoming": {
+      "get": {
+        "tags": ["Reminders"],
+        "summary": "Get upcoming reminders",
+        "description": "Get reminders due in the next N hours.",
+        "operationId": "getUpcomingReminders",
+        "parameters": [
+          {
+            "name": "hours",
+            "in": "query",
+            "description": "Hours to look ahead (default 24)",
+            "schema": { "type": "integer", "default": 24 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Upcoming reminders list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "count": { "type": "integer" },
+                    "hoursAhead": { "type": "integer" },
+                    "reminders": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/ReminderWithMeta" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reminders/{id}": {
+      "get": {
+        "tags": ["Reminders"],
+        "summary": "Get reminder",
+        "description": "Get a specific reminder by ID.",
+        "operationId": "getReminder",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reminder details",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ReminderWithMeta" }
+              }
+            }
+          },
+          "404": { "description": "Reminder not found" }
+        }
+      },
+      "patch": {
+        "tags": ["Reminders"],
+        "summary": "Update reminder",
+        "description": "Update an existing reminder.",
+        "operationId": "updateReminder",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": { "type": "string" },
+                  "message": { "type": "string" },
+                  "remindAt": { "type": "string", "format": "date-time" },
+                  "repeat": { "type": "string", "enum": ["none", "daily", "weekly", "monthly"] },
+                  "priority": { "type": "string", "enum": ["low", "normal", "high"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Reminder updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Reminder" }
+              }
+            }
+          },
+          "404": { "description": "Reminder not found" }
+        }
+      },
+      "delete": {
+        "tags": ["Reminders"],
+        "summary": "Delete reminder",
+        "description": "Permanently delete a reminder.",
+        "operationId": "deleteReminder",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Reminder deleted" },
+          "404": { "description": "Reminder not found" }
+        }
+      }
+    },
+    "/api/reminders/{id}/complete": {
+      "patch": {
+        "tags": ["Reminders"],
+        "summary": "Complete reminder",
+        "description": "Mark a reminder as completed. If the reminder has a repeat pattern, creates the next occurrence.",
+        "operationId": "completeReminder",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reminder completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "completed": { "$ref": "#/components/schemas/Reminder" },
+                    "next": { "$ref": "#/components/schemas/Reminder" },
+                    "message": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Reminder already completed" },
+          "404": { "description": "Reminder not found" }
+        }
+      }
+    },
+    "/api/reminders/{id}/snooze": {
+      "patch": {
+        "tags": ["Reminders"],
+        "summary": "Snooze reminder",
+        "description": "Postpone a reminder by a specified number of minutes.",
+        "operationId": "snoozeReminder",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "minutes",
+            "in": "query",
+            "description": "Minutes to snooze (1-10080, default 15)",
+            "schema": { "type": "integer", "default": 15, "minimum": 1, "maximum": 10080 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reminder snoozed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "reminder": { "$ref": "#/components/schemas/Reminder" },
+                    "snoozedFor": { "type": "integer" },
+                    "newRemindAt": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Invalid snooze duration or reminder already completed" },
+          "404": { "description": "Reminder not found" }
+        }
+      }
+    },
     "/api/backup": {
       "get": {
         "tags": [
@@ -4465,6 +4794,90 @@
             "nullable": true
           }
         }
+      },
+      "Reminder": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique reminder identifier"
+          },
+          "activityHash": {
+            "type": "string",
+            "nullable": true,
+            "description": "Linked activity hash (optional)"
+          },
+          "title": {
+            "type": "string",
+            "description": "Reminder title"
+          },
+          "message": {
+            "type": "string",
+            "description": "Optional longer message/notes"
+          },
+          "remindAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the reminder should trigger"
+          },
+          "completed": {
+            "type": "boolean",
+            "description": "Whether the reminder has been dismissed"
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the reminder was completed"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the reminder was created"
+          },
+          "repeat": {
+            "type": "string",
+            "enum": ["none", "daily", "weekly", "monthly"],
+            "description": "Repeat pattern"
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["low", "normal", "high"],
+            "description": "Reminder priority level"
+          }
+        }
+      },
+      "ReminderWithMeta": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Reminder" },
+          {
+            "type": "object",
+            "properties": {
+              "activity": {
+                "type": "object",
+                "nullable": true,
+                "properties": {
+                  "type": { "type": "string" },
+                  "description": { "type": "string" },
+                  "timestamp": { "type": "string", "format": "date-time" }
+                },
+                "description": "Linked activity summary"
+              },
+              "isDue": {
+                "type": "boolean",
+                "description": "Whether the reminder is currently due"
+              },
+              "overdueMinutes": {
+                "type": "integer",
+                "description": "Minutes overdue (if applicable)"
+              },
+              "minutesUntil": {
+                "type": "integer",
+                "description": "Minutes until due (if upcoming)"
+              }
+            }
+          }
+        ]
       },
       "Backup": {
         "type": "object",

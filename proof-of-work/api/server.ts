@@ -99,6 +99,9 @@ const TEMPLATES_FILE = join(BASE_DIR, 'data', 'templates.json');
 /** Path to the settings file */
 const SETTINGS_FILE = join(BASE_DIR, 'data', 'settings.json');
 
+/** Path to the reminders file */
+const REMINDERS_FILE = join(BASE_DIR, 'data', 'reminders.json');
+
 // ==============================================
 // SETTINGS SYSTEM (including trash retention)
 // ==============================================
@@ -387,6 +390,128 @@ function getBuiltInTypeEmoji(type: string): string {
     'research': '🔍'
   };
   return emojiMap[type] || '⚡';
+}
+
+// ==============================================
+// ACTIVITY REMINDERS SYSTEM
+// ==============================================
+
+/**
+ * Reminder Interface
+ * 
+ * Reminders allow users to set follow-up notifications on activities.
+ * Each reminder includes:
+ * - id: Unique identifier (auto-generated UUID)
+ * - activityHash: The activity this reminder is for (can be null for standalone reminders)
+ * - title: Reminder title/label
+ * - message: Optional longer message/notes
+ * - remindAt: ISO timestamp when the reminder should trigger
+ * - completed: Whether the reminder has been dismissed
+ * - completedAt: When the reminder was completed
+ * - createdAt: When the reminder was created
+ * - repeat: Optional repeat pattern (none, daily, weekly, monthly)
+ * - priority: Reminder priority level (low, normal, high)
+ */
+interface Reminder {
+  id: string;
+  activityHash: string | null;
+  title: string;
+  message?: string;
+  remindAt: string;
+  completed: boolean;
+  completedAt?: string;
+  createdAt: string;
+  repeat: 'none' | 'daily' | 'weekly' | 'monthly';
+  priority: 'low' | 'normal' | 'high';
+}
+
+/**
+ * Load reminders from disk.
+ * Returns empty array if file doesn't exist or is invalid.
+ */
+function getReminders(): Reminder[] {
+  if (!existsSync(REMINDERS_FILE)) return [];
+  try {
+    const data = readFileSync(REMINDERS_FILE, 'utf-8');
+    return JSON.parse(data);
+  } catch (e) {
+    console.error('Failed to load reminders:', e);
+    return [];
+  }
+}
+
+/**
+ * Save reminders to disk.
+ */
+function saveReminders(reminders: Reminder[]): void {
+  try {
+    writeFileSync(REMINDERS_FILE, JSON.stringify(reminders, null, 2));
+  } catch (e) {
+    console.error('Failed to save reminders:', e);
+  }
+}
+
+/**
+ * Get reminders that are due (remindAt is in the past and not completed).
+ */
+function getDueReminders(): Reminder[] {
+  const reminders = getReminders();
+  const now = new Date();
+  
+  return reminders.filter(r => 
+    !r.completed && 
+    new Date(r.remindAt) <= now
+  );
+}
+
+/**
+ * Get upcoming reminders (remindAt is in the future).
+ */
+function getUpcomingReminders(hoursAhead: number = 24): Reminder[] {
+  const reminders = getReminders();
+  const now = new Date();
+  const cutoff = new Date(now.getTime() + hoursAhead * 60 * 60 * 1000);
+  
+  return reminders.filter(r => 
+    !r.completed && 
+    new Date(r.remindAt) > now &&
+    new Date(r.remindAt) <= cutoff
+  ).sort((a, b) => new Date(a.remindAt).getTime() - new Date(b.remindAt).getTime());
+}
+
+/**
+ * Handle reminder completion with optional repeat logic.
+ * If the reminder has a repeat pattern, creates the next occurrence.
+ */
+function completeReminder(reminder: Reminder): { completed: Reminder; next?: Reminder } {
+  const completed = { ...reminder, completed: true, completedAt: new Date().toISOString() };
+  
+  if (reminder.repeat === 'none') {
+    return { completed };
+  }
+  
+  // Calculate next occurrence
+  const remindAt = new Date(reminder.remindAt);
+  switch (reminder.repeat) {
+    case 'daily':
+      remindAt.setDate(remindAt.getDate() + 1);
+      break;
+    case 'weekly':
+      remindAt.setDate(remindAt.getDate() + 7);
+      break;
+    case 'monthly':
+      remindAt.setMonth(remindAt.getMonth() + 1);
+      break;
+  }
+  
+  const next: Reminder = {
+    ...reminder,
+    id: randomUUID(),
+    remindAt: remindAt.toISOString(),
+    createdAt: new Date().toISOString()
+  };
+  
+  return { completed, next };
 }
 
 // ==============================================
@@ -7278,6 +7403,489 @@ Colosseum Agent Hackathon 2026`;
           headers: corsHeaders 
         });
       }
+    }
+
+    // ==========================================
+    // API: GET /api/reminders
+    // List all reminders with optional filtering
+    // Query params: ?activityHash=xxx, ?status=pending|completed|due|upcoming
+    // ==========================================
+    if (path === '/api/reminders' && req.method === 'GET') {
+      let reminders = getReminders();
+      const activities = getActivities();
+      
+      // Filter by activity hash
+      const activityHash = url.searchParams.get('activityHash');
+      if (activityHash) {
+        reminders = reminders.filter(r => r.activityHash === activityHash);
+      }
+      
+      // Filter by status
+      const status = url.searchParams.get('status');
+      const now = new Date();
+      
+      switch (status) {
+        case 'pending':
+          reminders = reminders.filter(r => !r.completed);
+          break;
+        case 'completed':
+          reminders = reminders.filter(r => r.completed);
+          break;
+        case 'due':
+          reminders = reminders.filter(r => !r.completed && new Date(r.remindAt) <= now);
+          break;
+        case 'upcoming':
+          const hoursAhead = parseInt(url.searchParams.get('hours') || '24');
+          const cutoff = new Date(now.getTime() + hoursAhead * 60 * 60 * 1000);
+          reminders = reminders.filter(r => 
+            !r.completed && new Date(r.remindAt) > now && new Date(r.remindAt) <= cutoff
+          );
+          break;
+      }
+      
+      // Sort by remindAt (soonest first for pending, newest completed first for completed)
+      reminders.sort((a, b) => {
+        if (a.completed !== b.completed) return a.completed ? 1 : -1;
+        if (!a.completed) return new Date(a.remindAt).getTime() - new Date(b.remindAt).getTime();
+        return new Date(b.completedAt || 0).getTime() - new Date(a.completedAt || 0).getTime();
+      });
+      
+      // Enrich with activity data
+      const enriched = reminders.map(r => {
+        const activity = r.activityHash 
+          ? activities.find((a: any) => (a.hash || a.proof?.hash) === r.activityHash)
+          : null;
+        
+        return {
+          ...r,
+          activity: activity ? {
+            type: activity.type,
+            description: activity.description?.substring(0, 100),
+            timestamp: activity.timestamp
+          } : null,
+          isDue: !r.completed && new Date(r.remindAt) <= now
+        };
+      });
+      
+      return Response.json({
+        count: enriched.length,
+        due: enriched.filter(r => r.isDue).length,
+        upcoming: enriched.filter(r => !r.completed && !r.isDue).length,
+        completed: enriched.filter(r => r.completed).length,
+        reminders: enriched
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: POST /api/reminders
+    // Create a new reminder
+    // ==========================================
+    if (path === '/api/reminders' && req.method === 'POST') {
+      // Authentication required for writes
+      if (API_KEY && !authenticateRequest(req)) {
+        return Response.json({ error: 'Unauthorized' }, { 
+          status: 401, 
+          headers: corsHeaders 
+        });
+      }
+      
+      try {
+        const body = await req.json() as any;
+        const { activityHash, title, message, remindAt, repeat, priority } = body;
+        
+        // Validate required fields
+        if (!title || typeof title !== 'string' || title.trim().length === 0) {
+          return Response.json({ error: 'Reminder title is required' }, { 
+            status: 400, 
+            headers: corsHeaders 
+          });
+        }
+        
+        if (!remindAt || isNaN(new Date(remindAt).getTime())) {
+          return Response.json({ error: 'Valid remindAt datetime is required' }, { 
+            status: 400, 
+            headers: corsHeaders 
+          });
+        }
+        
+        // Validate activity exists if hash provided
+        if (activityHash) {
+          const activities = getActivities();
+          const activity = activities.find((a: any) => (a.hash || a.proof?.hash) === activityHash);
+          if (!activity) {
+            return Response.json({ error: 'Activity not found' }, { 
+              status: 404, 
+              headers: corsHeaders 
+            });
+          }
+        }
+        
+        // Validate repeat pattern
+        const validRepeat = ['none', 'daily', 'weekly', 'monthly'];
+        const finalRepeat = validRepeat.includes(repeat) ? repeat : 'none';
+        
+        // Validate priority
+        const validPriority = ['low', 'normal', 'high'];
+        const finalPriority = validPriority.includes(priority) ? priority : 'normal';
+        
+        const reminder: Reminder = {
+          id: randomUUID(),
+          activityHash: activityHash || null,
+          title: title.trim(),
+          message: message?.trim() || undefined,
+          remindAt: new Date(remindAt).toISOString(),
+          completed: false,
+          createdAt: new Date().toISOString(),
+          repeat: finalRepeat as any,
+          priority: finalPriority as any
+        };
+        
+        const reminders = getReminders();
+        reminders.push(reminder);
+        saveReminders(reminders);
+        
+        // Broadcast to WebSocket clients
+        broadcastUpdate('reminder_created', reminder);
+        
+        console.log(`⏰ Reminder created: ${reminder.title} (${reminder.id.slice(0, 8)}) for ${reminder.remindAt}`);
+        
+        return Response.json(reminder, { 
+          status: 201, 
+          headers: corsHeaders 
+        });
+      } catch (e) {
+        return Response.json({ error: 'Invalid request body' }, { 
+          status: 400, 
+          headers: corsHeaders 
+        });
+      }
+    }
+
+    // ==========================================
+    // API: GET /api/reminders/due
+    // Get all reminders that are currently due (past remindAt, not completed)
+    // ==========================================
+    if (path === '/api/reminders/due' && req.method === 'GET') {
+      const reminders = getDueReminders();
+      const activities = getActivities();
+      
+      const enriched = reminders.map(r => {
+        const activity = r.activityHash 
+          ? activities.find((a: any) => (a.hash || a.proof?.hash) === r.activityHash)
+          : null;
+        
+        return {
+          ...r,
+          activity: activity ? {
+            type: activity.type,
+            description: activity.description?.substring(0, 100),
+            timestamp: activity.timestamp
+          } : null,
+          overdueMinutes: Math.floor((Date.now() - new Date(r.remindAt).getTime()) / 60000)
+        };
+      });
+      
+      return Response.json({
+        count: enriched.length,
+        reminders: enriched
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: GET /api/reminders/upcoming
+    // Get upcoming reminders (not yet due)
+    // Query params: ?hours=24 (default 24 hours ahead)
+    // ==========================================
+    if (path === '/api/reminders/upcoming' && req.method === 'GET') {
+      const hoursAhead = parseInt(url.searchParams.get('hours') || '24');
+      const reminders = getUpcomingReminders(hoursAhead);
+      const activities = getActivities();
+      
+      const enriched = reminders.map(r => {
+        const activity = r.activityHash 
+          ? activities.find((a: any) => (a.hash || a.proof?.hash) === r.activityHash)
+          : null;
+        
+        const remindAtDate = new Date(r.remindAt);
+        const minutesUntil = Math.floor((remindAtDate.getTime() - Date.now()) / 60000);
+        
+        return {
+          ...r,
+          activity: activity ? {
+            type: activity.type,
+            description: activity.description?.substring(0, 100),
+            timestamp: activity.timestamp
+          } : null,
+          minutesUntil,
+          hoursUntil: Math.floor(minutesUntil / 60)
+        };
+      });
+      
+      return Response.json({
+        count: enriched.length,
+        hoursAhead,
+        reminders: enriched
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: GET /api/reminders/:id
+    // Get a specific reminder by ID
+    // ==========================================
+    if (path.match(/^\/api\/reminders\/[a-f0-9-]{36}$/) && req.method === 'GET') {
+      const id = path.split('/').pop()!;
+      const reminders = getReminders();
+      const reminder = reminders.find(r => r.id === id);
+      
+      if (!reminder) {
+        return Response.json({ error: 'Reminder not found' }, { 
+          status: 404, 
+          headers: corsHeaders 
+        });
+      }
+      
+      // Enrich with activity data
+      const activities = getActivities();
+      const activity = reminder.activityHash 
+        ? activities.find((a: any) => (a.hash || a.proof?.hash) === reminder.activityHash)
+        : null;
+      
+      return Response.json({
+        ...reminder,
+        activity: activity ? {
+          type: activity.type,
+          description: activity.description,
+          timestamp: activity.timestamp
+        } : null,
+        isDue: !reminder.completed && new Date(reminder.remindAt) <= new Date()
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: PATCH /api/reminders/:id
+    // Update a reminder
+    // ==========================================
+    if (path.match(/^\/api\/reminders\/[a-f0-9-]{36}$/) && req.method === 'PATCH') {
+      // Authentication required for writes
+      if (API_KEY && !authenticateRequest(req)) {
+        return Response.json({ error: 'Unauthorized' }, { 
+          status: 401, 
+          headers: corsHeaders 
+        });
+      }
+      
+      const id = path.split('/').pop()!;
+      
+      try {
+        const body = await req.json() as any;
+        const reminders = getReminders();
+        const reminderIndex = reminders.findIndex(r => r.id === id);
+        
+        if (reminderIndex === -1) {
+          return Response.json({ error: 'Reminder not found' }, { 
+            status: 404, 
+            headers: corsHeaders 
+          });
+        }
+        
+        const reminder = reminders[reminderIndex];
+        
+        // Update allowed fields
+        if (body.title && typeof body.title === 'string') {
+          reminder.title = body.title.trim();
+        }
+        
+        if (body.message !== undefined) {
+          reminder.message = body.message?.trim() || undefined;
+        }
+        
+        if (body.remindAt && !isNaN(new Date(body.remindAt).getTime())) {
+          reminder.remindAt = new Date(body.remindAt).toISOString();
+        }
+        
+        if (body.repeat && ['none', 'daily', 'weekly', 'monthly'].includes(body.repeat)) {
+          reminder.repeat = body.repeat;
+        }
+        
+        if (body.priority && ['low', 'normal', 'high'].includes(body.priority)) {
+          reminder.priority = body.priority;
+        }
+        
+        saveReminders(reminders);
+        
+        // Broadcast update
+        broadcastUpdate('reminder_updated', reminder);
+        
+        console.log(`⏰ Reminder updated: ${reminder.title} (${reminder.id.slice(0, 8)})`);
+        
+        return Response.json(reminder, { headers: corsHeaders });
+      } catch (e) {
+        return Response.json({ error: 'Invalid request body' }, { 
+          status: 400, 
+          headers: corsHeaders 
+        });
+      }
+    }
+
+    // ==========================================
+    // API: PATCH /api/reminders/:id/complete
+    // Mark a reminder as completed
+    // If the reminder has a repeat pattern, creates the next occurrence
+    // ==========================================
+    if (path.match(/^\/api\/reminders\/[a-f0-9-]{36}\/complete$/) && req.method === 'PATCH') {
+      // Authentication required for writes
+      if (API_KEY && !authenticateRequest(req)) {
+        return Response.json({ error: 'Unauthorized' }, { 
+          status: 401, 
+          headers: corsHeaders 
+        });
+      }
+      
+      const id = path.split('/')[3];
+      const reminders = getReminders();
+      const reminderIndex = reminders.findIndex(r => r.id === id);
+      
+      if (reminderIndex === -1) {
+        return Response.json({ error: 'Reminder not found' }, { 
+          status: 404, 
+          headers: corsHeaders 
+        });
+      }
+      
+      const reminder = reminders[reminderIndex];
+      
+      if (reminder.completed) {
+        return Response.json({ error: 'Reminder is already completed' }, { 
+          status: 400, 
+          headers: corsHeaders 
+        });
+      }
+      
+      // Complete the reminder (may create next occurrence for repeating reminders)
+      const { completed, next } = completeReminder(reminder);
+      
+      // Update the completed reminder
+      reminders[reminderIndex] = completed;
+      
+      // Add next occurrence if repeating
+      if (next) {
+        reminders.push(next);
+      }
+      
+      saveReminders(reminders);
+      
+      // Broadcast updates
+      broadcastUpdate('reminder_completed', { completed, next });
+      
+      console.log(`⏰ Reminder completed: ${completed.title}${next ? ` (next: ${next.remindAt})` : ''}`);
+      
+      return Response.json({
+        success: true,
+        completed,
+        next: next || null,
+        message: next 
+          ? `Reminder completed. Next occurrence scheduled for ${next.remindAt}`
+          : 'Reminder completed'
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: PATCH /api/reminders/:id/snooze
+    // Snooze a reminder for a specified duration
+    // Query params: ?minutes=15 (default)
+    // ==========================================
+    if (path.match(/^\/api\/reminders\/[a-f0-9-]{36}\/snooze$/) && req.method === 'PATCH') {
+      // Authentication required for writes
+      if (API_KEY && !authenticateRequest(req)) {
+        return Response.json({ error: 'Unauthorized' }, { 
+          status: 401, 
+          headers: corsHeaders 
+        });
+      }
+      
+      const id = path.split('/')[3];
+      const minutes = parseInt(url.searchParams.get('minutes') || '15');
+      
+      if (minutes <= 0 || minutes > 10080) { // Max 1 week
+        return Response.json({ error: 'Snooze duration must be between 1 and 10080 minutes (1 week)' }, { 
+          status: 400, 
+          headers: corsHeaders 
+        });
+      }
+      
+      const reminders = getReminders();
+      const reminderIndex = reminders.findIndex(r => r.id === id);
+      
+      if (reminderIndex === -1) {
+        return Response.json({ error: 'Reminder not found' }, { 
+          status: 404, 
+          headers: corsHeaders 
+        });
+      }
+      
+      const reminder = reminders[reminderIndex];
+      
+      if (reminder.completed) {
+        return Response.json({ error: 'Cannot snooze a completed reminder' }, { 
+          status: 400, 
+          headers: corsHeaders 
+        });
+      }
+      
+      const newRemindAt = new Date(Date.now() + minutes * 60 * 1000);
+      reminder.remindAt = newRemindAt.toISOString();
+      
+      saveReminders(reminders);
+      
+      // Broadcast update
+      broadcastUpdate('reminder_snoozed', { id, remindAt: reminder.remindAt, minutes });
+      
+      console.log(`⏰ Reminder snoozed: ${reminder.title} for ${minutes} minutes`);
+      
+      return Response.json({
+        success: true,
+        reminder,
+        snoozedFor: minutes,
+        newRemindAt: reminder.remindAt
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: DELETE /api/reminders/:id
+    // Delete a reminder
+    // ==========================================
+    if (path.match(/^\/api\/reminders\/[a-f0-9-]{36}$/) && req.method === 'DELETE') {
+      // Authentication required for writes
+      if (API_KEY && !authenticateRequest(req)) {
+        return Response.json({ error: 'Unauthorized' }, { 
+          status: 401, 
+          headers: corsHeaders 
+        });
+      }
+      
+      const id = path.split('/').pop()!;
+      const reminders = getReminders();
+      const reminderIndex = reminders.findIndex(r => r.id === id);
+      
+      if (reminderIndex === -1) {
+        return Response.json({ error: 'Reminder not found' }, { 
+          status: 404, 
+          headers: corsHeaders 
+        });
+      }
+      
+      const deletedReminder = reminders.splice(reminderIndex, 1)[0];
+      saveReminders(reminders);
+      
+      // Broadcast deletion
+      broadcastUpdate('reminder_deleted', { id });
+      
+      console.log(`⏰ Reminder deleted: ${deletedReminder.title}`);
+      
+      return Response.json({
+        success: true,
+        message: `Reminder "${deletedReminder.title}" deleted`
+      }, { headers: corsHeaders });
     }
 
     // ==========================================
