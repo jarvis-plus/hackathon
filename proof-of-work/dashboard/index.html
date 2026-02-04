@@ -2849,34 +2849,86 @@
         <div class="charts-section">
             <h2>📊 Activity Analytics</h2>
             <div class="charts-grid">
-                <div class="chart-card">
+                <div class="chart-card" id="timeline-chart-card">
                     <h3>Activity Over Time</h3>
-                    <div class="chart-container">
+                    <div class="chart-container" style="position: relative;">
+                        <!-- Loading skeleton -->
+                        <div class="chart-loading" id="timeline-loading">
+                            <div class="skeleton-chart">
+                                <div class="skeleton skeleton-bar"></div>
+                                <div class="skeleton skeleton-bar"></div>
+                                <div class="skeleton skeleton-bar"></div>
+                                <div class="skeleton skeleton-bar"></div>
+                                <div class="skeleton skeleton-bar"></div>
+                                <div class="skeleton skeleton-bar"></div>
+                                <div class="skeleton skeleton-bar"></div>
+                                <div class="skeleton skeleton-bar"></div>
+                            </div>
+                            <span class="loading-text">Loading activity data...</span>
+                        </div>
                         <canvas id="timelineChart"></canvas>
                     </div>
                 </div>
-                <div class="chart-card">
+                <div class="chart-card" id="breakdown-chart-card">
                     <h3>Activity Breakdown</h3>
-                    <div class="chart-container small">
+                    <div class="chart-container small" style="position: relative;">
+                        <!-- Loading skeleton -->
+                        <div class="chart-loading" id="breakdown-loading">
+                            <div class="skeleton-doughnut"></div>
+                            <span class="loading-text">Loading breakdown...</span>
+                        </div>
                         <canvas id="breakdownChart"></canvas>
                     </div>
                 </div>
             </div>
-            <div class="chart-card" style="margin-top: 1.5rem;">
+            <div class="chart-card" style="margin-top: 1.5rem;" id="cumulative-chart-card">
                 <h3>⛓️ Cumulative On-Chain Proofs</h3>
-                <div class="chart-container">
+                <div class="chart-container" style="position: relative;">
+                    <!-- Loading skeleton -->
+                    <div class="chart-loading" id="cumulative-loading">
+                        <div class="skeleton-chart">
+                            <div class="skeleton skeleton-bar"></div>
+                            <div class="skeleton skeleton-bar"></div>
+                            <div class="skeleton skeleton-bar"></div>
+                            <div class="skeleton skeleton-bar"></div>
+                            <div class="skeleton skeleton-bar"></div>
+                            <div class="skeleton skeleton-bar"></div>
+                            <div class="skeleton skeleton-bar"></div>
+                            <div class="skeleton skeleton-bar"></div>
+                        </div>
+                        <span class="loading-text">Loading proof data...</span>
+                    </div>
                     <canvas id="cumulativeChart"></canvas>
                 </div>
             </div>
-            <div class="chart-card" style="margin-top: 1.5rem;">
+            <div class="chart-card" style="margin-top: 1.5rem;" id="daily-chart-card">
                 <h3>📅 Actions Per Day</h3>
-                <div class="chart-container" style="height: 250px;">
+                <div class="chart-container" style="height: 250px; position: relative;">
+                    <!-- Loading skeleton -->
+                    <div class="chart-loading" id="daily-loading">
+                        <div class="skeleton-chart">
+                            <div class="skeleton skeleton-bar"></div>
+                            <div class="skeleton skeleton-bar"></div>
+                            <div class="skeleton skeleton-bar"></div>
+                            <div class="skeleton skeleton-bar"></div>
+                            <div class="skeleton skeleton-bar"></div>
+                            <div class="skeleton skeleton-bar"></div>
+                            <div class="skeleton skeleton-bar"></div>
+                            <div class="skeleton skeleton-bar"></div>
+                        </div>
+                        <span class="loading-text">Loading daily stats...</span>
+                    </div>
                     <canvas id="dailyChart"></canvas>
                 </div>
             </div>
-            <div class="chart-card" style="margin-top: 1.5rem;">
+            <div class="chart-card" style="margin-top: 1.5rem;" id="heatmap-chart-card">
                 <h3>🗓️ Activity Heatmap</h3>
-                <div class="heatmap-container" id="heatmapContainer">
+                <div class="heatmap-container" id="heatmapContainer" style="position: relative;">
+                    <!-- Loading skeleton -->
+                    <div class="chart-loading" id="heatmap-loading">
+                        <div class="loading-spinner"></div>
+                        <span class="loading-text">Loading heatmap...</span>
+                    </div>
                     <div class="heatmap-months" id="heatmapMonths"></div>
                     <div class="heatmap-wrapper">
                         <div class="heatmap-days">
@@ -4447,6 +4499,12 @@
         let dailyChart = null;
 
         function renderCharts(activities) {
+            // Hide all chart loading states
+            const hideLoading = (id) => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = 'none';
+            };
+            
             // Activity over time (by hour)
             const hourCounts = {};
             // Muted color palette for charts - one accent shade per type
@@ -4535,6 +4593,7 @@
                     }
                 }
             });
+            hideLoading('timeline-loading');
 
             // Activity breakdown by type
             const typeCounts = {};
@@ -4592,6 +4651,7 @@
                     }
                 }
             });
+            hideLoading('breakdown-loading');
 
             // Cumulative on-chain proofs over time
             const onChainActivities = activities
@@ -4679,6 +4739,7 @@
                     }
                 }
             });
+            hideLoading('cumulative-loading');
 
             // Daily activity breakdown (stacked bar chart)
             const dailyCounts = {};
@@ -4793,6 +4854,7 @@
                     }
                 }
             });
+            hideLoading('daily-loading');
         }
 
         // Render GitHub-style activity heatmap
@@ -4800,6 +4862,10 @@
             const grid = document.getElementById('heatmapGrid');
             const monthsContainer = document.getElementById('heatmapMonths');
             if (!grid || !monthsContainer) return;
+            
+            // Hide loading state
+            const heatmapLoading = document.getElementById('heatmap-loading');
+            if (heatmapLoading) heatmapLoading.style.display = 'none';
             
             // Count activities per day
             const dayCounts = {};

@@ -2184,5 +2184,19 @@
     },
     "hash": "817844bd0353ee0bd76065c5f679e8e71b4dbce71033d69a7a0860b358831386",
     "signature": "37BFe1w1JGg2vGWSkEtLrFGemyYgCWzZ74AerRZn7sFb1jdxpXigWa5tzGGYDRRKhwZhgvetkiJkybMcQA9aKvzD"
+  },
+  {
+    "timestamp": "2026-02-04T00:06:23.940Z",
+    "type": "commit",
+    "description": "feat: cycle 125 - enhanced activity pulse animation with color-coded glow rings",
+    "hash": "f14a9a2d6c0d82cb5308f27fbdb2012edcaecb9d0ea073cba1bc8508940a6864",
+    "signature": "qWrdbufbDBzcryKBWDbRbD3kakwqqLHmQxYc4R8a4JhKFdojqxke2Q4NtRk4L88N7caaPZanWZ6avcmjHTj39b3"
+  },
+  {
+    "timestamp": "2026-02-04T00:10:19.728Z",
+    "type": "build",
+    "description": "Cycle 126: Added loading skeleton states for all 5 charts (timeline, breakdown, cumulative, daily, heatmap). Shows animated bars/doughnut while data loads, improves perceived performance.",
+    "hash": "8ea472b44e256e41207b600faee790db71fa0218f7f109c0d6f52d679669d985",
+    "signature": "5PJ7CCZPnj2B2W3UNofxrXDpSuVqNRraoN3oCNDnEjQmbFBoj4qhFum26MPqvCu2ZMvF8SZvESC8Se8AwwNjtX86"
   }
 ]

@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 15:36 PST
-**Cycle:** 124
+**Last Updated:** 2026-02-03 16:06 PST
+**Cycle:** 125
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -36,7 +36,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] **Light grey text** ✅ Cycle 122 - Change #e8e8e8 to softer #e0e0e0
 - [x] **Chart color refinement** ✅ Cycle 123 - Muted palette across all charts
 - [x] **Stat card icons** ✅ Cycle 124 - Distinctive colored icons per stat type
-- [ ] **Activity pulse animation** - Glow ring for new activities
+- [x] **Activity pulse animation** ✅ Cycle 125 - Color-coded glow rings for new activities
 - [ ] Improve mobile chart readability
 - [ ] Add loading states for charts
 - [ ] Better empty states for tabs with no data
@@ -58,6 +58,20 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 125 (Activity Pulse Animation)
+- Enhanced new-activity pulse with multi-phase animation + inner glow
+- Added pseudo-element glow ring overlay for more visible effect
+- Color-coded pulse rings per activity type:
+  - Green: default/session/heartbeat
+  - Yellow: commit
+  - Red: trade/transfer
+  - Blue: build/deploy
+  - Pink: decision
+  - Twitter blue: tweet
+  - Teal: message
+- Double-wave pulse effect for more visual impact
+- 288 activities, all signed on-chain
 
 ### Cycle 124 (Stat Card Icons)
 - Added distinctive colored icons to all 12 stat cards
@@ -91,15 +105,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - Filter drop-shadow for subtle outer glow effect
 - Full light theme support with adjusted colors
 - 276 activities, all signed on-chain
-
-### Cycle 120 (Card Border Glow on Hover)
-- Added subtle colored glow effects on hover for all card types
-- stat-card: green accent glow + border color change
-- activity-item: color-coded glows matching border-left color (commit=yellow, trade=red, build=blue, etc.)
-- chart-card: blue accent glow
-- decision-item: pink/red glow matching decision accent
-- milestone-item: golden glow matching milestone accent
-- 272 activities, all signed on-chain
 
 ---
 
