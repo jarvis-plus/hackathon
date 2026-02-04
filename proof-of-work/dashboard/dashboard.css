@@ -17721,3 +17721,216 @@ body.tour-active {
         transform: none !important;
     }
 }
+
+/* ============================================
+   ACTIVITY SPARKLINES (Trend Visualization)
+   ============================================ */
+
+.activity-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.activity-sparkline {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.activity-sparkline:hover {
+    opacity: 1;
+}
+
+.sparkline-svg {
+    flex-shrink: 0;
+}
+
+.sparkline-bar {
+    fill: var(--accent);
+    transition: opacity 0.2s ease;
+}
+
+.sparkline-bar.sparkline-center {
+    fill: var(--accent);
+}
+
+.sparkline-line {
+    stroke: var(--accent);
+    opacity: 0.4;
+}
+
+.sparkline-label {
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    font-family: 'JetBrains Mono', monospace;
+    min-width: 1.5rem;
+    text-align: right;
+}
+
+/* Theme variations for sparklines */
+[data-theme="dark"] .sparkline-bar {
+    fill: #22c55e;
+}
+[data-theme="dark"] .sparkline-bar.sparkline-center {
+    fill: #4ade80;
+}
+[data-theme="dark"] .sparkline-line {
+    stroke: #22c55e;
+}
+
+[data-theme="light"] .sparkline-bar {
+    fill: #16a34a;
+}
+[data-theme="light"] .sparkline-bar.sparkline-center {
+    fill: #22c55e;
+}
+[data-theme="light"] .sparkline-line {
+    stroke: #16a34a;
+}
+
+[data-theme="ocean"] .sparkline-bar {
+    fill: #3b82f6;
+}
+[data-theme="ocean"] .sparkline-bar.sparkline-center {
+    fill: #60a5fa;
+}
+[data-theme="ocean"] .sparkline-line {
+    stroke: #3b82f6;
+}
+
+[data-theme="forest"] .sparkline-bar {
+    fill: #22c55e;
+}
+[data-theme="forest"] .sparkline-bar.sparkline-center {
+    fill: #4ade80;
+}
+[data-theme="forest"] .sparkline-line {
+    stroke: #22c55e;
+}
+
+[data-theme="sunset"] .sparkline-bar {
+    fill: #f97316;
+}
+[data-theme="sunset"] .sparkline-bar.sparkline-center {
+    fill: #fb923c;
+}
+[data-theme="sunset"] .sparkline-line {
+    stroke: #f97316;
+}
+
+[data-theme="cyberpunk"] .sparkline-bar {
+    fill: #d946ef;
+}
+[data-theme="cyberpunk"] .sparkline-bar.sparkline-center {
+    fill: #f0abfc;
+}
+[data-theme="cyberpunk"] .sparkline-line {
+    stroke: #d946ef;
+}
+
+/* Responsive sparkline adjustments */
+@media (max-width: 480px) {
+    .activity-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .activity-sparkline {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+    .sparkline-bar,
+    .sparkline-line {
+        transition: none;
+    }
+}
+
+/* ================================================
+   STAT CARD SPARKLINES - 7-day trend mini charts
+   ================================================ */
+
+.sparkline-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin: 4px 0 2px;
+    min-height: 24px;
+}
+
+.sparkline-svg {
+    display: block;
+    overflow: visible;
+}
+
+.sparkline-dot {
+    opacity: 0;
+    transition: opacity 0.2s ease, r 0.2s ease;
+}
+
+.sparkline-container:hover .sparkline-dot {
+    opacity: 1;
+}
+
+.sparkline-dot:hover {
+    r: 4;
+}
+
+.sparkline-trend {
+    font-size: 0.75rem;
+    font-weight: 600;
+    opacity: 0.9;
+}
+
+/* Stat card layout adjustments for sparklines */
+.stat-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.stat-card .stat-value {
+    margin-bottom: 0;
+}
+
+.stat-card .sparkline-container {
+    order: 2;
+}
+
+.stat-card .stat-label {
+    order: 3;
+}
+
+/* Theme variations for sparkline trends */
+[data-theme="dark"] .sparkline-trend {
+    filter: brightness(1.1);
+}
+
+[data-theme="light"] .sparkline-trend {
+    filter: brightness(0.9);
+}
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+    .sparkline-container {
+        transform: scale(0.85);
+        margin: 2px 0;
+    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .sparkline-dot {
+        transition: none;
+    }
+}

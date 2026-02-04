@@ -1564,7 +1564,10 @@ function renderActivities(activities, highlightNew = false) {
             ${tagsHtml}
             ${notesHtml}
             ${attachmentsHtml}
-            ${hashDisplay ? `<div class="activity-hash">${hashDisplay}</div>` : ''}
+            <div class="activity-footer">
+                ${hashDisplay ? `<div class="activity-hash">${hashDisplay}</div>` : ''}
+                ${renderActivitySparkline(a)}
+            </div>
         </div>
     `}).join('');
     
@@ -2116,10 +2119,16 @@ function initializeStatCards() {
             const cardIdAttr = htmlDef.cardId ? ` id="${htmlDef.cardId}"` : '';
             const valueClass = htmlDef.valueClass ? ` ${htmlDef.valueClass}` : '';
             
+            // Add sparkline container for applicable widgets
+            const sparklineHtml = ['total-actions', 'onchain', 'commits', 'builds', 'trades', 'messages', 'tweets'].includes(widget.id)
+                ? `<div class="sparkline-container" id="sparkline-${widget.id}" title="7-day trend"></div>`
+                : '';
+            
             return `
-        <div class="stat-card animate-entry"${cardIdAttr}>
+        <div class="stat-card animate-entry"${cardIdAttr} data-widget-id="${widget.id}">
             <div class="stat-icon ${htmlDef.iconClass}">${widget.icon}</div>
             <div class="stat-value${valueClass}" id="${htmlDef.valueId}">${htmlDef.defaultValue}</div>
+            ${sparklineHtml}
             <div class="stat-label">${htmlDef.label}</div>
         </div>`;
         })
@@ -2151,6 +2160,10 @@ function updateStats(activities) {
     
     // Cache activities for verify tab
     window.cachedActivities = activities;
+    window.allActivities = activities;
+    
+    // Build hourly index for sparklines
+    buildHourlyIndex();
     
     // Update judge quick-stats in meta-story
     const judgeCount = document.getElementById('judge-activity-count');
@@ -2269,6 +2282,127 @@ function updateStats(activities) {
             document.getElementById('uptime').textContent = `${uptimeHours}h`;
         }
     }
+    
+    // Render sparkline trend charts for stat cards
+    renderSparklines(activities);
+}
+
+/**
+ * Render sparklines for stat cards showing 7-day activity trends
+ * Uses SVG for crisp, lightweight inline charts
+ */
+function renderSparklines(activities) {
+    // Get last 7 days of data
+    const now = new Date();
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i);
+        days.push(d.toISOString().slice(0, 10)); // YYYY-MM-DD
+    }
+    
+    // Build daily counts index
+    const dailyCounts = new Map();
+    days.forEach(d => dailyCounts.set(d, {
+        total: 0, onchain: 0, commits: 0, builds: 0, trades: 0, messages: 0, tweets: 0
+    }));
+    
+    activities.forEach(a => {
+        const day = a.timestamp.slice(0, 10);
+        if (!dailyCounts.has(day)) return;
+        
+        const dc = dailyCounts.get(day);
+        dc.total++;
+        if (a.signature || a.proof?.txSignature) dc.onchain++;
+        if (a.type === 'commit') dc.commits++;
+        if (a.type === 'build' || a.type === 'deploy' || a.type === 'decision') dc.builds++;
+        if (a.type === 'trade' || a.type === 'transfer') dc.trades++;
+        if (a.type === 'message') dc.messages++;
+        if (a.type === 'tweet') dc.tweets++;
+    });
+    
+    // Sparkline configuration per widget
+    const sparklineConfig = {
+        'total-actions': { key: 'total', color: '#00ffaa' },
+        'onchain': { key: 'onchain', color: '#00e5ff' },
+        'commits': { key: 'commits', color: '#a78bfa' },
+        'builds': { key: 'builds', color: '#fbbf24' },
+        'trades': { key: 'trades', color: '#34d399' },
+        'messages': { key: 'messages', color: '#60a5fa' },
+        'tweets': { key: 'tweets', color: '#f472b6' }
+    };
+    
+    // Theme-specific colors
+    const theme = document.documentElement.getAttribute('data-theme') || 'dark';
+    const themeColors = {
+        light: { 'total-actions': '#059669', onchain: '#0891b2', commits: '#7c3aed', builds: '#d97706', trades: '#059669', messages: '#2563eb', tweets: '#db2777' },
+        ocean: { 'total-actions': '#22d3ee', onchain: '#06b6d4', commits: '#818cf8', builds: '#fcd34d', trades: '#4ade80', messages: '#60a5fa', tweets: '#f9a8d4' },
+        forest: { 'total-actions': '#4ade80', onchain: '#86efac', commits: '#a3e635', builds: '#fef08a', trades: '#22c55e', messages: '#6ee7b7', tweets: '#bef264' },
+        sunset: { 'total-actions': '#fb923c', onchain: '#fbbf24', commits: '#f87171', builds: '#facc15', trades: '#fb7185', messages: '#fdba74', tweets: '#f472b6' },
+        cyberpunk: { 'total-actions': '#f0abfc', onchain: '#e879f9', commits: '#c084fc', builds: '#fde047', trades: '#a78bfa', messages: '#818cf8', tweets: '#f472b6' }
+    };
+    
+    // Render each sparkline
+    Object.entries(sparklineConfig).forEach(([widgetId, config]) => {
+        const container = document.getElementById(`sparkline-${widgetId}`);
+        if (!container) return;
+        
+        // Get data for this sparkline
+        const data = days.map(d => dailyCounts.get(d)?.[config.key] || 0);
+        const max = Math.max(...data, 1); // At least 1 to avoid division by zero
+        
+        // Determine color based on theme
+        const color = themeColors[theme]?.[widgetId] || config.color;
+        
+        // Calculate trend (up, down, flat)
+        const first3Avg = (data[0] + data[1] + data[2]) / 3;
+        const last3Avg = (data[4] + data[5] + data[6]) / 3;
+        const trend = last3Avg > first3Avg * 1.1 ? 'up' : last3Avg < first3Avg * 0.9 ? 'down' : 'flat';
+        const trendIcon = trend === 'up' ? '↗' : trend === 'down' ? '↘' : '→';
+        const trendColor = trend === 'up' ? '#22c55e' : trend === 'down' ? '#ef4444' : '#9ca3af';
+        
+        // Generate SVG sparkline path
+        const width = 60;
+        const height = 20;
+        const padding = 2;
+        const innerWidth = width - padding * 2;
+        const innerHeight = height - padding * 2;
+        
+        const points = data.map((v, i) => {
+            const x = padding + (i / (data.length - 1)) * innerWidth;
+            const y = padding + innerHeight - (v / max) * innerHeight;
+            return `${x},${y}`;
+        });
+        
+        // Create filled area path (for gradient effect)
+        const areaPath = `M${points[0]} L${points.join(' L')} L${padding + innerWidth},${height - padding} L${padding},${height - padding} Z`;
+        
+        // Create line path
+        const linePath = `M${points[0]} L${points.join(' L')}`;
+        
+        // Generate SVG
+        container.innerHTML = `
+            <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" class="sparkline-svg" aria-label="7-day trend: ${data.join(', ')}">
+                <defs>
+                    <linearGradient id="sparkline-grad-${widgetId}" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:${color};stop-opacity:0.3"/>
+                        <stop offset="100%" style="stop-color:${color};stop-opacity:0"/>
+                    </linearGradient>
+                </defs>
+                <path d="${areaPath}" fill="url(#sparkline-grad-${widgetId})" />
+                <path d="${linePath}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                ${data.map((v, i) => {
+                    const x = padding + (i / (data.length - 1)) * innerWidth;
+                    const y = padding + innerHeight - (v / max) * innerHeight;
+                    return `<circle cx="${x}" cy="${y}" r="2" fill="${color}" class="sparkline-dot" data-day="${days[i]}" data-value="${v}" />`;
+                }).join('')}
+            </svg>
+            <span class="sparkline-trend" style="color: ${trendColor}">${trendIcon}</span>
+        `;
+        
+        // Update tooltip with summary
+        container.title = `7-day trend: ${data.join(' → ')} (${trend === 'up' ? 'trending up' : trend === 'down' ? 'trending down' : 'stable'})`;
+    });
 }
 
 // Chart instances
@@ -5335,7 +5469,10 @@ function renderGroupedActivitiesFiltered(activities) {
                     </div>
                     <div class="activity-desc">${escapeHtml(a.description)}</div>
                     ${tagsHtml}
-                    ${hashDisplay ? `<div class="activity-hash">${hashDisplay}</div>` : ''}
+                    <div class="activity-footer">
+                        ${hashDisplay ? `<div class="activity-hash">${hashDisplay}</div>` : ''}
+                        ${renderActivitySparkline(a)}
+                    </div>
                 </div>
             `;
         });
@@ -6391,6 +6528,103 @@ function gotoActivity(hash) {
     }
 }
 
+// ============================================
+// ACTIVITY SPARKLINES (Trend Visualization)
+// ============================================
+
+/**
+ * Build hourly activity index for sparkline lookups
+ * Called once when activities are loaded
+ * @returns {Map} Map of hour key (YYYY-MM-DDTHH) to activity count
+ */
+function buildHourlyIndex() {
+    const activities = window.allActivities || [];
+    const hourlyIndex = new Map();
+    
+    activities.forEach(a => {
+        const ts = new Date(a.timestamp);
+        // Round down to the hour
+        const hourKey = ts.toISOString().slice(0, 13); // "YYYY-MM-DDTHH"
+        hourlyIndex.set(hourKey, (hourlyIndex.get(hourKey) || 0) + 1);
+    });
+    
+    window.hourlyActivityIndex = hourlyIndex;
+    return hourlyIndex;
+}
+
+/**
+ * Get hourly counts for a time window around a timestamp
+ * @param {string} timestamp - ISO timestamp
+ * @param {number} hoursBefore - Hours to look back
+ * @param {number} hoursAfter - Hours to look forward
+ * @returns {number[]} Array of hourly counts
+ */
+function getHourlyCountsAround(timestamp, hoursBefore = 12, hoursAfter = 12) {
+    const hourlyIndex = window.hourlyActivityIndex || buildHourlyIndex();
+    const centerTs = new Date(timestamp);
+    const counts = [];
+    
+    const totalHours = hoursBefore + 1 + hoursAfter;
+    const startTs = new Date(centerTs.getTime() - hoursBefore * 60 * 60 * 1000);
+    
+    for (let i = 0; i < totalHours; i++) {
+        const hourTs = new Date(startTs.getTime() + i * 60 * 60 * 1000);
+        const hourKey = hourTs.toISOString().slice(0, 13);
+        counts.push(hourlyIndex.get(hourKey) || 0);
+    }
+    
+    return counts;
+}
+
+/**
+ * Render an inline SVG sparkline showing activity trend
+ * @param {Object} activity - Activity object
+ * @returns {string} SVG HTML string
+ */
+function renderActivitySparkline(activity) {
+    if (!activity.timestamp) return '';
+    
+    const counts = getHourlyCountsAround(activity.timestamp, 11, 12); // 24 hours total
+    const maxCount = Math.max(...counts, 1);
+    
+    const width = 80;
+    const height = 20;
+    const padding = 2;
+    const barWidth = (width - padding * 2) / counts.length;
+    const centerIndex = 11; // The hour of this activity
+    
+    // Build bars
+    const bars = counts.map((count, i) => {
+        const barHeight = (count / maxCount) * (height - padding * 2);
+        const x = padding + i * barWidth;
+        const y = height - padding - barHeight;
+        const isCenter = i === centerIndex;
+        const opacity = count === 0 ? 0 : (isCenter ? 1 : 0.5);
+        
+        return `<rect x="${x}" y="${y}" width="${barWidth - 0.5}" height="${barHeight}" rx="0.5" class="sparkline-bar${isCenter ? ' sparkline-center' : ''}" style="opacity: ${opacity}"/>`;
+    }).join('');
+    
+    // Trend line (polyline connecting midpoints of bars)
+    const points = counts.map((count, i) => {
+        const x = padding + i * barWidth + barWidth / 2;
+        const y = height - padding - (count / maxCount) * (height - padding * 2);
+        return `${x},${y}`;
+    }).join(' ');
+    
+    const totalNearby = counts.reduce((a, b) => a + b, 0);
+    const avgPerHour = (totalNearby / counts.length).toFixed(1);
+    
+    return `
+        <div class="activity-sparkline" title="Activity trend: ${totalNearby} activities in 24h window (${avgPerHour}/hr avg)">
+            <svg width="${width}" height="${height}" class="sparkline-svg" aria-hidden="true">
+                <polyline points="${points}" class="sparkline-line" fill="none" stroke-width="1"/>
+                ${bars}
+            </svg>
+            <span class="sparkline-label">${totalNearby}</span>
+        </div>
+    `;
+}
+
 function renderActivityTags(tags) {
     if (!tags || !Array.isArray(tags) || tags.length === 0) return '';
     
@@ -6825,7 +7059,10 @@ function renderGroupedActivities(activities, highlightNew = false) {
                     </div>
                     <div class="activity-desc">${escapeHtml(a.description)}</div>
                     ${tagsHtml}
-                    ${hashDisplay ? `<div class="activity-hash">${hashDisplay}</div>` : ''}
+                    <div class="activity-footer">
+                        ${hashDisplay ? `<div class="activity-hash">${hashDisplay}</div>` : \'\'}
+                        ${renderActivitySparkline(a)}
+                    </div>
                 </div>
             `;
             itemIndex++;
@@ -6926,7 +7163,10 @@ function renderGroupedActivitiesLimited(activities, limit, highlightNew = false)
                     </div>
                     <div class="activity-desc">${escapeHtml(a.description)}</div>
                     ${tagsHtml}
-                    ${hashDisplay ? `<div class="activity-hash">${hashDisplay}</div>` : ''}
+                    <div class="activity-footer">
+                        ${hashDisplay ? `<div class="activity-hash">${hashDisplay}</div>` : \'\'}
+                        ${renderActivitySparkline(a)}
+                    </div>
                 </div>
             `;
             itemIndex++;
