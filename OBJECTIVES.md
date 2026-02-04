@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 20:36 PST
-**Cycle:** 162
+**Last Updated:** 2026-02-03 20:40 PST
+**Cycle:** 163
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -82,7 +82,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 
 ### 🆕 Future Improvements (New Items)
 - [x] OpenAPI/Swagger documentation (auto-generated API docs) ✅ Cycle 162
-- [ ] Activity comments/notes (add notes to activities)
+- [x] Activity comments/notes (add notes to activities) ✅ Cycle 163
 - [ ] Activity pinning (pin important activities to top)
 - [ ] Email digest (daily/weekly summary emails)
 - [ ] Slack/Discord bot integration
@@ -95,6 +95,22 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 163 (Activity Notes/Comments API)
+- Implemented activity notes/comments feature for user annotations
+- **New Endpoints**:
+  - `GET /api/activities/:hash` - Fetch single activity by hash
+  - `PATCH /api/activities/:hash/notes` - Add/update notes (2000 char max)
+  - `DELETE /api/activities/:hash/notes` - Remove notes from activity
+- **Implementation Details**:
+  - Added `saveActivities()` helper function for atomic writes
+  - Notes are user annotations, NOT part of cryptographically signed content
+  - Validation: notes must be string, max 2000 chars, empty = remove
+  - Tracks `notesUpdatedAt` timestamp for each note
+- **OpenAPI Updated**: New endpoints + Activity schema with notes fields
+- **Server Comments Updated**: Key Endpoints section now lists notes APIs
+- ~110 lines added to server.ts, ~150 lines to openapi.json
+- 410 activities, all signed on-chain
 
 ### Cycle 162 (OpenAPI/Swagger Documentation)
 - Implemented auto-generated API documentation for the Proof of Work API
@@ -167,16 +183,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - Added `validateBackup()` helper function (~60 lines)
 - ~180 lines added to server.ts
 - 400 activities, all signed on-chain
-
-### Cycle 158 (Per-IP Rate Limiting for Webhooks)
-- Implemented endpoint-specific rate limiting for webhook operations
-- **New Limits**: Webhook POST/DELETE = 5/min, Webhook Tests = 10/min
-- **Environment Variables**: `WEBHOOK_WRITE_LIMIT`, `WEBHOOK_TEST_LIMIT` to customize
-- **Rate Limit Endpoint**: `/api/ratelimit` shows current usage across all categories
-- **Categories Tracked**: api, websocket, webhookWrite, webhookTest
-- Added `webhookWriteRateLimitStore` and `webhookTestRateLimitStore` Maps
-- ~80 lines added to server.ts
-- 397 activities, all signed on-chain
 
 ---
 
