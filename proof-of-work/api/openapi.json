@@ -338,6 +338,48 @@
         }
       }
     },
+    "/api/activities/{hash}/diff": {
+      "get": {
+        "tags": ["Activities"],
+        "summary": "Compare with previous activity",
+        "description": "Compare an activity with the previous activity of the same type. Returns description diff, metadata changes, and time delta.",
+        "operationId": "getActivityDiff",
+        "parameters": [
+          {
+            "name": "hash",
+            "in": "path",
+            "required": true,
+            "description": "SHA256 hash of the activity",
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Diff with previous activity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityDiff"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Activity not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/stats": {
       "get": {
         "tags": ["Stats"],
@@ -1360,6 +1402,79 @@
             "type": "string",
             "format": "date-time",
             "description": "Timestamp when activity was pinned"
+          }
+        }
+      },
+      "ActivityDiff": {
+        "type": "object",
+        "description": "Comparison between an activity and its previous same-type activity",
+        "properties": {
+          "current": {
+            "$ref": "#/components/schemas/Activity",
+            "description": "The current activity being compared"
+          },
+          "previous": {
+            "oneOf": [
+              {"$ref": "#/components/schemas/Activity"},
+              {"type": "null"}
+            ],
+            "description": "Previous activity of the same type (null if none exists)"
+          },
+          "hasPrevious": {
+            "type": "boolean",
+            "description": "Whether a previous same-type activity was found"
+          },
+          "message": {
+            "type": "string",
+            "description": "Message when no previous activity found"
+          },
+          "timeDelta": {
+            "type": "object",
+            "description": "Time difference between activities",
+            "properties": {
+              "ms": {"type": "integer", "description": "Milliseconds between activities"},
+              "display": {"type": "string", "description": "Human-readable time difference"},
+              "seconds": {"type": "integer"},
+              "minutes": {"type": "integer"},
+              "hours": {"type": "integer"},
+              "days": {"type": "integer"}
+            }
+          },
+          "descriptionDiff": {
+            "type": "object",
+            "description": "Word-level comparison of descriptions",
+            "properties": {
+              "previous": {"type": "string"},
+              "current": {"type": "string"},
+              "commonWordCount": {"type": "integer"},
+              "previousWordCount": {"type": "integer"},
+              "currentWordCount": {"type": "integer"},
+              "similarity": {"type": "integer", "description": "Percentage similarity (0-100)"}
+            }
+          },
+          "metadataDiff": {
+            "type": "object",
+            "description": "Changes in metadata fields",
+            "properties": {
+              "added": {"type": "object", "description": "New fields in current"},
+              "removed": {"type": "object", "description": "Fields removed from previous"},
+              "changed": {
+                "type": "object",
+                "description": "Fields with different values",
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "from": {"description": "Previous value"},
+                    "to": {"description": "Current value"}
+                  }
+                }
+              },
+              "unchanged": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Field names that are unchanged"
+              }
+            }
           }
         }
       },

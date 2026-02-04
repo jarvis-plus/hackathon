@@ -18,6 +18,7 @@
  * Key Endpoints:
  * - GET /api/activities           - All activities as JSON array
  * - GET /api/activities/:hash     - Single activity by hash
+ * - GET /api/activities/:hash/diff - Compare with previous same-type activity
  * - PATCH /api/activities/:hash/notes - Add/update notes on activity
  * - DELETE /api/activities/:hash/notes - Remove notes from activity
  * - PATCH /api/activities/:hash/pin - Toggle pin status on activity
@@ -1605,6 +1606,174 @@ const server = Bun.serve({
       return Response.json({
         count: pinned.length,
         activities: pinned
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: GET /api/activities/:hash/diff
+    // Compare an activity with the previous same-type activity
+    // Returns description diff, metadata changes, and time delta
+    // ==========================================
+    if (path.match(/^\/api\/activities\/[a-f0-9]{64}\/diff$/) && req.method === 'GET') {
+      const hash = path.split('/')[3];
+      const activities = getActivities();
+      
+      // Find current activity
+      const currentIdx = activities.findIndex((a: any) => a.hash === hash);
+      if (currentIdx === -1) {
+        return Response.json({ 
+          error: 'Activity not found' 
+        }, { status: 404, headers: corsHeaders });
+      }
+      
+      const current = activities[currentIdx];
+      
+      // Find previous activity of same type (earlier in time)
+      // Activities are ordered chronologically, so look backward
+      let previous = null;
+      for (let i = currentIdx - 1; i >= 0; i--) {
+        if (activities[i].type === current.type) {
+          previous = activities[i];
+          break;
+        }
+      }
+      
+      if (!previous) {
+        return Response.json({
+          current: {
+            hash: current.hash,
+            type: current.type,
+            description: current.description,
+            timestamp: current.timestamp
+          },
+          previous: null,
+          hasPrevious: false,
+          message: `No previous ${current.type} activity found`
+        }, { headers: corsHeaders });
+      }
+      
+      // Calculate time delta
+      const currentTime = new Date(current.timestamp).getTime();
+      const previousTime = new Date(previous.timestamp).getTime();
+      const timeDeltaMs = currentTime - previousTime;
+      const timeDeltaSec = Math.floor(timeDeltaMs / 1000);
+      const timeDeltaMin = Math.floor(timeDeltaSec / 60);
+      const timeDeltaHrs = Math.floor(timeDeltaMin / 60);
+      const timeDeltaDays = Math.floor(timeDeltaHrs / 24);
+      
+      // Format time delta for display
+      let timeDeltaDisplay;
+      if (timeDeltaDays > 0) {
+        timeDeltaDisplay = `${timeDeltaDays}d ${timeDeltaHrs % 24}h`;
+      } else if (timeDeltaHrs > 0) {
+        timeDeltaDisplay = `${timeDeltaHrs}h ${timeDeltaMin % 60}m`;
+      } else {
+        timeDeltaDisplay = `${timeDeltaMin}m`;
+      }
+      
+      // Compute metadata diff (added, removed, changed keys)
+      const currMeta = current.metadata || {};
+      const prevMeta = previous.metadata || {};
+      const allKeys = new Set([...Object.keys(currMeta), ...Object.keys(prevMeta)]);
+      
+      const metadataDiff: { 
+        added: Record<string, any>; 
+        removed: Record<string, any>; 
+        changed: Record<string, { from: any; to: any }>; 
+        unchanged: string[];
+      } = {
+        added: {},
+        removed: {},
+        changed: {},
+        unchanged: []
+      };
+      
+      for (const key of allKeys) {
+        const inCurr = key in currMeta;
+        const inPrev = key in prevMeta;
+        
+        if (inCurr && !inPrev) {
+          metadataDiff.added[key] = currMeta[key];
+        } else if (!inCurr && inPrev) {
+          metadataDiff.removed[key] = prevMeta[key];
+        } else if (JSON.stringify(currMeta[key]) !== JSON.stringify(prevMeta[key])) {
+          metadataDiff.changed[key] = { from: prevMeta[key], to: currMeta[key] };
+        } else {
+          metadataDiff.unchanged.push(key);
+        }
+      }
+      
+      // Simple word-level diff for descriptions
+      const prevWords = (previous.description || '').split(/\s+/);
+      const currWords = (current.description || '').split(/\s+/);
+      
+      // LCS-based diff for highlighting changes
+      function lcs(a: string[], b: string[]): string[] {
+        const m = a.length, n = b.length;
+        const dp: number[][] = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
+        for (let i = 1; i <= m; i++) {
+          for (let j = 1; j <= n; j++) {
+            if (a[i - 1] === b[j - 1]) {
+              dp[i][j] = dp[i - 1][j - 1] + 1;
+            } else {
+              dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+            }
+          }
+        }
+        // Backtrack to find LCS
+        const result: string[] = [];
+        let i = m, j = n;
+        while (i > 0 && j > 0) {
+          if (a[i - 1] === b[j - 1]) {
+            result.unshift(a[i - 1]);
+            i--; j--;
+          } else if (dp[i - 1][j] > dp[i][j - 1]) {
+            i--;
+          } else {
+            j--;
+          }
+        }
+        return result;
+      }
+      
+      const common = lcs(prevWords, currWords);
+      const descriptionDiff = {
+        previous: previous.description || '',
+        current: current.description || '',
+        commonWordCount: common.length,
+        previousWordCount: prevWords.filter(w => w).length,
+        currentWordCount: currWords.filter(w => w).length,
+        similarity: prevWords.length > 0 ? Math.round((common.length / Math.max(prevWords.length, currWords.length)) * 100) : 100
+      };
+      
+      return Response.json({
+        current: {
+          hash: current.hash,
+          type: current.type,
+          description: current.description,
+          timestamp: current.timestamp,
+          signature: current.signature,
+          metadata: current.metadata
+        },
+        previous: {
+          hash: previous.hash,
+          type: previous.type,
+          description: previous.description,
+          timestamp: previous.timestamp,
+          signature: previous.signature,
+          metadata: previous.metadata
+        },
+        hasPrevious: true,
+        timeDelta: {
+          ms: timeDeltaMs,
+          display: timeDeltaDisplay,
+          seconds: timeDeltaSec,
+          minutes: timeDeltaMin,
+          hours: timeDeltaHrs,
+          days: timeDeltaDays
+        },
+        descriptionDiff,
+        metadataDiff
       }, { headers: corsHeaders });
     }
 

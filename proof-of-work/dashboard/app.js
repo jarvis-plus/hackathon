@@ -876,6 +876,8 @@ function renderActivities(activities, highlightNew = false) {
         const notesHtml = renderActivityNotes(a, hash);
         const pinButtonHtml = renderPinButton(hash, isPinned);
         
+        const compareButtonHtml = renderCompareButton(hash);
+        
         return `
         <div class="activity-item ${a.type}${isNew ? ' new-activity' : ''}${isPinned ? ' pinned' : ''}" 
              style="animation-delay: ${i * 0.04}s" 
@@ -887,6 +889,7 @@ function renderActivities(activities, highlightNew = false) {
              role="article"
              aria-label="${ariaLabel}">
             ${renderShareButton(activityId)}
+            ${renderCompareButton(hash)}
             ${pinButtonHtml}
             <div class="activity-header">
                 <div class="activity-badges">
@@ -5206,6 +5209,228 @@ function renderShareButton(activityId) {
                     title="Copy link to this activity">
         🔗
     </button>`;
+}
+
+// ============================================
+// ACTIVITY DIFF VIEW
+// ============================================
+
+/**
+ * Render compare button for activity cards
+ * @param {string} hash - The activity hash
+ */
+function renderCompareButton(hash) {
+    if (!hash) return '';
+    return `<button class="compare-btn" 
+                    onclick="event.stopPropagation(); showDiffModal('${hash}');" 
+                    title="Compare with previous activity"
+                    aria-label="Compare with previous activity of same type">
+        ⚖️
+    </button>`;
+}
+
+/**
+ * Show diff modal comparing activity with previous same-type
+ * @param {string} hash - The activity hash
+ */
+async function showDiffModal(hash) {
+    // Create modal if it doesn't exist
+    let modal = document.getElementById('diff-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'diff-modal';
+        modal.className = 'diff-modal';
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        modal.setAttribute('aria-labelledby', 'diff-modal-title');
+        modal.innerHTML = `
+            <div class="diff-modal-content" role="document">
+                <div class="diff-modal-header">
+                    <h3 id="diff-modal-title">⚖️ Activity Comparison</h3>
+                    <button class="diff-close" onclick="hideDiffModal()" aria-label="Close comparison modal">×</button>
+                </div>
+                <div class="diff-modal-body" id="diff-modal-body">
+                    <div class="diff-loading">Loading comparison...</div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        // Close on backdrop click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) hideDiffModal();
+        });
+    }
+    
+    // Show modal with loading state
+    modal.classList.add('visible');
+    document.getElementById('diff-modal-body').innerHTML = `
+        <div class="diff-loading">
+            <div class="loading-spinner"></div>
+            <span>Loading comparison...</span>
+        </div>
+    `;
+    
+    // Focus close button for accessibility
+    setTimeout(() => {
+        modal.querySelector('.diff-close').focus();
+    }, 100);
+    
+    // Trap focus in modal
+    modal.addEventListener('keydown', handleDiffModalKeydown);
+    
+    try {
+        const response = await fetch(`/api/activities/${hash}/diff`);
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to load diff');
+        }
+        
+        document.getElementById('diff-modal-body').innerHTML = renderDiffContent(data);
+        announceToScreenReader('Activity comparison loaded');
+    } catch (error) {
+        document.getElementById('diff-modal-body').innerHTML = `
+            <div class="diff-error">
+                <span class="error-icon">❌</span>
+                <p>${escapeHtml(error.message)}</p>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Hide the diff modal
+ */
+function hideDiffModal() {
+    const modal = document.getElementById('diff-modal');
+    if (modal) {
+        modal.classList.remove('visible');
+        modal.removeEventListener('keydown', handleDiffModalKeydown);
+    }
+}
+
+/**
+ * Handle keyboard events in diff modal
+ */
+function handleDiffModalKeydown(e) {
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        hideDiffModal();
+    }
+}
+
+/**
+ * Render the diff content HTML
+ * @param {object} data - Diff data from API
+ */
+function renderDiffContent(data) {
+    if (!data.hasPrevious) {
+        return `
+            <div class="diff-no-previous">
+                <span class="info-icon">ℹ️</span>
+                <p>${escapeHtml(data.message)}</p>
+                <div class="diff-current-only">
+                    <h4>Current Activity</h4>
+                    <div class="diff-activity">
+                        <div class="diff-type"><span class="activity-type">${escapeHtml(data.current.type)}</span></div>
+                        <div class="diff-desc">${escapeHtml(data.current.description)}</div>
+                        <div class="diff-time">${formatTime(data.current.timestamp)}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    const { current, previous, timeDelta, descriptionDiff, metadataDiff } = data;
+    
+    // Build metadata diff HTML
+    let metadataHtml = '';
+    const hasMetaChanges = Object.keys(metadataDiff.added).length > 0 || 
+                           Object.keys(metadataDiff.removed).length > 0 || 
+                           Object.keys(metadataDiff.changed).length > 0;
+    
+    if (hasMetaChanges) {
+        metadataHtml = '<div class="diff-metadata">';
+        metadataHtml += '<h4>📋 Metadata Changes</h4>';
+        
+        // Added fields
+        for (const [key, value] of Object.entries(metadataDiff.added)) {
+            metadataHtml += `<div class="meta-change added">
+                <span class="meta-key">+ ${escapeHtml(key)}:</span>
+                <span class="meta-value">${escapeHtml(JSON.stringify(value))}</span>
+            </div>`;
+        }
+        
+        // Removed fields
+        for (const [key, value] of Object.entries(metadataDiff.removed)) {
+            metadataHtml += `<div class="meta-change removed">
+                <span class="meta-key">- ${escapeHtml(key)}:</span>
+                <span class="meta-value">${escapeHtml(JSON.stringify(value))}</span>
+            </div>`;
+        }
+        
+        // Changed fields
+        for (const [key, change] of Object.entries(metadataDiff.changed)) {
+            metadataHtml += `<div class="meta-change changed">
+                <span class="meta-key">~ ${escapeHtml(key)}:</span>
+                <div class="meta-diff">
+                    <div class="meta-from">${escapeHtml(JSON.stringify(change.from))}</div>
+                    <span class="meta-arrow">→</span>
+                    <div class="meta-to">${escapeHtml(JSON.stringify(change.to))}</div>
+                </div>
+            </div>`;
+        }
+        
+        metadataHtml += '</div>';
+    }
+    
+    // Similarity indicator
+    const similarityClass = descriptionDiff.similarity >= 80 ? 'high' : 
+                            descriptionDiff.similarity >= 50 ? 'medium' : 'low';
+    
+    return `
+        <div class="diff-summary">
+            <div class="diff-stat">
+                <span class="stat-label">Time Between</span>
+                <span class="stat-value">⏱️ ${escapeHtml(timeDelta.display)}</span>
+            </div>
+            <div class="diff-stat">
+                <span class="stat-label">Description Similarity</span>
+                <span class="stat-value similarity-${similarityClass}">${descriptionDiff.similarity}%</span>
+            </div>
+        </div>
+        
+        <div class="diff-comparison">
+            <div class="diff-side previous">
+                <div class="diff-side-header">
+                    <h4>⬅️ Previous</h4>
+                    <span class="diff-time">${formatTime(previous.timestamp)}</span>
+                </div>
+                <div class="diff-activity">
+                    <div class="diff-type"><span class="activity-type">${escapeHtml(previous.type)}</span></div>
+                    <div class="diff-desc">${escapeHtml(previous.description)}</div>
+                    <div class="diff-hash">${escapeHtml(previous.hash.slice(0, 12))}...</div>
+                </div>
+            </div>
+            
+            <div class="diff-arrow">➡️</div>
+            
+            <div class="diff-side current">
+                <div class="diff-side-header">
+                    <h4>➡️ Current</h4>
+                    <span class="diff-time">${formatTime(current.timestamp)}</span>
+                </div>
+                <div class="diff-activity">
+                    <div class="diff-type"><span class="activity-type">${escapeHtml(current.type)}</span></div>
+                    <div class="diff-desc">${escapeHtml(current.description)}</div>
+                    <div class="diff-hash">${escapeHtml(current.hash.slice(0, 12))}...</div>
+                </div>
+            </div>
+        </div>
+        
+        ${metadataHtml}
+    `;
 }
 
 // ============================================
