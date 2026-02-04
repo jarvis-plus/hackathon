@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-04 05:29 PST
-**Cycle:** 196
+**Last Updated:** 2026-02-04 05:38 PST
+**Cycle:** 197
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -117,11 +117,46 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Batch restore from trash (restore multiple at once) ✅ Cycle 194
 - [x] Activity quick actions menu (right-click context menu) ✅ Cycle 195
 - [x] Dashboard widgets (customizable stat cards) ✅ Cycle 196
-- [ ] Activity reminder system (set reminders for follow-ups)
+- [x] Activity reminder system (set reminders for follow-ups) ✅ Cycle 197
 
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 197 (Activity Reminder System)
+- Implemented full-featured reminder system for activity follow-ups
+- **API Endpoints**:
+  - `GET /api/reminders` - List reminders with status/activity filtering
+  - `POST /api/reminders` - Create reminder (title, message, datetime, priority, repeat)
+  - `GET /api/reminders/:id` - Get specific reminder
+  - `PATCH /api/reminders/:id` - Update reminder
+  - `DELETE /api/reminders/:id` - Delete reminder
+  - `PATCH /api/reminders/:id/complete` - Mark complete (auto-creates next for repeating)
+  - `PATCH /api/reminders/:id/snooze?minutes=N` - Snooze for N minutes
+  - `GET /api/reminders/due` - Get all overdue reminders
+  - `GET /api/reminders/upcoming` - Get upcoming reminders
+- **Reminder Features**:
+  - Link reminders to specific activities (optional)
+  - Priority levels: low, normal, high
+  - Repeat patterns: none, daily, weekly, monthly
+  - Snooze functionality (postpone by minutes)
+- **Dashboard UI**:
+  - Reminders modal with tabbed view (Due/Upcoming/Completed)
+  - Reminder form with datetime picker, priority, repeat options
+  - Snooze buttons (15m, 1h) and complete action on each reminder
+  - Links to associated activities with click-to-jump
+  - Reminders badge in header showing due count
+- **Context Menu Integration**: "Set Reminder" option on right-click
+- **Notification System**:
+  - Browser notifications for due reminders
+  - Toast notifications with snooze/complete actions
+  - Auto-check every 60 seconds
+- **Keyboard Shortcut**: `R` opens reminders modal
+- **Command Palette**: "View Reminders", "New Reminder" commands
+- **OpenAPI Updated**: Reminder and ReminderWithMeta schemas, all endpoints
+- **Theme Support**: All 7 themes (Auto, Dark, Light, Ocean, Forest, Sunset, Cyberpunk)
+- **Stats**: 527 activities, all signed on-chain
+- Commit: 051774c
 
 ### Cycle 196 (Dashboard Widgets - Customizable Stat Cards)
 - Implemented fully customizable dashboard stat card widgets
@@ -200,23 +235,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - **Theme Support**: All 7 themes (Auto, Dark, Light, Ocean, Forest, Sunset, Cyberpunk)
 - **Stats**: 516 activities, all signed on-chain
 - Commit: 8282e5b
-
-### Cycle 192 (Undo Toast + Auto Theme Mode)
-- Verified undo toast for delete operations was already fully implemented
-- **New: Auto Theme Mode** - follows OS dark/light preference
-  - Added 'auto' to AVAILABLE_THEMES list
-  - New `getSystemTheme()` and `getEffectiveTheme()` functions
-  - Theme dropdown now includes "🔄 Auto (System)" at top
-  - Command palette includes auto theme option
-  - `systemPrefersDark.addEventListener('change')` for real-time updates
-  - When system preference changes, theme updates automatically
-- **Undo Toast Features** (pre-existing):
-  - `showUndoToast()` displays toast with Undo button and progress bar
-  - Works for both single delete and bulk delete operations
-  - Restores via `/api/activities/:hash/restore`
-- **Theme Support**: All 7 themes (Auto, Dark, Light, Ocean, Forest, Sunset, Cyberpunk)
-- **Stats**: 513 activities, all signed on-chain
-- Commit: 0a21a98
 
 ---
 
