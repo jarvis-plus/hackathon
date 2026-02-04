@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 23:09 PST
-**Cycle:** 184
+**Last Updated:** 2026-02-03 23:16 PST
+**Cycle:** 185
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -104,10 +104,36 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Activity importance scoring (auto-prioritize) ✅ Cycle 182
 - [x] Voice input for activity logging (web speech API) ✅ Cycle 183
 - [x] Activity calendar view (month-view with daily details) ✅ Cycle 184
+- [x] Bulk activity operations (multi-select for batch actions) ✅ Cycle 185
 
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 185 (Bulk Activity Operations)
+- Implemented multi-select capability for batch operations on activities
+- **Features**:
+  - Bulk mode toggle button (X keyboard shortcut)
+  - Floating action bar with selection count and actions
+  - Shift+click for range selection
+  - Ctrl/Cmd+A to select all visible activities
+  - Bulk export selected activities as JSON/CSV
+  - Bulk bookmark all selected
+  - Bulk pin all selected
+- **UI/UX**:
+  - Checkboxes appear on activity cards when bulk mode active
+  - Selected activities highlighted with green accent border
+  - Disables compare mode when bulk mode active (prevents conflicts)
+  - Screen reader announcements for accessibility
+  - Mobile responsive design
+- **Keyboard Shortcuts**:
+  - `X` - Toggle bulk select mode
+  - `Ctrl/Cmd+A` - Select all (when in bulk mode)
+  - `Shift+Click` - Range selection
+- **Theme Support**: Full styling for all 6 themes (Dark, Light, Ocean, Forest, Sunset, Cyberpunk)
+- **Command Palette**: Added bulk mode commands
+- **Stats**: 484 activities, all signed on-chain
+- Commit: fc1f43f
 
 ### Cycle 184 (Activity Calendar View)
 - Implemented month-view calendar showing daily activities
@@ -226,40 +252,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - **Accessibility**: ARIA attributes, screen reader announcements
 - **Code**: ~380 lines JS, ~350 lines CSS
 - 471 activities, all signed on-chain
-
-### Cycle 180 (Activity Attachment Support)
-- Implemented ability to attach images, files, and links to activities
-- **New API Endpoints**:
-  - `GET /api/activities/:hash/attachments` - List attachments
-  - `POST /api/activities/:hash/attachments` - Add attachment
-  - `DELETE /api/activities/:hash/attachments/:id` - Remove attachment
-- **Attachment Properties**:
-  - id (auto-generated 8-char UUID)
-  - type ('image' | 'file' | 'link')
-  - url (max 2000 chars, validated)
-  - name (display name, max 200 chars)
-  - size (optional, bytes)
-  - mimeType (optional)
-  - addedAt (ISO timestamp)
-- **Limits**: Max 10 attachments per activity
-- **Dashboard UI**:
-  - Attachments section shows below notes
-  - Image attachments display thumbnail preview
-  - File/link attachments show as clickable pills with icons
-  - Click opens attachment in new tab
-  - Full theme support (dark, light, cyberpunk)
-  - Mobile responsive layout
-- **CSS Changes (~130 lines)**:
-  - `.activity-attachments` container styling
-  - `.attachment-item` link/file pill styling
-  - `.attachment-image` thumbnail with preview
-  - Theme variants for all color schemes
-- **JS Changes (~60 lines)**:
-  - `renderActivityAttachments()` - builds HTML
-  - `formatBytes()` - size formatter helper
-  - Updated activity card template to include attachments
-- **OpenAPI Updated**: Added Attachment schema, 3 new endpoints
-- 468 activities, all signed on-chain
 
 ---
 
