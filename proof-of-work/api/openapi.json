@@ -472,6 +472,69 @@
         }
       }
     },
+    "/api/activities/bulk-delete": {
+      "post": {
+        "tags": [
+          "Activities"
+        ],
+        "summary": "Bulk delete activities",
+        "description": "Soft deletes multiple activities at once by moving them to trash. Limited to 100 activities per request.",
+        "operationId": "bulkDeleteActivities",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyHeader": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["hashes"],
+                "properties": {
+                  "hashes": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    },
+                    "description": "Array of activity hashes to delete",
+                    "minItems": 1,
+                    "maxItems": 100
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Bulk delete completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkDeleteResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (empty array, too many hashes, invalid hash format)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/settings/trash": {
       "get": {
         "tags": [
@@ -4408,6 +4471,56 @@
           },
           "remainingCount": {
             "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "BulkDeleteResult": {
+        "type": "object",
+        "description": "Result of bulk delete operation",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "deleted": {
+            "type": "integer",
+            "description": "Number of activities successfully moved to trash"
+          },
+          "notFound": {
+            "type": "integer",
+            "description": "Number of hashes that did not match any activity"
+          },
+          "alreadyDeleted": {
+            "type": "integer",
+            "description": "Number of activities that were already in trash"
+          },
+          "details": {
+            "type": "object",
+            "properties": {
+              "deleted": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "List of successfully deleted hashes"
+              },
+              "notFound": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "List of hashes that were not found"
+              },
+              "alreadyDeleted": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "List of hashes already in trash"
+              }
+            }
           },
           "message": {
             "type": "string"

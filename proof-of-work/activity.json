@@ -4115,7 +4115,10 @@
   {
     "timestamp": "2026-02-04T10:39:20.528Z",
     "type": "commit",
-    "description": "Sign remaining activities"
+    "description": "Sign remaining activities",
+    "hash": "a4782559b2738135430a90cffe32b2a38a948f3f917e2bd6f12e60fcda2ec345",
+    "signature": "R8KwDMrnNpa3YDvmYkMgmXeTyyM7AzU1sTaEiDJrvBLtJW9XXi1YheFd3smWLr17uescC6bwaSRg228UPbsbhHX",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
   },
   {
     "timestamp": "2026-02-04T11:04:48.245Z",
@@ -4129,7 +4132,10 @@
         "dashboard/dashboard.css",
         "dashboard/app.js"
       ]
-    }
+    },
+    "hash": "bb01451ae267536995b61913ae122a8007e269c9230dd0da76ce63225a456a59",
+    "signature": "3Bcvir6AjP87XK5b7CgJkMRjFHqqfHoHfgMcZ577t8yGezW8CKNz12pk7sc4yhEL6SYZdFH4XRGiEcEfg1unaBH2",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
   },
   {
     "timestamp": "2026-02-04T11:04:51.470Z",
@@ -4146,6 +4152,40 @@
     },
     "hash": "5846225d9f50e70ae22ed6b09494f9eb00a2ca90e5bcbf8d8dba7e8647caddb3",
     "signature": "2MjNWAV5i3sTTBCeCeg4Kqc3vwyfq6ZwrPTtcZuRDB5PY94sYcWZqvxhyvQCwtRC9TTCYKS9eEn6JY1Smaq4edpZ",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
+  },
+  {
+    "timestamp": "2026-02-04T11:05:03.574Z",
+    "type": "commit",
+    "description": "Cycle 190: Export with filters - filter-aware export with count indicator",
+    "hash": "b51ac684cc946417365f4d6fa440574c6960a0086da138b234457250e8d89099",
+    "signature": "4PtxcM1vakqWJQ8qcdYt6xAWbqbkW2VbKnaxqaVEPo7rBwmhAJ5myDpgeWFCjWKfGENzCwnp4Nte2diUf7zaWHzf",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
+  },
+  {
+    "timestamp": "2026-02-04T11:05:42.751Z",
+    "type": "commit",
+    "description": "Update OBJECTIVES.md for cycle 190",
+    "hash": "7e9552431fa7de56fa5453d84acbaf9ba0f48540c0b7aca29faa6d993d62c827",
+    "signature": "zbZMfyjQskJ8X4wdWXkEbye2hJcxE7mmJK44MqK5ypRcewFvxhz2c2yaydeZBzQS2BE2Jmfe5Txago7tLeiscQh",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
+  },
+  {
+    "timestamp": "2026-02-04T11:40:58.800Z",
+    "type": "build",
+    "description": "Cycle 191: Bulk delete feature - Added POST /api/activities/bulk-delete endpoint for deleting multiple activities at once (max 100). Added delete button to bulk bar in dashboard with confirmation dialog. Includes theme support (all 6 themes), command palette integration, trash badge updates, and toast notifications.",
+    "metadata": {
+      "cycle": 191,
+      "feature": "bulk-delete",
+      "files_modified": [
+        "api/server.ts",
+        "api/openapi.json",
+        "dashboard/app.js",
+        "dashboard/dashboard.css"
+      ]
+    },
+    "hash": "be4fde936139fb6dda22e436347fc55226cc2b2f60bb59c0923429820ae84f6a",
+    "signature": "5Y7wmjaKw8FB3nx51ei38wBrigkG6MJ94ZrvGP4x2cqMMu6ykanjb28TPbyevt68qhdgS7HYWwk7gAa2oSE6FoHJ",
     "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
   }
 ]

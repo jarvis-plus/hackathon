@@ -10994,6 +10994,7 @@ function initBulkOperations() {
         COMMAND_PALETTE_COMMANDS.push(
             { id: 'bulk-mode', title: 'Toggle Bulk Select Mode', description: 'Select multiple activities for batch actions', icon: '☑️', shortcut: 'X', action: () => toggleBulkMode(), group: 'Actions' },
             { id: 'bulk-select-all', title: 'Select All Activities', description: 'Select all visible activities', icon: '✅', action: () => selectAllActivities(), group: 'Bulk' },
+            { id: 'bulk-delete', title: 'Delete Selected Activities', description: 'Move selected activities to trash', icon: '🗑️', action: () => bulkDelete(), group: 'Bulk' },
             { id: 'bulk-clear', title: 'Clear Bulk Selection', description: 'Deselect all activities', icon: '❌', action: () => clearBulkSelection(), group: 'Bulk' }
         );
     }
@@ -11055,6 +11056,9 @@ function createBulkBar() {
             </button>
             <button class="bulk-bar-btn pin" onclick="bulkPin()" title="Pin all selected">
                 📌 Pin
+            </button>
+            <button class="bulk-bar-btn delete danger" onclick="bulkDelete()" title="Delete all selected (move to trash)">
+                🗑️ Delete
             </button>
             <button class="bulk-bar-btn clear secondary" onclick="clearBulkSelection()" title="Clear selection">
                 ❌ Clear
@@ -11384,6 +11388,121 @@ async function bulkPin() {
     }
     
     announceToScreenReader(`Pinned ${pinnedCount} activities`);
+}
+
+/**
+ * Delete all selected activities (move to trash)
+ * Uses bulk delete API for efficiency
+ */
+async function bulkDelete() {
+    if (bulkSelections.length === 0) {
+        announceToScreenReader('No activities selected');
+        return;
+    }
+    
+    // Confirm deletion
+    const count = bulkSelections.length;
+    const confirmed = confirm(`Move ${count} activit${count === 1 ? 'y' : 'ies'} to trash?\n\nYou can restore them from the trash later.`);
+    
+    if (!confirmed) {
+        announceToScreenReader('Deletion cancelled');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/activities/bulk-delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ hashes: bulkSelections })
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to delete activities');
+        }
+        
+        const result = await response.json();
+        
+        // Update local cache - mark deleted activities
+        const activities = window.cachedActivities || allActivities || [];
+        const deletedHashes = result.details?.deleted || [];
+        const now = new Date().toISOString();
+        
+        deletedHashes.forEach(hash => {
+            const activity = activities.find(a => (a.hash || a.proof?.hash) === hash);
+            if (activity) {
+                activity.deleted = true;
+                activity.deletedAt = now;
+            }
+        });
+        
+        // Clear selection for deleted items
+        bulkSelections = bulkSelections.filter(h => !deletedHashes.includes(h));
+        
+        // Update UI
+        updateBulkBarUI();
+        
+        // Re-render to hide deleted activities
+        if (typeof applyFilters === 'function') {
+            applyFilters();
+        }
+        
+        // Update trash count badge
+        updateTrashBadge();
+        
+        // Feedback
+        let message = `${result.deleted} activit${result.deleted === 1 ? 'y' : 'ies'} moved to trash`;
+        if (result.notFound > 0) message += ` (${result.notFound} not found)`;
+        if (result.alreadyDeleted > 0) message += ` (${result.alreadyDeleted} already deleted)`;
+        
+        announceToScreenReader(message);
+        console.log('🗑️ Bulk delete result:', result);
+        
+        // Show toast notification if available
+        if (typeof showToast === 'function') {
+            showToast(message, 'success');
+        }
+        
+    } catch (err) {
+        console.error('Bulk delete failed:', err);
+        announceToScreenReader(`Failed to delete activities: ${err.message}`);
+        
+        if (typeof showToast === 'function') {
+            showToast(`Delete failed: ${err.message}`, 'error');
+        }
+    }
+}
+
+/**
+ * Update trash badge count (after bulk operations)
+ */
+async function updateTrashBadge() {
+    try {
+        const response = await fetch('/api/activities/trash');
+        if (!response.ok) return;
+        
+        const data = await response.json();
+        const trashItems = data.activities || [];
+        
+        // Update badge on trash button
+        const trashBtn = document.getElementById('trash-btn');
+        if (trashBtn) {
+            let badge = trashBtn.querySelector('.trash-count-badge');
+            if (trashItems.length > 0) {
+                if (!badge) {
+                    badge = document.createElement('span');
+                    badge.className = 'trash-count-badge';
+                    trashBtn.appendChild(badge);
+                }
+                badge.textContent = trashItems.length;
+                badge.style.display = 'inline-flex';
+            } else if (badge) {
+                badge.style.display = 'none';
+            }
+        }
+    } catch (e) {
+        console.error('Failed to update trash badge:', e);
+    }
 }
 
 /**

@@ -2927,6 +2927,100 @@ const server = Bun.serve({
     }
 
     // ==========================================
+    // API: POST /api/activities/bulk-delete
+    // Soft delete multiple activities at once
+    // ==========================================
+    if (path === '/api/activities/bulk-delete' && req.method === 'POST') {
+      try {
+        const body = await req.json() as {
+          hashes: string[];
+        };
+
+        // Validate hashes array
+        if (!Array.isArray(body.hashes) || body.hashes.length === 0) {
+          return Response.json({
+            error: 'hashes must be a non-empty array of activity hashes'
+          }, { status: 400, headers: corsHeaders });
+        }
+
+        // Limit to 100 at a time to prevent abuse
+        if (body.hashes.length > 100) {
+          return Response.json({
+            error: 'Cannot delete more than 100 activities at once'
+          }, { status: 400, headers: corsHeaders });
+        }
+
+        // Validate each hash format
+        const hashRegex = /^[a-f0-9]{64}$/;
+        const invalidHashes = body.hashes.filter(h => !hashRegex.test(h));
+        if (invalidHashes.length > 0) {
+          return Response.json({
+            error: `Invalid hash format: ${invalidHashes.slice(0, 3).join(', ')}${invalidHashes.length > 3 ? '...' : ''}`
+          }, { status: 400, headers: corsHeaders });
+        }
+
+        const activities = getActivities();
+        const now = new Date().toISOString();
+        const results: { deleted: string[]; notFound: string[]; alreadyDeleted: string[] } = {
+          deleted: [],
+          notFound: [],
+          alreadyDeleted: [],
+        };
+
+        for (const hash of body.hashes) {
+          const activity = activities.find((a: any) => a.hash === hash);
+          
+          if (!activity) {
+            results.notFound.push(hash);
+            continue;
+          }
+
+          if (activity.deleted) {
+            results.alreadyDeleted.push(hash);
+            continue;
+          }
+
+          // Soft delete
+          activity.deleted = true;
+          activity.deletedAt = now;
+          results.deleted.push(hash);
+        }
+
+        // Save if any were deleted
+        if (results.deleted.length > 0) {
+          saveActivities(activities);
+          
+          // Broadcast bulk delete event
+          broadcastUpdate('activities_bulk_deleted', {
+            hashes: results.deleted,
+            deletedAt: now,
+            count: results.deleted.length,
+          });
+          broadcastToWebhooks('activities.bulk_deleted', {
+            hashes: results.deleted,
+            deletedAt: now,
+            count: results.deleted.length,
+          });
+          
+          console.log(`🗑️ Bulk deleted ${results.deleted.length} activities`);
+        }
+
+        return Response.json({
+          success: true,
+          deleted: results.deleted.length,
+          notFound: results.notFound.length,
+          alreadyDeleted: results.alreadyDeleted.length,
+          details: results,
+          message: `${results.deleted.length} activities moved to trash`,
+        }, { headers: corsHeaders });
+      } catch (e) {
+        return Response.json({
+          error: 'Invalid JSON body'
+        }, { status: 400, headers: corsHeaders });
+      }
+    }
+
+    // ==========================================
     // API: POST /api/activities
     // Create a new activity (via voice input or manual entry)
     // Activities are created unsigned; signing happens separately

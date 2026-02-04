@@ -12536,6 +12536,19 @@ body.tour-active {
     background: rgba(249, 115, 22, 0.3);
 }
 
+.bulk-bar-btn.delete,
+.bulk-bar-btn.danger {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #ef4444;
+}
+
+.bulk-bar-btn.delete:hover:not(:disabled),
+.bulk-bar-btn.danger:hover:not(:disabled) {
+    background: rgba(239, 68, 68, 0.35);
+    border-color: rgba(239, 68, 68, 0.6);
+}
+
 .bulk-bar-btn.secondary {
     background: rgba(80, 80, 100, 0.6);
     color: var(--text-secondary, #a0a0a0);
@@ -12985,6 +12998,68 @@ body.tour-active {
 [data-theme="cyberpunk"] .bulk-mode-active .activity-item.bulk-selected::before {
     background: linear-gradient(180deg, #00ffff 0%, #ff0066 100%);
     box-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
+}
+
+/* Delete button theme overrides */
+[data-theme="light"] .bulk-bar-btn.delete,
+[data-theme="light"] .bulk-bar-btn.danger {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #dc2626;
+}
+
+[data-theme="light"] .bulk-bar-btn.delete:hover:not(:disabled),
+[data-theme="light"] .bulk-bar-btn.danger:hover:not(:disabled) {
+    background: rgba(239, 68, 68, 0.25);
+}
+
+[data-theme="ocean"] .bulk-bar-btn.delete,
+[data-theme="ocean"] .bulk-bar-btn.danger {
+    background: rgba(244, 63, 94, 0.2);
+    border-color: rgba(244, 63, 94, 0.4);
+    color: #f43f5e;
+}
+
+[data-theme="ocean"] .bulk-bar-btn.delete:hover:not(:disabled),
+[data-theme="ocean"] .bulk-bar-btn.danger:hover:not(:disabled) {
+    background: rgba(244, 63, 94, 0.3);
+}
+
+[data-theme="forest"] .bulk-bar-btn.delete,
+[data-theme="forest"] .bulk-bar-btn.danger {
+    background: rgba(244, 63, 94, 0.2);
+    border-color: rgba(244, 63, 94, 0.4);
+    color: #f43f5e;
+}
+
+[data-theme="forest"] .bulk-bar-btn.delete:hover:not(:disabled),
+[data-theme="forest"] .bulk-bar-btn.danger:hover:not(:disabled) {
+    background: rgba(244, 63, 94, 0.3);
+}
+
+[data-theme="sunset"] .bulk-bar-btn.delete,
+[data-theme="sunset"] .bulk-bar-btn.danger {
+    background: rgba(220, 38, 38, 0.2);
+    border-color: rgba(220, 38, 38, 0.4);
+    color: #dc2626;
+}
+
+[data-theme="sunset"] .bulk-bar-btn.delete:hover:not(:disabled),
+[data-theme="sunset"] .bulk-bar-btn.danger:hover:not(:disabled) {
+    background: rgba(220, 38, 38, 0.3);
+}
+
+[data-theme="cyberpunk"] .bulk-bar-btn.delete,
+[data-theme="cyberpunk"] .bulk-bar-btn.danger {
+    background: rgba(255, 0, 102, 0.2);
+    border-color: rgba(255, 0, 102, 0.5);
+    color: #ff0066;
+}
+
+[data-theme="cyberpunk"] .bulk-bar-btn.delete:hover:not(:disabled),
+[data-theme="cyberpunk"] .bulk-bar-btn.danger:hover:not(:disabled) {
+    background: rgba(255, 0, 102, 0.3);
+    box-shadow: 0 0 10px rgba(255, 0, 102, 0.4);
 }
 
 /* =========================================
