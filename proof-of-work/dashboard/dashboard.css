@@ -17085,3 +17085,83 @@ body.tour-active {
         grid-template-columns: 1fr;
     }
 }
+
+/* ============================================
+   PRODUCTIVITY CLOCK (Hour Distribution)
+   ============================================ */
+
+.productivity-clock-container {
+    padding: 1rem;
+}
+
+.productivity-clock-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+#productivityClockChart {
+    max-width: 400px;
+    width: 100%;
+}
+
+.productivity-clock-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+}
+
+.clock-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    text-align: center;
+}
+
+.clock-stat-icon {
+    font-size: 1.25rem;
+}
+
+.clock-stat-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.clock-stat-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.clock-stat-value.peak {
+    color: var(--accent);
+}
+
+.clock-stat-value.quiet {
+    color: var(--text-muted);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .productivity-clock-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    #productivityClockChart {
+        max-height: 280px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .productivity-clock-stats {
+        grid-template-columns: 1fr;
+    }
+}

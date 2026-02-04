@@ -744,6 +744,43 @@
                 </div>
             </div>
             
+            <!-- Productivity Clock - Hour Distribution -->
+            <div class="chart-card" style="margin-top: 1.5rem;" id="productivity-clock-card" aria-busy="true">
+                <h3 id="productivity-clock-title">🕐 Productivity Clock</h3>
+                <p class="chart-subtitle">Activity distribution by hour of day (24-hour view)</p>
+                <div class="productivity-clock-container" style="position: relative;">
+                    <div class="chart-loading" id="productivity-clock-loading">
+                        <div class="loading-spinner"></div>
+                        <span class="loading-text">Analyzing activity patterns...</span>
+                    </div>
+                    <div class="productivity-clock-wrapper">
+                        <canvas id="productivityClockChart" style="max-height: 320px;" aria-labelledby="productivity-clock-title"></canvas>
+                    </div>
+                    <div class="productivity-clock-stats" id="productivityClockStats">
+                        <div class="clock-stat">
+                            <span class="clock-stat-icon">🌅</span>
+                            <span class="clock-stat-label">Peak Hour:</span>
+                            <span class="clock-stat-value" id="peakHour">--</span>
+                        </div>
+                        <div class="clock-stat">
+                            <span class="clock-stat-icon">😴</span>
+                            <span class="clock-stat-label">Quiet Hour:</span>
+                            <span class="clock-stat-value" id="quietHour">--</span>
+                        </div>
+                        <div class="clock-stat">
+                            <span class="clock-stat-icon">☀️</span>
+                            <span class="clock-stat-label">Day (6-18):</span>
+                            <span class="clock-stat-value" id="dayActivityPct">--%</span>
+                        </div>
+                        <div class="clock-stat">
+                            <span class="clock-stat-icon">🌙</span>
+                            <span class="clock-stat-label">Night (18-6):</span>
+                            <span class="clock-stat-value" id="nightActivityPct">--%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
             <!-- Relationship Network Graph -->
             <div class="chart-card" style="margin-top: 1.5rem;" id="relationship-graph-card" aria-busy="true">
                 <div class="graph-header">

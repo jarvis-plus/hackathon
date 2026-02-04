@@ -2864,6 +2864,171 @@ function renderVelocityChart(activities) {
 }
 
 // ============================================
+// PRODUCTIVITY CLOCK (Hour Distribution)
+// ============================================
+
+let productivityClockChart = null;
+
+/**
+ * Render Productivity Clock - a polar area chart showing activity distribution
+ * across 24 hours of the day. Helps visualize when the agent is most active.
+ */
+function renderProductivityClock(activities) {
+    if (!activities || activities.length === 0) return;
+    
+    // Hide loading state
+    const loadingEl = document.getElementById('productivity-clock-loading');
+    if (loadingEl) loadingEl.style.display = 'none';
+    const chartCard = document.getElementById('productivity-clock-card');
+    if (chartCard) chartCard.setAttribute('aria-busy', 'false');
+    
+    // Calculate hourly distribution
+    const hourlyCount = new Array(24).fill(0);
+    activities.forEach(a => {
+        const hour = new Date(a.timestamp).getHours();
+        hourlyCount[hour]++;
+    });
+    
+    // Generate labels (12am, 1am, ..., 11pm)
+    const labels = [];
+    for (let h = 0; h < 24; h++) {
+        if (h === 0) labels.push('12am');
+        else if (h === 12) labels.push('12pm');
+        else if (h < 12) labels.push(`${h}am`);
+        else labels.push(`${h - 12}pm`);
+    }
+    
+    // Calculate stats
+    const maxHour = hourlyCount.indexOf(Math.max(...hourlyCount));
+    const minHour = hourlyCount.indexOf(Math.min(...hourlyCount.filter(c => c >= 0)));
+    
+    // Calculate day vs night activity
+    const dayActivity = hourlyCount.slice(6, 18).reduce((a, b) => a + b, 0);
+    const nightActivity = [...hourlyCount.slice(0, 6), ...hourlyCount.slice(18)].reduce((a, b) => a + b, 0);
+    const totalActivity = dayActivity + nightActivity;
+    
+    const dayPct = totalActivity > 0 ? Math.round((dayActivity / totalActivity) * 100) : 0;
+    const nightPct = totalActivity > 0 ? Math.round((nightActivity / totalActivity) * 100) : 0;
+    
+    // Update stats display
+    const peakHourEl = document.getElementById('peakHour');
+    const quietHourEl = document.getElementById('quietHour');
+    const dayPctEl = document.getElementById('dayActivityPct');
+    const nightPctEl = document.getElementById('nightActivityPct');
+    
+    if (peakHourEl) {
+        peakHourEl.textContent = labels[maxHour];
+        peakHourEl.classList.add('peak');
+    }
+    if (quietHourEl) {
+        quietHourEl.textContent = labels[minHour];
+        quietHourEl.classList.add('quiet');
+    }
+    if (dayPctEl) dayPctEl.textContent = `${dayPct}%`;
+    if (nightPctEl) nightPctEl.textContent = `${nightPct}%`;
+    
+    // Generate colors - gradient from midnight blue through day colors
+    const colors = hourlyCount.map((_, h) => {
+        // Color intensity based on time of day
+        if (h >= 6 && h < 12) {
+            // Morning: warm oranges/yellows
+            return `rgba(251, 191, 36, ${0.4 + (hourlyCount[h] / Math.max(...hourlyCount)) * 0.6})`;
+        } else if (h >= 12 && h < 18) {
+            // Afternoon: bright greens/teals
+            return `rgba(52, 211, 153, ${0.4 + (hourlyCount[h] / Math.max(...hourlyCount)) * 0.6})`;
+        } else if (h >= 18 && h < 22) {
+            // Evening: purples
+            return `rgba(167, 139, 250, ${0.4 + (hourlyCount[h] / Math.max(...hourlyCount)) * 0.6})`;
+        } else {
+            // Night: blues
+            return `rgba(96, 165, 250, ${0.4 + (hourlyCount[h] / Math.max(...hourlyCount)) * 0.6})`;
+        }
+    });
+    
+    // Get theme colors
+    const getThemeAccent = () => {
+        const theme = document.documentElement.getAttribute('data-theme') || 'dark';
+        const accents = {
+            dark: '#00ffaa',
+            light: '#10b981',
+            ocean: '#38bdf8',
+            forest: '#22c55e',
+            sunset: '#f97316',
+            cyberpunk: '#d946ef'
+        };
+        return accents[theme] || accents.dark;
+    };
+    
+    // Render Chart.js polar area chart
+    const ctx = document.getElementById('productivityClockChart');
+    if (!ctx) return;
+    
+    if (productivityClockChart) {
+        productivityClockChart.destroy();
+    }
+    
+    productivityClockChart = new Chart(ctx, {
+        type: 'polarArea',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Activities',
+                data: hourlyCount,
+                backgroundColor: colors,
+                borderColor: 'rgba(255, 255, 255, 0.1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: (ctx) => {
+                            const count = ctx.raw;
+                            const pct = totalActivity > 0 ? Math.round((count / totalActivity) * 100) : 0;
+                            return `${count} activities (${pct}%)`;
+                        },
+                        afterLabel: (ctx) => {
+                            const idx = ctx.dataIndex;
+                            if (idx === maxHour) return '🌟 Most active hour';
+                            if (hourlyCount[idx] === 0) return '💤 No activity';
+                            return '';
+                        }
+                    }
+                }
+            },
+            scales: {
+                r: {
+                    ticks: {
+                        display: false
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.05)'
+                    },
+                    pointLabels: {
+                        color: '#6b6b6b',
+                        font: {
+                            size: 10
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Set accessibility
+    ctx.setAttribute('role', 'img');
+    ctx.setAttribute('aria-label', 
+        `Productivity clock showing activity by hour. Peak hour: ${labels[maxHour]} with ${hourlyCount[maxHour]} activities. Day activity: ${dayPct}%, Night activity: ${nightPct}%`
+    );
+}
+
+// ============================================
 // ACTIVITY INSIGHTS PANEL
 // ============================================
 
@@ -3510,6 +3675,7 @@ async function loadActivities() {
         renderInsights(activities);
         renderWeeklyComparison(activities);
         renderVelocityChart(activities);
+        renderProductivityClock(activities);
         renderGoalTracker(activities);
         populateTagFilters(activities);
         initTimelineSlider(activities);
@@ -3529,6 +3695,7 @@ async function loadActivities() {
             renderInsights(activities);
             renderWeeklyComparison(activities);
             renderVelocityChart(activities);
+            renderProductivityClock(activities);
             renderGoalTracker(activities);
             populateTagFilters(activities);
             initTimelineSlider(activities);
@@ -3717,6 +3884,7 @@ function connectWebSocket() {
                     renderHeatmap(msg.data.activities);
                     renderInsights(msg.data.activities);
                     renderVelocityChart(msg.data.activities);
+                    renderProductivityClock(msg.data.activities);
                     renderGoalTracker(msg.data.activities);
                     populateTagFilters(msg.data.activities);
                     
