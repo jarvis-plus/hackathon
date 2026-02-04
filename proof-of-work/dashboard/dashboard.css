@@ -696,6 +696,32 @@
             color: var(--accent-red);
         }
 
+        /* Fuzzy Search Toggle Button */
+        .fuzzy-search-toggle {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 0.3rem 0.6rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.7rem;
+            transition: all 0.2s;
+            white-space: nowrap;
+            margin-left: 0.5rem;
+        }
+
+        .fuzzy-search-toggle:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+            background: var(--card-bg-hover);
+        }
+
+        .fuzzy-search-toggle.exact-mode {
+            border-color: var(--text-muted);
+            opacity: 0.7;
+        }
+
         /* Bookmark Filter Button */
         .bookmark-filter-container {
             margin-bottom: 0.75rem;

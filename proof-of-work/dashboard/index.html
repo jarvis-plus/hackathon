@@ -1230,6 +1230,11 @@
                     <label for="activitySearch" class="sr-only">Search activities</label>
                     <input type="text" id="activitySearch" placeholder="Search activities..." oninput="applyFilters()" aria-describedby="filterStats">
                     <button class="search-clear" id="searchClear" onclick="clearSearch()" title="Clear search" aria-label="Clear search">×</button>
+                    <button class="fuzzy-search-toggle" id="fuzzySearchIndicator" onclick="toggleFuzzySearch()" 
+                            title="Toggle fuzzy search (typo tolerance)" 
+                            aria-label="Toggle fuzzy search mode">
+                        🔍 Fuzzy
+                    </button>
                 </div>
                 <div class="voice-input-container">
                     <button class="voice-input-btn" id="voiceInputBtn" onclick="toggleVoiceInput()" 

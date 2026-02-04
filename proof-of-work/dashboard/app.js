@@ -4470,6 +4470,227 @@ let availableTags = new Set();
 // Default wallet for signing (matches first wallet in KNOWN_WALLETS above)
 const DEFAULT_WALLET = 'AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX';
 
+// ============================================
+// FUZZY SEARCH UTILITIES
+// ============================================
+
+/**
+ * Calculate Levenshtein distance between two strings
+ * @param {string} a - First string
+ * @param {string} b - Second string
+ * @returns {number} Edit distance
+ */
+function levenshteinDistance(a, b) {
+    if (a.length === 0) return b.length;
+    if (b.length === 0) return a.length;
+    
+    const matrix = [];
+    
+    // Initialize matrix
+    for (let i = 0; i <= b.length; i++) {
+        matrix[i] = [i];
+    }
+    for (let j = 0; j <= a.length; j++) {
+        matrix[0][j] = j;
+    }
+    
+    // Fill matrix
+    for (let i = 1; i <= b.length; i++) {
+        for (let j = 1; j <= a.length; j++) {
+            if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j - 1] + 1, // substitution
+                    matrix[i][j - 1] + 1,     // insertion
+                    matrix[i - 1][j] + 1      // deletion
+                );
+            }
+        }
+    }
+    
+    return matrix[b.length][a.length];
+}
+
+/**
+ * Check if query fuzzy matches text with typo tolerance
+ * @param {string} text - Text to search in
+ * @param {string} query - Search query
+ * @param {number} maxDistance - Maximum edit distance allowed (default: based on query length)
+ * @returns {object} { matches: boolean, score: number, matchType: string }
+ */
+function fuzzyMatch(text, query) {
+    if (!text || !query) return { matches: false, score: 0, matchType: 'none' };
+    
+    text = text.toLowerCase();
+    query = query.toLowerCase();
+    
+    // Exact substring match (highest score)
+    if (text.includes(query)) {
+        // Bonus for word boundary match
+        const wordBoundary = new RegExp(`\\b${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i');
+        if (wordBoundary.test(text)) {
+            return { matches: true, score: 100, matchType: 'exact-word' };
+        }
+        return { matches: true, score: 90, matchType: 'exact-substring' };
+    }
+    
+    // Word-by-word matching for multi-word queries
+    const queryWords = query.split(/\s+/).filter(w => w.length > 0);
+    if (queryWords.length > 1) {
+        const allWordsMatch = queryWords.every(word => text.includes(word));
+        if (allWordsMatch) {
+            return { matches: true, score: 85, matchType: 'all-words' };
+        }
+    }
+    
+    // Calculate typo tolerance based on query length
+    // Short queries (1-3 chars): 0 typos allowed
+    // Medium queries (4-6 chars): 1 typo allowed
+    // Longer queries (7+ chars): 2 typos allowed
+    const maxDistance = query.length <= 3 ? 0 : query.length <= 6 ? 1 : 2;
+    
+    if (maxDistance === 0) {
+        return { matches: false, score: 0, matchType: 'none' };
+    }
+    
+    // Check each word in text for fuzzy match
+    const textWords = text.split(/\s+/);
+    for (const textWord of textWords) {
+        // Skip very short words for fuzzy matching
+        if (textWord.length < 3) continue;
+        
+        // Check if query is similar to any word
+        const distance = levenshteinDistance(query, textWord);
+        if (distance <= maxDistance) {
+            const similarity = 1 - (distance / Math.max(query.length, textWord.length));
+            return { 
+                matches: true, 
+                score: Math.round(70 * similarity), 
+                matchType: 'fuzzy',
+                distance 
+            };
+        }
+        
+        // Also check if query fuzzy matches start of word (for prefix typos)
+        if (textWord.length >= query.length) {
+            const prefix = textWord.substring(0, query.length);
+            const prefixDistance = levenshteinDistance(query, prefix);
+            if (prefixDistance <= maxDistance) {
+                const similarity = 1 - (prefixDistance / query.length);
+                return { 
+                    matches: true, 
+                    score: Math.round(60 * similarity), 
+                    matchType: 'fuzzy-prefix',
+                    distance: prefixDistance 
+                };
+            }
+        }
+    }
+    
+    // Check if query fuzzy matches any substring (more expensive, but catches more)
+    if (query.length >= 4 && text.length <= 500) {
+        for (let i = 0; i <= text.length - query.length; i++) {
+            const substr = text.substring(i, i + query.length);
+            const distance = levenshteinDistance(query, substr);
+            if (distance <= maxDistance) {
+                const similarity = 1 - (distance / query.length);
+                return { 
+                    matches: true, 
+                    score: Math.round(50 * similarity), 
+                    matchType: 'fuzzy-substring',
+                    distance 
+                };
+            }
+        }
+    }
+    
+    return { matches: false, score: 0, matchType: 'none' };
+}
+
+/**
+ * Calculate overall fuzzy search score for an activity
+ * @param {object} activity - Activity object
+ * @param {string} query - Search query
+ * @returns {object} { matches: boolean, score: number, matchDetails: array }
+ */
+function fuzzySearchActivity(activity, query) {
+    const fields = [
+        { name: 'description', value: activity.description || '', weight: 1.5 },
+        { name: 'type', value: activity.type || '', weight: 1.3 },
+        { name: 'hash', value: activity.hash || '', weight: 0.5 },
+        { name: 'metadata', value: JSON.stringify(activity.metadata || {}), weight: 0.8 },
+        { name: 'tags', value: (activity.tags || []).join(' '), weight: 1.2 },
+        { name: 'wallet', value: activity.wallet || '', weight: 0.3 }
+    ];
+    
+    let bestScore = 0;
+    let matches = false;
+    const matchDetails = [];
+    
+    for (const field of fields) {
+        const result = fuzzyMatch(field.value, query);
+        if (result.matches) {
+            matches = true;
+            const weightedScore = result.score * field.weight;
+            matchDetails.push({ field: field.name, ...result, weightedScore });
+            if (weightedScore > bestScore) {
+                bestScore = weightedScore;
+            }
+        }
+    }
+    
+    return { matches, score: bestScore, matchDetails };
+}
+
+// Fuzzy search mode toggle (can be disabled for performance)
+let fuzzySearchEnabled = localStorage.getItem('pow_fuzzy_search') !== 'false';
+
+/**
+ * Toggle fuzzy search mode
+ */
+function toggleFuzzySearch() {
+    fuzzySearchEnabled = !fuzzySearchEnabled;
+    localStorage.setItem('pow_fuzzy_search', fuzzySearchEnabled);
+    
+    // Update UI indicator if it exists
+    const indicator = document.getElementById('fuzzySearchIndicator');
+    if (indicator) {
+        indicator.textContent = fuzzySearchEnabled ? '🔍 Fuzzy' : '🔎 Exact';
+        indicator.title = fuzzySearchEnabled 
+            ? 'Fuzzy search enabled (typo tolerant)' 
+            : 'Exact search only';
+    }
+    
+    // Re-apply filters with new mode
+    if (currentSearchQuery) {
+        applyFilters();
+    }
+    
+    showToast(fuzzySearchEnabled 
+        ? 'Fuzzy search enabled - typos will be tolerated' 
+        : 'Exact search only - no typo tolerance', 
+        'info'
+    );
+}
+
+/**
+ * Initialize fuzzy search indicator on page load
+ */
+function initFuzzySearchIndicator() {
+    const indicator = document.getElementById('fuzzySearchIndicator');
+    if (indicator) {
+        indicator.textContent = fuzzySearchEnabled ? '🔍 Fuzzy' : '🔎 Exact';
+        indicator.title = fuzzySearchEnabled 
+            ? 'Fuzzy search enabled (typo tolerant) - click to switch to exact' 
+            : 'Exact search only - click to enable fuzzy (typo tolerant)';
+        indicator.classList.toggle('exact-mode', !fuzzySearchEnabled);
+    }
+}
+
+// Initialize fuzzy search indicator on DOM load
+document.addEventListener('DOMContentLoaded', initFuzzySearchIndicator);
+
 function setTypeFilter(type) {
     currentTypeFilter = type;
     
@@ -5300,22 +5521,35 @@ function renderFilteredActivities(activities) {
         });
     }
     
-    // Apply search filter
+    // Apply search filter (with optional fuzzy matching)
     if (currentSearchQuery) {
-        filtered = filtered.filter(a => {
-            const desc = (a.description || '').toLowerCase();
-            const type = (a.type || '').toLowerCase();
-            const hash = (a.hash || '').toLowerCase();
-            const metadata = JSON.stringify(a.metadata || {}).toLowerCase();
-            const tags = (a.tags || []).join(' ').toLowerCase();
-            const wallet = (a.wallet || '').toLowerCase();
-            return desc.includes(currentSearchQuery) || 
-                   type.includes(currentSearchQuery) ||
-                   hash.includes(currentSearchQuery) ||
-                   metadata.includes(currentSearchQuery) ||
-                   tags.includes(currentSearchQuery) ||
-                   wallet.includes(currentSearchQuery);
-        });
+        if (fuzzySearchEnabled) {
+            // Use fuzzy search with scoring
+            const searchResults = filtered.map(a => ({
+                activity: a,
+                ...fuzzySearchActivity(a, currentSearchQuery)
+            })).filter(r => r.matches);
+            
+            // Sort by relevance score (highest first)
+            searchResults.sort((a, b) => b.score - a.score);
+            filtered = searchResults.map(r => r.activity);
+        } else {
+            // Use exact substring matching (faster)
+            filtered = filtered.filter(a => {
+                const desc = (a.description || '').toLowerCase();
+                const type = (a.type || '').toLowerCase();
+                const hash = (a.hash || '').toLowerCase();
+                const metadata = JSON.stringify(a.metadata || {}).toLowerCase();
+                const tags = (a.tags || []).join(' ').toLowerCase();
+                const wallet = (a.wallet || '').toLowerCase();
+                return desc.includes(currentSearchQuery) || 
+                       type.includes(currentSearchQuery) ||
+                       hash.includes(currentSearchQuery) ||
+                       metadata.includes(currentSearchQuery) ||
+                       tags.includes(currentSearchQuery) ||
+                       wallet.includes(currentSearchQuery);
+            });
+        }
     }
     
     // Apply bookmark filter
@@ -6696,14 +6930,24 @@ function exportActivities(format) {
         filtered = filtered.filter(a => a.type === currentTypeFilter);
     }
     
-    // Apply search filter
+    // Apply search filter (with optional fuzzy matching)
     if (currentSearchQuery) {
-        const query = currentSearchQuery.toLowerCase();
-        filtered = filtered.filter(a => 
-            (a.description && a.description.toLowerCase().includes(query)) ||
-            (a.type && a.type.toLowerCase().includes(query)) ||
-            (a.hash && a.hash.toLowerCase().includes(query))
-        );
+        if (fuzzySearchEnabled) {
+            // Use fuzzy search with scoring
+            const searchResults = filtered.map(a => ({
+                activity: a,
+                ...fuzzySearchActivity(a, currentSearchQuery)
+            })).filter(r => r.matches);
+            searchResults.sort((a, b) => b.score - a.score);
+            filtered = searchResults.map(r => r.activity);
+        } else {
+            const query = currentSearchQuery.toLowerCase();
+            filtered = filtered.filter(a => 
+                (a.description && a.description.toLowerCase().includes(query)) ||
+                (a.type && a.type.toLowerCase().includes(query)) ||
+                (a.hash && a.hash.toLowerCase().includes(query))
+            );
+        }
     }
     
     // Apply tag filter
@@ -7277,6 +7521,7 @@ const KEYBOARD_SHORTCUTS = {
     'w': { action: 'openWidgets', description: 'Open widgets configuration' },
     'y': { action: 'celebrate', description: 'Fire confetti celebration' },
     'Y': { action: 'celebrateEpic', description: 'Fire epic confetti cannons' },
+    'f': { action: 'toggleFuzzySearch', description: 'Toggle fuzzy search (typo tolerance)' },
     '?': { action: 'showShortcuts', description: 'Show keyboard shortcuts' },
 };
 
@@ -7302,6 +7547,7 @@ function createShortcutsModal() {
                     <div class="shortcut-row"><kbd>/</kbd> Focus search</div>
                     <div class="shortcut-row"><kbd>Esc</kbd> Clear search / Close modal</div>
                     <div class="shortcut-row"><kbd>r</kbd> Reset all filters</div>
+                    <div class="shortcut-row"><kbd>f</kbd> Toggle fuzzy search</div>
                 </div>
                 <div class="shortcut-section">
                     <h4>Tabs</h4>
@@ -7427,6 +7673,8 @@ function handleShortcutAction(action) {
         celebrate('epic');
     } else if (action === 'toggleEditMode') {
         toggleDashboardEditMode();
+    } else if (action === 'toggleFuzzySearch') {
+        toggleFuzzySearch();
     }
 }
 
@@ -7532,6 +7780,7 @@ const PALETTE_COMMANDS = [
     
     // Search & Filter
     { id: 'search', title: 'Search Activities', description: 'Focus the search input', icon: '🔍', shortcut: '/', action: () => focusSearchInput(), group: 'Search & Filter' },
+    { id: 'fuzzy-search', title: 'Toggle Fuzzy Search', description: 'Enable/disable typo-tolerant search', icon: '🔎', shortcut: 'F', action: () => { toggleFuzzySearch(); hideCommandPalette(); }, group: 'Search & Filter' },
     { id: 'reset-filters', title: 'Reset All Filters', description: 'Clear all active filters', icon: '🔄', shortcut: 'R', action: () => resetFilters(), group: 'Search & Filter' },
     { id: 'filter-bookmarks', title: 'Toggle Bookmarks Filter', description: 'Show only bookmarked items', icon: '⭐', shortcut: 'B', action: () => toggleBookmarkFilter(), group: 'Search & Filter' },
     { id: 'filter-build', title: 'Filter: Build', description: 'Show only build activities', icon: '🔨', action: () => { setTypeFilter('build'); hideCommandPalette(); }, group: 'Search & Filter' },
