@@ -229,26 +229,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - ~170 lines added to server.ts, ~80 lines to openapi.json
 - 440 activities, all signed on-chain
 
-### Cycle 171 (Social Sharing Cards)
-- Implemented Open Graph image generation for social media sharing
-- **New Endpoints**:
-  - `GET /api/og` - Default OG image (1200x630 SVG) with aggregate stats
-  - `GET /api/og/:hash` - Activity-specific OG image with type, description, status
-- **SVG Features**:
-  - Dark gradient background with grid pattern
-  - Type-specific emoji and accent colors (🔨 build, 📝 commit, 💰 trade, etc.)
-  - Three stat boxes (Activities/Hash, On-Chain/Status, Proofs/Timestamp)
-  - Glow filter effects on stat values
-  - Solana badge in corner
-  - Footer with dashboard URL
-- **HTML Changes**:
-  - Added 12 OG meta tags (og:type, og:url, og:title, og:description, og:image, etc.)
-  - Added 6 Twitter Card meta tags (twitter:card, twitter:image, etc.)
-  - Image dimensions specified (1200x630)
-- **OpenAPI Updated**: Added `/api/og` and `/api/og/{hash}` with Social tag
-- Works on Twitter, Facebook, Discord, Slack, and other platforms
-- 437 activities, all signed on-chain
-
 ---
 
 ## 🔄 CYCLE INSTRUCTIONS
