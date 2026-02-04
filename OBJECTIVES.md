@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 20:55 PST
-**Cycle:** 167
+**Last Updated:** 2026-02-03 21:03 PST
+**Cycle:** 168
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -86,7 +86,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Activity pinning (pin important activities to top) ✅ Cycle 164
 - [x] Email digest (daily/weekly summary emails) ✅ Cycle 165-166
 - [x] Slack/Discord webhook integration ✅ Cycle 166 - Format field for Slack Block Kit and Discord Embed
-- [ ] Activity diff view (show changes between activities)
+- [x] Activity diff view (show changes between activities) ✅ Cycle 168
 - [ ] Performance dashboard (response times, memory usage)
 - [ ] Multi-theme support (more color schemes)
 - [ ] Activity timeline slider (zoom in/out on time ranges)
@@ -95,6 +95,26 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 168 (Activity Diff View)
+- Implemented activity comparison feature to view changes between same-type activities
+- **New Endpoint**: `GET /api/activities/:hash/diff`
+- **Response Includes**:
+  - Current and previous activity details (same type)
+  - Time delta with human-readable display (e.g., "2h 15m", "3d 4h")
+  - Description similarity percentage (LCS-based word matching)
+  - Metadata diff (added/removed/changed fields)
+- **Dashboard UI**:
+  - Compare button (⚖️) on activity cards (shows on hover)
+  - Modal with side-by-side activity comparison
+  - Color-coded similarity indicator (green/yellow/red)
+  - Metadata changes visualization with +/- styling
+  - Keyboard accessible (Escape to close)
+  - Light/dark theme support
+  - Mobile responsive (stacked layout on small screens)
+- **OpenAPI Updated**: Added ActivityDiff schema with full documentation
+- **Files Modified**: server.ts (~160 lines), openapi.json (~70 lines), app.js (~200 lines), dashboard.css (~350 lines)
+- 430 activities, all signed on-chain
 
 ### Cycle 167 (Slack/Discord Webhook Integration)
 - Added format field to webhook subscriptions for native Slack/Discord support
@@ -177,22 +197,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
   - Light/dark theme support for pin styling
 - ~90 lines added to server.ts, ~85 lines to app.js, ~100 lines CSS
 - 415 activities, all signed on-chain
-
-### Cycle 163 (Activity Notes/Comments API)
-- Implemented activity notes/comments feature for user annotations
-- **New Endpoints**:
-  - `GET /api/activities/:hash` - Fetch single activity by hash
-  - `PATCH /api/activities/:hash/notes` - Add/update notes (2000 char max)
-  - `DELETE /api/activities/:hash/notes` - Remove notes from activity
-- **Implementation Details**:
-  - Added `saveActivities()` helper function for atomic writes
-  - Notes are user annotations, NOT part of cryptographically signed content
-  - Validation: notes must be string, max 2000 chars, empty = remove
-  - Tracks `notesUpdatedAt` timestamp for each note
-- **OpenAPI Updated**: New endpoints + Activity schema with notes fields
-- **Server Comments Updated**: Key Endpoints section now lists notes APIs
-- ~110 lines added to server.ts, ~150 lines to openapi.json
-- 410 activities, all signed on-chain
 
 ---
 
