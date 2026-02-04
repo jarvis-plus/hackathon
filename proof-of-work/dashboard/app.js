@@ -254,10 +254,11 @@ function toggleSound() {
 }
 
 // ============================================
-// MULTI-THEME SUPPORT (Dark, Light, Ocean, Forest, Sunset, Cyberpunk)
+// MULTI-THEME SUPPORT (Dark, Light, Ocean, Forest, Sunset, Cyberpunk + Auto)
 // ============================================
-const AVAILABLE_THEMES = ['dark', 'light', 'ocean', 'forest', 'sunset', 'cyberpunk'];
+const AVAILABLE_THEMES = ['auto', 'dark', 'light', 'ocean', 'forest', 'sunset', 'cyberpunk'];
 const THEME_EMOJIS = {
+    auto: '🔄',
     dark: '🌙',
     light: '☀️',
     ocean: '🌊',
@@ -266,20 +267,53 @@ const THEME_EMOJIS = {
     cyberpunk: '🔮'
 };
 
+// System preference media query for auto mode
+const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+
+function getSystemTheme() {
+    return systemPrefersDark.matches ? 'dark' : 'light';
+}
+
 function getPreferredTheme() {
     const stored = localStorage.getItem('jarvis-pow-theme');
     if (stored && AVAILABLE_THEMES.includes(stored)) return stored;
-    return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    // Default to auto for new users
+    return 'auto';
+}
+
+function getEffectiveTheme(theme) {
+    // If auto, return system preference; otherwise return the theme
+    return theme === 'auto' ? getSystemTheme() : theme;
 }
 
 function setTheme(theme) {
     if (!AVAILABLE_THEMES.includes(theme)) theme = 'dark';
-    document.documentElement.setAttribute('data-theme', theme);
+    
+    // Store the user's preference (including 'auto')
     localStorage.setItem('jarvis-pow-theme', theme);
+    
+    // Apply the effective theme (auto resolves to system preference)
+    const effectiveTheme = getEffectiveTheme(theme);
+    document.documentElement.setAttribute('data-theme', effectiveTheme);
+    
+    // Store which mode we're in for the listener
+    document.documentElement.setAttribute('data-theme-mode', theme);
+    
     updateThemeButton(theme);
     updateThemeDropdownSelection(theme);
     closeThemeDropdown();
 }
+
+// Listen for system preference changes (for auto mode)
+systemPrefersDark.addEventListener('change', () => {
+    const currentMode = localStorage.getItem('jarvis-pow-theme');
+    if (currentMode === 'auto') {
+        // Re-apply to update to new system preference
+        const effectiveTheme = getSystemTheme();
+        document.documentElement.setAttribute('data-theme', effectiveTheme);
+        console.log(`🔄 System preference changed to ${effectiveTheme}`);
+    }
+});
 
 function updateThemeButton(theme) {
     const btn = document.getElementById('themeToggle');
@@ -6287,6 +6321,7 @@ const PALETTE_COMMANDS = [
     { id: 'export-csv', title: 'Export as CSV', description: 'Download activities as CSV file', icon: '📊', shortcut: '⇧E', action: () => exportActivities('csv'), group: 'Export' },
     
     // Settings
+    { id: 'theme-auto', title: 'Theme: Auto (System)', description: 'Follow system dark/light preference', icon: '🔄', action: () => { setTheme('auto'); hideCommandPalette(); }, group: 'Settings' },
     { id: 'theme-dark', title: 'Theme: Dark', description: 'Switch to dark theme', icon: '🌙', action: () => { setTheme('dark'); hideCommandPalette(); }, group: 'Settings' },
     { id: 'theme-light', title: 'Theme: Light', description: 'Switch to light theme', icon: '☀️', action: () => { setTheme('light'); hideCommandPalette(); }, group: 'Settings' },
     { id: 'theme-ocean', title: 'Theme: Ocean', description: 'Switch to ocean theme', icon: '🌊', action: () => { setTheme('ocean'); hideCommandPalette(); }, group: 'Settings' },
