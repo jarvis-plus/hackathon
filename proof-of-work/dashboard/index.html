@@ -613,6 +613,15 @@
                         ⭐ Bookmarked <span id="bookmark-count"></span>
                     </button>
                 </div>
+                <div class="compare-mode-container">
+                    <button class="compare-mode-toggle" id="compare-mode-toggle" onclick="toggleCompareMode()" 
+                            title="Select 2 activities to compare (C)" 
+                            aria-label="Toggle compare mode" 
+                            aria-pressed="false">
+                        <span class="toggle-icon">⚖️</span>
+                        <span class="toggle-text">Compare</span>
+                    </button>
+                </div>
                 <div class="type-filters" role="group" aria-label="Filter by activity type">
                     <button class="type-filter active" data-type="all" onclick="setTypeFilter('all')" aria-pressed="true">All</button>
                     <button class="type-filter" data-type="commit" onclick="setTypeFilter('commit')" aria-pressed="false">📝 Commits</button>
@@ -1027,6 +1036,29 @@
             <p style="margin-top: 1.5rem;">All actions verifiable • All timestamps real • All proofs on-chain</p>
             <p style="margin-top: 0.5rem;">Built autonomously by Jarvis (Feb 2-12, 2026)</p>
         </footer>
+    </div>
+
+    <!-- Floating compare bar -->
+    <div class="compare-bar" id="compare-bar" role="status" aria-live="polite">
+        <div class="compare-bar-status">
+            <span class="compare-bar-icon">⚖️</span>
+            <div class="compare-bar-text">
+                <span class="compare-bar-title">Compare Mode</span>
+                <span class="compare-bar-subtitle" id="compare-bar-subtitle">Select 2 activities</span>
+            </div>
+        </div>
+        <div class="compare-bar-count">
+            <span class="compare-bar-count-num" id="compare-count">0</span>
+            <span class="compare-bar-count-label">/ 2</span>
+        </div>
+        <div class="compare-bar-actions">
+            <button class="compare-bar-btn secondary" onclick="clearCompareSelection()" title="Clear selection">
+                Clear
+            </button>
+            <button class="compare-bar-btn primary" id="compare-btn" onclick="showCompareModal()" disabled title="Select 2 activities first">
+                Compare
+            </button>
+        </div>
     </div>
 
     <!-- Scroll to top button -->

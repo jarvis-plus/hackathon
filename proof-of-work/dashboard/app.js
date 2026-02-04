@@ -937,8 +937,11 @@ function renderActivities(activities, highlightNew = false) {
         
         const compareButtonHtml = renderCompareButton(hash);
         
+        const compareSelected = typeof compareSelections !== 'undefined' && compareSelections.includes(hash);
+        const compareCheckboxHtml = typeof renderCompareCheckbox === 'function' ? renderCompareCheckbox(hash) : '';
+        
         return `
-        <div class="activity-item ${a.type}${isNew ? ' new-activity' : ''}${isPinned ? ' pinned' : ''}${bookmarked ? ' bookmarked' : ''}" 
+        <div class="activity-item ${a.type}${isNew ? ' new-activity' : ''}${isPinned ? ' pinned' : ''}${bookmarked ? ' bookmarked' : ''}${compareSelected ? ' compare-selected' : ''}" 
              style="animation-delay: ${i * 0.04}s" 
              data-wallet="${a.wallet || ''}" 
              data-activity-id="${activityId}"
@@ -948,6 +951,7 @@ function renderActivities(activities, highlightNew = false) {
              tabindex="0"
              role="article"
              aria-label="${ariaLabel}">
+            ${compareCheckboxHtml}
             ${renderShareButton(activityId, hash)}
             ${renderCompareButton(hash)}
             ${bookmarkButtonHtml}
@@ -4405,14 +4409,18 @@ function renderGroupedActivitiesFiltered(activities) {
             const tagsHtml = renderActivityTags(a.tags);
             const walletHtml = renderActivityWallet(a);
             const activityId = getActivityId(a);
+            const compareSelected = typeof compareSelections !== 'undefined' && compareSelections.includes(hash);
+            const compareCheckboxHtml = typeof renderCompareCheckbox === 'function' ? renderCompareCheckbox(hash) : '';
             
             html += `
-                <div class="activity-item ${a.type}" 
+                <div class="activity-item ${a.type}${compareSelected ? ' compare-selected' : ''}" 
                      style="animation-delay: ${Math.min(dayIndex, 5) * 0.04}s" 
                      data-activity-id="${activityId}"
+                     data-hash="${hash || ''}"
                      tabindex="0"
                      role="article"
                      aria-label="${a.type} activity: ${escapeHtml(a.description.substring(0, 80))}${a.description.length > 80 ? '...' : ''}">
+                    ${compareCheckboxHtml}
                     ${renderShareButton(activityId, hash)}
                     <div class="activity-header">
                         <div class="activity-badges">
@@ -5290,12 +5298,17 @@ function renderGroupedActivities(activities, highlightNew = false) {
             const walletHtml = renderWalletBadge(a.wallet);
             const activityId = getActivityId(a);
             const ariaLabel = `${a.type} activity: ${escapeHtml(a.description.substring(0, 80))}${a.description.length > 80 ? "..." : ""}`;
+            const compareSelected = typeof compareSelections !== 'undefined' && compareSelections.includes(hash);
+            const compareCheckboxHtml = typeof renderCompareCheckbox === 'function' ? renderCompareCheckbox(hash) : '';
             
             html += `
-                <div class="activity-item ${a.type}${isNew ? ' new-activity' : ''}" 
+                <div class="activity-item ${a.type}${isNew ? ' new-activity' : ''}${compareSelected ? ' compare-selected' : ''}" 
                      style="animation-delay: ${Math.min(dayIndex, 5) * 0.04}s" 
                      data-wallet="${a.wallet || ''}" 
-                     data-activity-id="${activityId}" tabindex="0" role="article" aria-label="${ariaLabel}">
+                     data-activity-id="${activityId}"
+                     data-hash="${hash || ''}"
+                     tabindex="0" role="article" aria-label="${ariaLabel}">
+                    ${compareCheckboxHtml}
                     ${renderShareButton(activityId, hash)}
                     <div class="activity-header">
                         <div class="activity-badges">
@@ -5383,12 +5396,17 @@ function renderGroupedActivitiesLimited(activities, limit, highlightNew = false)
             const walletHtml = renderWalletBadge(a.wallet);
             const activityId = getActivityId(a);
             const ariaLabel = `${a.type} activity: ${escapeHtml(a.description.substring(0, 80))}${a.description.length > 80 ? "..." : ""}`;
+            const compareSelected = typeof compareSelections !== 'undefined' && compareSelections.includes(hash);
+            const compareCheckboxHtml = typeof renderCompareCheckbox === 'function' ? renderCompareCheckbox(hash) : '';
             
             html += `
-                <div class="activity-item ${a.type}${isNew ? ' new-activity' : ''}" 
+                <div class="activity-item ${a.type}${isNew ? ' new-activity' : ''}${compareSelected ? ' compare-selected' : ''}" 
                      style="animation-delay: ${Math.min(dayIndex, 5) * 0.04}s" 
                      data-wallet="${a.wallet || ''}" 
-                     data-activity-id="${activityId}" tabindex="0" role="article" aria-label="${ariaLabel}">
+                     data-activity-id="${activityId}"
+                     data-hash="${hash || ''}"
+                     tabindex="0" role="article" aria-label="${ariaLabel}">
+                    ${compareCheckboxHtml}
                     ${renderShareButton(activityId, hash)}
                     <div class="activity-header">
                         <div class="activity-badges">
@@ -5552,8 +5570,9 @@ function createShortcutsModal() {
                     <div class="shortcut-row"><kbd>Shift+b</kbd> Bookmark focused activity</div>
                 </div>
                 <div class="shortcut-section">
-                    <h4>View</h4>
+                    <h4>View & Actions</h4>
                     <div class="shortcut-row"><kbd>z</kbd> Toggle focus mode</div>
+                    <div class="shortcut-row"><kbd>c</kbd> Toggle compare mode</div>
                     <div class="shortcut-row"><kbd>?</kbd> Show this help</div>
                 </div>
             </div>
@@ -6808,8 +6827,9 @@ createShortcutsModal = function() {
                     <div class="shortcut-row"><kbd>Shift+b</kbd> Bookmark focused activity</div>
                 </div>
                 <div class="shortcut-section">
-                    <h4>View</h4>
+                    <h4>View & Actions</h4>
                     <div class="shortcut-row"><kbd>z</kbd> Toggle focus mode</div>
+                    <div class="shortcut-row"><kbd>c</kbd> Toggle compare mode</div>
                     <div class="shortcut-row"><kbd>?</kbd> Show this help</div>
                 </div>
             </div>
@@ -7756,3 +7776,983 @@ if (document.readyState === 'loading') {
     // DOM already loaded, init now
     setTimeout(initActivityPreview, 100);
 }
+
+// ============================================
+// ACTIVITY COMPARISON MODE
+// Select any 2 activities to compare side-by-side
+// ============================================
+
+let compareModeActive = false;
+let compareSelections = []; // Array of selected activity hashes (max 2)
+let compareBar = null;
+let compareModal = null;
+
+/**
+ * Initialize comparison mode (called on DOM ready)
+ */
+function initCompareMode() {
+    // Create floating compare bar
+    createCompareBar();
+    
+    // Create compare modal
+    createCompareModal();
+    
+    // Add keyboard shortcut 'c' for compare mode toggle
+    KEYBOARD_SHORTCUTS['c'] = { action: 'toggleCompareMode', description: 'Toggle comparison mode' };
+    
+    // Update command palette with compare commands
+    if (typeof PALETTE_COMMANDS !== 'undefined') {
+        PALETTE_COMMANDS.push(
+            { id: 'compare-mode', title: 'Toggle Comparison Mode', description: 'Select 2 activities to compare', icon: '⚖️', shortcut: 'C', action: () => toggleCompareMode(), group: 'Actions' },
+            { id: 'clear-compare', title: 'Clear Comparison Selection', description: 'Deselect all activities', icon: '🗑️', action: () => clearCompareSelections(), group: 'Actions' }
+        );
+    }
+    
+    console.log('[Compare Mode] Initialized');
+}
+
+// NOTE: toggleCompareMode is defined below in the consolidated implementation
+
+/**
+ * Create the floating comparison bar
+ */
+function createCompareBar() {
+    if (document.getElementById('compare-bar')) return;
+    
+    compareBar = document.createElement('div');
+    compareBar.id = 'compare-bar';
+    compareBar.className = 'compare-bar';
+    compareBar.setAttribute('role', 'status');
+    compareBar.setAttribute('aria-live', 'polite');
+    compareBar.innerHTML = `
+        <div class="compare-bar-status">
+            <span class="compare-bar-icon">⚖️</span>
+            <div class="compare-bar-text">
+                <span class="compare-bar-title">Comparison Mode</span>
+                <span class="compare-bar-subtitle" id="compare-bar-hint">Select 2 activities</span>
+            </div>
+        </div>
+        <div class="compare-bar-count">
+            <span class="compare-bar-count-num" id="compare-count">0</span>
+            <span class="compare-bar-count-label">/ 2</span>
+        </div>
+        <div class="compare-bar-actions">
+            <button class="compare-bar-btn primary" id="compare-btn" onclick="showCompareModal()" disabled>
+                Compare
+            </button>
+            <button class="compare-bar-btn secondary" onclick="clearCompareSelections()">
+                Clear
+            </button>
+            <button class="compare-bar-btn secondary" onclick="toggleCompareMode()">
+                Exit
+            </button>
+        </div>
+    `;
+    document.body.appendChild(compareBar);
+}
+
+/**
+ * Create the comparison modal
+ */
+function createCompareModal() {
+    if (document.getElementById('compare-modal')) return;
+    
+    compareModal = document.createElement('div');
+    compareModal.id = 'compare-modal';
+    compareModal.className = 'compare-modal';
+    compareModal.setAttribute('role', 'dialog');
+    compareModal.setAttribute('aria-modal', 'true');
+    compareModal.setAttribute('aria-labelledby', 'compare-modal-title');
+    compareModal.innerHTML = `
+        <div class="compare-modal-content" role="document">
+            <div class="compare-modal-header">
+                <h3 id="compare-modal-title">⚖️ Activity Comparison</h3>
+                <button class="compare-modal-close" onclick="hideCompareModal()" aria-label="Close comparison">×</button>
+            </div>
+            <div class="compare-modal-body" id="compare-modal-body">
+                <p>Select two activities to compare.</p>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(compareModal);
+    
+    // Close on backdrop click
+    compareModal.addEventListener('click', (e) => {
+        if (e.target === compareModal) hideCompareModal();
+    });
+    
+    // Close on Escape
+    compareModal.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') hideCompareModal();
+    });
+}
+
+/**
+ * Update the compare bar UI
+ */
+function updateCompareBar() {
+    if (!compareBar) return;
+    
+    const count = compareSelections.length;
+    const countEl = document.getElementById('compare-count');
+    const hintEl = document.getElementById('compare-bar-hint');
+    const compareBtn = document.getElementById('compare-btn');
+    
+    if (countEl) countEl.textContent = count;
+    
+    if (count === 0) {
+        hintEl.textContent = 'Select 2 activities';
+        compareBtn.disabled = true;
+    } else if (count === 1) {
+        hintEl.textContent = 'Select 1 more activity';
+        compareBtn.disabled = true;
+    } else {
+        hintEl.textContent = 'Ready to compare!';
+        compareBtn.disabled = false;
+    }
+    
+    // Show bar when in compare mode
+    if (compareModeActive) {
+        compareBar.classList.add('visible');
+    }
+}
+
+/**
+ * Hide the compare bar
+ */
+function hideCompareBar() {
+    if (compareBar) {
+        compareBar.classList.remove('visible');
+    }
+}
+
+/**
+ * Toggle selection of an activity for comparison
+ */
+function toggleCompareSelection(hash) {
+    if (!compareModeActive) return;
+    
+    const index = compareSelections.indexOf(hash);
+    
+    if (index > -1) {
+        // Remove from selection
+        compareSelections.splice(index, 1);
+    } else if (compareSelections.length < 2) {
+        // Add to selection
+        compareSelections.push(hash);
+    } else {
+        // Already have 2 selected - replace the first one
+        compareSelections.shift();
+        compareSelections.push(hash);
+    }
+    
+    updateCompareSelectionUI();
+    updateCompareBar();
+}
+
+/**
+ * Update the visual selection state on activity items
+ */
+function updateCompareSelectionUI() {
+    // Remove all selection states
+    document.querySelectorAll('.activity-item.compare-selected').forEach(item => {
+        item.classList.remove('compare-selected');
+        const badge = item.querySelector('.compare-order-badge');
+        if (badge) badge.remove();
+        const checkbox = item.querySelector('.activity-select-checkbox');
+        if (checkbox) checkbox.classList.remove('selected');
+    });
+    
+    // Apply selection states
+    compareSelections.forEach((hash, index) => {
+        const item = document.querySelector(`.activity-item[data-hash="${hash}"]`);
+        if (item) {
+            item.classList.add('compare-selected');
+            
+            // Add order badge
+            let badge = item.querySelector('.compare-order-badge');
+            if (!badge) {
+                badge = document.createElement('div');
+                badge.className = 'compare-order-badge';
+                item.appendChild(badge);
+            }
+            badge.textContent = index + 1;
+            
+            // Update checkbox
+            const checkbox = item.querySelector('.activity-select-checkbox');
+            if (checkbox) checkbox.classList.add('selected');
+        }
+    });
+}
+
+/**
+ * Clear all comparison selections
+ */
+function clearCompareSelections() {
+    compareSelections = [];
+    updateCompareSelectionUI();
+    updateCompareBar();
+}
+
+/**
+ * Show the comparison modal with selected activities
+ */
+function showCompareModal() {
+    if (compareSelections.length !== 2 || !allActivities) return;
+    
+    const activity1 = allActivities.find(a => (a.hash || a.proof?.hash) === compareSelections[0]);
+    const activity2 = allActivities.find(a => (a.hash || a.proof?.hash) === compareSelections[1]);
+    
+    if (!activity1 || !activity2) {
+        console.error('[Compare] Could not find selected activities');
+        return;
+    }
+    
+    // Render comparison content
+    const bodyEl = document.getElementById('compare-modal-body');
+    if (bodyEl) {
+        bodyEl.innerHTML = renderComparisonContent(activity1, activity2);
+    }
+    
+    // Show modal
+    compareModal.classList.add('visible');
+    
+    // Focus close button
+    setTimeout(() => {
+        compareModal.querySelector('.compare-modal-close').focus();
+    }, 100);
+    
+    announceToScreenReader('Activity comparison modal opened');
+}
+
+/**
+ * Hide the comparison modal
+ */
+function hideCompareModal() {
+    if (compareModal) {
+        compareModal.classList.remove('visible');
+    }
+}
+
+/**
+ * Render the comparison content HTML
+ */
+function renderComparisonContent(a1, a2) {
+    const getEmoji = (type) => {
+        const emojis = {
+            commit: '📝', build: '🔨', trade: '💹', message: '💬',
+            tweet: '🐦', decision: '🧠', heartbeat: '💓', email: '📧',
+            calendar: '📅', browser: '🌐', research: '🔍'
+        };
+        return emojis[type] || '📋';
+    };
+    
+    const formatTimeCompare = (ts) => {
+        const d = new Date(ts);
+        return d.toLocaleString('en-US', {
+            month: 'short', day: 'numeric', year: 'numeric',
+            hour: 'numeric', minute: '2-digit'
+        });
+    };
+    
+    const formatTimeAgoCompare = (ts) => {
+        const now = Date.now();
+        const diff = now - new Date(ts).getTime();
+        const mins = Math.floor(diff / 60000);
+        const hours = Math.floor(mins / 60);
+        const days = Math.floor(hours / 24);
+        
+        if (days > 0) return `${days}d ago`;
+        if (hours > 0) return `${hours}h ago`;
+        if (mins > 0) return `${mins}m ago`;
+        return 'Just now';
+    };
+    
+    // Calculate differences
+    const time1 = new Date(a1.timestamp).getTime();
+    const time2 = new Date(a2.timestamp).getTime();
+    const timeDiff = Math.abs(time2 - time1);
+    const timeDiffHours = Math.floor(timeDiff / 3600000);
+    const timeDiffMins = Math.floor((timeDiff % 3600000) / 60000);
+    let timeDeltaStr = '';
+    if (timeDiffHours > 24) {
+        timeDeltaStr = `${Math.floor(timeDiffHours / 24)}d ${timeDiffHours % 24}h`;
+    } else if (timeDiffHours > 0) {
+        timeDeltaStr = `${timeDiffHours}h ${timeDiffMins}m`;
+    } else {
+        timeDeltaStr = `${timeDiffMins}m`;
+    }
+    
+    const sameType = a1.type === a2.type;
+    const sameWallet = (a1.wallet || 'default') === (a2.wallet || 'default');
+    
+    // Render activity card
+    const renderCard = (a, num) => {
+        const hash = a.hash || a.proof?.hash || '';
+        const sig = a.signature || a.proof?.signature || '';
+        const tags = a.tags || [];
+        const isOnChain = !!sig;
+        
+        return `
+            <div class="compare-card">
+                <div class="compare-card-header">
+                    <div class="compare-card-number">${num}</div>
+                    <span class="compare-card-label">Activity ${num}</span>
+                    <span class="compare-card-time">${formatTimeAgoCompare(a.timestamp)}</span>
+                </div>
+                
+                <div class="compare-field">
+                    <div class="compare-field-label">Type</div>
+                    <div class="compare-field-value type">
+                        ${getEmoji(a.type)} <span class="activity-type">${escapeHtml(a.type || 'unknown')}</span>
+                    </div>
+                </div>
+                
+                <div class="compare-field">
+                    <div class="compare-field-label">Description</div>
+                    <div class="compare-field-value">${escapeHtml(a.description || 'No description')}</div>
+                </div>
+                
+                <div class="compare-field">
+                    <div class="compare-field-label">Timestamp</div>
+                    <div class="compare-field-value">${formatTimeCompare(a.timestamp)}</div>
+                </div>
+                
+                ${hash ? `
+                <div class="compare-field">
+                    <div class="compare-field-label">Hash</div>
+                    <div class="compare-field-value hash">${escapeHtml(hash)}</div>
+                </div>
+                ` : ''}
+                
+                ${sig ? `
+                <div class="compare-field">
+                    <div class="compare-field-label">On-Chain Signature</div>
+                    <div class="compare-field-value signature">${escapeHtml(sig)}</div>
+                </div>
+                ` : `
+                <div class="compare-field">
+                    <div class="compare-field-label">On-Chain Status</div>
+                    <div class="compare-field-value">⏳ Pending signature</div>
+                </div>
+                `}
+                
+                ${tags.length > 0 ? `
+                <div class="compare-field">
+                    <div class="compare-field-label">Tags</div>
+                    <div class="compare-field-value tags">
+                        ${tags.map(t => `<span class="tag-item">${escapeHtml(t)}</span>`).join('')}
+                    </div>
+                </div>
+                ` : ''}
+                
+                ${a.wallet ? `
+                <div class="compare-field">
+                    <div class="compare-field-label">Wallet</div>
+                    <div class="compare-field-value" style="font-family: monospace; font-size: 0.8rem;">${escapeHtml(a.wallet)}</div>
+                </div>
+                ` : ''}
+            </div>
+        `;
+    };
+    
+    return `
+        <div class="compare-grid">
+            ${renderCard(a1, 1)}
+            
+            <div class="compare-divider">
+                <div class="compare-divider-line"></div>
+                <span class="compare-divider-icon">⚖️</span>
+                <div class="compare-divider-line"></div>
+            </div>
+            
+            ${renderCard(a2, 2)}
+        </div>
+        
+        <div class="compare-diff-section">
+            <div class="compare-diff-title">📊 Comparison Summary</div>
+            <div class="compare-diff-grid">
+                <div class="compare-diff-item">
+                    <div class="compare-diff-item-label">Time Between</div>
+                    <div class="compare-diff-item-value time-delta">⏱️ ${timeDeltaStr}</div>
+                </div>
+                <div class="compare-diff-item">
+                    <div class="compare-diff-item-label">Type Match</div>
+                    <div class="compare-diff-item-value ${sameType ? 'same' : 'different'}">
+                        ${sameType ? '✓ Same type' : '✗ Different types'}
+                    </div>
+                </div>
+                <div class="compare-diff-item">
+                    <div class="compare-diff-item-label">Wallet Match</div>
+                    <div class="compare-diff-item-value ${sameWallet ? 'same' : 'different'}">
+                        ${sameWallet ? '✓ Same wallet' : '✗ Different wallets'}
+                    </div>
+                </div>
+                <div class="compare-diff-item">
+                    <div class="compare-diff-item-label">Both On-Chain</div>
+                    <div class="compare-diff-item-value ${(a1.signature && a2.signature) ? 'same' : 'different'}">
+                        ${(a1.signature && a2.signature) ? '✓ Both verified' : 
+                          (!a1.signature && !a2.signature) ? '✗ Neither verified' :
+                          '⚠️ One verified'}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Render the selection checkbox for activity cards (called during activity rendering)
+ */
+function renderCompareCheckbox(hash) {
+    if (!hash) return '';
+    const isSelected = compareSelections.includes(hash);
+    return `<div class="activity-select-checkbox ${isSelected ? 'selected' : ''}" 
+                onclick="event.stopPropagation(); toggleCompareSelection('${hash}')"
+                role="checkbox" 
+                aria-checked="${isSelected}"
+                aria-label="Select for comparison"
+                tabindex="0"></div>`;
+}
+
+// Update the handleShortcutAction function to include compare mode toggle
+const _originalHandleShortcutActionCompare = typeof handleShortcutAction === 'function' ? handleShortcutAction : null;
+handleShortcutAction = function(action) {
+    if (action === 'toggleCompareMode') {
+        toggleCompareMode();
+    } else if (_originalHandleShortcutActionCompare) {
+        _originalHandleShortcutActionCompare(action);
+    }
+};
+
+// Initialize comparison mode on DOM ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCompareMode);
+} else {
+    setTimeout(initCompareMode, 150);
+}
+
+// ============================================
+// ACTIVITY COMPARISON MODE
+// Select 2 activities to compare side-by-side
+// ============================================
+
+let compareModeActive = false;
+let compareSelectedActivities = []; // Array of {hash, activity} objects
+let compareSelectionPanelEl = null;
+
+/**
+ * Initialize the comparison mode system
+ */
+function initComparisonMode() {
+    // Create floating selection panel
+    createCompareSelectionPanel();
+    
+    // Add comparison mode toggle button to filter section
+    const filterSection = document.querySelector('.filter-section') || document.querySelector('.filters');
+    if (filterSection) {
+        const existingToggle = document.getElementById('compare-mode-toggle');
+        if (!existingToggle) {
+            const toggleBtn = document.createElement('button');
+            toggleBtn.id = 'compare-mode-toggle';
+            toggleBtn.className = 'compare-mode-toggle';
+            toggleBtn.title = 'Compare Mode - Select 2 activities to compare (C)';
+            toggleBtn.innerHTML = '<span class="toggle-icon">⚖️</span> Compare';
+            toggleBtn.onclick = toggleCompareMode;
+            filterSection.appendChild(toggleBtn);
+        }
+    }
+    
+    // Listen for activity card clicks when in compare mode
+    document.addEventListener('click', handleCompareClick);
+}
+
+/**
+ * Create the floating comparison selection panel
+ */
+function createCompareSelectionPanel() {
+    if (document.getElementById('compare-selection-panel')) return;
+    
+    const panel = document.createElement('div');
+    panel.id = 'compare-selection-panel';
+    panel.className = 'compare-selection-panel';
+    panel.setAttribute('role', 'region');
+    panel.setAttribute('aria-label', 'Activity comparison selection');
+    
+    panel.innerHTML = `
+        <div class="compare-panel-title">Compare Activities</div>
+        <div class="compare-selected-items">
+            <div class="compare-slot" id="compare-slot-1" data-slot="1">
+                <span class="compare-slot-num">1</span>
+                <div class="compare-slot-content">
+                    <span class="compare-slot-empty">Select first activity</span>
+                </div>
+            </div>
+            <span class="compare-vs">VS</span>
+            <div class="compare-slot" id="compare-slot-2" data-slot="2">
+                <span class="compare-slot-num">2</span>
+                <div class="compare-slot-content">
+                    <span class="compare-slot-empty">Select second activity</span>
+                </div>
+            </div>
+        </div>
+        <div class="compare-actions">
+            <button class="compare-btn-action compare-btn-primary" id="compare-start-btn" disabled onclick="openComparisonModal()">
+                ⚖️ Compare
+            </button>
+            <button class="compare-btn-action compare-btn-secondary" onclick="clearCompareSelection()">
+                ✕ Clear
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(panel);
+    compareSelectionPanelEl = panel;
+}
+
+/**
+ * Toggle comparison mode on/off
+ */
+function toggleCompareMode() {
+    compareModeActive = !compareModeActive;
+    
+    const toggleBtn = document.getElementById('compare-mode-toggle');
+    const panel = document.getElementById('compare-selection-panel');
+    const compareBar = document.getElementById('compare-bar');
+    const feed = document.getElementById('feed');
+    
+    if (compareModeActive) {
+        document.body.classList.add('compare-mode-active');
+        feed?.classList.add('compare-mode-active');
+        if (toggleBtn) {
+            toggleBtn.classList.add('active');
+            toggleBtn.innerHTML = '<span class="toggle-icon">✓</span><span class="toggle-text">Compare ON</span>';
+        }
+        if (panel) panel.classList.add('visible');
+        if (compareBar) compareBar.classList.add('visible');
+        updateCompareBarUI();
+        announceToScreenReader('Compare mode activated. Click on activities to select them for comparison.');
+    } else {
+        document.body.classList.remove('compare-mode-active');
+        feed?.classList.remove('compare-mode-active');
+        if (toggleBtn) {
+            toggleBtn.classList.remove('active');
+            toggleBtn.innerHTML = '<span class="toggle-icon">⚖️</span><span class="toggle-text">Compare</span>';
+        }
+        if (panel) panel.classList.remove('visible');
+        if (compareBar) compareBar.classList.remove('visible');
+        clearCompareSelection();
+        announceToScreenReader('Compare mode deactivated.');
+    }
+    
+    // Update command palette button if visible
+    if (typeof hideCommandPalette === 'function') hideCommandPalette();
+}
+
+/**
+ * Handle clicks on activity cards during compare mode
+ */
+function handleCompareClick(event) {
+    if (!compareModeActive) return;
+    
+    // Find if click was on an activity item
+    const activityItem = event.target.closest('.activity-item');
+    if (!activityItem) return;
+    
+    // Ignore clicks on buttons inside the activity
+    if (event.target.closest('button') || event.target.closest('a')) return;
+    
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const hash = activityItem.dataset.hash;
+    if (!hash) return;
+    
+    // Find the activity data
+    const activities = window.cachedActivities || allActivities || [];
+    const activity = activities.find(a => (a.hash || a.proof?.hash) === hash);
+    if (!activity) return;
+    
+    // Check if already selected
+    const existingIndex = compareSelectedActivities.findIndex(s => s.hash === hash);
+    
+    if (existingIndex >= 0) {
+        // Deselect
+        compareSelectedActivities.splice(existingIndex, 1);
+        activityItem.classList.remove('compare-selected');
+    } else if (compareSelectedActivities.length < 2) {
+        // Select
+        compareSelectedActivities.push({ hash, activity });
+        activityItem.classList.add('compare-selected');
+    } else {
+        // Already have 2 selected, show hint
+        announceToScreenReader('Maximum 2 activities can be selected. Clear selection to choose different activities.');
+    }
+    
+    updateCompareSelectionUI();
+}
+
+/**
+ * Update the floating selection panel UI
+ */
+function updateCompareSelectionUI() {
+    const slot1 = document.getElementById('compare-slot-1');
+    const slot2 = document.getElementById('compare-slot-2');
+    const compareBtn = document.getElementById('compare-start-btn');
+    
+    // Update slot 1
+    if (compareSelectedActivities[0]) {
+        const a = compareSelectedActivities[0].activity;
+        slot1.classList.add('filled');
+        slot1.querySelector('.compare-slot-content').innerHTML = `
+            <div class="compare-slot-type">${getActivityEmoji(a.type)} ${a.type}</div>
+            <div class="compare-slot-desc">${escapeHtml(a.description.substring(0, 40))}${a.description.length > 40 ? '...' : ''}</div>
+            <button class="compare-slot-remove" onclick="removeFromCompare(0)" title="Remove">×</button>
+        `;
+    } else {
+        slot1.classList.remove('filled');
+        slot1.querySelector('.compare-slot-content').innerHTML = '<span class="compare-slot-empty">Select first activity</span>';
+    }
+    
+    // Update slot 2
+    if (compareSelectedActivities[1]) {
+        const a = compareSelectedActivities[1].activity;
+        slot2.classList.add('filled');
+        slot2.querySelector('.compare-slot-content').innerHTML = `
+            <div class="compare-slot-type">${getActivityEmoji(a.type)} ${a.type}</div>
+            <div class="compare-slot-desc">${escapeHtml(a.description.substring(0, 40))}${a.description.length > 40 ? '...' : ''}</div>
+            <button class="compare-slot-remove" onclick="removeFromCompare(1)" title="Remove">×</button>
+        `;
+    } else {
+        slot2.classList.remove('filled');
+        slot2.querySelector('.compare-slot-content').innerHTML = '<span class="compare-slot-empty">Select second activity</span>';
+    }
+    
+    // Enable/disable compare button
+    if (compareBtn) {
+        compareBtn.disabled = compareSelectedActivities.length < 2;
+    }
+    
+    // Also update the HTML compare bar
+    updateCompareBarUI();
+}
+
+/**
+ * Update the HTML compare bar UI (the floating bar at bottom)
+ */
+function updateCompareBarUI() {
+    const countEl = document.getElementById('compare-count');
+    const subtitleEl = document.getElementById('compare-bar-subtitle');
+    const compareBtn = document.getElementById('compare-btn');
+    
+    const count = compareSelectedActivities.length;
+    
+    if (countEl) countEl.textContent = count;
+    
+    if (subtitleEl) {
+        if (count === 0) {
+            subtitleEl.textContent = 'Select 2 activities';
+        } else if (count === 1) {
+            subtitleEl.textContent = 'Select 1 more';
+        } else {
+            subtitleEl.textContent = 'Ready to compare!';
+        }
+    }
+    
+    if (compareBtn) {
+        compareBtn.disabled = count < 2;
+    }
+}
+
+/**
+ * Remove an activity from comparison selection
+ */
+function removeFromCompare(index) {
+    const removed = compareSelectedActivities[index];
+    if (removed) {
+        // Remove visual selection from the card
+        const card = document.querySelector(`.activity-item[data-hash="${removed.hash}"]`);
+        if (card) card.classList.remove('compare-selected');
+    }
+    
+    compareSelectedActivities.splice(index, 1);
+    updateCompareSelectionUI();
+}
+
+/**
+ * Clear all comparison selections
+ */
+function clearCompareSelection() {
+    // Remove visual selection from all cards
+    compareSelectedActivities.forEach(s => {
+        const card = document.querySelector(`.activity-item[data-hash="${s.hash}"]`);
+        if (card) card.classList.remove('compare-selected');
+    });
+    
+    compareSelectedActivities = [];
+    updateCompareSelectionUI();
+}
+
+/**
+ * Open the comparison modal showing 2 selected activities
+ */
+function openComparisonModal() {
+    if (compareSelectedActivities.length < 2) return;
+    
+    const [first, second] = compareSelectedActivities;
+    
+    // Create modal if doesn't exist
+    let modal = document.getElementById('compare-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'compare-modal';
+        modal.className = 'compare-modal';
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        modal.setAttribute('aria-labelledby', 'compare-modal-title');
+        
+        document.body.appendChild(modal);
+        
+        // Close on backdrop click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeComparisonModal();
+        });
+        
+        // Close on escape
+        modal.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeComparisonModal();
+        });
+    }
+    
+    // Calculate comparison stats
+    const stats = calculateComparisonStats(first.activity, second.activity);
+    
+    modal.innerHTML = `
+        <div class="compare-modal-content" role="document">
+            <div class="compare-modal-header">
+                <h3 id="compare-modal-title">⚖️ Activity Comparison</h3>
+                <button class="compare-modal-close" onclick="closeComparisonModal()" aria-label="Close comparison">×</button>
+            </div>
+            <div class="compare-modal-body">
+                <div class="compare-side-by-side">
+                    <div class="compare-side compare-left">
+                        <div class="compare-side-label">🔵 Activity 1</div>
+                        ${renderCompareActivityCard(first.activity)}
+                    </div>
+                    <div class="compare-divider">
+                        <div class="compare-divider-line"></div>
+                        <div class="compare-divider-vs">VS</div>
+                        <div class="compare-divider-line"></div>
+                    </div>
+                    <div class="compare-side compare-right">
+                        <div class="compare-side-label">🟢 Activity 2</div>
+                        ${renderCompareActivityCard(second.activity)}
+                    </div>
+                </div>
+                <div class="compare-stats">
+                    <div class="compare-stats-title">📊 Comparison Analysis</div>
+                    <div class="compare-stats-grid">
+                        ${stats.map(s => `
+                            <div class="compare-stat-item">
+                                <div class="compare-stat-label">${s.label}</div>
+                                <div class="compare-stat-value ${s.class || ''}">${s.value}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    modal.classList.add('visible');
+    
+    // Focus the close button for accessibility
+    setTimeout(() => {
+        modal.querySelector('.compare-modal-close').focus();
+    }, 100);
+    
+    announceToScreenReader('Activity comparison modal opened');
+}
+
+/**
+ * Close the comparison modal
+ */
+function closeComparisonModal() {
+    const modal = document.getElementById('compare-modal');
+    if (modal) {
+        modal.classList.remove('visible');
+    }
+}
+
+/**
+ * Render an activity card for the comparison modal
+ */
+function renderCompareActivityCard(activity) {
+    const type = activity.type || 'activity';
+    const emoji = getActivityEmoji(type);
+    const timestamp = new Date(activity.timestamp);
+    const formattedTime = timestamp.toLocaleString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+    });
+    const hash = activity.hash || activity.proof?.hash || '';
+    const isOnChain = !!(activity.signature || activity.proof?.signature);
+    const wallet = activity.wallet || '';
+    const tags = activity.tags || [];
+    
+    return `
+        <div class="compare-activity-type">${emoji} ${type}</div>
+        <div class="compare-activity-desc">${escapeHtml(activity.description)}</div>
+        <div class="compare-activity-meta">
+            <div class="compare-activity-meta-item">
+                <span class="meta-icon">📅</span>
+                ${formattedTime}
+            </div>
+            ${isOnChain ? `<div class="compare-activity-meta-item">
+                <span class="meta-icon">⛓️</span>
+                On-chain verified
+            </div>` : `<div class="compare-activity-meta-item">
+                <span class="meta-icon">⏳</span>
+                Pending
+            </div>`}
+            ${wallet ? `<div class="compare-activity-meta-item">
+                <span class="meta-icon">👛</span>
+                ${wallet.slice(0, 4)}...${wallet.slice(-4)}
+            </div>` : ''}
+            ${hash ? `<div class="compare-activity-meta-item">
+                <span class="meta-icon">🔗</span>
+                ${hash.slice(0, 8)}...${hash.slice(-4)}
+            </div>` : ''}
+            ${tags.length > 0 ? `<div class="compare-activity-meta-item">
+                <span class="meta-icon">🏷️</span>
+                ${tags.slice(0, 3).join(', ')}${tags.length > 3 ? '...' : ''}
+            </div>` : ''}
+        </div>
+    `;
+}
+
+/**
+ * Calculate comparison stats between two activities
+ */
+function calculateComparisonStats(a1, a2) {
+    const stats = [];
+    
+    // Time difference
+    const t1 = new Date(a1.timestamp);
+    const t2 = new Date(a2.timestamp);
+    const timeDiff = Math.abs(t2 - t1);
+    const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+    const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    let timeStr;
+    if (hours >= 24) {
+        const days = Math.floor(hours / 24);
+        timeStr = `${days} day${days > 1 ? 's' : ''} apart`;
+    } else if (hours > 0) {
+        timeStr = `${hours}h ${minutes}m apart`;
+    } else {
+        timeStr = `${minutes}m apart`;
+    }
+    stats.push({ label: 'Time Gap', value: timeStr });
+    
+    // Type comparison
+    if (a1.type === a2.type) {
+        stats.push({ label: 'Type Match', value: '✓ Same Type', class: 'positive' });
+    } else {
+        stats.push({ label: 'Type Match', value: '✗ Different', class: 'neutral' });
+    }
+    
+    // On-chain status
+    const onChain1 = !!(a1.signature || a1.proof?.signature);
+    const onChain2 = !!(a2.signature || a2.proof?.signature);
+    if (onChain1 && onChain2) {
+        stats.push({ label: 'On-Chain', value: 'Both Verified', class: 'positive' });
+    } else if (onChain1 || onChain2) {
+        stats.push({ label: 'On-Chain', value: 'One Verified', class: 'neutral' });
+    } else {
+        stats.push({ label: 'On-Chain', value: 'Neither Verified', class: 'negative' });
+    }
+    
+    // Description length comparison
+    const len1 = a1.description?.length || 0;
+    const len2 = a2.description?.length || 0;
+    const lenDiff = Math.abs(len1 - len2);
+    if (lenDiff < 20) {
+        stats.push({ label: 'Detail Level', value: 'Similar', class: 'neutral' });
+    } else if (len1 > len2) {
+        stats.push({ label: 'Detail Level', value: '#1 More Detailed' });
+    } else {
+        stats.push({ label: 'Detail Level', value: '#2 More Detailed' });
+    }
+    
+    // Wallet comparison
+    if (a1.wallet && a2.wallet) {
+        if (a1.wallet === a2.wallet) {
+            stats.push({ label: 'Wallet', value: 'Same Wallet', class: 'positive' });
+        } else {
+            stats.push({ label: 'Wallet', value: 'Different Wallets' });
+        }
+    }
+    
+    // Tags comparison
+    const tags1 = new Set(a1.tags || []);
+    const tags2 = new Set(a2.tags || []);
+    const sharedTags = [...tags1].filter(t => tags2.has(t));
+    if (sharedTags.length > 0) {
+        stats.push({ label: 'Shared Tags', value: sharedTags.slice(0, 2).join(', '), class: 'positive' });
+    } else if (tags1.size > 0 || tags2.size > 0) {
+        stats.push({ label: 'Shared Tags', value: 'None' });
+    }
+    
+    return stats;
+}
+
+// Add 'C' keyboard shortcut for compare mode
+const originalShortcutHandler = window.handleShortcutAction;
+if (typeof handleShortcutAction === 'function') {
+    const _originalHandleShortcutAction = handleShortcutAction;
+    handleShortcutAction = function(action) {
+        if (action === 'toggleCompareMode') {
+            toggleCompareMode();
+            return;
+        }
+        return _originalHandleShortcutAction(action);
+    };
+}
+
+// Add to command palette
+if (typeof PALETTE_COMMANDS !== 'undefined' && Array.isArray(PALETTE_COMMANDS)) {
+    PALETTE_COMMANDS.push({
+        id: 'compare-mode',
+        title: 'Toggle Compare Mode',
+        description: 'Select 2 activities to compare side-by-side',
+        icon: '⚖️',
+        shortcut: 'C',
+        action: () => { toggleCompareMode(); hideCommandPalette(); },
+        group: 'Actions'
+    });
+}
+
+// Initialize comparison mode when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initComparisonMode);
+} else {
+    setTimeout(initComparisonMode, 200);
+}
+
+// Add keyboard listener for 'C' key
+document.addEventListener('keydown', (e) => {
+    // Ignore if typing in an input or if modal is open
+    if (e.target.matches('input, textarea, [contenteditable]')) return;
+    if (document.querySelector('.compare-modal.visible')) return;
+    if (document.querySelector('.command-palette-overlay.visible')) return;
+    
+    if (e.key.toLowerCase() === 'c' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
+        toggleCompareMode();
+    }
+});
