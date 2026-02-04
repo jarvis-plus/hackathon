@@ -12795,3 +12795,369 @@ document.addEventListener('DOMContentLoaded', () => {
         helpContent.appendChild(trashShortcut);
     }
 });
+
+/* ========================================
+   Activity Context Menu (Right-Click Menu)
+   ======================================== */
+
+// Context menu state
+let contextMenuState = {
+    isOpen: false,
+    targetHash: null,
+    targetActivity: null
+};
+
+// Show the context menu
+function showContextMenu(event, activityItem) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const menu = document.getElementById('activityContextMenu');
+    if (!menu) return;
+    
+    // Get activity data from the item
+    const hash = activityItem.dataset.hash;
+    const isPinned = activityItem.dataset.pinned === 'true';
+    const isBookmarked = activityItem.dataset.bookmarked === 'true';
+    const status = activityItem.dataset.status || 'completed';
+    
+    // Find the activity object
+    const activities = window.cachedActivities || allActivities || [];
+    const activity = activities.find(a => (a.hash || a.proof?.hash) === hash);
+    
+    if (!activity) return;
+    
+    // Store state
+    contextMenuState = {
+        isOpen: true,
+        targetHash: hash,
+        targetActivity: activity
+    };
+    
+    // Update menu header
+    const header = document.getElementById('contextMenuHeader');
+    if (header) {
+        const type = activity.type || 'activity';
+        const desc = activity.description ? activity.description.substring(0, 30) + (activity.description.length > 30 ? '...' : '') : type;
+        header.textContent = desc;
+    }
+    
+    // Update pin button
+    const pinBtn = document.getElementById('ctxPin');
+    if (pinBtn) {
+        pinBtn.querySelector('.context-menu-icon').textContent = isPinned ? '📍' : '📌';
+        pinBtn.querySelector('.context-menu-label').textContent = isPinned ? 'Unpin Activity' : 'Pin Activity';
+    }
+    
+    // Update bookmark button
+    const bookmarkBtn = document.getElementById('ctxBookmark');
+    if (bookmarkBtn) {
+        bookmarkBtn.querySelector('.context-menu-icon').textContent = isBookmarked ? '★' : '⭐';
+        bookmarkBtn.querySelector('.context-menu-label').textContent = isBookmarked ? 'Remove Bookmark' : 'Bookmark';
+    }
+    
+    // Update status items (check current status)
+    const statusItems = {
+        completed: document.getElementById('ctxStatusCompleted'),
+        pending: document.getElementById('ctxStatusPending'),
+        failed: document.getElementById('ctxStatusFailed')
+    };
+    
+    Object.entries(statusItems).forEach(([key, item]) => {
+        if (item) {
+            if (key === status) {
+                item.classList.add('disabled');
+                item.querySelector('.context-menu-label').textContent = `${key.charAt(0).toUpperCase() + key.slice(1)} ✓`;
+            } else {
+                item.classList.remove('disabled');
+                item.querySelector('.context-menu-label').textContent = key.charAt(0).toUpperCase() + key.slice(1);
+            }
+        }
+    });
+    
+    // Show/hide compare option based on compare mode
+    const compareMode = typeof compareSelections !== 'undefined' && document.getElementById('compare-bar')?.classList.contains('visible');
+    const compareBtn = document.getElementById('ctxCompare');
+    const compareDivider = document.getElementById('ctxCompareDivider');
+    if (compareBtn) {
+        if (compareMode) {
+            compareBtn.style.display = 'flex';
+            compareDivider.style.display = 'block';
+            const isInCompare = typeof compareSelections !== 'undefined' && compareSelections.includes(hash);
+            compareBtn.querySelector('.context-menu-label').textContent = isInCompare ? 'Remove from Compare' : 'Add to Compare';
+        } else {
+            compareBtn.style.display = 'none';
+            compareDivider.style.display = 'none';
+        }
+    }
+    
+    // Show/hide bulk select option based on bulk mode
+    const bulkMode = typeof bulkSelections !== 'undefined' && document.getElementById('bulk-bar')?.classList.contains('visible');
+    const bulkBtn = document.getElementById('ctxBulkSelect');
+    if (bulkBtn) {
+        if (bulkMode) {
+            bulkBtn.style.display = 'flex';
+            const isInBulk = typeof bulkSelections !== 'undefined' && bulkSelections.includes(hash);
+            bulkBtn.querySelector('.context-menu-label').textContent = isInBulk ? 'Deselect' : 'Select for Bulk';
+        } else {
+            bulkBtn.style.display = 'none';
+        }
+    }
+    
+    // Update on-chain link visibility
+    const onchainBtn = document.getElementById('ctxViewOnChain');
+    if (onchainBtn) {
+        const hasTx = activity.solanaSignature || (activity.proof && activity.proof.solanaSignature);
+        if (hasTx) {
+            onchainBtn.classList.remove('disabled');
+            onchainBtn.style.display = 'flex';
+        } else {
+            onchainBtn.classList.add('disabled');
+            onchainBtn.style.display = 'none';
+        }
+    }
+    
+    // Position menu
+    positionContextMenu(menu, event.clientX, event.clientY);
+    
+    // Show menu with animation
+    menu.classList.add('visible');
+    
+    // Announce for screen readers
+    if (typeof announce === 'function') {
+        announce('Context menu opened. Use arrow keys to navigate.');
+    }
+}
+
+// Position the context menu, ensuring it stays on screen
+function positionContextMenu(menu, x, y) {
+    const menuRect = menu.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    // Calculate actual menu dimensions (before positioning)
+    menu.style.visibility = 'hidden';
+    menu.style.display = 'block';
+    const tempRect = menu.getBoundingClientRect();
+    const menuWidth = tempRect.width || 200;
+    const menuHeight = tempRect.height || 300;
+    menu.style.visibility = '';
+    
+    // Adjust X position if menu would go off right edge
+    let finalX = x;
+    if (x + menuWidth > viewportWidth - 10) {
+        finalX = viewportWidth - menuWidth - 10;
+    }
+    
+    // Adjust Y position if menu would go off bottom edge
+    let finalY = y;
+    let originBottom = false;
+    if (y + menuHeight > viewportHeight - 10) {
+        finalY = y - menuHeight;
+        originBottom = true;
+        if (finalY < 10) {
+            finalY = viewportHeight - menuHeight - 10;
+        }
+    }
+    
+    // Apply position
+    menu.style.left = `${Math.max(10, finalX)}px`;
+    menu.style.top = `${Math.max(10, finalY)}px`;
+    
+    // Set transform origin for animation
+    if (originBottom) {
+        menu.classList.add('origin-bottom');
+    } else {
+        menu.classList.remove('origin-bottom');
+    }
+}
+
+// Hide the context menu
+function hideContextMenu() {
+    const menu = document.getElementById('activityContextMenu');
+    if (menu) {
+        menu.classList.remove('visible');
+    }
+    contextMenuState.isOpen = false;
+    contextMenuState.targetHash = null;
+    contextMenuState.targetActivity = null;
+}
+
+// Context menu action handlers
+function handleContextMenuAction(actionId) {
+    const { targetHash, targetActivity } = contextMenuState;
+    
+    if (!targetHash) {
+        hideContextMenu();
+        return;
+    }
+    
+    switch (actionId) {
+        case 'ctxPin':
+            if (typeof togglePin === 'function') {
+                togglePin(targetHash);
+            }
+            break;
+            
+        case 'ctxBookmark':
+            if (typeof toggleBookmark === 'function') {
+                toggleBookmark(targetHash);
+            }
+            break;
+            
+        case 'ctxCopyLink':
+            const activityId = targetActivity ? getActivityId(targetActivity) : targetHash.substring(0, 8);
+            const link = `${window.location.origin}${window.location.pathname}#activity-${activityId}`;
+            navigator.clipboard.writeText(link).then(() => {
+                if (typeof announce === 'function') announce('Link copied to clipboard');
+            }).catch(() => {
+                if (typeof announce === 'function') announce('Failed to copy link');
+            });
+            break;
+            
+        case 'ctxCopyHash':
+            navigator.clipboard.writeText(targetHash).then(() => {
+                if (typeof announce === 'function') announce('Hash copied to clipboard');
+            }).catch(() => {
+                if (typeof announce === 'function') announce('Failed to copy hash');
+            });
+            break;
+            
+        case 'ctxViewOnChain':
+            const sig = targetActivity?.solanaSignature || targetActivity?.proof?.solanaSignature;
+            if (sig) {
+                window.open(`https://solscan.io/tx/${sig}`, '_blank');
+            }
+            break;
+            
+        case 'ctxStatusCompleted':
+            if (typeof cycleStatus === 'function') {
+                cycleStatus(targetHash, 'completed');
+            }
+            break;
+            
+        case 'ctxStatusPending':
+            if (typeof cycleStatus === 'function') {
+                cycleStatus(targetHash, 'pending');
+            }
+            break;
+            
+        case 'ctxStatusFailed':
+            if (typeof cycleStatus === 'function') {
+                cycleStatus(targetHash, 'failed');
+            }
+            break;
+            
+        case 'ctxCompare':
+            if (typeof toggleCompareSelection === 'function') {
+                toggleCompareSelection(targetHash);
+            }
+            break;
+            
+        case 'ctxBulkSelect':
+            if (typeof toggleBulkSelection === 'function') {
+                toggleBulkSelection(targetHash);
+            }
+            break;
+            
+        case 'ctxDelete':
+            if (typeof deleteActivity === 'function') {
+                deleteActivity(targetHash);
+            }
+            break;
+    }
+    
+    hideContextMenu();
+}
+
+// Initialize context menu event listeners
+function initContextMenu() {
+    const menu = document.getElementById('activityContextMenu');
+    if (!menu) return;
+    
+    // Click handlers for menu items
+    const menuItems = menu.querySelectorAll('.context-menu-item[id]');
+    menuItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!item.classList.contains('disabled')) {
+                handleContextMenuAction(item.id);
+            }
+        });
+    });
+    
+    // Hide menu when clicking outside
+    document.addEventListener('click', (e) => {
+        if (contextMenuState.isOpen && !menu.contains(e.target)) {
+            hideContextMenu();
+        }
+    });
+    
+    // Hide menu on scroll
+    window.addEventListener('scroll', () => {
+        if (contextMenuState.isOpen) {
+            hideContextMenu();
+        }
+    }, true);
+    
+    // Hide menu on Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && contextMenuState.isOpen) {
+            e.preventDefault();
+            hideContextMenu();
+        }
+    });
+    
+    // Keyboard navigation within menu
+    menu.addEventListener('keydown', (e) => {
+        if (!contextMenuState.isOpen) return;
+        
+        const items = Array.from(menu.querySelectorAll('.context-menu-item:not([style*="display: none"]):not(.disabled)'));
+        const currentIndex = items.indexOf(document.activeElement);
+        
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            const nextIndex = currentIndex < items.length - 1 ? currentIndex + 1 : 0;
+            items[nextIndex]?.focus();
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            const prevIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
+            items[prevIndex]?.focus();
+        } else if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            if (document.activeElement && document.activeElement.id) {
+                handleContextMenuAction(document.activeElement.id);
+            }
+        }
+    });
+    
+    // Right-click handler on activity items
+    document.addEventListener('contextmenu', (e) => {
+        const activityItem = e.target.closest('.activity-item');
+        if (activityItem && activityItem.dataset.hash) {
+            showContextMenu(e, activityItem);
+        } else if (contextMenuState.isOpen) {
+            // Right-clicking elsewhere closes the menu
+            hideContextMenu();
+        }
+    });
+    
+    console.log('Activity context menu initialized');
+}
+
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initContextMenu);
+} else {
+    initContextMenu();
+}
+
+// Add to command palette
+if (typeof commandPaletteCommands !== 'undefined') {
+    commandPaletteCommands.push(
+        { name: 'Show Context Menu (right-click on activity)', action: () => {
+            if (typeof announce === 'function') announce('Right-click on any activity to open context menu');
+        }}
+    );
+}

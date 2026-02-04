@@ -1418,6 +1418,70 @@
         <span class="scroll-top-text">Top</span>
     </button>
 
+    <!-- Activity Context Menu (right-click menu) -->
+    <div id="activityContextMenu" class="activity-context-menu" role="menu" aria-label="Activity actions">
+        <div class="context-menu-header" id="contextMenuHeader">Activity</div>
+        <div class="context-menu-item" id="ctxPin" role="menuitem" tabindex="-1">
+            <span class="context-menu-icon">📌</span>
+            <span class="context-menu-label">Pin Activity</span>
+        </div>
+        <div class="context-menu-item" id="ctxBookmark" role="menuitem" tabindex="-1">
+            <span class="context-menu-icon">⭐</span>
+            <span class="context-menu-label">Bookmark</span>
+        </div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item" id="ctxCopyLink" role="menuitem" tabindex="-1">
+            <span class="context-menu-icon">🔗</span>
+            <span class="context-menu-label">Copy Link</span>
+            <span class="context-menu-shortcut">⌘L</span>
+        </div>
+        <div class="context-menu-item" id="ctxCopyHash" role="menuitem" tabindex="-1">
+            <span class="context-menu-icon">#</span>
+            <span class="context-menu-label">Copy Hash</span>
+        </div>
+        <div class="context-menu-item" id="ctxViewOnChain" role="menuitem" tabindex="-1">
+            <span class="context-menu-icon">⛓️</span>
+            <span class="context-menu-label">View On-Chain</span>
+        </div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-submenu">
+            <div class="context-menu-item" role="menuitem" tabindex="-1">
+                <span class="context-menu-icon">📊</span>
+                <span class="context-menu-label">Set Status</span>
+                <span class="context-menu-submenu-arrow">▶</span>
+            </div>
+            <div class="context-menu-submenu-items" role="menu">
+                <div class="context-menu-item" id="ctxStatusCompleted" role="menuitem" tabindex="-1">
+                    <span class="context-menu-icon">✅</span>
+                    <span class="context-menu-label">Completed</span>
+                </div>
+                <div class="context-menu-item" id="ctxStatusPending" role="menuitem" tabindex="-1">
+                    <span class="context-menu-icon">⏳</span>
+                    <span class="context-menu-label">Pending</span>
+                </div>
+                <div class="context-menu-item" id="ctxStatusFailed" role="menuitem" tabindex="-1">
+                    <span class="context-menu-icon">❌</span>
+                    <span class="context-menu-label">Failed</span>
+                </div>
+            </div>
+        </div>
+        <div class="context-menu-divider" id="ctxCompareDivider" style="display: none;"></div>
+        <div class="context-menu-item" id="ctxCompare" role="menuitem" tabindex="-1" style="display: none;">
+            <span class="context-menu-icon">⚖️</span>
+            <span class="context-menu-label">Add to Compare</span>
+        </div>
+        <div class="context-menu-item" id="ctxBulkSelect" role="menuitem" tabindex="-1" style="display: none;">
+            <span class="context-menu-icon">☑️</span>
+            <span class="context-menu-label">Select for Bulk</span>
+        </div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item danger" id="ctxDelete" role="menuitem" tabindex="-1">
+            <span class="context-menu-icon">🗑️</span>
+            <span class="context-menu-label">Delete</span>
+            <span class="context-menu-shortcut">Del</span>
+        </div>
+    </div>
+
     <script src="app.js"></script>
 </body>
 </html>
