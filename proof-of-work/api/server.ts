@@ -89,6 +89,9 @@ const ACTIVITY_FILE = join(BASE_DIR, 'activity.json');
 /** Path to the dashboard static files */
 const DASHBOARD_DIR = join(BASE_DIR, 'dashboard');
 
+/** Path to the v2 dashboard (React) static files */
+const DASHBOARD_V2_DIR = join(BASE_DIR, 'dashboard-v2', 'dist');
+
 /** Path to the webhook subscriptions file */
 const WEBHOOKS_FILE = join(BASE_DIR, 'data', 'webhooks.json');
 
@@ -8905,6 +8908,36 @@ Colosseum Agent Hackathon 2026`;
     // ==========================================
     if (path === '/activity.json') {
       return Response.json(getActivities(), { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // DASHBOARD V2: Serve React dashboard at /pow-new
+    // ==========================================
+    if (path.startsWith('/pow-new')) {
+      const v2Path = path.replace('/pow-new', '') || '/index.html';
+      const filePath = v2Path === '/' ? '/index.html' : v2Path;
+      const fullPath = join(DASHBOARD_V2_DIR, filePath);
+      
+      try {
+        const file = Bun.file(fullPath);
+        if (await file.exists()) {
+          const contentType = fullPath.endsWith('.html') ? 'text/html' :
+                              fullPath.endsWith('.css') ? 'text/css' :
+                              fullPath.endsWith('.js') ? 'application/javascript' :
+                              'application/octet-stream';
+          return new Response(file, { 
+            headers: { 
+              'Content-Type': contentType,
+              'Access-Control-Allow-Origin': '*'
+            } 
+          });
+        }
+        // Fallback to index.html for SPA routing
+        const indexFile = Bun.file(join(DASHBOARD_V2_DIR, 'index.html'));
+        return new Response(indexFile, { headers: { 'Content-Type': 'text/html' } });
+      } catch (e) {
+        return new Response('Dashboard v2 not found', { status: 404 });
+      }
     }
 
     // ==========================================
