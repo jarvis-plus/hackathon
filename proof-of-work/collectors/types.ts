@@ -18,6 +18,7 @@ import { join, dirname } from 'path';
 export type ActivityType =
   | 'browser'     // Web research (searches, fetches)
   | 'build'       // Development/build cycle work
+  | 'calendar'    // Calendar events
   | 'commit'      // Git commits
   | 'decision'    // Agent decisions
   | 'deploy'      // Deployments
@@ -77,6 +78,22 @@ export interface EmailMetadata {
   threadId: string;
   messageCount?: number;
   account?: string;
+}
+
+/**
+ * Metadata for calendar activities
+ */
+export interface CalendarMetadata {
+  eventId: string;
+  title: string;
+  startTime: string;
+  endTime: string;
+  isAllDay: boolean;
+  organizer?: string;
+  attendeeCount?: number;
+  location?: string;
+  meetingLink?: string;
+  calendarLink?: string;
 }
 
 /**
@@ -141,6 +158,7 @@ export type ActivityMetadata =
   | MessageMetadata
   | TweetMetadata
   | EmailMetadata
+  | CalendarMetadata
   | HeartbeatMetadata
   | SessionMetadata
   | CommitMetadata
@@ -252,6 +270,15 @@ export interface EmailState extends BaseState {
   lastCheck: string;
   knownThreadIds: string[];
   totalEmails: number;
+}
+
+/**
+ * Calendar tracker state
+ */
+export interface CalendarState extends BaseState {
+  lastCheck: string;
+  knownEventIds: string[];
+  totalEvents: number;
 }
 
 /**

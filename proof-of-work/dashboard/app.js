@@ -975,6 +975,7 @@ function renderRecentHashes(activities) {
     // Muted color palette for verification badges
     const typeColors = {
         browser: '#3498db',
+        calendar: '#9b59b6',
         commit: '#c9a227',
         build: '#5a9fd4',
         trade: '#d47a7a',
@@ -1316,6 +1317,7 @@ function renderCharts(activities) {
     // Muted color palette for charts - one accent shade per type
     const typeColors = {
         'browser': '#3498db',    // bright blue
+        'calendar': '#9b59b6',   // muted purple
         'commit': '#c9a227',     // muted gold
         'build': '#5a9fd4',      // muted blue
         'decision': '#d45a84',   // muted rose

@@ -36,7 +36,12 @@ echo ""
 echo "🌐 Checking browser activity..."
 bun run collectors/browser-tracker.ts
 
-# 6. Execute recurring micro-trade (every ~2 hours to preserve SOL)
+# 6. Track calendar events
+echo ""
+echo "📅 Checking calendar events..."
+bun run collectors/calendar-tracker.ts
+
+# 7. Execute recurring micro-trade (every ~2 hours to preserve SOL)
 # Check if enough time has passed since last trade
 LAST_TRADE_FILE="/tmp/jarvis-last-dca-trade"
 TRADE_INTERVAL=7200  # 2 hours in seconds
