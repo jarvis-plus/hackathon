@@ -1563,6 +1563,7 @@ function renderActivities(activities, highlightNew = false) {
                 <div class="activity-time">${formatTime(a.timestamp)}</div>
             </div>
             <div class="activity-desc">${escapeHtml(a.description)}</div>
+            ${typeof renderAISummary === 'function' ? renderAISummary(a) : ''}
             ${tagsHtml}
             ${notesHtml}
             ${attachmentsHtml}
@@ -6666,6 +6667,250 @@ window.setSentimentFilter = setSentimentFilter;
 window.analyzeSentiment = analyzeSentiment;
 window.renderSentimentBadge = renderSentimentBadge;
 
+// ============================================================
+// AI SUMMARY - Local keyword-based activity summarization
+// ============================================================
+
+/**
+ * Keywords for extracting entities from activity descriptions
+ */
+const AI_SUMMARY_PATTERNS = {
+    // Technical entities
+    files: /(?:[\w-]+\.(?:ts|js|tsx|jsx|css|html|json|md|py|rs|go|java|sh|yml|yaml))/gi,
+    urls: /(?:https?:\/\/[^\s<>"{}|\\^`\[\]]+)/gi,
+    commits: /(?:[a-f0-9]{7,40})/gi,
+    numbers: /(?:\d+(?:\.\d+)?(?:\s*(?:SOL|USDC|USD|%|ms|sec|min|hr|KB|MB|GB))?)/gi,
+    functions: /(?:[\w]+(?:Component|Handler|Listener|Manager|Service|Provider|Hook|Modal|Button|Chart|View|Page))/g,
+    versions: /(?:v?\d+\.\d+(?:\.\d+)?(?:-[a-z]+(?:\.\d+)?)?)/gi,
+    
+    // Activity type-specific
+    trades: /(?:(?:buy|sell|swap|trade|stake|unstake)(?:ing)?)/gi,
+    apis: /(?:\/api\/[\w/-]+|GET|POST|PUT|DELETE|PATCH)/gi,
+    features: /(?:(?:add|implement|create|build|fix|update|refactor|optimize|enhance)(?:ed|ing)?)/gi
+};
+
+/**
+ * Summary templates by activity type
+ */
+const AI_SUMMARY_TEMPLATES = {
+    commit: [
+        (data) => `Code ${data.action || 'changes'} affecting ${data.fileCount || 'files'}${data.mainFile ? ` (${data.mainFile})` : ''}.`,
+        (data) => data.action ? `${capitalize(data.action)} implementation${data.mainFile ? ` in ${data.mainFile}` : ''}.` : 'Code changes committed.'
+    ],
+    build: [
+        (data) => `Build cycle ${data.number ? '#' + data.number : ''} - ${data.features?.length ? data.features.join(', ') : 'development work'}.`,
+        (data) => `Engineering work${data.features?.length ? `: ${data.features.slice(0, 2).join(', ')}` : ''}.`
+    ],
+    trade: [
+        (data) => `${capitalize(data.tradeAction || 'Trade')} activity${data.amounts?.length ? ` involving ${data.amounts[0]}` : ''}.`,
+        (data) => `Swap/trade executed${data.amounts?.length ? ` (${data.amounts.slice(0, 2).join(' → ')})` : ''}.`
+    ],
+    message: [
+        (data) => `Communication activity${data.platform ? ` on ${data.platform}` : ''}.`,
+        (data) => 'Message sent/received.'
+    ],
+    tweet: [
+        (data) => `Social post${data.metrics ? ` (${data.metrics})` : ''}.`,
+        (data) => 'Twitter/social media activity.'
+    ],
+    email: [
+        (data) => `Email ${data.action || 'activity'}${data.recipient ? ` to ${data.recipient}` : ''}.`,
+        (data) => 'Email communication.'
+    ],
+    calendar: [
+        (data) => `Calendar ${data.action || 'event'}${data.eventName ? `: ${data.eventName}` : ''}.`,
+        (data) => 'Calendar activity.'
+    ],
+    browser: [
+        (data) => `Web research${data.domain ? ` on ${data.domain}` : ''}.`,
+        (data) => 'Browser/research activity.'
+    ],
+    default: [
+        (data) => `${capitalize(data.type || 'Activity')} recorded${data.keyInfo ? `: ${data.keyInfo}` : ''}.`,
+        (data) => 'Activity logged.'
+    ]
+};
+
+/**
+ * Whether AI summaries are enabled
+ */
+let aiSummariesEnabled = localStorage.getItem('aiSummariesEnabled') === 'true';
+
+/**
+ * Capitalize first letter
+ */
+function capitalize(str) {
+    if (!str) return '';
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+/**
+ * Extract key data from activity description for summarization
+ * @param {Object} activity - The activity object
+ * @returns {Object} Extracted data
+ */
+function extractActivityData(activity) {
+    const text = activity.description || '';
+    const type = activity.type || 'unknown';
+    
+    const data = {
+        type,
+        text,
+        // Extract files
+        files: (text.match(AI_SUMMARY_PATTERNS.files) || []).filter((v, i, a) => a.indexOf(v) === i),
+        // Extract URLs
+        urls: (text.match(AI_SUMMARY_PATTERNS.urls) || []).filter((v, i, a) => a.indexOf(v) === i),
+        // Extract numbers/amounts
+        amounts: (text.match(AI_SUMMARY_PATTERNS.numbers) || []).filter((v, i, a) => a.indexOf(v) === i),
+        // Extract functions/components
+        functions: (text.match(AI_SUMMARY_PATTERNS.functions) || []).filter((v, i, a) => a.indexOf(v) === i),
+        // Extract feature keywords
+        features: (text.match(AI_SUMMARY_PATTERNS.features) || []).filter((v, i, a) => a.indexOf(v) === i),
+        // Extract trade actions
+        tradeActions: (text.match(AI_SUMMARY_PATTERNS.trades) || []).filter((v, i, a) => a.indexOf(v) === i),
+        // Extract API paths
+        apis: (text.match(AI_SUMMARY_PATTERNS.apis) || []).filter((v, i, a) => a.indexOf(v) === i),
+        // Extract versions
+        versions: (text.match(AI_SUMMARY_PATTERNS.versions) || []).filter((v, i, a) => a.indexOf(v) === i)
+    };
+    
+    // Derive additional info
+    data.fileCount = data.files.length || null;
+    data.mainFile = data.files[0] || null;
+    data.action = data.features[0] || null;
+    data.tradeAction = data.tradeActions[0] || null;
+    
+    // Check for cycle number in build activities
+    const cycleMatch = text.match(/Cycle\s*(\d+)/i);
+    if (cycleMatch) {
+        data.number = cycleMatch[1];
+    }
+    
+    // Extract domain from URLs
+    if (data.urls.length > 0) {
+        try {
+            const url = new URL(data.urls[0]);
+            data.domain = url.hostname.replace('www.', '');
+        } catch (e) {}
+    }
+    
+    // Key info is the most salient extracted piece
+    data.keyInfo = data.functions[0] || data.mainFile || data.versions[0] || data.amounts[0] || null;
+    
+    return data;
+}
+
+/**
+ * Generate an AI summary for an activity.
+ * Uses local keyword extraction and templates - no API calls.
+ * @param {Object} activity - The activity object  
+ * @returns {string} Generated summary
+ */
+function generateAISummary(activity) {
+    const data = extractActivityData(activity);
+    const type = activity.type || 'default';
+    const templates = AI_SUMMARY_TEMPLATES[type] || AI_SUMMARY_TEMPLATES.default;
+    
+    // Try templates in order, use first one that produces a good result
+    for (const template of templates) {
+        try {
+            const summary = template(data);
+            if (summary && summary.length > 5) {
+                return summary;
+            }
+        } catch (e) {}
+    }
+    
+    // Fallback
+    return `${capitalize(type)} activity recorded.`;
+}
+
+/**
+ * Render AI summary for an activity.
+ * Returns empty string if summaries are disabled.
+ * @param {Object} activity - The activity object
+ * @returns {string} HTML string for AI summary
+ */
+function renderAISummary(activity) {
+    if (!aiSummariesEnabled) return '';
+    
+    const summary = generateAISummary(activity);
+    const data = extractActivityData(activity);
+    
+    // Build entity badges
+    let entitiesBadges = '';
+    if (data.files.length > 0) {
+        entitiesBadges += `<span class="ai-entity ai-file" title="Files: ${data.files.join(', ')}">📄 ${data.files.length}</span>`;
+    }
+    if (data.functions.length > 0) {
+        entitiesBadges += `<span class="ai-entity ai-func" title="Components: ${data.functions.join(', ')}">⚡ ${data.functions.length}</span>`;
+    }
+    if (data.apis.length > 0) {
+        entitiesBadges += `<span class="ai-entity ai-api" title="APIs: ${data.apis.join(', ')}">🔌 ${data.apis.length}</span>`;
+    }
+    if (data.amounts.length > 0 && (activity.type === 'trade' || activity.type === 'build')) {
+        entitiesBadges += `<span class="ai-entity ai-num" title="Values: ${data.amounts.join(', ')}">💰 ${data.amounts[0]}</span>`;
+    }
+    
+    return `
+        <div class="ai-summary">
+            <div class="ai-summary-header">
+                <span class="ai-summary-icon">🤖</span>
+                <span class="ai-summary-label">AI Summary</span>
+            </div>
+            <div class="ai-summary-text">${escapeHtml(summary)}</div>
+            ${entitiesBadges ? `<div class="ai-summary-entities">${entitiesBadges}</div>` : ''}
+        </div>
+    `;
+}
+
+/**
+ * Toggle AI summaries on/off
+ */
+function toggleAISummaries() {
+    aiSummariesEnabled = !aiSummariesEnabled;
+    localStorage.setItem('aiSummariesEnabled', aiSummariesEnabled);
+    
+    // Update toggle button
+    const btn = document.getElementById('aiSummaryToggle');
+    if (btn) {
+        btn.classList.toggle('active', aiSummariesEnabled);
+        btn.textContent = aiSummariesEnabled ? '🤖 AI On' : '🤖 AI Off';
+        btn.setAttribute('aria-pressed', aiSummariesEnabled);
+    }
+    
+    // Re-render activities
+    if (window.allActivities) {
+        renderActivities(window.allActivities);
+    }
+    
+    // Toast notification
+    showToast(aiSummariesEnabled ? '🤖 AI Summaries enabled' : '🤖 AI Summaries disabled');
+    
+    // Announce for screen readers
+    announceToScreenReader(`AI Summaries ${aiSummariesEnabled ? 'enabled' : 'disabled'}`);
+}
+
+// Make AI summary functions globally available
+window.generateAISummary = generateAISummary;
+window.renderAISummary = renderAISummary;
+window.toggleAISummaries = toggleAISummaries;
+
+/**
+ * Initialize AI summary button state on page load
+ */
+function initAISummaries() {
+    const btn = document.getElementById('aiSummaryToggle');
+    if (btn) {
+        btn.classList.toggle('active', aiSummariesEnabled);
+        btn.textContent = aiSummariesEnabled ? '🤖 AI On' : '🤖 AI Off';
+        btn.setAttribute('aria-pressed', aiSummariesEnabled);
+        btn.setAttribute('aria-label', `AI Summaries: ${aiSummariesEnabled ? 'On' : 'Off'}`);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', initAISummaries);
+
 /**
  * Render links indicator for an activity.
  * Shows a badge when activity has relationships to other activities.
@@ -7734,6 +7979,7 @@ const KEYBOARD_SHORTCUTS = {
     'Y': { action: 'celebrateEpic', description: 'Fire epic confetti cannons' },
     'f': { action: 'toggleFuzzySearch', description: 'Toggle fuzzy search (typo tolerance)' },
     's': { action: 'cycleSentiment', description: 'Cycle sentiment filter (all → positive → neutral → negative)' },
+    'a': { action: 'toggleAISummaries', description: 'Toggle AI-generated summaries' },
     '?': { action: 'showShortcuts', description: 'Show keyboard shortcuts' },
 };
 
@@ -7761,6 +8007,7 @@ function createShortcutsModal() {
                     <div class="shortcut-row"><kbd>r</kbd> Reset all filters</div>
                     <div class="shortcut-row"><kbd>f</kbd> Toggle fuzzy search</div>
                     <div class="shortcut-row"><kbd>s</kbd> Cycle sentiment filter</div>
+                    <div class="shortcut-row"><kbd>a</kbd> Toggle AI summaries</div>
                 </div>
                 <div class="shortcut-section">
                     <h4>Tabs</h4>
@@ -7890,6 +8137,8 @@ function handleShortcutAction(action) {
         toggleFuzzySearch();
     } else if (action === 'cycleSentiment') {
         cycleSentimentFilter();
+    } else if (action === 'toggleAISummaries') {
+        toggleAISummaries();
     }
 }
 
@@ -8006,6 +8255,7 @@ const PALETTE_COMMANDS = [
     // Search & Filter
     { id: 'search', title: 'Search Activities', description: 'Focus the search input', icon: '🔍', shortcut: '/', action: () => focusSearchInput(), group: 'Search & Filter' },
     { id: 'fuzzy-search', title: 'Toggle Fuzzy Search', description: 'Enable/disable typo-tolerant search', icon: '🔎', shortcut: 'F', action: () => { toggleFuzzySearch(); hideCommandPalette(); }, group: 'Search & Filter' },
+    { id: 'ai-summaries', title: 'Toggle AI Summaries', description: 'Show/hide AI-generated activity summaries', icon: '🤖', shortcut: 'A', action: () => { toggleAISummaries(); hideCommandPalette(); }, group: 'Search & Filter' },
     { id: 'reset-filters', title: 'Reset All Filters', description: 'Clear all active filters', icon: '🔄', shortcut: 'R', action: () => resetFilters(), group: 'Search & Filter' },
     { id: 'filter-bookmarks', title: 'Toggle Bookmarks Filter', description: 'Show only bookmarked items', icon: '⭐', shortcut: 'B', action: () => toggleBookmarkFilter(), group: 'Search & Filter' },
     { id: 'filter-build', title: 'Filter: Build', description: 'Show only build activities', icon: '🔨', action: () => { setTypeFilter('build'); hideCommandPalette(); }, group: 'Search & Filter' },
