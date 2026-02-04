@@ -3197,6 +3197,7 @@ async function loadActivities() {
             renderGoalTracker(activities);
             populateTagFilters(activities);
             initTimelineSlider(activities);
+            loadAchievements();
         } catch (e2) {
             document.getElementById('feed').innerHTML = `
                 <div class="empty-state">

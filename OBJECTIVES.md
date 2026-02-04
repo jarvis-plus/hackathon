@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
 **Last Updated:** 2026-02-03 21:30 PST
-**Cycle:** 175
+**Cycle:** 176
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -94,7 +94,8 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Activity streak tracking (consecutive days, milestones) ✅ Cycle 172
 - [x] Activity bookmarking/favorites (localStorage-based) ✅ Cycle 173
 - [x] Command palette (Cmd/Ctrl+K quick access) ✅ Cycle 174
-- [ ] Mini activity preview on hover (quick peek)
+- [x] Focus Mode / Zen Mode (distraction-free view) ✅ Cycle 175
+- [x] Mini activity preview on hover (quick peek) ✅ Cycle 176
 - [ ] Activity comparison mode (select 2 to compare)
 - [ ] Custom activity types (user-defined)
 - [ ] Activity attachment support (link files/images)
@@ -105,6 +106,57 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 176 (Mini Activity Preview on Hover)
+- Implemented floating tooltip that appears when hovering over activity cards
+- **Features**:
+  - Type emoji with styled header (commit yellow, trade red, etc.)
+  - Description preview (3 lines max with ellipsis)
+  - Timestamp (relative "5m ago" + full date on hover)
+  - On-chain status badge (verified green, pending yellow)
+  - Wallet address (truncated), tags, pinned/notes indicators
+  - Smart positioning (flips when near viewport edges)
+  - Disabled on touch devices via `@media (hover: none)`
+  - 200ms debounce for smooth UX
+- **CSS Changes (~180 lines)**:
+  - `.activity-preview` floating tooltip with backdrop blur
+  - Arrow indicator that flips based on position
+  - Theme support (light, cyberpunk with glow)
+  - Mobile responsive sizing
+- **JS Changes (~190 lines)**:
+  - `initActivityPreview()` - creates preview element, attaches listeners
+  - `handleActivityHover/Leave/Move()` - event handlers
+  - `showActivityPreview()`, `hideActivityPreview()` - toggle visibility
+  - `positionPreview()` - smart viewport-aware positioning
+  - `renderPreviewContent()` - builds tooltip HTML with activity data
+- 451 activities, all signed on-chain
+
+### Cycle 175 (Focus Mode / Zen Mode)
+- Implemented distraction-free view for quick dashboard overview
+- **Features**:
+  - Full-screen overlay with key stats (total activities, on-chain %, streak)
+  - Latest 5 activities with type emoji, description, time ago, on-chain badge
+  - 'Z' keyboard shortcut to toggle (also Escape to close)
+  - Focus button in header next to theme/notification toggles
+  - Animated gradient for on-chain percentage, yellow streak counter
+  - Mobile responsive design
+- **CSS Changes (~200 lines)**:
+  - Overlay positioning and fade-in animation
+  - 3-column stat cards with hover glow effect
+  - Activity list items with slide animation on hover
+  - Dark/light theme support via CSS variables
+  - Mobile grid adjustment (single column)
+- **JS Changes (~200 lines)**:
+  - `createFocusModeOverlay()` - injects modal HTML
+  - `toggleFocusMode()`, `showFocusMode()`, `hideFocusMode()` - toggle logic
+  - `updateFocusModeContent()` - populates stats and activities
+  - `calculateFocusStreak()` - simplified streak calculation
+  - `getActivityEmoji()`, `formatTimeAgo()`, `escapeHtml()` - helper functions
+  - Updated `handleShortcutAction()` for 'z' shortcut
+  - Updated both shortcuts modals with Focus Mode entry
+- **HTML Changes**:
+  - Added Focus button in header controls
+- 449 activities, all signed on-chain
 
 ### Cycle 174 (Command Palette)
 - Implemented Cmd/Ctrl+K quick access UI (similar to VS Code, Figma, Linear)
@@ -196,56 +248,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - **OpenAPI Updated**: Added `/api/og` and `/api/og/{hash}` with Social tag
 - Works on Twitter, Facebook, Discord, Slack, and other platforms
 - 437 activities, all signed on-chain
-
-### Cycle 170 (Activity Timeline Slider)
-- Implemented visual time range selector for activity filtering
-- **HTML Changes**:
-  - Added timeline slider container with track, handles, activity bars
-  - Zoom preset buttons (1D/1W/1M/All)
-  - Date labels (start/selected/end range display)
-  - Reset button for clearing selection
-- **CSS Changes (~220 lines)**:
-  - Timeline slider track with activity density bars
-  - Draggable handle styling with tooltips
-  - Selection highlight with gradient
-  - Light theme support
-  - Mobile responsive (taller track for touch)
-- **JavaScript Changes (~380 lines)**:
-  - `initTimelineSlider()` - calculates date range and activity density buckets
-  - `calculateActivityBuckets()` - divides activities into 50 time buckets
-  - `renderTimelineSlider()` - renders density bars and date labels
-  - `initTimelineSliderDrag()` - mouse/touch drag handlers
-  - `handleKeyboard()` - arrow key navigation for accessibility
-  - `updateSliderUI()` - positions handles, selection, and bar highlights
-  - `applyTimelineRange()` - syncs with date inputs and filters
-  - `setTimelineZoom()` - preset zoom buttons
-  - Integration with existing date filter system
-- Activity density visualization shows where activities are concentrated
-- 436 activities, all signed on-chain
-
-### Cycle 169 (Multi-Theme Support)
-- Implemented 6 color themes: Dark, Light, Ocean, Forest, Sunset, Cyberpunk
-- **CSS Changes**:
-  - Added theme variables for Ocean (deep blue tones), Forest (natural green), Sunset (warm orange/red), Cyberpunk (neon purple)
-  - Each theme has custom background, accent colors, text colors, and borders
-  - Special effects for Cyberpunk theme (text glow, box shadows)
-- **HTML Changes**:
-  - Replaced theme toggle button with dropdown selector
-  - Theme options with emoji indicators (🌙🌊🌲🌅🔮)
-  - Proper ARIA attributes for accessibility
-- **JavaScript Changes**:
-  - `AVAILABLE_THEMES` array and `THEME_EMOJIS` mapping
-  - `toggleThemeDropdown()` and `closeThemeDropdown()` functions
-  - Updated `setTheme()` to update dropdown selection
-  - Click-outside-to-close behavior
-  - Legacy `toggleTheme()` cycles through all themes (for keyboard shortcut)
-- **Also Verified**: Performance dashboard already exists at `/api/performance` with:
-  - Uptime, memory usage (heap, RSS)
-  - Per-endpoint metrics (count, avg/min/max/p50/p95/p99 response times)
-  - WebSocket and webhook connection counts
-  - Health status and recommendations
-- ~180 lines added to CSS, ~50 to HTML, ~50 to JS
-- 432 activities, all signed on-chain
 
 ---
 
