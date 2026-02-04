@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-04 05:38 PST
-**Cycle:** 197
+**Last Updated:** 2026-02-04 06:07 PST
+**Cycle:** 198
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -118,10 +118,39 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Activity quick actions menu (right-click context menu) ✅ Cycle 195
 - [x] Dashboard widgets (customizable stat cards) ✅ Cycle 196
 - [x] Activity reminder system (set reminders for follow-ups) ✅ Cycle 197
+- [x] Activity relationships (link activities together) ✅ Cycle 198
 
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 198 (Activity Relationships)
+- Implemented Activity Relationships feature - link activities with typed connections
+- **Relationship Types**:
+  - `follows-up`: Activity continues from another
+  - `related-to`: General connection between activities
+  - `fixes`: Activity solves an issue from another
+  - `blocks`: Activity blocks another from proceeding
+  - `implements`: Activity realizes what was planned in another
+  - `supersedes`: Activity replaces/supersedes another
+- **API Endpoints**:
+  - `GET /api/relationships` - List all with filters (source, target, type)
+  - `POST /api/relationships` - Create new relationship
+  - `GET /api/relationships/:id` - Get specific relationship
+  - `DELETE /api/relationships/:id` - Delete relationship
+  - `GET /api/relationships/graph` - Graph visualization endpoint
+  - `GET /api/activities/:hash/relationships` - Get activity's connections
+- **Dashboard UI**:
+  - Relationships modal showing all links (L key shortcut)
+  - "🔗 Links" button in header
+  - Link Activity modal with target search
+  - Context menu "Link Activity" option
+- **Graph Endpoint**: Returns nodes (enriched with activity info) and edges
+- **OpenAPI Updated**: ActivityRelationship schema, all endpoints documented
+- **Command Palette**: "View Relationships" command
+- **Theme Support**: All 7 themes
+- **Stats**: 530 activities, all signed on-chain
+- Commit: fa19894
 
 ### Cycle 197 (Activity Reminder System)
 - Implemented full-featured reminder system for activity follow-ups
@@ -216,25 +245,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - **OpenAPI Updated**: BulkRestoreResult schema, new endpoint documented
 - **Stats**: 519 activities, all signed on-chain
 - Commit: 45b6698
-
-### Cycle 193 (Activity Status Indicator)
-- Implemented activity status tracking (pending/completed/failed)
-- **New API Endpoints**:
-  - `PATCH /api/activities/:hash/status` - Update activity status
-  - `GET /api/activities/status?status=X` - Filter activities by status
-  - Status counts returned: pending, completed, failed totals
-- **Activity Fields Added**: `status`, `statusUpdatedAt`
-- **Dashboard UI**:
-  - Status badges (⏳ Pending, ❌ Failed) next to pinned/bookmarked badges
-  - Status cycling button on hover (✅→❌→⏳→✅)
-  - Status filter section with All/Completed/Pending/Failed buttons
-  - Visual styling: yellow border for pending, red border for failed
-- **WebSocket/Webhook Events**: activity_status_changed event
-- **OpenAPI Updated**: StatusUpdateResult schema, new endpoints documented
-- **Export Integration**: Status filter included in export filter indicator
-- **Theme Support**: All 7 themes (Auto, Dark, Light, Ocean, Forest, Sunset, Cyberpunk)
-- **Stats**: 516 activities, all signed on-chain
-- Commit: 8282e5b
 
 ---
 
