@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 18:47 PST
-**Cycle:** 146
+**Last Updated:** 2026-02-03 18:49 PST
+**Cycle:** 147
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -29,6 +29,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Activity deep links (share specific activity via URL hash) ✅ Cycle 143
 - [x] Browser notifications for new activities (with permission) ✅ Cycle 144
 - [x] PWA support (manifest, service worker, installable) ✅ Cycle 146
+- [x] Activity export (JSON/CSV download with filter support) ✅ Cycle 147
 - [ ] Activity grouping by day (collapsible sections)
 - [ ] Webhook notifications API for external integrations
 - [ ] Accessibility improvements (ARIA labels, focus states)
@@ -67,6 +68,22 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 147 (Activity Export)
+- Added activity export feature for data download
+- 📤 Export controls section in filter area with JSON/CSV buttons
+- JSON export: Full activity data with proper formatting (2-space indent)
+- CSV export: Spreadsheet-compatible with escaped values
+- Filter-aware: Exports only currently visible activities (respects all filters)
+- Keyboard shortcuts: `e` for JSON export, `Shift+E` for CSV export
+- Toast notification shows count of exported activities
+- File naming: jarvis-activities-YYYY-MM-DD.json/csv
+- ~150 lines JavaScript for export logic (exportActivities, activitiesToCSV, downloadFile)
+- ~80 lines CSS for export controls with dark/light mode support
+- Updated keyboard shortcuts modal with Export section
+- Mobile responsive layout for export buttons
+- Files: app.js, dashboard.css, index.html
+- 356 activities, all signed on-chain
 
 ### Cycle 146 (PWA Support)
 - Added Progressive Web App support for installable experience
@@ -130,21 +147,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - ~130 lines of CSS with light/dark mode support
 - Files: app.js, dashboard.css
 - 347 activities, all signed on-chain
-
-### Cycle 142 (Keyboard Shortcuts)
-- Added comprehensive keyboard shortcuts for power users
-- `/` key focuses the search input and selects text
-- Number keys 1-6 switch between dashboard tabs
-- `Esc` clears search or closes modal
-- `r` resets all filters
-- `?` opens styled keyboard shortcuts help modal
-- Created shortcuts modal with sections for Navigation, Tabs, and Help
-- Added `.keyboard-hint` button in header ("Press ? for keyboard shortcuts")
-- ~180 lines of JavaScript for shortcut handling and modal
-- ~150 lines of CSS for modal styling with light/dark mode support
-- Mobile responsive: hint hidden on small screens, modal adapts
-- Files: app.js, dashboard.css
-- 342 activities, all signed on-chain
 
 ---
 

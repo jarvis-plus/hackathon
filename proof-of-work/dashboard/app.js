@@ -2627,6 +2627,160 @@ function resetFilters() {
     applyFilters();
 }
 
+// ============================================
+// EXPORT FUNCTIONS
+// ============================================
+
+/**
+ * Export activities to JSON or CSV format
+ * Respects current filters - exports what's currently visible
+ * @param {string} format - 'json' or 'csv'
+ */
+function exportActivities(format) {
+    const activities = window.cachedActivities || [];
+    if (activities.length === 0) {
+        showToast('No activities to export', '⚠️');
+        return;
+    }
+    
+    // Apply current filters to get the activities to export
+    let filtered = [...activities];
+    
+    // Apply type filter
+    if (currentTypeFilter !== 'all') {
+        filtered = filtered.filter(a => a.type === currentTypeFilter);
+    }
+    
+    // Apply search filter
+    if (currentSearchQuery) {
+        const query = currentSearchQuery.toLowerCase();
+        filtered = filtered.filter(a => 
+            (a.description && a.description.toLowerCase().includes(query)) ||
+            (a.type && a.type.toLowerCase().includes(query)) ||
+            (a.hash && a.hash.toLowerCase().includes(query))
+        );
+    }
+    
+    // Apply tag filter
+    if (currentTagFilter) {
+        filtered = filtered.filter(a => a.tags && a.tags.includes(currentTagFilter));
+    }
+    
+    // Apply wallet filter
+    if (currentWalletFilter) {
+        filtered = filtered.filter(a => a.wallet === currentWalletFilter);
+    }
+    
+    // Apply date range filter
+    if (currentDateFrom) {
+        const fromDate = new Date(currentDateFrom);
+        fromDate.setHours(0, 0, 0, 0);
+        filtered = filtered.filter(a => new Date(a.timestamp) >= fromDate);
+    }
+    if (currentDateTo) {
+        const toDate = new Date(currentDateTo);
+        toDate.setHours(23, 59, 59, 999);
+        filtered = filtered.filter(a => new Date(a.timestamp) <= toDate);
+    }
+    
+    if (filtered.length === 0) {
+        showToast('No matching activities to export', '⚠️');
+        return;
+    }
+    
+    // Generate export based on format
+    let content, filename, mimeType;
+    const timestamp = new Date().toISOString().slice(0, 10);
+    
+    if (format === 'json') {
+        content = JSON.stringify(filtered, null, 2);
+        filename = `jarvis-activities-${timestamp}.json`;
+        mimeType = 'application/json';
+    } else if (format === 'csv') {
+        content = activitiesToCSV(filtered);
+        filename = `jarvis-activities-${timestamp}.csv`;
+        mimeType = 'text/csv';
+    } else {
+        showToast('Unknown export format', '❌');
+        return;
+    }
+    
+    // Trigger download
+    downloadFile(content, filename, mimeType);
+    
+    // Show success toast
+    const filterInfo = currentTypeFilter !== 'all' || currentSearchQuery || currentTagFilter || currentWalletFilter || currentDateFrom || currentDateTo
+        ? ' (filtered)'
+        : '';
+    showToast(`Exported ${filtered.length} activities${filterInfo}`, '✅');
+}
+
+/**
+ * Convert activities array to CSV string
+ * @param {Array} activities - Array of activity objects
+ * @returns {string} CSV formatted string
+ */
+function activitiesToCSV(activities) {
+    // Define CSV columns
+    const columns = ['timestamp', 'type', 'description', 'hash', 'signature', 'onchain', 'tags', 'wallet'];
+    
+    // Create header row
+    const header = columns.join(',');
+    
+    // Create data rows
+    const rows = activities.map(activity => {
+        return columns.map(col => {
+            let value = activity[col];
+            
+            // Handle special cases
+            if (col === 'tags' && Array.isArray(value)) {
+                value = value.join('; ');
+            }
+            if (col === 'onchain') {
+                value = value ? 'Yes' : 'No';
+            }
+            if (value === null || value === undefined) {
+                value = '';
+            }
+            
+            // Escape and quote values containing commas, quotes, or newlines
+            value = String(value);
+            if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+                value = '"' + value.replace(/"/g, '""') + '"';
+            }
+            
+            return value;
+        }).join(',');
+    });
+    
+    return [header, ...rows].join('\n');
+}
+
+/**
+ * Trigger file download in browser
+ * @param {string} content - File content
+ * @param {string} filename - Name for downloaded file
+ * @param {string} mimeType - MIME type of content
+ */
+function downloadFile(content, filename, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.style.display = 'none';
+    
+    document.body.appendChild(link);
+    link.click();
+    
+    // Cleanup
+    setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }, 100);
+}
+
 // Override renderActivities to use filtered rendering when filters are active
 const originalRenderActivities = renderActivities;
 renderActivities = function(activities, highlightNew = false) {
@@ -2664,6 +2818,8 @@ const KEYBOARD_SHORTCUTS = {
     '5': { action: () => switchTab('meta'), description: 'Meta Story tab' },
     '6': { action: () => switchTab('verify'), description: 'Verify tab' },
     'r': { action: 'resetFilters', description: 'Reset all filters' },
+    'e': { action: 'exportJSON', description: 'Export as JSON' },
+    'E': { action: 'exportCSV', description: 'Export as CSV' },
     '?': { action: 'showShortcuts', description: 'Show keyboard shortcuts' },
 };
 
@@ -2695,6 +2851,11 @@ function createShortcutsModal() {
                     <div class="shortcut-row"><kbd>4</kbd> Key Decisions</div>
                     <div class="shortcut-row"><kbd>5</kbd> Meta Story</div>
                     <div class="shortcut-row"><kbd>6</kbd> Verify</div>
+                </div>
+                <div class="shortcut-section">
+                    <h4>Export</h4>
+                    <div class="shortcut-row"><kbd>e</kbd> Export as JSON</div>
+                    <div class="shortcut-row"><kbd>Shift+e</kbd> Export as CSV</div>
                 </div>
                 <div class="shortcut-section">
                     <h4>Help</h4>
@@ -2753,6 +2914,10 @@ function handleShortcutAction(action) {
         resetFilters();
     } else if (action === 'showShortcuts') {
         showShortcutsModal();
+    } else if (action === 'exportJSON') {
+        exportActivities('json');
+    } else if (action === 'exportCSV') {
+        exportActivities('csv');
     }
 }
 
@@ -3324,6 +3489,11 @@ createShortcutsModal = function() {
                     <div class="shortcut-row"><kbd>4</kbd> Key Decisions</div>
                     <div class="shortcut-row"><kbd>5</kbd> Meta Story</div>
                     <div class="shortcut-row"><kbd>6</kbd> Verify</div>
+                </div>
+                <div class="shortcut-section">
+                    <h4>Export</h4>
+                    <div class="shortcut-row"><kbd>e</kbd> Export as JSON</div>
+                    <div class="shortcut-row"><kbd>Shift+e</kbd> Export as CSV</div>
                 </div>
                 <div class="shortcut-section">
                     <h4>Help</h4>
