@@ -211,6 +211,76 @@
             border-color: rgba(0, 255, 170, 0.3);
         }
 
+        /* Staggered entry animation for stat cards on initial load */
+        .stat-card.animate-entry {
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+            animation: statCardEntry 0.5s ease-out forwards;
+        }
+        
+        @keyframes statCardEntry {
+            0% {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            60% {
+                opacity: 1;
+                transform: translateY(-4px) scale(1.02);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        /* Stagger delays for each card (set via inline style or nth-child) */
+        .stat-card.animate-entry:nth-child(1) { animation-delay: 0ms; }
+        .stat-card.animate-entry:nth-child(2) { animation-delay: 60ms; }
+        .stat-card.animate-entry:nth-child(3) { animation-delay: 120ms; }
+        .stat-card.animate-entry:nth-child(4) { animation-delay: 180ms; }
+        .stat-card.animate-entry:nth-child(5) { animation-delay: 240ms; }
+        .stat-card.animate-entry:nth-child(6) { animation-delay: 300ms; }
+        .stat-card.animate-entry:nth-child(7) { animation-delay: 360ms; }
+        .stat-card.animate-entry:nth-child(8) { animation-delay: 420ms; }
+        .stat-card.animate-entry:nth-child(9) { animation-delay: 480ms; }
+        .stat-card.animate-entry:nth-child(10) { animation-delay: 540ms; }
+        .stat-card.animate-entry:nth-child(11) { animation-delay: 600ms; }
+        .stat-card.animate-entry:nth-child(12) { animation-delay: 660ms; }
+        
+        /* Counting animation - subtle scale pulse while value changes */
+        .stat-value.counting {
+            animation: countPulse 0.1s ease-in-out infinite alternate;
+        }
+        
+        @keyframes countPulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.02); }
+        }
+        
+        /* Updated state - pop animation when value finishes */
+        .stat-value.updated {
+            animation: valuePop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        @keyframes valuePop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+        
+        /* Respect reduced motion preference */
+        @media (prefers-reduced-motion: reduce) {
+            .stat-card.animate-entry {
+                animation: none;
+                opacity: 1;
+                transform: none;
+            }
+            .stat-value.counting,
+            .stat-value.updated {
+                animation: none;
+            }
+        }
+
         .stat-value {
             font-size: clamp(1.75rem, 4vw, 2.5rem);
             font-weight: bold;
@@ -4672,5 +4742,141 @@ input[aria-invalid="true"],
     .search-clear {
         min-width: 44px;
         min-height: 44px;
+    }
+}
+
+/* ============================================
+   INFINITE SCROLL / LOAD MORE
+   ============================================ */
+
+/* Activity counter in day-group-controls */
+.activity-counter {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-left: auto;
+    padding: 0.3rem 0.8rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+}
+
+[data-theme="light"] .activity-counter {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+/* Load more container */
+.load-more-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem;
+    margin-top: 1rem;
+}
+
+/* Load more button */
+.load-more-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.8rem 2rem;
+    background: linear-gradient(135deg, rgba(0, 255, 170, 0.15), rgba(0, 200, 255, 0.15));
+    border: 1px solid rgba(0, 255, 170, 0.3);
+    border-radius: 25px;
+    color: var(--accent-green);
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.load-more-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(0, 255, 170, 0.25), rgba(0, 200, 255, 0.25));
+    border-color: rgba(0, 255, 170, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 255, 170, 0.2);
+}
+
+.load-more-btn:focus-visible {
+    outline: 2px solid var(--accent-green);
+    outline-offset: 2px;
+}
+
+.load-more-btn:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+[data-theme="light"] .load-more-btn {
+    background: linear-gradient(135deg, rgba(0, 180, 120, 0.1), rgba(0, 150, 200, 0.1));
+    border-color: rgba(0, 180, 120, 0.3);
+    color: #00b478;
+}
+
+[data-theme="light"] .load-more-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(0, 180, 120, 0.2), rgba(0, 150, 200, 0.2));
+}
+
+/* Loading spinner */
+.loading-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(0, 255, 170, 0.3);
+    border-top-color: var(--accent-green);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Sentinel for IntersectionObserver (invisible) */
+.load-more-sentinel {
+    height: 1px;
+    width: 100%;
+    visibility: hidden;
+}
+
+/* All loaded message */
+.all-loaded-message {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    padding: 1rem 1.5rem;
+    background: rgba(0, 255, 170, 0.05);
+    border-radius: 20px;
+    border: 1px dashed rgba(0, 255, 170, 0.2);
+}
+
+[data-theme="light"] .all-loaded-message {
+    background: rgba(0, 180, 120, 0.05);
+    border-color: rgba(0, 180, 120, 0.2);
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+    .loading-spinner {
+        animation: none;
+        opacity: 0.5;
+    }
+    
+    .load-more-btn:hover {
+        transform: none;
+    }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .activity-counter {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.6rem;
+    }
+    
+    .load-more-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .load-more-container {
+        padding: 1.5rem 0.5rem;
     }
 }

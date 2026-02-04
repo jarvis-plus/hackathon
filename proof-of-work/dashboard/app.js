@@ -1,4 +1,147 @@
 // ============================================
+// INFINITE SCROLL / LAZY LOADING
+// ============================================
+const ACTIVITIES_PER_PAGE = 50;
+let currentDisplayCount = ACTIVITIES_PER_PAGE;
+let isLoadingMore = false;
+let infiniteScrollObserver = null;
+
+/**
+ * Initialize infinite scroll observer
+ * Watches for when the load-more sentinel enters viewport
+ */
+function initInfiniteScroll() {
+    // Clean up any existing observer
+    if (infiniteScrollObserver) {
+        infiniteScrollObserver.disconnect();
+    }
+    
+    infiniteScrollObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && !isLoadingMore) {
+                loadMoreActivities();
+            }
+        });
+    }, {
+        root: null, // viewport
+        rootMargin: '200px', // Load 200px before reaching bottom
+        threshold: 0.1
+    });
+    
+    // Observe the sentinel element if it exists
+    const sentinel = document.getElementById('load-more-sentinel');
+    if (sentinel) {
+        infiniteScrollObserver.observe(sentinel);
+    }
+}
+
+/**
+ * Load more activities into the feed
+ */
+function loadMoreActivities() {
+    if (isLoadingMore) return;
+    
+    const activities = window.cachedActivities || [];
+    if (currentDisplayCount >= activities.length) {
+        // All activities are loaded
+        hideLoadMoreUI();
+        return;
+    }
+    
+    isLoadingMore = true;
+    showLoadingIndicator();
+    
+    // Simulate a small delay for smooth UX (prevents jarring instant loads)
+    setTimeout(() => {
+        currentDisplayCount = Math.min(currentDisplayCount + ACTIVITIES_PER_PAGE, activities.length);
+        
+        // Re-render with the new display count
+        const feed = document.getElementById('feed');
+        if (feed && activities.length > 0) {
+            feed.classList.add('refreshing');
+            feed.innerHTML = renderGroupedActivitiesLimited(activities, currentDisplayCount, false);
+            lastRenderedCount = activities.length;
+            setTimeout(() => feed.classList.remove('refreshing'), 300);
+        }
+        
+        isLoadingMore = false;
+        hideLoadingIndicator();
+        
+        // Update the load more button text
+        updateLoadMoreButton();
+        
+        // Re-observe sentinel for next load
+        const sentinel = document.getElementById('load-more-sentinel');
+        if (sentinel && infiniteScrollObserver) {
+            infiniteScrollObserver.observe(sentinel);
+        }
+        
+        // Announce to screen readers
+        announceToScreenReader(`Loaded more activities. Now showing ${currentDisplayCount} of ${activities.length}.`);
+    }, 150);
+}
+
+/**
+ * Show loading indicator in load-more area
+ */
+function showLoadingIndicator() {
+    const btn = document.getElementById('load-more-btn');
+    if (btn) {
+        btn.innerHTML = '<span class="loading-spinner"></span> Loading...';
+        btn.disabled = true;
+    }
+}
+
+/**
+ * Hide loading indicator
+ */
+function hideLoadingIndicator() {
+    updateLoadMoreButton();
+}
+
+/**
+ * Update load more button text with remaining count
+ */
+function updateLoadMoreButton() {
+    const btn = document.getElementById('load-more-btn');
+    const activities = window.cachedActivities || [];
+    const remaining = activities.length - currentDisplayCount;
+    
+    if (btn) {
+        if (remaining > 0) {
+            const loadCount = Math.min(remaining, ACTIVITIES_PER_PAGE);
+            btn.innerHTML = `📜 Load ${loadCount} More (${remaining} remaining)`;
+            btn.disabled = false;
+            btn.style.display = 'inline-flex';
+        } else {
+            btn.style.display = 'none';
+        }
+    }
+}
+
+/**
+ * Hide load more UI when all items are loaded
+ */
+function hideLoadMoreUI() {
+    const container = document.getElementById('load-more-container');
+    if (container) {
+        container.innerHTML = `
+            <div class="all-loaded-message">
+                ✅ All ${window.cachedActivities?.length || 0} activities loaded
+            </div>
+        `;
+    }
+}
+
+/**
+ * Reset infinite scroll state (called when filters change or activities reload)
+ */
+function resetInfiniteScroll() {
+    currentDisplayCount = ACTIVITIES_PER_PAGE;
+    isLoadingMore = false;
+}
+
+// ============================================
 // NOTIFICATION SOUND SYSTEM
 // ============================================
 const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -1092,7 +1235,7 @@ function renderRecentHashes(activities) {
 // ============================================
 // ANIMATED NUMBER COUNTER
 // ============================================
-function animateNumber(element, targetValue, duration = 600, prefix = '', suffix = '') {
+function animateNumber(element, targetValue, duration = 600, prefix = '', suffix = '', delay = 0) {
     if (!element) return;
     
     const startValue = parseInt(element.dataset.currentValue || '0', 10);
@@ -1101,41 +1244,49 @@ function animateNumber(element, targetValue, duration = 600, prefix = '', suffix
     // Skip animation if value unchanged
     if (startValue === target) return;
     
-    element.dataset.currentValue = target;
-    
-    // Add pop animation class
-    element.classList.add('updated');
-    setTimeout(() => element.classList.remove('updated'), 400);
-    
-    // If difference is small, just set it
-    if (Math.abs(target - startValue) <= 2) {
-        element.textContent = prefix + target + suffix;
-        return;
-    }
-    
-    const startTime = performance.now();
-    const easeOutQuart = t => 1 - Math.pow(1 - t, 4);
-    
-    function updateNumber(currentTime) {
-        const elapsed = currentTime - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const easedProgress = easeOutQuart(progress);
+    // Delay animation for staggered effect
+    setTimeout(() => {
+        element.dataset.currentValue = target;
         
-        const currentValue = Math.round(startValue + (target - startValue) * easedProgress);
-        element.textContent = prefix + currentValue + suffix;
-        
-        if (progress < 1) {
-            requestAnimationFrame(updateNumber);
-        } else {
+        // If difference is small, just set it with pop
+        if (Math.abs(target - startValue) <= 2) {
             element.textContent = prefix + target + suffix;
+            element.classList.add('updated');
+            setTimeout(() => element.classList.remove('updated'), 400);
+            return;
         }
-    }
-    
-    requestAnimationFrame(updateNumber);
+        
+        // Add counting pulse animation during count-up
+        element.classList.add('counting');
+        
+        const startTime = performance.now();
+        const easeOutQuart = t => 1 - Math.pow(1 - t, 4);
+        
+        function updateNumber(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const easedProgress = easeOutQuart(progress);
+            
+            const currentValue = Math.round(startValue + (target - startValue) * easedProgress);
+            element.textContent = prefix + currentValue + suffix;
+            
+            if (progress < 1) {
+                requestAnimationFrame(updateNumber);
+            } else {
+                element.textContent = prefix + target + suffix;
+                // Remove counting pulse and add final pop
+                element.classList.remove('counting');
+                element.classList.add('updated');
+                setTimeout(() => element.classList.remove('updated'), 400);
+            }
+        }
+        
+        requestAnimationFrame(updateNumber);
+    }, delay);
 }
 
 // Animate decimal numbers (for volume, etc.)
-function animateDecimal(element, targetValue, duration = 600, prefix = '', suffix = '', decimals = 2) {
+function animateDecimal(element, targetValue, duration = 600, prefix = '', suffix = '', decimals = 2, delay = 0) {
     if (!element) return;
     
     const startValue = parseFloat(element.dataset.currentValue || '0');
@@ -1143,99 +1294,110 @@ function animateDecimal(element, targetValue, duration = 600, prefix = '', suffi
     
     if (Math.abs(startValue - target) < 0.001) return;
     
-    element.dataset.currentValue = target;
-    element.classList.add('updated');
-    setTimeout(() => element.classList.remove('updated'), 400);
-    
-    const startTime = performance.now();
-    const easeOutQuart = t => 1 - Math.pow(1 - t, 4);
-    
-    function updateNumber(currentTime) {
-        const elapsed = currentTime - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const easedProgress = easeOutQuart(progress);
+    setTimeout(() => {
+        element.dataset.currentValue = target;
+        element.classList.add('counting');
         
-        const currentValue = startValue + (target - startValue) * easedProgress;
-        element.textContent = prefix + currentValue.toFixed(decimals) + suffix;
+        const startTime = performance.now();
+        const easeOutQuart = t => 1 - Math.pow(1 - t, 4);
         
-        if (progress < 1) {
-            requestAnimationFrame(updateNumber);
-        } else {
-            element.textContent = prefix + target.toFixed(decimals) + suffix;
+        function updateNumber(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const easedProgress = easeOutQuart(progress);
+            
+            const currentValue = startValue + (target - startValue) * easedProgress;
+            element.textContent = prefix + currentValue.toFixed(decimals) + suffix;
+            
+            if (progress < 1) {
+                requestAnimationFrame(updateNumber);
+            } else {
+                element.textContent = prefix + target.toFixed(decimals) + suffix;
+                element.classList.remove('counting');
+                element.classList.add('updated');
+                setTimeout(() => element.classList.remove('updated'), 400);
+            }
         }
-    }
-    
-    requestAnimationFrame(updateNumber);
+        
+        requestAnimationFrame(updateNumber);
+    }, delay);
 }
 
-// Initialize stat cards from skeleton state
+// Initialize stat cards from skeleton state with entry animations
 function initializeStatCards() {
     const statsGrid = document.getElementById('stats-grid');
     if (!statsGrid) return;
     
-    // Replace skeleton cards with real stat cards (with icons)
+    // Replace skeleton cards with real stat cards (with icons and entry animation)
     statsGrid.innerHTML = `
-        <div class="stat-card">
+        <div class="stat-card animate-entry">
             <div class="stat-icon icon-total">⚡</div>
             <div class="stat-value" id="total-actions">0</div>
             <div class="stat-label">Total Actions</div>
         </div>
-        <div class="stat-card" id="card-onchain">
+        <div class="stat-card animate-entry" id="card-onchain">
             <div class="stat-icon icon-chain">⛓️</div>
             <div class="stat-value chain" id="onchain">0</div>
             <div class="stat-label">On-Chain</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card animate-entry">
             <div class="stat-icon icon-commits">📝</div>
             <div class="stat-value commits" id="commits">0</div>
             <div class="stat-label">Commits</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card animate-entry">
             <div class="stat-icon icon-builds">🔧</div>
             <div class="stat-value builds" id="builds">0</div>
             <div class="stat-label">Builds</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card animate-entry">
             <div class="stat-icon icon-trades">💱</div>
             <div class="stat-value trades" id="trades">0</div>
             <div class="stat-label">Trades</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card animate-entry">
             <div class="stat-icon icon-messages">💬</div>
             <div class="stat-value messages" id="messages">0</div>
             <div class="stat-label">Messages</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card animate-entry">
             <div class="stat-icon icon-tweets">🐦</div>
             <div class="stat-value tweets" id="tweets">0</div>
             <div class="stat-label">Tweets</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card animate-entry">
             <div class="stat-icon icon-uptime">⏱️</div>
             <div class="stat-value uptime" id="uptime">0h</div>
             <div class="stat-label">Uptime</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card animate-entry">
             <div class="stat-icon icon-volume">💰</div>
             <div class="stat-value volume" id="volume">$0</div>
             <div class="stat-label">Trade Volume</div>
         </div>
-        <div class="stat-card" id="streak-card">
+        <div class="stat-card animate-entry" id="streak-card">
             <div class="stat-icon icon-streak">🔥</div>
             <div class="stat-value streak" id="streak"><span class="streak-fire">🔥</span>0</div>
             <div class="stat-label">Day Streak</div>
         </div>
-        <div class="stat-card" id="mood-card">
+        <div class="stat-card animate-entry" id="mood-card">
             <div class="stat-icon icon-mood">🧠</div>
             <div class="stat-value mood" id="mood">🤖</div>
             <div class="stat-label">Agent Mood</div>
         </div>
-        <div class="stat-card" id="sol-position-card">
+        <div class="stat-card animate-entry" id="sol-position-card">
             <div class="stat-icon icon-sol">◎</div>
             <div class="stat-value sol-position" id="sol-position">0 SOL</div>
             <div class="stat-label">Net SOL</div>
         </div>
     `;
+    
+    // Remove entry animation class after animations complete to allow hover effects
+    setTimeout(() => {
+        statsGrid.querySelectorAll('.stat-card.animate-entry').forEach(card => {
+            card.classList.remove('animate-entry');
+        });
+    }, 1200); // Wait for all staggered animations to finish
 }
 
 let statsInitialized = false;
@@ -1254,24 +1416,30 @@ function updateStats(activities) {
     const judgeCount = document.getElementById('judge-activity-count');
     if (judgeCount) judgeCount.textContent = activities.length;
     
-    // Animate stat number updates
-    animateNumber(document.getElementById('total-actions'), activities.length);
+    // Animate stat number updates with staggered delays for cascade effect
+    // On first load, delay matches card entry animation (60ms stagger per card)
+    const isFirstLoad = !window.statsFirstLoadDone;
+    const baseDelay = isFirstLoad ? 300 : 0; // Wait for card entry to start
+    const stagger = isFirstLoad ? 60 : 0; // Stagger delay between stats
+    window.statsFirstLoadDone = true;
+    
+    animateNumber(document.getElementById('total-actions'), activities.length, 600, '', '', baseDelay + stagger * 0);
     animateNumber(document.getElementById('onchain'), activities.filter(a => 
         a.signature || a.proof?.txSignature
-    ).length);
-    animateNumber(document.getElementById('commits'), activities.filter(a => a.type === 'commit').length);
+    ).length, 600, '', '', baseDelay + stagger * 1);
+    animateNumber(document.getElementById('commits'), activities.filter(a => a.type === 'commit').length, 600, '', '', baseDelay + stagger * 2);
     animateNumber(document.getElementById('builds'), activities.filter(a => 
         a.type === 'build' || a.type === 'deploy' || a.type === 'decision'
-    ).length);
+    ).length, 600, '', '', baseDelay + stagger * 3);
     animateNumber(document.getElementById('trades'), activities.filter(a => 
         a.type === 'trade' || a.type === 'transfer'
-    ).length);
+    ).length, 600, '', '', baseDelay + stagger * 4);
     animateNumber(document.getElementById('messages'), activities.filter(a => 
         a.type === 'message'
-    ).length);
+    ).length, 600, '', '', baseDelay + stagger * 5);
     animateNumber(document.getElementById('tweets'), activities.filter(a => 
         a.type === 'tweet'
-    ).length);
+    ).length, 600, '', '', baseDelay + stagger * 6);
     
     // Calculate trade volume (sum of all trade amounts in USD equivalent)
     let totalVolume = 0;
@@ -1974,8 +2142,14 @@ function renderInsights(activities) {
     };
     const peakHoursStr = peakHours.map(h => formatHour(h.hour)).join(', ');
     document.getElementById('insightPeakHours').textContent = peakHoursStr || 'N/A';
-    document.getElementById('insightPeakHoursDetail').textContent = 
-        peakHours.length > 0 ? `${peakHours[0].count} activities at peak` : '';
+    const peakCountEl = document.getElementById('insightPeakHoursDetail');
+    if (peakHours.length > 0) {
+        // Animate the peak count
+        peakCountEl.innerHTML = '<span id="peakCountNum">0</span> activities at peak';
+        animateNumber(document.getElementById('peakCountNum'), peakHours[0].count, 600);
+    } else {
+        peakCountEl.textContent = '';
+    }
     
     // Calculate day of week distribution
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -1987,16 +2161,21 @@ function renderInsights(activities) {
     
     const peakDayIndex = dayCount.indexOf(Math.max(...dayCount));
     document.getElementById('insightPeakDay').textContent = dayNames[peakDayIndex];
-    document.getElementById('insightPeakDayDetail').textContent = `${dayCount[peakDayIndex]} total activities`;
+    const peakDayDetail = document.getElementById('insightPeakDayDetail');
+    peakDayDetail.innerHTML = '<span id="peakDayNum">0</span> total activities';
+    animateNumber(document.getElementById('peakDayNum'), dayCount[peakDayIndex], 600);
     
     // Calculate daily average
     const uniqueDays = new Set();
     activities.forEach(a => {
         uniqueDays.add(new Date(a.timestamp).toDateString());
     });
-    const avgDaily = uniqueDays.size > 0 ? (activities.length / uniqueDays.size).toFixed(1) : 0;
-    document.getElementById('insightAvgDaily').textContent = `${avgDaily}/day`;
-    document.getElementById('insightAvgDailyDetail').textContent = `Across ${uniqueDays.size} active days`;
+    const avgDailyNum = uniqueDays.size > 0 ? (activities.length / uniqueDays.size) : 0;
+    const avgDailyEl = document.getElementById('insightAvgDaily');
+    animateDecimal(avgDailyEl, avgDailyNum, 800, '', '/day', 1);
+    const avgDailyDetail = document.getElementById('insightAvgDailyDetail');
+    avgDailyDetail.innerHTML = 'Across <span id="avgActiveDays">0</span> active days';
+    animateNumber(document.getElementById('avgActiveDays'), uniqueDays.size, 600);
     
     // Calculate top activity type
     const typeCounts = {};
@@ -2012,8 +2191,15 @@ function renderInsights(activities) {
     };
     const emoji = typeEmoji[topType?.[0]] || '📊';
     document.getElementById('insightTopType').textContent = topType ? `${emoji} ${topType[0]}` : 'N/A';
-    document.getElementById('insightTopTypeDetail').textContent = 
-        topType ? `${topType[1]} activities (${Math.round(topType[1] / activities.length * 100)}%)` : '';
+    const topTypeDetail = document.getElementById('insightTopTypeDetail');
+    if (topType) {
+        const topTypePercent = Math.round(topType[1] / activities.length * 100);
+        topTypeDetail.innerHTML = '<span id="topTypeNum">0</span> activities (<span id="topTypePercent">0</span>%)';
+        animateNumber(document.getElementById('topTypeNum'), topType[1], 600);
+        animateNumber(document.getElementById('topTypePercent'), topTypePercent, 600);
+    } else {
+        topTypeDetail.textContent = '';
+    }
     
     // Calculate productivity score (based on variety and consistency)
     const typeVariety = Object.keys(typeCounts).length;
@@ -2027,14 +2213,25 @@ function renderInsights(activities) {
     const onChainScore = onChainRate * 40;
     const productivityScore = Math.round(varietyScore + consistencyScore + onChainScore);
     
-    document.getElementById('insightProductivity').textContent = `${productivityScore}/100`;
-    document.getElementById('insightProductivityBar').style.width = `${productivityScore}%`;
+    // Animate productivity score count-up
+    const productivityEl = document.getElementById('insightProductivity');
+    animateNumber(productivityEl, productivityScore, 800, '', '/100');
     
-    // On-chain rate
-    const onChainPercent = (onChainRate * 100).toFixed(1);
-    document.getElementById('insightOnchainRate').textContent = `${onChainPercent}%`;
-    document.getElementById('insightOnchainDetail').textContent = 
-        `${onChainCount} of ${activities.length} signed`;
+    // Animate progress bar from 0 (CSS transition handles the animation)
+    const progressBar = document.getElementById('insightProductivityBar');
+    progressBar.style.width = '0%';
+    setTimeout(() => {
+        progressBar.style.width = `${productivityScore}%`;
+    }, 50);
+    
+    // On-chain rate with animated percentage
+    const onChainPercent = (onChainRate * 100);
+    const onChainEl = document.getElementById('insightOnchainRate');
+    animateDecimal(onChainEl, onChainPercent, 800, '', '%', 1);
+    const onChainDetail = document.getElementById('insightOnchainDetail');
+    onChainDetail.innerHTML = '<span id="onChainSigned">0</span> of <span id="onChainTotal">0</span> signed';
+    animateNumber(document.getElementById('onChainSigned'), onChainCount, 600);
+    animateNumber(document.getElementById('onChainTotal'), activities.length, 600);
     
     // Render hourly distribution bars
     const maxHourly = Math.max(...hourlyCount, 1);
@@ -3248,6 +3445,120 @@ function renderGroupedActivities(activities, highlightNew = false) {
     return html;
 }
 
+/**
+ * Render activities grouped by day with a limit (for infinite scroll)
+ * @param {Array} activities - Array of all activities
+ * @param {number} limit - Maximum number of activities to render
+ * @param {boolean} highlightNew - Whether to highlight new activities
+ * @returns {string} HTML string for grouped activities with load-more UI
+ */
+function renderGroupedActivitiesLimited(activities, limit, highlightNew = false) {
+    const sorted = [...activities].reverse(); // Newest first
+    const limited = sorted.slice(0, limit);
+    const groups = groupActivitiesByDay(limited);
+    const newCount = sorted.length - lastRenderedCount;
+    const shouldHighlight = highlightNew && newCount > 0;
+    const remaining = sorted.length - limit;
+    
+    let html = '';
+    let itemIndex = 0;
+    
+    // Add expand/collapse all controls
+    html += `
+        <div class="day-group-controls">
+            <button class="day-control-btn" onclick="expandAllDays()" title="Expand all days" aria-label="Expand all day groups">
+                <span>⊞</span> Expand All
+            </button>
+            <button class="day-control-btn" onclick="collapseAllDays()" title="Collapse all days" aria-label="Collapse all day groups">
+                <span>⊟</span> Collapse All
+            </button>
+            <span class="activity-counter" aria-live="polite">
+                Showing ${Math.min(limit, sorted.length)} of ${sorted.length}
+            </span>
+        </div>
+    `;
+    
+    for (const [dateKey, dayActivities] of groups) {
+        const isCollapsed = collapsedDays.has(dateKey);
+        const dayLabel = formatDayHeader(dateKey, dayActivities.length);
+        const onChainCount = dayActivities.filter(a => a.signature || a.proof?.txSignature).length;
+        
+        html += `
+            <div class="day-group ${isCollapsed ? 'collapsed' : ''}" data-date="${dateKey}" role="region" aria-labelledby="inf-day-label-${dateKey}">
+                <div class="day-header" tabindex="0" role="button" aria-expanded="${!isCollapsed}" aria-controls="inf-day-activities-${dateKey}" onclick="toggleDayGroup('${dateKey}')">
+                    <div class="day-header-left">
+                        <span class="day-toggle" aria-hidden="true">${isCollapsed ? '▶' : '▼'}</span>
+                        <span class="day-label" id="inf-day-label-${dateKey}">${dayLabel}</span>
+                    </div>
+                    <div class="day-header-right">
+                        <span class="day-count">${dayActivities.length} activit${dayActivities.length === 1 ? 'y' : 'ies'}</span>
+                        ${onChainCount > 0 ? `<span class="day-onchain">⛓️ ${onChainCount}</span>` : ''}
+                    </div>
+                </div>
+                <div class="day-activities" id="inf-day-activities-${dateKey}">
+        `;
+        
+        dayActivities.forEach((a, dayIndex) => {
+            const hash = a.hash || a.proof?.hash;
+            const hashDisplay = hash ? `SHA256: ${hash.slice(0, 12)}...${hash.slice(-6)}` : '';
+            const isNew = shouldHighlight && itemIndex < newCount;
+            const tagsHtml = renderActivityTags(a.tags);
+            const walletHtml = renderWalletBadge(a.wallet);
+            const activityId = getActivityId(a);
+            const ariaLabel = `${a.type} activity: ${escapeHtml(a.description.substring(0, 80))}${a.description.length > 80 ? "..." : ""}`;
+            
+            html += `
+                <div class="activity-item ${a.type}${isNew ? ' new-activity' : ''}" 
+                     style="animation-delay: ${Math.min(dayIndex, 5) * 0.04}s" 
+                     data-wallet="${a.wallet || ''}" 
+                     data-activity-id="${activityId}" tabindex="0" role="article" aria-label="${ariaLabel}">
+                    ${renderShareButton(activityId)}
+                    <div class="activity-header">
+                        <div class="activity-badges">
+                            <span class="activity-type">${a.type}</span>
+                            ${getProofBadge(a)}
+                            ${walletHtml}
+                        </div>
+                        <div class="activity-time">${formatTime(a.timestamp)}</div>
+                    </div>
+                    <div class="activity-desc">${escapeHtml(a.description)}</div>
+                    ${tagsHtml}
+                    ${hashDisplay ? `<div class="activity-hash">${hashDisplay}</div>` : ''}
+                </div>
+            `;
+            itemIndex++;
+        });
+        
+        html += `
+                </div>
+            </div>
+        `;
+    }
+    
+    // Add load more container
+    if (remaining > 0) {
+        const loadCount = Math.min(remaining, ACTIVITIES_PER_PAGE);
+        html += `
+            <div id="load-more-container" class="load-more-container">
+                <button id="load-more-btn" class="load-more-btn" onclick="loadMoreActivities()" aria-label="Load ${loadCount} more activities">
+                    📜 Load ${loadCount} More (${remaining} remaining)
+                </button>
+                <div id="load-more-sentinel" class="load-more-sentinel" aria-hidden="true"></div>
+            </div>
+        `;
+    } else {
+        html += `
+            <div id="load-more-container" class="load-more-container">
+                <div class="all-loaded-message">
+                    ✅ All ${sorted.length} activities loaded
+                </div>
+            </div>
+        `;
+    }
+    
+    return html;
+}
+
 // Initialize collapsed days state on load
 initCollapsedDays();
 
@@ -3261,11 +3572,11 @@ renderActivities = function(activities, highlightNew = false) {
     populateTagFilters(activities);
     populateWalletFilters(activities);
     
-    // If filters are active, use filtered rendering
+    // If filters are active, use filtered rendering (no infinite scroll for filtered results)
     if (currentTypeFilter !== 'all' || currentSearchQuery || currentTagFilter || currentWalletFilter || currentDateFrom || currentDateTo) {
         renderFilteredActivities(activities);
     } else {
-        // Use day-grouped rendering
+        // Use day-grouped rendering with infinite scroll
         const feed = document.getElementById('feed');
         if (!activities.length) {
             feed.innerHTML = `
@@ -3282,9 +3593,14 @@ renderActivities = function(activities, highlightNew = false) {
         }
         
         feed.classList.add('refreshing');
-        feed.innerHTML = renderGroupedActivities(activities, highlightNew);
+        // Use limited rendering for infinite scroll performance
+        feed.innerHTML = renderGroupedActivitiesLimited(activities, currentDisplayCount, highlightNew);
         lastRenderedCount = activities.length;
-        setTimeout(() => feed.classList.remove('refreshing'), 500);
+        setTimeout(() => {
+            feed.classList.remove('refreshing');
+            // Initialize infinite scroll observer after render
+            initInfiniteScroll();
+        }, 500);
     }
 };
 
@@ -3308,6 +3624,7 @@ const KEYBOARD_SHORTCUTS = {
     'r': { action: 'resetFilters', description: 'Reset all filters' },
     'e': { action: 'exportJSON', description: 'Export as JSON' },
     'E': { action: 'exportCSV', description: 'Export as CSV' },
+    'l': { action: 'loadMore', description: 'Load more activities' },
     '?': { action: 'showShortcuts', description: 'Show keyboard shortcuts' },
 };
 
@@ -3344,9 +3661,10 @@ function createShortcutsModal() {
                     <div class="shortcut-row"><kbd>6</kbd> Verify</div>
                 </div>
                 <div class="shortcut-section">
-                    <h4>Export</h4>
+                    <h4>Export & More</h4>
                     <div class="shortcut-row"><kbd>e</kbd> Export as JSON</div>
                     <div class="shortcut-row"><kbd>Shift+e</kbd> Export as CSV</div>
+                    <div class="shortcut-row"><kbd>l</kbd> Load more activities</div>
                 </div>
                 <div class="shortcut-section">
                     <h4>Help</h4>
@@ -3417,6 +3735,8 @@ function handleShortcutAction(action) {
         exportActivities('json');
     } else if (action === 'exportCSV') {
         exportActivities('csv');
+    } else if (action === 'loadMore') {
+        loadMoreActivities();
     }
 }
 
@@ -4009,9 +4329,10 @@ createShortcutsModal = function() {
                     <div class="shortcut-row"><kbd>6</kbd> Verify</div>
                 </div>
                 <div class="shortcut-section">
-                    <h4>Export</h4>
+                    <h4>Export & More</h4>
                     <div class="shortcut-row"><kbd>e</kbd> Export as JSON</div>
                     <div class="shortcut-row"><kbd>Shift+e</kbd> Export as CSV</div>
+                    <div class="shortcut-row"><kbd>l</kbd> Load more activities</div>
                 </div>
                 <div class="shortcut-section">
                     <h4>Help</h4>
