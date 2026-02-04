@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 16:06 PST
-**Cycle:** 125
+**Last Updated:** 2026-02-03 16:11 PST
+**Cycle:** 126
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -38,7 +38,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] **Stat card icons** ✅ Cycle 124 - Distinctive colored icons per stat type
 - [x] **Activity pulse animation** ✅ Cycle 125 - Color-coded glow rings for new activities
 - [ ] Improve mobile chart readability
-- [ ] Add loading states for charts
+- [x] Add loading states for charts ✅ Cycle 126
 - [ ] Better empty states for tabs with no data
 
 ### ⚡ Capability
@@ -58,6 +58,15 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 126 (Chart Loading States)
+- Added loading skeleton states for all 5 charts in analytics section
+- Timeline, cumulative, daily charts get animated skeleton bars
+- Breakdown chart gets skeleton doughnut ring
+- Heatmap gets spinning loader
+- Each loading state auto-hides when chart data loads
+- Improves perceived performance on slower connections
+- 290 activities, all signed on-chain
 
 ### Cycle 125 (Activity Pulse Animation)
 - Enhanced new-activity pulse with multi-phase animation + inner glow
@@ -97,14 +106,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - Updated GitHub social link hover from pure #fff to #e0e0e0 for consistency
 - Subtle but noticeable improvement for long reading sessions
 - 278 activities, all signed on-chain
-
-### Cycle 121 (Gradient Accent for Hero Stat)
-- Made "On-Chain %" stat value pop with animated gradient
-- Colors: purple → green → blue (135deg), animates via background-position shift
-- Added rotating conic gradient glow behind the card (#card-onchain)
-- Filter drop-shadow for subtle outer glow effect
-- Full light theme support with adjusted colors
-- 276 activities, all signed on-chain
 
 ---
 
