@@ -2316,6 +2316,178 @@ const server = Bun.serve({
     }
 
     // ==========================================
+    // API: GET /api/activities/:hash/attachments
+    // Get all attachments for an activity
+    // ==========================================
+    if (path.match(/^\/api\/activities\/[a-f0-9]{64}\/attachments$/) && req.method === 'GET') {
+      const hash = path.split('/')[3];
+      const activities = getActivities();
+      const activity = activities.find((a: any) => a.hash === hash);
+      
+      if (!activity) {
+        return Response.json({ 
+          error: 'Activity not found' 
+        }, { status: 404, headers: corsHeaders });
+      }
+      
+      return Response.json({
+        hash,
+        attachments: activity.attachments || [],
+        count: (activity.attachments || []).length
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: POST /api/activities/:hash/attachments
+    // Add an attachment to an activity
+    // Attachments can be images, files, or links
+    // ==========================================
+    if (path.match(/^\/api\/activities\/[a-f0-9]{64}\/attachments$/) && req.method === 'POST') {
+      const hash = path.split('/')[3];
+      
+      try {
+        const body = await req.json() as { 
+          type: 'image' | 'file' | 'link';
+          url: string;
+          name?: string;
+          size?: number;
+          mimeType?: string;
+        };
+        
+        // Validate required fields
+        if (!body.type || !['image', 'file', 'link'].includes(body.type)) {
+          return Response.json({ 
+            error: 'type must be one of: image, file, link' 
+          }, { status: 400, headers: corsHeaders });
+        }
+        
+        if (!body.url || typeof body.url !== 'string') {
+          return Response.json({ 
+            error: 'url is required and must be a string' 
+          }, { status: 400, headers: corsHeaders });
+        }
+        
+        // Validate URL format
+        try {
+          new URL(body.url);
+        } catch {
+          return Response.json({ 
+            error: 'url must be a valid URL' 
+          }, { status: 400, headers: corsHeaders });
+        }
+        
+        // Limit URL length
+        if (body.url.length > 2000) {
+          return Response.json({ 
+            error: 'url cannot exceed 2000 characters' 
+          }, { status: 400, headers: corsHeaders });
+        }
+        
+        // Validate name length
+        if (body.name && body.name.length > 200) {
+          return Response.json({ 
+            error: 'name cannot exceed 200 characters' 
+          }, { status: 400, headers: corsHeaders });
+        }
+        
+        const activities = getActivities();
+        const activityIndex = activities.findIndex((a: any) => a.hash === hash);
+        
+        if (activityIndex === -1) {
+          return Response.json({ 
+            error: 'Activity not found' 
+          }, { status: 404, headers: corsHeaders });
+        }
+        
+        // Initialize attachments array if needed
+        if (!activities[activityIndex].attachments) {
+          activities[activityIndex].attachments = [];
+        }
+        
+        // Limit max attachments
+        if (activities[activityIndex].attachments.length >= 10) {
+          return Response.json({ 
+            error: 'Maximum 10 attachments per activity' 
+          }, { status: 400, headers: corsHeaders });
+        }
+        
+        // Create attachment
+        const attachment = {
+          id: randomUUID().slice(0, 8),
+          type: body.type,
+          url: body.url,
+          name: body.name || body.url.split('/').pop()?.slice(0, 100) || 'attachment',
+          ...(body.size && { size: body.size }),
+          ...(body.mimeType && { mimeType: body.mimeType }),
+          addedAt: new Date().toISOString()
+        };
+        
+        activities[activityIndex].attachments.push(attachment);
+        saveActivities(activities);
+        
+        console.log(`📎 Attachment added to activity: ${hash.slice(0, 8)}... (${attachment.type}: ${attachment.name})`);
+        
+        return Response.json({
+          hash,
+          attachment,
+          totalAttachments: activities[activityIndex].attachments.length,
+          message: 'Attachment added successfully'
+        }, { status: 201, headers: corsHeaders });
+        
+      } catch (e) {
+        return Response.json({ 
+          error: 'Invalid JSON body' 
+        }, { status: 400, headers: corsHeaders });
+      }
+    }
+
+    // ==========================================
+    // API: DELETE /api/activities/:hash/attachments/:id
+    // Remove an attachment from an activity
+    // ==========================================
+    if (path.match(/^\/api\/activities\/[a-f0-9]{64}\/attachments\/[a-f0-9-]+$/) && req.method === 'DELETE') {
+      const parts = path.split('/');
+      const hash = parts[3];
+      const attachmentId = parts[5];
+      
+      const activities = getActivities();
+      const activityIndex = activities.findIndex((a: any) => a.hash === hash);
+      
+      if (activityIndex === -1) {
+        return Response.json({ 
+          error: 'Activity not found' 
+        }, { status: 404, headers: corsHeaders });
+      }
+      
+      const attachments = activities[activityIndex].attachments || [];
+      const attachmentIndex = attachments.findIndex((a: any) => a.id === attachmentId);
+      
+      if (attachmentIndex === -1) {
+        return Response.json({ 
+          error: 'Attachment not found' 
+        }, { status: 404, headers: corsHeaders });
+      }
+      
+      const removed = attachments.splice(attachmentIndex, 1)[0];
+      
+      // Remove attachments array if empty
+      if (attachments.length === 0) {
+        delete activities[activityIndex].attachments;
+      }
+      
+      saveActivities(activities);
+      
+      console.log(`📎 Attachment removed from activity: ${hash.slice(0, 8)}... (${removed.name})`);
+      
+      return Response.json({
+        hash,
+        removed,
+        remainingAttachments: attachments.length,
+        message: 'Attachment removed successfully'
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
     // API: GET /api/activities/:hash/diff
     // Compare an activity with the previous same-type activity
     // Returns description diff, metadata changes, and time delta

@@ -10857,3 +10857,149 @@ body.compare-mode-active .activity-item.compare-selected {
         flex: 1;
     }
 }
+
+/* ==============================================
+   ACTIVITY ATTACHMENTS
+   ============================================== */
+
+.activity-attachments {
+    margin-top: 12px;
+    padding: 12px;
+    background: rgba(0, 150, 255, 0.05);
+    border: 1px solid rgba(0, 150, 255, 0.2);
+    border-radius: 8px;
+}
+
+.attachments-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 10px;
+    font-size: 0.85em;
+    color: var(--text-secondary, #888);
+}
+
+.attachments-icon {
+    font-size: 1em;
+}
+
+.attachments-label {
+    font-weight: 500;
+}
+
+.attachments-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.attachment-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    text-decoration: none;
+    color: var(--text-primary, #e0e0e0);
+    font-size: 0.85em;
+    transition: all 0.2s ease;
+    max-width: 200px;
+}
+
+.attachment-item:hover {
+    background: rgba(0, 150, 255, 0.15);
+    border-color: var(--accent-blue, #0096ff);
+    transform: translateY(-1px);
+}
+
+.attachment-icon {
+    font-size: 1.1em;
+    flex-shrink: 0;
+}
+
+.attachment-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+}
+
+.attachment-size {
+    font-size: 0.8em;
+    color: var(--text-secondary, #888);
+    white-space: nowrap;
+}
+
+/* Image attachments */
+.attachment-image {
+    flex-direction: column;
+    padding: 4px;
+    max-width: 120px;
+    text-align: center;
+}
+
+.attachment-image img {
+    width: 100%;
+    max-width: 110px;
+    max-height: 80px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-bottom: 4px;
+}
+
+.attachment-image .attachment-name {
+    font-size: 0.75em;
+    max-width: 100%;
+}
+
+/* Light theme */
+[data-theme="light"] .activity-attachments {
+    background: rgba(0, 100, 200, 0.05);
+    border-color: rgba(0, 100, 200, 0.2);
+}
+
+[data-theme="light"] .attachment-item {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.1);
+    color: var(--text-primary, #333);
+}
+
+[data-theme="light"] .attachment-item:hover {
+    background: rgba(0, 100, 200, 0.1);
+    border-color: var(--accent-blue, #0077cc);
+}
+
+/* Cyberpunk theme */
+[data-theme="cyberpunk"] .activity-attachments {
+    background: rgba(170, 0, 255, 0.05);
+    border-color: rgba(170, 0, 255, 0.3);
+}
+
+[data-theme="cyberpunk"] .attachment-item:hover {
+    background: rgba(170, 0, 255, 0.2);
+    border-color: var(--accent-purple, #aa00ff);
+    box-shadow: 0 0 8px rgba(170, 0, 255, 0.4);
+}
+
+/* Mobile responsive */
+@media (max-width: 600px) {
+    .attachments-list {
+        gap: 6px;
+    }
+    
+    .attachment-item {
+        max-width: 150px;
+        padding: 5px 8px;
+        font-size: 0.8em;
+    }
+    
+    .attachment-image {
+        max-width: 100px;
+    }
+    
+    .attachment-image img {
+        max-height: 60px;
+    }
+}

@@ -932,6 +932,7 @@ function renderActivities(activities, highlightNew = false) {
         
         const ariaLabel = `${bookmarked ? 'Bookmarked ' : ''}${isPinned ? 'Pinned ' : ''}${a.type} activity: ${escapeHtml(a.description.substring(0, 80))}${a.description.length > 80 ? '...' : ''}`;
         const notesHtml = renderActivityNotes(a, hash);
+        const attachmentsHtml = renderActivityAttachments(a, hash);
         const pinButtonHtml = renderPinButton(hash, isPinned);
         const bookmarkButtonHtml = renderBookmarkButton(hash);
         
@@ -969,6 +970,7 @@ function renderActivities(activities, highlightNew = false) {
             <div class="activity-desc">${escapeHtml(a.description)}</div>
             ${tagsHtml}
             ${notesHtml}
+            ${attachmentsHtml}
             ${hashDisplay ? `<div class="activity-hash">${hashDisplay}</div>` : ''}
         </div>
     `}).join('');
@@ -4887,6 +4889,63 @@ async function saveActivityNotes(hash) {
             saveBtn.textContent = 'Save';
         }
     }
+}
+
+/**
+ * Render attachments section for an activity
+ * @param {Object} activity - The activity object
+ * @param {string} hash - The activity hash
+ * @returns {string} HTML string for the attachments section
+ */
+function renderActivityAttachments(activity, hash) {
+    const attachments = activity.attachments || [];
+    if (attachments.length === 0) return '';
+    
+    const attachmentItems = attachments.map(att => {
+        const typeIcon = att.type === 'image' ? '🖼️' : att.type === 'file' ? '📄' : '🔗';
+        const isImage = att.type === 'image' || (att.mimeType && att.mimeType.startsWith('image/'));
+        const sizeStr = att.size ? ` (${formatBytes(att.size)})` : '';
+        
+        if (isImage) {
+            return `
+                <a href="${escapeHtml(att.url)}" target="_blank" rel="noopener" class="attachment-item attachment-image" title="${escapeHtml(att.name)}">
+                    <img src="${escapeHtml(att.url)}" alt="${escapeHtml(att.name)}" loading="lazy" onerror="this.onerror=null;this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22><text y=%2232%22 font-size=%2232%22>🖼️</text></svg>';">
+                    <span class="attachment-name">${escapeHtml(att.name)}</span>
+                </a>
+            `;
+        }
+        
+        return `
+            <a href="${escapeHtml(att.url)}" target="_blank" rel="noopener" class="attachment-item attachment-${att.type}" title="${escapeHtml(att.name)}${sizeStr}">
+                <span class="attachment-icon">${typeIcon}</span>
+                <span class="attachment-name">${escapeHtml(att.name)}</span>
+                ${sizeStr ? `<span class="attachment-size">${sizeStr}</span>` : ''}
+            </a>
+        `;
+    }).join('');
+    
+    return `
+        <div class="activity-attachments" data-hash="${hash}">
+            <div class="attachments-header">
+                <span class="attachments-icon">📎</span>
+                <span class="attachments-label">Attachments (${attachments.length})</span>
+            </div>
+            <div class="attachments-list">${attachmentItems}</div>
+        </div>
+    `;
+}
+
+/**
+ * Format bytes to human-readable string
+ * @param {number} bytes - Size in bytes
+ * @returns {string} Formatted size string
+ */
+function formatBytes(bytes) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
 
 function renderActivityTags(tags) {

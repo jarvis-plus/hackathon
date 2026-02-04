@@ -342,6 +342,168 @@
         }
       }
     },
+    "/api/activities/{hash}/attachments": {
+      "get": {
+        "tags": ["Activities"],
+        "summary": "Get attachments",
+        "description": "Get all attachments for an activity.",
+        "operationId": "getActivityAttachments",
+        "parameters": [
+          {
+            "name": "hash",
+            "in": "path",
+            "required": true,
+            "description": "SHA256 hash of the activity",
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attachments list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "hash": {"type": "string"},
+                    "attachments": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/Attachment"}
+                    },
+                    "count": {"type": "integer"}
+                  }
+                }
+              }
+            }
+          },
+          "404": {"description": "Activity not found"}
+        }
+      },
+      "post": {
+        "tags": ["Activities"],
+        "summary": "Add attachment",
+        "description": "Add an attachment (image, file, or link) to an activity. Maximum 10 attachments per activity.",
+        "operationId": "addActivityAttachment",
+        "parameters": [
+          {
+            "name": "hash",
+            "in": "path",
+            "required": true,
+            "description": "SHA256 hash of the activity",
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["type", "url"],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["image", "file", "link"],
+                    "description": "Type of attachment"
+                  },
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "maxLength": 2000,
+                    "description": "URL of the attachment"
+                  },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "description": "Display name for the attachment"
+                  },
+                  "size": {
+                    "type": "integer",
+                    "description": "File size in bytes (optional)"
+                  },
+                  "mimeType": {
+                    "type": "string",
+                    "description": "MIME type (optional)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Attachment added",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "hash": {"type": "string"},
+                    "attachment": {"$ref": "#/components/schemas/Attachment"},
+                    "totalAttachments": {"type": "integer"},
+                    "message": {"type": "string"}
+                  }
+                }
+              }
+            }
+          },
+          "400": {"description": "Invalid input or max attachments reached"},
+          "404": {"description": "Activity not found"}
+        }
+      }
+    },
+    "/api/activities/{hash}/attachments/{attachmentId}": {
+      "delete": {
+        "tags": ["Activities"],
+        "summary": "Remove attachment",
+        "description": "Remove an attachment from an activity.",
+        "operationId": "removeActivityAttachment",
+        "parameters": [
+          {
+            "name": "hash",
+            "in": "path",
+            "required": true,
+            "description": "SHA256 hash of the activity",
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          },
+          {
+            "name": "attachmentId",
+            "in": "path",
+            "required": true,
+            "description": "Attachment ID",
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attachment removed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "hash": {"type": "string"},
+                    "removed": {"$ref": "#/components/schemas/Attachment"},
+                    "remainingAttachments": {"type": "integer"},
+                    "message": {"type": "string"}
+                  }
+                }
+              }
+            }
+          },
+          "404": {"description": "Activity or attachment not found"}
+        }
+      }
+    },
     "/api/activities/{hash}/diff": {
       "get": {
         "tags": ["Activities"],
@@ -1903,6 +2065,49 @@
             "type": "string",
             "format": "date-time",
             "description": "Timestamp when activity was pinned"
+          },
+          "attachments": {
+            "type": "array",
+            "description": "Attached files, images, or links",
+            "items": {"$ref": "#/components/schemas/Attachment"}
+          }
+        }
+      },
+      "Attachment": {
+        "type": "object",
+        "description": "File, image, or link attachment on an activity",
+        "required": ["id", "type", "url", "name", "addedAt"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique attachment identifier"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["image", "file", "link"],
+            "description": "Type of attachment"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL of the attachment"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name"
+          },
+          "size": {
+            "type": "integer",
+            "description": "File size in bytes (optional)"
+          },
+          "mimeType": {
+            "type": "string",
+            "description": "MIME type (optional)"
+          },
+          "addedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the attachment was added"
           }
         }
       },
