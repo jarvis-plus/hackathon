@@ -710,9 +710,11 @@ function renderActivities(activities, highlightNew = false) {
         const isNew = shouldHighlight && i < newCount;
         const tagsHtml = renderActivityTags(a.tags);
         const walletHtml = renderWalletBadge(a.wallet);
+        const activityId = getActivityId(a);
         
         return `
-        <div class="activity-item ${a.type}${isNew ? ' new-activity' : ''}" style="animation-delay: ${i * 0.04}s" data-wallet="${a.wallet || ''}">
+        <div class="activity-item ${a.type}${isNew ? ' new-activity' : ''}" style="animation-delay: ${i * 0.04}s" data-wallet="${a.wallet || ''}" data-activity-id="${activityId}">
+            ${renderShareButton(activityId)}
             <div class="activity-header">
                 <div class="activity-badges">
                     <span class="activity-type">${a.type}</span>
@@ -2537,9 +2539,11 @@ function renderFilteredActivities(activities) {
         const hashDisplay = hash ? `SHA256: ${hash.slice(0, 12)}...${hash.slice(-6)}` : '';
         const tagsHtml = renderActivityTags(a.tags);
         const walletHtml = renderActivityWallet(a);
+        const activityId = getActivityId(a);
         
         return `
-        <div class="activity-item ${a.type}" style="animation-delay: ${Math.min(i, 10) * 0.04}s">
+        <div class="activity-item ${a.type}" style="animation-delay: ${Math.min(i, 10) * 0.04}s" data-activity-id="${activityId}">
+            ${renderShareButton(activityId)}
             <div class="activity-header">
                 <div class="activity-badges">
                     <span class="activity-type">${a.type}</span>
@@ -2825,3 +2829,154 @@ function addKeyboardHint() {
 
 // Initialize keyboard shortcuts on load
 document.addEventListener('DOMContentLoaded', addKeyboardHint);
+
+// ============================================
+// ACTIVITY DEEP LINKS
+// ============================================
+
+/**
+ * Get a short unique ID for an activity (first 8 chars of hash)
+ */
+function getActivityId(activity) {
+    const hash = activity.hash || activity.proof?.hash;
+    if (hash) return hash.slice(0, 8);
+    // Fallback: create ID from timestamp + type
+    const ts = new Date(activity.timestamp).getTime();
+    return `${activity.type}-${ts.toString(36)}`;
+}
+
+/**
+ * Generate full URL with activity hash
+ */
+function getActivityUrl(activityId) {
+    const url = new URL(window.location.href);
+    url.hash = `activity-${activityId}`;
+    return url.toString();
+}
+
+/**
+ * Copy activity link to clipboard and show feedback
+ */
+function copyActivityLink(activityId, buttonElement) {
+    const url = getActivityUrl(activityId);
+    
+    navigator.clipboard.writeText(url).then(() => {
+        // Update button state
+        if (buttonElement) {
+            const originalContent = buttonElement.innerHTML;
+            buttonElement.classList.add('copied');
+            buttonElement.innerHTML = '';
+            
+            setTimeout(() => {
+                buttonElement.classList.remove('copied');
+                buttonElement.innerHTML = originalContent;
+            }, 1500);
+        }
+        
+        // Show toast
+        showCopyToast('Link copied to clipboard!');
+        
+        // Play sound
+        playNotificationSound('new');
+        
+        // Update URL without scrolling
+        history.replaceState(null, '', url);
+    }).catch(err => {
+        console.error('Failed to copy link:', err);
+        showCopyToast('Failed to copy link', true);
+    });
+}
+
+/**
+ * Show a toast notification
+ */
+function showCopyToast(message, isError = false) {
+    // Remove existing toast if any
+    const existing = document.querySelector('.copy-toast');
+    if (existing) existing.remove();
+    
+    const toast = document.createElement('div');
+    toast.className = 'copy-toast';
+    toast.textContent = message;
+    if (isError) {
+        toast.style.background = 'var(--accent-red)';
+        toast.style.color = '#fff';
+    }
+    document.body.appendChild(toast);
+    
+    // Trigger animation
+    requestAnimationFrame(() => {
+        toast.classList.add('visible');
+    });
+    
+    // Remove after delay
+    setTimeout(() => {
+        toast.classList.remove('visible');
+        setTimeout(() => toast.remove(), 300);
+    }, 2500);
+}
+
+/**
+ * Check URL hash and scroll to activity on page load
+ */
+function handleDeepLink() {
+    const hash = window.location.hash;
+    if (!hash || !hash.startsWith('#activity-')) return;
+    
+    const activityId = hash.replace('#activity-', '');
+    scrollToActivity(activityId);
+}
+
+/**
+ * Scroll to and highlight a specific activity
+ */
+function scrollToActivity(activityId, retryCount = 0) {
+    const maxRetries = 10;
+    const element = document.querySelector(`[data-activity-id="${activityId}"]`);
+    
+    if (element) {
+        // Remove any existing highlights
+        document.querySelectorAll('.activity-item.highlighted').forEach(el => {
+            el.classList.remove('highlighted');
+        });
+        
+        // Scroll into view
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Add highlight after a short delay (let scroll complete)
+        setTimeout(() => {
+            element.classList.add('highlighted');
+            
+            // Remove highlight class after animation completes (but keep subtle border)
+            setTimeout(() => {
+                element.classList.remove('highlighted');
+                element.style.borderColor = 'var(--accent-green)';
+            }, 2500);
+        }, 300);
+        
+        return true;
+    } else if (retryCount < maxRetries) {
+        // Activities might not be loaded yet, retry
+        setTimeout(() => scrollToActivity(activityId, retryCount + 1), 300);
+        return false;
+    }
+    
+    return false;
+}
+
+// Handle deep link on page load
+document.addEventListener('DOMContentLoaded', handleDeepLink);
+
+// Handle hash changes (e.g., browser back/forward)
+window.addEventListener('hashchange', handleDeepLink);
+
+/**
+ * Render share button HTML for activity cards
+ */
+function renderShareButton(activityId) {
+    return `<button class="activity-share-btn" 
+                    onclick="event.stopPropagation(); copyActivityLink('${activityId}', this);" 
+                    title="Copy link to this activity">
+        🔗
+    </button>`;
+}

@@ -3574,3 +3574,150 @@
         font-size: 0.8rem;
     }
 }
+
+/* ============================================
+   ACTIVITY DEEP LINKS
+   ============================================ */
+
+/* Share button on activity cards */
+.activity-share-btn {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    z-index: 5;
+}
+
+.activity-item:hover .activity-share-btn {
+    opacity: 0.6;
+}
+
+.activity-share-btn:hover {
+    opacity: 1 !important;
+    background: var(--bg-primary);
+    border-color: var(--border);
+    color: var(--accent-green);
+    transform: scale(1.1);
+}
+
+.activity-share-btn:active {
+    transform: scale(0.95);
+}
+
+/* Copied state feedback */
+.activity-share-btn.copied {
+    opacity: 1 !important;
+    background: var(--accent-green);
+    border-color: var(--accent-green);
+    color: #000;
+}
+
+.activity-share-btn.copied::after {
+    content: '✓';
+    position: absolute;
+    font-size: 0.7rem;
+    font-weight: bold;
+}
+
+/* Make activity-item position relative for share button */
+.activity-item {
+    position: relative;
+}
+
+/* Highlighted activity (from deep link) */
+.activity-item.highlighted {
+    animation: highlightPulse 2s ease-out;
+    border-color: var(--accent-green) !important;
+    box-shadow: 0 0 20px rgba(0, 255, 170, 0.3), 0 0 40px rgba(0, 255, 170, 0.15);
+}
+
+@keyframes highlightPulse {
+    0% {
+        box-shadow: 0 0 0 rgba(0, 255, 170, 0.5);
+        border-color: var(--accent-green);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(0, 255, 170, 0.4), 0 0 60px rgba(0, 255, 170, 0.2);
+        border-color: var(--accent-green);
+    }
+    100% {
+        box-shadow: 0 0 15px rgba(0, 255, 170, 0.2);
+        border-color: var(--accent-green);
+    }
+}
+
+/* Deep link indicator in activity header */
+.activity-id {
+    display: none;
+    font-family: 'SF Mono', 'Monaco', monospace;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    margin-left: auto;
+    padding: 0.15rem 0.4rem;
+    background: var(--bg-primary);
+    border-radius: 4px;
+    opacity: 0.6;
+}
+
+.activity-item:hover .activity-id {
+    display: inline-block;
+}
+
+/* Toast notification for copy confirmation */
+.copy-toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--accent-green);
+    color: #000;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    box-shadow: 0 4px 20px rgba(0, 255, 170, 0.3);
+    z-index: 1000;
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
+}
+
+.copy-toast.visible {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+/* Light mode */
+[data-theme="light"] .activity-share-btn:hover {
+    background: var(--bg-secondary);
+    color: var(--accent-green);
+}
+
+[data-theme="light"] .activity-item.highlighted {
+    box-shadow: 0 0 20px rgba(0, 199, 123, 0.25), 0 0 40px rgba(0, 199, 123, 0.12);
+}
+
+[data-theme="light"] .copy-toast {
+    box-shadow: 0 4px 20px rgba(0, 199, 123, 0.25);
+}
+
+/* Mobile adjustments for share button */
+@media (max-width: 600px) {
+    .activity-share-btn {
+        opacity: 0.5;
+        width: 32px;
+        height: 32px;
+    }
+}

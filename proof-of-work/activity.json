@@ -2721,5 +2721,22 @@
     "hash": "bb2e38e40c5a971eb8c3299087defa17432c4bfd7220ef982c543b1dfd0af40f",
     "signature": "5Vv4aSGxiyUTsLtgfg2psZJ3Zn55tqnkpUH61uBTKroef9PM3KiuqLLLvDbBuGgmowJRA2R211xbj6WAWHwQNS7x",
     "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
+  },
+  {
+    "timestamp": "2026-02-04T02:36:08.074Z",
+    "type": "commit",
+    "description": "feat: Cycle 142 - keyboard shortcuts for power users",
+    "hash": "815b8035b8f7d6249c8d01fce073114894139aada57bff9c3cbf6611807a7b82",
+    "signature": "5K9JnG4L9vFcdxnjYR1tNs7JjvyeojmBb8GnzxTZaTJTzC3NoJDQQdPHda9VEowPXAUQLAJviHFDPe7HhyHNbdiN",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
+  },
+  {
+    "timestamp": "2026-02-04T02:39:00Z",
+    "type": "build",
+    "description": "Cycle 143: Activity deep links - Added shareable URL links for individual activities. Hover over any activity to see a 🔗 share button. Clicking copies a direct link (e.g., #activity-abc123) to clipboard. Visiting a link auto-scrolls to and highlights the activity with a green pulse animation. Includes toast notification on copy, URL hash updates on share, and handles browser back/forward navigation. ~180 lines of JavaScript, ~130 lines of CSS with light/dark mode support.",
+    "metadata": {},
+    "hash": "f5b1af74f198453b635f2d64337b21d2a481f1242696adb780d9af7b5addd5f6",
+    "signature": "63UMfcmu7nvTdKEYJUGdkv86QZCpQTVAnTBfSNYGLENsVcJQjHn7H8CjwdZvYpi5WT19YdoUzdKsny42Whb119mn",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
   }
 ]
