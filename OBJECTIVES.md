@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
 **Last Updated:** 2026-02-03 20:55 PST
-**Cycle:** 166
+**Cycle:** 167
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -85,7 +85,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Activity comments/notes (add notes to activities) ✅ Cycle 163
 - [x] Activity pinning (pin important activities to top) ✅ Cycle 164
 - [x] Email digest (daily/weekly summary emails) ✅ Cycle 165-166
-- [ ] Slack/Discord bot integration
+- [x] Slack/Discord webhook integration ✅ Cycle 166 - Format field for Slack Block Kit and Discord Embed
 - [ ] Activity diff view (show changes between activities)
 - [ ] Performance dashboard (response times, memory usage)
 - [ ] Multi-theme support (more color schemes)
@@ -95,6 +95,25 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 167 (Slack/Discord Webhook Integration)
+- Added format field to webhook subscriptions for native Slack/Discord support
+- **Format Options**:
+  - `json` (default): Standard JSON payload with event, timestamp, data
+  - `slack`: Slack Block Kit format with header, fields, context, actions
+  - `discord`: Discord Embed format with color-coded embeds
+- **Implementation**:
+  - Added `format` field to WebhookSubscription interface
+  - formatSlackPayload(): Block Kit with activity type emoji, on-chain status, hash
+  - formatDiscordPayload(): Discord embed with type-based colors, fields, footer
+  - Updated deliverWebhook() to format based on webhook settings
+  - Validation for format field in POST /api/webhooks
+  - Format shown in GET /api/webhooks response
+- **Slack Features**: Header block, 2-column fields, context with hash/time, dashboard button
+- **Discord Features**: Colored embed per type, 3 inline fields, footer with timestamp
+- **OpenAPI Updated**: WebhookSummary, WebhookCreate, WebhookCreated schemas with format
+- ~180 lines for formatters, ~30 lines for endpoint changes
+- 426 activities, all signed on-chain
 
 ### Cycle 166 (Email Digest Subscriptions API)
 - Extended email digest with subscription management system
@@ -174,26 +193,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - **Server Comments Updated**: Key Endpoints section now lists notes APIs
 - ~110 lines added to server.ts, ~150 lines to openapi.json
 - 410 activities, all signed on-chain
-
-### Cycle 162 (OpenAPI/Swagger Documentation)
-- Implemented auto-generated API documentation for the Proof of Work API
-- **New Files**: `api/openapi.json` - Complete OpenAPI 3.0 specification (~33KB)
-- **New Endpoints**:
-  - `GET /api/openapi.json` - Raw OpenAPI spec (JSON)
-  - `GET /api/docs` - Interactive Swagger UI
-- **Spec Contents**:
-  - 16 API paths documented with request/response schemas
-  - 15 reusable component schemas (Activity, Stats, Webhook, etc.)
-  - Full authentication documentation (API keys, Bearer tokens)
-  - Rate limiting details for all endpoint categories
-  - Tag organization: Activities, Verification, Stats, Webhooks, System, Backup
-- **Swagger UI Features**:
-  - Custom header with dashboard/GitHub links
-  - "Try it out" functionality enabled
-  - Deep linking support
-  - Dark gradient header matching dashboard theme
-- ~100 lines added to server.ts, ~900 lines in openapi.json
-- 407 activities, all signed on-chain
 
 ---
 
