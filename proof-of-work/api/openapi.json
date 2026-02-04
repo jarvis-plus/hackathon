@@ -47,6 +47,10 @@
     {
       "name": "Backup",
       "description": "Backup and restore operations"
+    },
+    {
+      "name": "Digest",
+      "description": "Email digest subscription management"
     }
   ],
   "paths": {
@@ -1000,6 +1004,264 @@
           }
         }
       }
+    },
+    "/api/digest": {
+      "get": {
+        "tags": ["Digest"],
+        "summary": "Generate digest",
+        "description": "Generate an activity digest for a given period. Returns HTML by default (email-ready).",
+        "operationId": "getDigest",
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "description": "Digest period",
+            "schema": {
+              "type": "string",
+              "enum": ["daily", "weekly", "monthly"],
+              "default": "daily"
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "description": "Output format",
+            "schema": {
+              "type": "string",
+              "enum": ["html", "text", "json"],
+              "default": "html"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "description": "End date for the digest period (ISO format)",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Digest content",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DigestData"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/digest/subscriptions": {
+      "get": {
+        "tags": ["Digest"],
+        "summary": "List digest subscriptions",
+        "description": "Returns all email digest subscriptions. Email addresses are partially masked for privacy.",
+        "operationId": "listDigestSubscriptions",
+        "responses": {
+          "200": {
+            "description": "List of subscriptions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "count": {
+                      "type": "integer"
+                    },
+                    "subscriptions": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DigestSubscription"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Digest"],
+        "summary": "Subscribe to digest",
+        "description": "Subscribe an email address to receive periodic activity digests.",
+        "operationId": "createDigestSubscription",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email"],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email address to send digests to"
+                  },
+                  "frequency": {
+                    "type": "string",
+                    "enum": ["daily", "weekly", "monthly"],
+                    "default": "daily",
+                    "description": "How often to send digests"
+                  },
+                  "timezone": {
+                    "type": "string",
+                    "default": "UTC",
+                    "description": "Timezone for scheduling"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Subscription created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DigestSubscription"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid email or frequency"
+          },
+          "409": {
+            "description": "Email already subscribed"
+          }
+        }
+      }
+    },
+    "/api/digest/subscriptions/{id}": {
+      "get": {
+        "tags": ["Digest"],
+        "summary": "Get subscription",
+        "description": "Get details for a specific digest subscription.",
+        "operationId": "getDigestSubscription",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Subscription ID (UUID)",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Subscription details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DigestSubscription"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Subscription not found"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Digest"],
+        "summary": "Update subscription",
+        "description": "Update subscription frequency or status.",
+        "operationId": "updateDigestSubscription",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "frequency": {
+                    "type": "string",
+                    "enum": ["daily", "weekly", "monthly"]
+                  },
+                  "active": {
+                    "type": "boolean"
+                  },
+                  "timezone": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Subscription updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DigestSubscription"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Subscription not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Digest"],
+        "summary": "Unsubscribe",
+        "description": "Remove a digest subscription (unsubscribe).",
+        "operationId": "deleteDigestSubscription",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Unsubscribed successfully"
+          },
+          "404": {
+            "description": "Subscription not found"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1384,6 +1646,11 @@
             "type": "array",
             "items": {"type": "string"}
           },
+          "format": {
+            "type": "string",
+            "enum": ["json", "slack", "discord"],
+            "description": "Payload format: json (default), slack (Block Kit), discord (Embed)"
+          },
           "createdAt": {"type": "string", "format": "date-time"},
           "lastDelivery": {"type": "string", "format": "date-time", "nullable": true},
           "failureCount": {"type": "integer"},
@@ -1412,6 +1679,12 @@
             },
             "default": ["*"],
             "description": "Event types to subscribe to"
+          },
+          "format": {
+            "type": "string",
+            "enum": ["json", "slack", "discord"],
+            "default": "json",
+            "description": "Payload format for webhook delivery. Use 'slack' for Slack incoming webhooks (Block Kit format) or 'discord' for Discord webhooks (Embed format)."
           }
         }
       },
@@ -1423,6 +1696,11 @@
           "events": {
             "type": "array",
             "items": {"type": "string"}
+          },
+          "format": {
+            "type": "string",
+            "enum": ["json", "slack", "discord"],
+            "description": "Payload format configured for this webhook"
           },
           "createdAt": {"type": "string"},
           "active": {"type": "boolean"},
@@ -1535,6 +1813,103 @@
           "error": {"type": "string"},
           "message": {"type": "string"},
           "hint": {"type": "string"}
+        }
+      },
+      "DigestSubscription": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Subscription ID"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email address (partially masked for privacy)"
+          },
+          "frequency": {
+            "type": "string",
+            "enum": ["daily", "weekly", "monthly"],
+            "description": "How often digests are sent"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the subscription was created"
+          },
+          "lastSent": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the last digest was sent"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Whether the subscription is active"
+          },
+          "timezone": {
+            "type": "string",
+            "description": "Timezone for scheduling (e.g., UTC, America/Los_Angeles)"
+          }
+        }
+      },
+      "DigestData": {
+        "type": "object",
+        "properties": {
+          "period": {
+            "type": "string",
+            "enum": ["daily", "weekly", "monthly"]
+          },
+          "dateRange": {
+            "type": "object",
+            "properties": {
+              "start": {"type": "string", "format": "date-time"},
+              "end": {"type": "string", "format": "date-time"}
+            }
+          },
+          "summary": {
+            "type": "object",
+            "properties": {
+              "totalActivities": {"type": "integer"},
+              "onChainProofs": {"type": "integer"},
+              "verificationRate": {"type": "integer"},
+              "uniqueDays": {"type": "integer"},
+              "pinnedCount": {"type": "integer"}
+            }
+          },
+          "breakdown": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {"type": "string"},
+                "count": {"type": "integer"}
+              }
+            }
+          },
+          "highlights": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {"type": "string"},
+                "description": {"type": "string"},
+                "timestamp": {"type": "string", "format": "date-time"},
+                "pinned": {"type": "boolean"}
+              }
+            }
+          },
+          "links": {
+            "type": "object",
+            "properties": {
+              "dashboard": {"type": "string", "format": "uri"},
+              "api": {"type": "string", "format": "uri"},
+              "rss": {"type": "string", "format": "uri"}
+            }
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       }
     }

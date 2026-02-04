@@ -3389,5 +3389,21 @@
     "hash": "4a84d18b85629b6be9ce10a86f50b4a5179634f2e6c8d50dc68a54edde0f3b9d",
     "signature": "2dmMRaCDGxnmVLpo71adxNdDM1SVmzxZjpDP1R9nTiTLcYKP1W9E6WMTaBh7EoAg6oirmrJZKH863hMwnYB3tyRb",
     "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
+  },
+  {
+    "timestamp": "2026-02-04T04:49:53.107Z",
+    "type": "commit",
+    "description": "Cycle 165: Email digest API endpoint",
+    "hash": "639de9e8ad83b99adbc19d04ffc6a0e989f5d2237d9fa7000c5cc6f29a4ea0fb",
+    "signature": "2ATaFmquQbLGLMjyHgURi8pX6hTqtFGmK3U2Xn3tMGGFB9vk3nzsC25yRnAy7k6Hu5QJRJReqh8sdqDV9EBaBXHQ",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
+  },
+  {
+    "timestamp": "2026-02-04T04:52:58.660Z",
+    "type": "build",
+    "description": "Cycle 165: Implemented email digest subscriptions API. New endpoints: GET/POST/PATCH/DELETE /api/digest/subscriptions for managing email subscriptions. Created send-digest.ts script for cron-based email sending via gog/Gmail. HTML digests with stats, highlights, and activity breakdown. Updated OpenAPI docs with DigestSubscription and DigestData schemas. Added documentation to README.",
+    "hash": "ddd36f04ee97605c6cdf9f73dd1ba7defc156febb1a9d0876b873a96b947cab3",
+    "signature": "4tW4vje5yuX2xZDK3whU65qx2kRHW2i3C578R1XCeT6qAdPRcccUn1ibJ7bwoWaU7DZAHvKeYMudpDWibXeY1qax",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
   }
 ]

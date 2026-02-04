@@ -102,10 +102,173 @@ interface WebhookSubscription {
   url: string;
   secret?: string;
   events: string[];
+  format?: 'json' | 'slack' | 'discord'; // Output format (default: json)
   createdAt: string;
   lastDelivery?: string;
   failureCount: number;
   active: boolean;
+}
+
+// ==============================================
+// SLACK & DISCORD WEBHOOK FORMATTERS
+// ==============================================
+
+/**
+ * Format activity payload for Slack Block Kit.
+ * Creates a rich message with activity details, on-chain status, and links.
+ */
+function formatSlackPayload(eventType: string, payload: any): object {
+  const activity = payload.activity || payload;
+  const timestamp = new Date().toISOString();
+  
+  // Emoji for activity types
+  const typeEmoji: Record<string, string> = {
+    'build': '🔨',
+    'commit': '📝',
+    'decision': '🎯',
+    'research': '🔍',
+    'email': '📧',
+    'calendar': '📅',
+    'browser': '🌐',
+    'default': '⚡'
+  };
+  
+  const emoji = typeEmoji[activity?.type] || typeEmoji.default;
+  const onChainStatus = activity?.signature ? '✅ On-Chain' : '⏳ Pending';
+  const activityHash = activity?.hash ? activity.hash.substring(0, 8) : 'N/A';
+  
+  return {
+    blocks: [
+      {
+        type: 'header',
+        text: {
+          type: 'plain_text',
+          text: `${emoji} New Activity: ${eventType}`,
+          emoji: true
+        }
+      },
+      {
+        type: 'section',
+        fields: [
+          {
+            type: 'mrkdwn',
+            text: `*Type:*\n${activity?.type || 'unknown'}`
+          },
+          {
+            type: 'mrkdwn',
+            text: `*Status:*\n${onChainStatus}`
+          }
+        ]
+      },
+      {
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: `*Description:*\n${activity?.description || 'No description'}`
+        }
+      },
+      {
+        type: 'context',
+        elements: [
+          {
+            type: 'mrkdwn',
+            text: `📋 Hash: \`${activityHash}\` | 🕐 ${new Date(activity?.timestamp || timestamp).toLocaleString()}`
+          }
+        ]
+      },
+      {
+        type: 'actions',
+        elements: [
+          {
+            type: 'button',
+            text: {
+              type: 'plain_text',
+              text: '🔗 View Dashboard',
+              emoji: true
+            },
+            url: 'https://jarvis.tail6a9bde.ts.net/pow/',
+            action_id: 'view_dashboard'
+          }
+        ]
+      }
+    ],
+    // Fallback text for notifications
+    text: `${emoji} ${eventType}: ${activity?.description || 'New activity'} (${onChainStatus})`
+  };
+}
+
+/**
+ * Format activity payload for Discord Embed.
+ * Creates a rich embed with activity details, color-coded by type.
+ */
+function formatDiscordPayload(eventType: string, payload: any): object {
+  const activity = payload.activity || payload;
+  const timestamp = new Date().toISOString();
+  
+  // Colors for activity types (Discord uses decimal)
+  const typeColors: Record<string, number> = {
+    'build': 0x10B981,    // Green
+    'commit': 0x6366F1,   // Indigo
+    'decision': 0xF59E0B, // Amber
+    'research': 0x8B5CF6, // Purple
+    'email': 0x3B82F6,    // Blue
+    'calendar': 0xEC4899, // Pink
+    'browser': 0x14B8A6,  // Teal
+    'default': 0x6B7280   // Gray
+  };
+  
+  // Emoji for activity types
+  const typeEmoji: Record<string, string> = {
+    'build': '🔨',
+    'commit': '📝',
+    'decision': '🎯',
+    'research': '🔍',
+    'email': '📧',
+    'calendar': '📅',
+    'browser': '🌐',
+    'default': '⚡'
+  };
+  
+  const color = typeColors[activity?.type] || typeColors.default;
+  const emoji = typeEmoji[activity?.type] || typeEmoji.default;
+  const onChainStatus = activity?.signature ? '✅ On-Chain' : '⏳ Pending';
+  const activityHash = activity?.hash ? activity.hash.substring(0, 8) : 'N/A';
+  
+  return {
+    embeds: [
+      {
+        title: `${emoji} ${eventType}`,
+        description: activity?.description || 'No description',
+        color: color,
+        fields: [
+          {
+            name: 'Type',
+            value: activity?.type || 'unknown',
+            inline: true
+          },
+          {
+            name: 'Status',
+            value: onChainStatus,
+            inline: true
+          },
+          {
+            name: 'Hash',
+            value: `\`${activityHash}\``,
+            inline: true
+          }
+        ],
+        footer: {
+          text: 'Jarvis Proof of Work',
+          icon_url: 'https://jarvis.tail6a9bde.ts.net/pow/favicon.png'
+        },
+        timestamp: activity?.timestamp || timestamp,
+        url: 'https://jarvis.tail6a9bde.ts.net/pow/'
+      }
+    ],
+    // Optional: username and avatar for the webhook
+    username: 'Jarvis PoW',
+    avatar_url: 'https://jarvis.tail6a9bde.ts.net/pow/favicon.png'
+  };
 }
 
 /**
@@ -174,11 +337,27 @@ async function deliverWebhook(
     return true; // Not subscribed, but not a failure
   }
   
-  const body = JSON.stringify({
-    event: eventType,
-    timestamp: new Date().toISOString(),
-    data: payload
-  });
+  // Format payload based on webhook format setting
+  let formattedPayload: object;
+  const format = webhook.format || 'json';
+  
+  switch (format) {
+    case 'slack':
+      formattedPayload = formatSlackPayload(eventType, payload);
+      break;
+    case 'discord':
+      formattedPayload = formatDiscordPayload(eventType, payload);
+      break;
+    case 'json':
+    default:
+      formattedPayload = {
+        event: eventType,
+        timestamp: new Date().toISOString(),
+        data: payload
+      };
+  }
+  
+  const body = JSON.stringify(formattedPayload);
   
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -2461,7 +2640,12 @@ Colosseum Agent Hackathon 2026`;
       }
       
       try {
-        const body = await req.json() as { url?: string; secret?: string; events?: string[] };
+        const body = await req.json() as { 
+          url?: string; 
+          secret?: string; 
+          events?: string[];
+          format?: 'json' | 'slack' | 'discord';
+        };
         
         // Validate URL
         if (!body.url) {
@@ -2493,6 +2677,16 @@ Colosseum Agent Hackathon 2026`;
           }
         }
         
+        // Validate format (json, slack, discord)
+        const validFormats = ['json', 'slack', 'discord'];
+        const format = body.format || 'json';
+        if (!validFormats.includes(format)) {
+          return Response.json({ 
+            error: `Invalid format: ${format}. Valid formats: ${validFormats.join(', ')}`,
+            hint: 'Use "slack" for Slack webhooks or "discord" for Discord webhooks'
+          }, { status: 400, headers: corsHeaders });
+        }
+        
         // Check for duplicate URL
         const webhooks = getWebhooks();
         if (webhooks.find(w => w.url === body.url)) {
@@ -2507,6 +2701,7 @@ Colosseum Agent Hackathon 2026`;
           url: body.url,
           secret: body.secret,
           events,
+          format: format as 'json' | 'slack' | 'discord',
           createdAt: new Date().toISOString(),
           failureCount: 0,
           active: true
@@ -2515,16 +2710,24 @@ Colosseum Agent Hackathon 2026`;
         webhooks.push(webhook);
         saveWebhooks(webhooks);
         
-        console.log(`🔔 New webhook registered: ${webhook.url} (events: ${events.join(', ')})`);
+        console.log(`🔔 New webhook registered: ${webhook.url} (format: ${format}, events: ${events.join(', ')})`);
+        
+        // Format-specific example payloads
+        const examplePayloads: Record<string, string> = {
+          json: '{"event":"test","timestamp":"' + new Date().toISOString() + '","data":{}}',
+          slack: '{"blocks":[{"type":"section","text":{"type":"mrkdwn","text":"Test webhook"}}]}',
+          discord: '{"embeds":[{"title":"Test","description":"Webhook test"}]}'
+        };
         
         return Response.json({
           id: webhook.id,
           url: webhook.url,
           events: webhook.events,
+          format: webhook.format,
           createdAt: webhook.createdAt,
           active: webhook.active,
-          message: 'Webhook registered successfully. You will receive POST requests at this URL when activities occur.',
-          testEndpoint: `curl -X POST ${body.url} -H "Content-Type: application/json" -d '{"event":"test","timestamp":"${new Date().toISOString()}","data":{}}'`
+          message: `Webhook registered successfully with ${format} format. You will receive POST requests at this URL when activities occur.`,
+          testEndpoint: `curl -X POST ${body.url} -H "Content-Type: application/json" -d '${examplePayloads[format]}'`
         }, { status: 201, headers: corsHeaders });
         
       } catch (e) {
@@ -2546,6 +2749,7 @@ Colosseum Agent Hackathon 2026`;
         id: w.id,
         url: w.url,
         events: w.events,
+        format: w.format || 'json',
         createdAt: w.createdAt,
         lastDelivery: w.lastDelivery,
         failureCount: w.failureCount,

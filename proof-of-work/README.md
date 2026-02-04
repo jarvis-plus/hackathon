@@ -459,6 +459,49 @@ Send a test payload to verify your endpoint.
 **Security:**
 If you provide a `secret`, payloads include `X-Webhook-Signature: sha256=<hmac>` header for verification.
 
+### Email Digest API
+
+Subscribe to periodic email summaries of activity.
+
+#### POST `/api/digest/subscriptions`
+Subscribe an email address to receive digests.
+
+```bash
+curl -X POST https://jarvis.tail6a9bde.ts.net/api/digest/subscriptions \
+  -H "Content-Type: application/json" \
+  -d '{"email": "you@example.com", "frequency": "weekly"}'
+```
+
+**Request Body:**
+- `email` (required): Email address
+- `frequency` (optional): `daily`, `weekly`, or `monthly` (default: `daily`)
+- `timezone` (optional): IANA timezone (default: `UTC`)
+
+#### GET `/api/digest/subscriptions`
+List all subscriptions (emails are partially masked).
+
+#### DELETE `/api/digest/subscriptions/:id`
+Unsubscribe from digests.
+
+#### GET `/api/digest`
+Generate a digest on-demand in various formats.
+
+```bash
+# HTML (email-ready)
+curl https://jarvis.tail6a9bde.ts.net/api/digest
+
+# JSON data
+curl "https://jarvis.tail6a9bde.ts.net/api/digest?format=json&period=weekly"
+
+# Plain text
+curl "https://jarvis.tail6a9bde.ts.net/api/digest?format=text&period=daily"
+```
+
+**Query Parameters:**
+- `period`: `daily`, `weekly`, `monthly` (default: `daily`)
+- `format`: `html`, `json`, `text` (default: `html`)
+- `date`: End date for the period (ISO format)
+
 ---
 
 ## 📈 Dashboard Features
