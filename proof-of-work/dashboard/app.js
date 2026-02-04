@@ -3048,6 +3048,7 @@ async function loadActivities() {
         renderVelocityChart(activities);
         renderGoalTracker(activities);
         populateTagFilters(activities);
+        initTimelineSlider(activities);
     } catch (e) {
         try {
             const res = await fetch(basePath + '/activity.json');
@@ -3065,6 +3066,7 @@ async function loadActivities() {
             renderVelocityChart(activities);
             renderGoalTracker(activities);
             populateTagFilters(activities);
+            initTimelineSlider(activities);
         } catch (e2) {
             document.getElementById('feed').innerHTML = `
                 <div class="empty-state">
@@ -3543,6 +3545,11 @@ function applyFilters() {
     currentDateFrom = dateFromInput && dateFromInput.value ? new Date(dateFromInput.value + 'T00:00:00') : null;
     currentDateTo = dateToInput && dateToInput.value ? new Date(dateToInput.value + 'T23:59:59') : null;
     
+    // Sync timeline slider with date inputs (if not currently being dragged)
+    if (typeof syncTimelineSliderFromInputs === 'function' && !timelineSliderData?.isDragging) {
+        syncTimelineSliderFromInputs();
+    }
+    
     // Re-render with filters
     if (window.cachedActivities) {
         renderFilteredActivities(window.cachedActivities);
@@ -3574,6 +3581,530 @@ function setQuickDateRange(preset) {
     }
     
     applyFilters();
+}
+
+// ============================================
+// TIMELINE SLIDER - Visual Time Range Selector
+// ============================================
+
+let timelineSliderData = {
+    minDate: null,
+    maxDate: null,
+    startPercent: 0,
+    endPercent: 100,
+    isDragging: false,
+    activeHandle: null,
+    buckets: [] // Activity counts per bucket for visualization
+};
+
+const TIMELINE_BUCKET_COUNT = 50; // Number of buckets for activity density visualization
+
+/**
+ * Initialize the timeline slider with activity data
+ */
+function initTimelineSlider(activities) {
+    if (!activities || activities.length === 0) {
+        hideTimelineSlider();
+        return;
+    }
+    
+    // Calculate date range
+    const timestamps = activities.map(a => new Date(a.timestamp).getTime());
+    timelineSliderData.minDate = new Date(Math.min(...timestamps));
+    timelineSliderData.maxDate = new Date(Math.max(...timestamps));
+    
+    // Calculate activity density buckets
+    calculateActivityBuckets(activities);
+    
+    // Render the slider
+    renderTimelineSlider();
+    
+    // Initialize drag handlers
+    initTimelineSliderDrag();
+    
+    // Update date labels
+    updateTimelineDateLabels();
+    
+    // Show the container
+    const container = document.getElementById('timelineSliderContainer');
+    if (container) container.style.display = 'block';
+}
+
+/**
+ * Hide the timeline slider
+ */
+function hideTimelineSlider() {
+    const container = document.getElementById('timelineSliderContainer');
+    if (container) container.style.display = 'none';
+}
+
+/**
+ * Calculate activity density for each bucket
+ */
+function calculateActivityBuckets(activities) {
+    const { minDate, maxDate } = timelineSliderData;
+    const range = maxDate.getTime() - minDate.getTime();
+    
+    // Reset buckets
+    timelineSliderData.buckets = new Array(TIMELINE_BUCKET_COUNT).fill(0);
+    
+    if (range === 0) {
+        // All activities on same timestamp
+        timelineSliderData.buckets[Math.floor(TIMELINE_BUCKET_COUNT / 2)] = activities.length;
+        return;
+    }
+    
+    // Count activities in each bucket
+    activities.forEach(activity => {
+        const timestamp = new Date(activity.timestamp).getTime();
+        const position = (timestamp - minDate.getTime()) / range;
+        const bucketIndex = Math.min(
+            Math.floor(position * TIMELINE_BUCKET_COUNT),
+            TIMELINE_BUCKET_COUNT - 1
+        );
+        timelineSliderData.buckets[bucketIndex]++;
+    });
+}
+
+/**
+ * Render the activity density bars
+ */
+function renderTimelineSlider() {
+    const barsContainer = document.getElementById('timelineActivityBars');
+    const labelsContainer = document.getElementById('timelineSliderLabels');
+    
+    if (!barsContainer) return;
+    
+    // Render density bars
+    const maxCount = Math.max(...timelineSliderData.buckets, 1);
+    barsContainer.innerHTML = timelineSliderData.buckets.map((count, i) => {
+        const height = (count / maxCount) * 100;
+        const percent = (i / TIMELINE_BUCKET_COUNT) * 100;
+        const inRange = percent >= timelineSliderData.startPercent && 
+                        percent <= timelineSliderData.endPercent;
+        return `<div class="timeline-activity-bar ${inRange ? 'in-range' : ''}" 
+                     style="height: ${Math.max(height, 2)}%;" 
+                     title="${count} activities"></div>`;
+    }).join('');
+    
+    // Render date labels (5 evenly spaced)
+    if (labelsContainer && timelineSliderData.minDate && timelineSliderData.maxDate) {
+        const range = timelineSliderData.maxDate.getTime() - timelineSliderData.minDate.getTime();
+        const labels = [];
+        for (let i = 0; i <= 4; i++) {
+            const date = new Date(timelineSliderData.minDate.getTime() + (range * i / 4));
+            labels.push(formatShortDate(date));
+        }
+        labelsContainer.innerHTML = labels.map(l => `<span>${l}</span>`).join('');
+    }
+}
+
+/**
+ * Format date for short display
+ */
+function formatShortDate(date) {
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+/**
+ * Initialize drag handlers for timeline slider
+ */
+function initTimelineSliderDrag() {
+    const track = document.getElementById('timelineSliderTrack');
+    const handleStart = document.getElementById('timelineHandleStart');
+    const handleEnd = document.getElementById('timelineHandleEnd');
+    
+    if (!track) return;
+    
+    // Track click to set range
+    track.addEventListener('mousedown', handleTrackClick);
+    track.addEventListener('touchstart', handleTrackTouch, { passive: false });
+    
+    // Handle drag events
+    if (handleStart) {
+        handleStart.addEventListener('mousedown', (e) => startDrag(e, 'start'));
+        handleStart.addEventListener('touchstart', (e) => startDrag(e, 'start'), { passive: false });
+        handleStart.addEventListener('keydown', (e) => handleKeyboard(e, 'start'));
+    }
+    
+    if (handleEnd) {
+        handleEnd.addEventListener('mousedown', (e) => startDrag(e, 'end'));
+        handleEnd.addEventListener('touchstart', (e) => startDrag(e, 'end'), { passive: false });
+        handleEnd.addEventListener('keydown', (e) => handleKeyboard(e, 'end'));
+    }
+    
+    // Global mouse/touch events for drag
+    document.addEventListener('mousemove', handleDrag);
+    document.addEventListener('mouseup', endDrag);
+    document.addEventListener('touchmove', handleDrag, { passive: false });
+    document.addEventListener('touchend', endDrag);
+}
+
+/**
+ * Handle click on the track to set initial range
+ */
+function handleTrackClick(e) {
+    if (e.target.classList.contains('timeline-slider-handle')) return;
+    
+    const track = document.getElementById('timelineSliderTrack');
+    const rect = track.getBoundingClientRect();
+    const percent = ((e.clientX - rect.left) / rect.width) * 100;
+    
+    // Create a range centered on the click (10% width)
+    const rangeWidth = 10;
+    timelineSliderData.startPercent = Math.max(0, percent - rangeWidth / 2);
+    timelineSliderData.endPercent = Math.min(100, percent + rangeWidth / 2);
+    
+    updateSliderUI();
+    applyTimelineRange();
+}
+
+/**
+ * Handle touch on track
+ */
+function handleTrackTouch(e) {
+    e.preventDefault();
+    const touch = e.touches[0];
+    handleTrackClick({ clientX: touch.clientX, target: e.target });
+}
+
+/**
+ * Start dragging a handle
+ */
+function startDrag(e, handle) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    timelineSliderData.isDragging = true;
+    timelineSliderData.activeHandle = handle;
+    
+    const handleEl = handle === 'start' ? 
+        document.getElementById('timelineHandleStart') : 
+        document.getElementById('timelineHandleEnd');
+    if (handleEl) handleEl.classList.add('dragging');
+}
+
+/**
+ * Handle drag movement
+ */
+function handleDrag(e) {
+    if (!timelineSliderData.isDragging) return;
+    
+    e.preventDefault();
+    
+    const track = document.getElementById('timelineSliderTrack');
+    if (!track) return;
+    
+    const rect = track.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    let percent = ((clientX - rect.left) / rect.width) * 100;
+    percent = Math.max(0, Math.min(100, percent));
+    
+    if (timelineSliderData.activeHandle === 'start') {
+        timelineSliderData.startPercent = Math.min(percent, timelineSliderData.endPercent - 2);
+    } else {
+        timelineSliderData.endPercent = Math.max(percent, timelineSliderData.startPercent + 2);
+    }
+    
+    updateSliderUI();
+}
+
+/**
+ * End dragging
+ */
+function endDrag() {
+    if (!timelineSliderData.isDragging) return;
+    
+    timelineSliderData.isDragging = false;
+    
+    document.querySelectorAll('.timeline-slider-handle').forEach(h => h.classList.remove('dragging'));
+    
+    applyTimelineRange();
+    timelineSliderData.activeHandle = null;
+}
+
+/**
+ * Handle keyboard navigation for handles
+ */
+function handleKeyboard(e, handle) {
+    const step = e.shiftKey ? 10 : 2; // Larger steps with shift
+    
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (handle === 'start') {
+            timelineSliderData.startPercent = Math.max(0, timelineSliderData.startPercent - step);
+        } else {
+            timelineSliderData.endPercent = Math.max(
+                timelineSliderData.startPercent + 2,
+                timelineSliderData.endPercent - step
+            );
+        }
+        updateSliderUI();
+        applyTimelineRange();
+    } else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (handle === 'start') {
+            timelineSliderData.startPercent = Math.min(
+                timelineSliderData.endPercent - 2,
+                timelineSliderData.startPercent + step
+            );
+        } else {
+            timelineSliderData.endPercent = Math.min(100, timelineSliderData.endPercent + step);
+        }
+        updateSliderUI();
+        applyTimelineRange();
+    }
+}
+
+/**
+ * Update the slider UI (handles, selection, bars)
+ */
+function updateSliderUI() {
+    const handleStart = document.getElementById('timelineHandleStart');
+    const handleEnd = document.getElementById('timelineHandleEnd');
+    const selection = document.getElementById('timelineSliderSelection');
+    const tooltipStart = document.getElementById('handleTooltipStart');
+    const tooltipEnd = document.getElementById('handleTooltipEnd');
+    
+    const { startPercent, endPercent, minDate, maxDate } = timelineSliderData;
+    
+    // Position handles
+    if (handleStart) {
+        handleStart.style.left = `${startPercent}%`;
+        handleStart.classList.add('visible');
+    }
+    if (handleEnd) {
+        handleEnd.style.left = `${endPercent}%`;
+        handleEnd.classList.add('visible');
+    }
+    
+    // Update selection highlight
+    if (selection) {
+        selection.style.left = `${startPercent}%`;
+        selection.style.width = `${endPercent - startPercent}%`;
+        selection.classList.add('active');
+    }
+    
+    // Update tooltips with dates
+    if (minDate && maxDate) {
+        const range = maxDate.getTime() - minDate.getTime();
+        const startDate = new Date(minDate.getTime() + (range * startPercent / 100));
+        const endDate = new Date(minDate.getTime() + (range * endPercent / 100));
+        
+        if (tooltipStart) tooltipStart.textContent = formatShortDate(startDate);
+        if (tooltipEnd) tooltipEnd.textContent = formatShortDate(endDate);
+    }
+    
+    // Update bars opacity (in-range vs out-of-range)
+    const bars = document.querySelectorAll('.timeline-activity-bar');
+    bars.forEach((bar, i) => {
+        const percent = (i / TIMELINE_BUCKET_COUNT) * 100;
+        const bucketEnd = ((i + 1) / TIMELINE_BUCKET_COUNT) * 100;
+        const inRange = bucketEnd >= startPercent && percent <= endPercent;
+        bar.classList.toggle('in-range', inRange);
+    });
+    
+    updateTimelineDateLabels();
+}
+
+/**
+ * Update the date labels above the slider
+ */
+function updateTimelineDateLabels() {
+    const startLabel = document.getElementById('timelineStartDate');
+    const endLabel = document.getElementById('timelineEndDate');
+    const selectedLabel = document.getElementById('timelineSelectedRange');
+    
+    const { minDate, maxDate, startPercent, endPercent } = timelineSliderData;
+    
+    if (!minDate || !maxDate) return;
+    
+    // Show overall range
+    if (startLabel) startLabel.textContent = formatShortDate(minDate);
+    if (endLabel) endLabel.textContent = formatShortDate(maxDate);
+    
+    // Show selected range
+    if (selectedLabel && startPercent !== 0 || endPercent !== 100) {
+        const range = maxDate.getTime() - minDate.getTime();
+        const selectedStart = new Date(minDate.getTime() + (range * startPercent / 100));
+        const selectedEnd = new Date(minDate.getTime() + (range * endPercent / 100));
+        selectedLabel.textContent = `${formatShortDate(selectedStart)} → ${formatShortDate(selectedEnd)}`;
+    } else if (selectedLabel) {
+        selectedLabel.textContent = 'All time';
+    }
+}
+
+/**
+ * Apply the current timeline range to filters
+ */
+function applyTimelineRange() {
+    const { minDate, maxDate, startPercent, endPercent } = timelineSliderData;
+    
+    if (!minDate || !maxDate) return;
+    
+    const range = maxDate.getTime() - minDate.getTime();
+    const startDate = new Date(minDate.getTime() + (range * startPercent / 100));
+    const endDate = new Date(minDate.getTime() + (range * endPercent / 100));
+    
+    // Update the date inputs
+    const dateFromInput = document.getElementById('dateFrom');
+    const dateToInput = document.getElementById('dateTo');
+    
+    if (startPercent > 0 || endPercent < 100) {
+        if (dateFromInput) dateFromInput.value = startDate.toISOString().split('T')[0];
+        if (dateToInput) dateToInput.value = endDate.toISOString().split('T')[0];
+    } else {
+        if (dateFromInput) dateFromInput.value = '';
+        if (dateToInput) dateToInput.value = '';
+    }
+    
+    // Update zoom preset buttons
+    updateZoomPresetButtons();
+    
+    // Clear quick date range buttons active state
+    document.querySelectorAll('.date-quick-btn').forEach(btn => btn.classList.remove('active'));
+    
+    applyFilters();
+}
+
+/**
+ * Set timeline zoom preset
+ */
+function setTimelineZoom(preset) {
+    const { maxDate } = timelineSliderData;
+    if (!maxDate) return;
+    
+    const now = maxDate;
+    let startDate;
+    
+    switch (preset) {
+        case '1d':
+            startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+            break;
+        case '1w':
+            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            break;
+        case '1m':
+            startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            break;
+        case 'all':
+        default:
+            resetTimelineSlider();
+            return;
+    }
+    
+    // Calculate percentages
+    const { minDate } = timelineSliderData;
+    const range = maxDate.getTime() - minDate.getTime();
+    
+    if (range === 0) return;
+    
+    const startPercent = Math.max(0, ((startDate.getTime() - minDate.getTime()) / range) * 100);
+    
+    timelineSliderData.startPercent = startPercent;
+    timelineSliderData.endPercent = 100;
+    
+    updateSliderUI();
+    applyTimelineRange();
+}
+
+/**
+ * Update zoom preset button active states
+ */
+function updateZoomPresetButtons() {
+    const { startPercent, endPercent, minDate, maxDate } = timelineSliderData;
+    
+    document.querySelectorAll('.zoom-preset-btn').forEach(btn => btn.classList.remove('active'));
+    
+    if (startPercent === 0 && endPercent === 100) {
+        document.querySelector('.zoom-preset-btn[data-zoom="all"]')?.classList.add('active');
+        return;
+    }
+    
+    if (!minDate || !maxDate) return;
+    
+    const range = maxDate.getTime() - minDate.getTime();
+    const selectedRange = range * (endPercent - startPercent) / 100;
+    const selectedEnd = minDate.getTime() + (range * endPercent / 100);
+    
+    // Check if end is at max (within 1 hour tolerance)
+    const isAtEnd = Math.abs(selectedEnd - maxDate.getTime()) < 60 * 60 * 1000;
+    
+    if (!isAtEnd) return;
+    
+    const oneDay = 24 * 60 * 60 * 1000;
+    const oneWeek = 7 * oneDay;
+    const oneMonth = 30 * oneDay;
+    
+    // Check which preset matches (within 10% tolerance)
+    const tolerance = 0.1;
+    if (Math.abs(selectedRange - oneDay) / oneDay < tolerance) {
+        document.querySelector('.zoom-preset-btn[data-zoom="1d"]')?.classList.add('active');
+    } else if (Math.abs(selectedRange - oneWeek) / oneWeek < tolerance) {
+        document.querySelector('.zoom-preset-btn[data-zoom="1w"]')?.classList.add('active');
+    } else if (Math.abs(selectedRange - oneMonth) / oneMonth < tolerance) {
+        document.querySelector('.zoom-preset-btn[data-zoom="1m"]')?.classList.add('active');
+    }
+}
+
+/**
+ * Reset timeline slider to show all
+ */
+function resetTimelineSlider() {
+    timelineSliderData.startPercent = 0;
+    timelineSliderData.endPercent = 100;
+    
+    // Hide handles and selection
+    const handleStart = document.getElementById('timelineHandleStart');
+    const handleEnd = document.getElementById('timelineHandleEnd');
+    const selection = document.getElementById('timelineSliderSelection');
+    
+    if (handleStart) handleStart.classList.remove('visible');
+    if (handleEnd) handleEnd.classList.remove('visible');
+    if (selection) selection.classList.remove('active');
+    
+    // Update bars
+    document.querySelectorAll('.timeline-activity-bar').forEach(bar => bar.classList.add('in-range'));
+    
+    updateTimelineDateLabels();
+    updateZoomPresetButtons();
+    
+    // Clear date inputs
+    const dateFromInput = document.getElementById('dateFrom');
+    const dateToInput = document.getElementById('dateTo');
+    if (dateFromInput) dateFromInput.value = '';
+    if (dateToInput) dateToInput.value = '';
+    
+    applyFilters();
+}
+
+/**
+ * Sync timeline slider when date inputs change externally
+ */
+function syncTimelineSliderFromInputs() {
+    const dateFromInput = document.getElementById('dateFrom');
+    const dateToInput = document.getElementById('dateTo');
+    const { minDate, maxDate } = timelineSliderData;
+    
+    if (!minDate || !maxDate) return;
+    
+    const range = maxDate.getTime() - minDate.getTime();
+    if (range === 0) return;
+    
+    if (!dateFromInput?.value && !dateToInput?.value) {
+        // Reset to show all
+        timelineSliderData.startPercent = 0;
+        timelineSliderData.endPercent = 100;
+    } else {
+        const fromDate = dateFromInput?.value ? new Date(dateFromInput.value + 'T00:00:00') : minDate;
+        const toDate = dateToInput?.value ? new Date(dateToInput.value + 'T23:59:59') : maxDate;
+        
+        timelineSliderData.startPercent = Math.max(0, ((fromDate.getTime() - minDate.getTime()) / range) * 100);
+        timelineSliderData.endPercent = Math.min(100, ((toDate.getTime() - minDate.getTime()) / range) * 100);
+    }
+    
+    updateSliderUI();
+    updateZoomPresetButtons();
 }
 
 function renderFilteredActivities(activities) {
