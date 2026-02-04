@@ -770,6 +770,15 @@
                         <span class="toggle-text">Compare</span>
                     </button>
                 </div>
+                <div class="bulk-mode-container">
+                    <button class="bulk-mode-toggle" id="bulk-mode-toggle" onclick="toggleBulkMode()" 
+                            title="Select multiple activities for bulk actions (X)" 
+                            aria-label="Toggle bulk select mode" 
+                            aria-pressed="false">
+                        <span class="toggle-icon">☑️</span>
+                        <span class="toggle-text">Bulk</span>
+                    </button>
+                </div>
                 <div class="type-filters" role="group" aria-label="Filter by activity type">
                     <button class="type-filter active" data-type="all" onclick="setTypeFilter('all')" aria-pressed="true">All</button>
                     <button class="type-filter" data-type="commit" onclick="setTypeFilter('commit')" aria-pressed="false">📝 Commits</button>

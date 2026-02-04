@@ -940,10 +940,12 @@ function renderActivities(activities, highlightNew = false) {
         
         const compareSelected = typeof compareSelections !== 'undefined' && compareSelections.includes(hash);
         const compareCheckboxHtml = typeof renderCompareCheckbox === 'function' ? renderCompareCheckbox(hash) : '';
+        const bulkSelected = typeof bulkSelections !== 'undefined' && bulkSelections.includes(hash);
+        const bulkCheckboxHtml = typeof renderBulkCheckbox === 'function' ? renderBulkCheckbox(hash) : '';
         const importanceBadgeHtml = renderImportanceBadge(a);
         
         return `
-        <div class="activity-item ${a.type}${isNew ? ' new-activity' : ''}${isPinned ? ' pinned' : ''}${bookmarked ? ' bookmarked' : ''}${compareSelected ? ' compare-selected' : ''}" 
+        <div class="activity-item ${a.type}${isNew ? ' new-activity' : ''}${isPinned ? ' pinned' : ''}${bookmarked ? ' bookmarked' : ''}${compareSelected ? ' compare-selected' : ''}${bulkSelected ? ' bulk-selected' : ''}" 
              style="animation-delay: ${i * 0.04}s" 
              data-wallet="${a.wallet || ''}" 
              data-activity-id="${activityId}"
@@ -954,6 +956,7 @@ function renderActivities(activities, highlightNew = false) {
              role="article"
              aria-label="${ariaLabel}">
             ${compareCheckboxHtml}
+            ${bulkCheckboxHtml}
             ${renderShareButton(activityId, hash)}
             ${renderCompareButton(hash)}
             ${bookmarkButtonHtml}
@@ -4415,9 +4418,11 @@ function renderGroupedActivitiesFiltered(activities) {
             const activityId = getActivityId(a);
             const compareSelected = typeof compareSelections !== 'undefined' && compareSelections.includes(hash);
             const compareCheckboxHtml = typeof renderCompareCheckbox === 'function' ? renderCompareCheckbox(hash) : '';
+            const bulkSelected = typeof bulkSelections !== 'undefined' && bulkSelections.includes(hash);
+            const bulkCheckboxHtml = typeof renderBulkCheckbox === 'function' ? renderBulkCheckbox(hash) : '';
             
             html += `
-                <div class="activity-item ${a.type}${compareSelected ? ' compare-selected' : ''}" 
+                <div class="activity-item ${a.type}${compareSelected ? ' compare-selected' : ''}${bulkSelected ? ' bulk-selected' : ''}" 
                      style="animation-delay: ${Math.min(dayIndex, 5) * 0.04}s" 
                      data-activity-id="${activityId}"
                      data-hash="${hash || ''}"
@@ -4425,6 +4430,7 @@ function renderGroupedActivitiesFiltered(activities) {
                      role="article"
                      aria-label="${a.type} activity: ${escapeHtml(a.description.substring(0, 80))}${a.description.length > 80 ? '...' : ''}">
                     ${compareCheckboxHtml}
+                    ${bulkCheckboxHtml}
                     ${renderShareButton(activityId, hash)}
                     <div class="activity-header">
                         <div class="activity-badges">
@@ -5446,15 +5452,18 @@ function renderGroupedActivities(activities, highlightNew = false) {
             const ariaLabel = `${a.type} activity: ${escapeHtml(a.description.substring(0, 80))}${a.description.length > 80 ? "..." : ""}`;
             const compareSelected = typeof compareSelections !== 'undefined' && compareSelections.includes(hash);
             const compareCheckboxHtml = typeof renderCompareCheckbox === 'function' ? renderCompareCheckbox(hash) : '';
+            const bulkSelected = typeof bulkSelections !== 'undefined' && bulkSelections.includes(hash);
+            const bulkCheckboxHtml = typeof renderBulkCheckbox === 'function' ? renderBulkCheckbox(hash) : '';
             
             html += `
-                <div class="activity-item ${a.type}${isNew ? ' new-activity' : ''}${compareSelected ? ' compare-selected' : ''}" 
+                <div class="activity-item ${a.type}${isNew ? ' new-activity' : ''}${compareSelected ? ' compare-selected' : ''}${bulkSelected ? ' bulk-selected' : ''}" 
                      style="animation-delay: ${Math.min(dayIndex, 5) * 0.04}s" 
                      data-wallet="${a.wallet || ''}" 
                      data-activity-id="${activityId}"
                      data-hash="${hash || ''}"
                      tabindex="0" role="article" aria-label="${ariaLabel}">
                     ${compareCheckboxHtml}
+                    ${bulkCheckboxHtml}
                     ${renderShareButton(activityId, hash)}
                     <div class="activity-header">
                         <div class="activity-badges">
@@ -5544,15 +5553,18 @@ function renderGroupedActivitiesLimited(activities, limit, highlightNew = false)
             const ariaLabel = `${a.type} activity: ${escapeHtml(a.description.substring(0, 80))}${a.description.length > 80 ? "..." : ""}`;
             const compareSelected = typeof compareSelections !== 'undefined' && compareSelections.includes(hash);
             const compareCheckboxHtml = typeof renderCompareCheckbox === 'function' ? renderCompareCheckbox(hash) : '';
+            const bulkSelected = typeof bulkSelections !== 'undefined' && bulkSelections.includes(hash);
+            const bulkCheckboxHtml = typeof renderBulkCheckbox === 'function' ? renderBulkCheckbox(hash) : '';
             
             html += `
-                <div class="activity-item ${a.type}${isNew ? ' new-activity' : ''}${compareSelected ? ' compare-selected' : ''}" 
+                <div class="activity-item ${a.type}${isNew ? ' new-activity' : ''}${compareSelected ? ' compare-selected' : ''}${bulkSelected ? ' bulk-selected' : ''}" 
                      style="animation-delay: ${Math.min(dayIndex, 5) * 0.04}s" 
                      data-wallet="${a.wallet || ''}" 
                      data-activity-id="${activityId}"
                      data-hash="${hash || ''}"
                      tabindex="0" role="article" aria-label="${ariaLabel}">
                     ${compareCheckboxHtml}
+                    ${bulkCheckboxHtml}
                     ${renderShareButton(activityId, hash)}
                     <div class="activity-header">
                         <div class="activity-badges">
@@ -5719,6 +5731,7 @@ function createShortcutsModal() {
                     <h4>View & Actions</h4>
                     <div class="shortcut-row"><kbd>z</kbd> Toggle focus mode</div>
                     <div class="shortcut-row"><kbd>c</kbd> Toggle compare mode</div>
+                    <div class="shortcut-row"><kbd>x</kbd> Toggle bulk select mode</div>
                     <div class="shortcut-row"><kbd>v</kbd> Voice activity input</div>
                     <div class="shortcut-row"><kbd>?</kbd> Show this help</div>
                 </div>
@@ -6977,6 +6990,7 @@ createShortcutsModal = function() {
                     <h4>View & Actions</h4>
                     <div class="shortcut-row"><kbd>z</kbd> Toggle focus mode</div>
                     <div class="shortcut-row"><kbd>c</kbd> Toggle compare mode</div>
+                    <div class="shortcut-row"><kbd>x</kbd> Toggle bulk select mode</div>
                     <div class="shortcut-row"><kbd>v</kbd> Voice activity input</div>
                     <div class="shortcut-row"><kbd>?</kbd> Show this help</div>
                 </div>
@@ -10461,4 +10475,470 @@ function hideCalendarTooltip() {
 document.addEventListener('DOMContentLoaded', () => {
     // Load current month calendar
     loadCalendar(currentCalendarYear, currentCalendarMonth);
+});
+
+// =============================================================================
+// BULK OPERATIONS - Multi-select activities for batch actions
+// =============================================================================
+
+let bulkModeActive = false;
+let bulkSelections = []; // Array of selected activity hashes
+let lastBulkSelectedHash = null; // For shift+click range selection
+
+/**
+ * Initialize bulk operations
+ */
+function initBulkOperations() {
+    // Create the floating bulk operations bar
+    createBulkBar();
+    
+    // Add keyboard shortcut for bulk mode
+    if (typeof KEYBOARD_SHORTCUTS !== 'undefined') {
+        KEYBOARD_SHORTCUTS['x'] = { action: 'toggleBulkMode', description: 'Toggle bulk select mode' };
+    }
+    
+    // Add to command palette
+    if (typeof COMMAND_PALETTE_COMMANDS !== 'undefined') {
+        COMMAND_PALETTE_COMMANDS.push(
+            { id: 'bulk-mode', title: 'Toggle Bulk Select Mode', description: 'Select multiple activities for batch actions', icon: '☑️', shortcut: 'X', action: () => toggleBulkMode(), group: 'Actions' },
+            { id: 'bulk-select-all', title: 'Select All Activities', description: 'Select all visible activities', icon: '✅', action: () => selectAllActivities(), group: 'Bulk' },
+            { id: 'bulk-clear', title: 'Clear Bulk Selection', description: 'Deselect all activities', icon: '❌', action: () => clearBulkSelection(), group: 'Bulk' }
+        );
+    }
+    
+    // Add click handler for bulk selection
+    document.addEventListener('click', handleBulkClick);
+    
+    // Add Ctrl+A / Cmd+A handler for select all when in bulk mode
+    document.addEventListener('keydown', (e) => {
+        if (bulkModeActive && (e.ctrlKey || e.metaKey) && e.key === 'a') {
+            const isInputFocused = document.activeElement?.matches('input, textarea, select');
+            if (!isInputFocused) {
+                e.preventDefault();
+                selectAllActivities();
+            }
+        }
+        // X key to toggle bulk mode
+        if (e.key === 'x' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            const isInputFocused = document.activeElement?.matches('input, textarea, select');
+            if (!isInputFocused) {
+                e.preventDefault();
+                toggleBulkMode();
+            }
+        }
+    });
+}
+
+/**
+ * Create the floating bulk operations bar
+ */
+function createBulkBar() {
+    const bar = document.createElement('div');
+    bar.id = 'bulk-bar';
+    bar.className = 'bulk-bar';
+    bar.innerHTML = `
+        <div class="bulk-bar-status">
+            <span class="bulk-bar-icon">☑️</span>
+            <div class="bulk-bar-text">
+                <span class="bulk-bar-title">Bulk Select</span>
+                <span class="bulk-bar-subtitle" id="bulk-bar-subtitle">Select activities</span>
+            </div>
+        </div>
+        <div class="bulk-bar-count">
+            <span class="bulk-bar-count-num" id="bulk-count">0</span>
+            <span class="bulk-bar-count-label">selected</span>
+        </div>
+        <div class="bulk-bar-actions">
+            <button class="bulk-bar-btn select-all" onclick="selectAllActivities()" title="Select all visible (Ctrl+A)">
+                ✅ All
+            </button>
+            <button class="bulk-bar-btn export" onclick="bulkExport('json')" title="Export selected as JSON">
+                📥 JSON
+            </button>
+            <button class="bulk-bar-btn export" onclick="bulkExport('csv')" title="Export selected as CSV">
+                📊 CSV
+            </button>
+            <button class="bulk-bar-btn bookmark" onclick="bulkBookmark()" title="Bookmark all selected">
+                ⭐ Bookmark
+            </button>
+            <button class="bulk-bar-btn pin" onclick="bulkPin()" title="Pin all selected">
+                📌 Pin
+            </button>
+            <button class="bulk-bar-btn clear secondary" onclick="clearBulkSelection()" title="Clear selection">
+                ❌ Clear
+            </button>
+            <button class="bulk-bar-btn close secondary" onclick="toggleBulkMode()" title="Exit bulk mode">
+                ✕
+            </button>
+        </div>
+    `;
+    document.body.appendChild(bar);
+}
+
+/**
+ * Toggle bulk select mode on/off
+ */
+function toggleBulkMode() {
+    // Don't allow both compare mode and bulk mode at once
+    if (!bulkModeActive && typeof compareModeActive !== 'undefined' && compareModeActive) {
+        toggleCompareMode();
+    }
+    
+    bulkModeActive = !bulkModeActive;
+    
+    const toggleBtn = document.getElementById('bulk-mode-toggle');
+    const bulkBar = document.getElementById('bulk-bar');
+    const feed = document.getElementById('feed');
+    
+    if (bulkModeActive) {
+        document.body.classList.add('bulk-mode-active');
+        feed?.classList.add('bulk-mode-active');
+        if (toggleBtn) {
+            toggleBtn.classList.add('active');
+            toggleBtn.innerHTML = '<span class="toggle-icon">✓</span><span class="toggle-text">Bulk ON</span>';
+        }
+        if (bulkBar) bulkBar.classList.add('visible');
+        updateBulkBarUI();
+        announceToScreenReader('Bulk select mode activated. Click activities to select them. Shift+click for range selection.');
+    } else {
+        document.body.classList.remove('bulk-mode-active');
+        feed?.classList.remove('bulk-mode-active');
+        if (toggleBtn) {
+            toggleBtn.classList.remove('active');
+            toggleBtn.innerHTML = '<span class="toggle-icon">☑️</span><span class="toggle-text">Bulk</span>';
+        }
+        if (bulkBar) bulkBar.classList.remove('visible');
+        clearBulkSelection(false); // Don't announce when exiting
+        announceToScreenReader('Bulk select mode deactivated.');
+    }
+}
+
+/**
+ * Handle clicks on activity cards during bulk mode
+ */
+function handleBulkClick(event) {
+    if (!bulkModeActive) return;
+    
+    // Find if click was on an activity item
+    const activityItem = event.target.closest('.activity-item');
+    if (!activityItem) return;
+    
+    // Ignore clicks on buttons, inputs, links inside the activity
+    if (event.target.closest('button, a, input, textarea, select')) return;
+    
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const hash = activityItem.dataset.hash;
+    if (!hash) return;
+    
+    // Handle shift+click for range selection
+    if (event.shiftKey && lastBulkSelectedHash) {
+        selectRange(lastBulkSelectedHash, hash);
+        return;
+    }
+    
+    // Toggle selection
+    toggleBulkSelection(hash);
+    lastBulkSelectedHash = hash;
+}
+
+/**
+ * Toggle selection of a single activity
+ */
+function toggleBulkSelection(hash) {
+    const index = bulkSelections.indexOf(hash);
+    
+    if (index >= 0) {
+        // Deselect
+        bulkSelections.splice(index, 1);
+    } else {
+        // Select
+        bulkSelections.push(hash);
+    }
+    
+    updateActivitySelectionUI(hash);
+    updateBulkBarUI();
+}
+
+/**
+ * Select a range of activities (shift+click)
+ */
+function selectRange(startHash, endHash) {
+    const feed = document.getElementById('feed');
+    if (!feed) return;
+    
+    const items = Array.from(feed.querySelectorAll('.activity-item[data-hash]'));
+    const startIndex = items.findIndex(el => el.dataset.hash === startHash);
+    const endIndex = items.findIndex(el => el.dataset.hash === endHash);
+    
+    if (startIndex === -1 || endIndex === -1) return;
+    
+    const [minIndex, maxIndex] = startIndex < endIndex 
+        ? [startIndex, endIndex] 
+        : [endIndex, startIndex];
+    
+    for (let i = minIndex; i <= maxIndex; i++) {
+        const hash = items[i].dataset.hash;
+        if (hash && !bulkSelections.includes(hash)) {
+            bulkSelections.push(hash);
+            updateActivitySelectionUI(hash);
+        }
+    }
+    
+    updateBulkBarUI();
+    announceToScreenReader(`Selected ${maxIndex - minIndex + 1} activities`);
+}
+
+/**
+ * Select all visible activities
+ */
+function selectAllActivities() {
+    if (!bulkModeActive) {
+        toggleBulkMode();
+    }
+    
+    const feed = document.getElementById('feed');
+    if (!feed) return;
+    
+    const items = feed.querySelectorAll('.activity-item[data-hash]');
+    let addedCount = 0;
+    
+    items.forEach(item => {
+        const hash = item.dataset.hash;
+        if (hash && !bulkSelections.includes(hash)) {
+            bulkSelections.push(hash);
+            updateActivitySelectionUI(hash);
+            addedCount++;
+        }
+    });
+    
+    updateBulkBarUI();
+    announceToScreenReader(`Selected all ${bulkSelections.length} activities`);
+}
+
+/**
+ * Clear all bulk selections
+ */
+function clearBulkSelection(announce = true) {
+    const previousCount = bulkSelections.length;
+    bulkSelections.forEach(hash => {
+        const item = document.querySelector(`.activity-item[data-hash="${hash}"]`);
+        if (item) item.classList.remove('bulk-selected');
+    });
+    
+    bulkSelections = [];
+    lastBulkSelectedHash = null;
+    updateBulkBarUI();
+    
+    if (announce && previousCount > 0) {
+        announceToScreenReader('Selection cleared');
+    }
+}
+
+/**
+ * Update the visual selection state of an activity item
+ */
+function updateActivitySelectionUI(hash) {
+    const item = document.querySelector(`.activity-item[data-hash="${hash}"]`);
+    if (!item) return;
+    
+    if (bulkSelections.includes(hash)) {
+        item.classList.add('bulk-selected');
+    } else {
+        item.classList.remove('bulk-selected');
+    }
+}
+
+/**
+ * Update the bulk bar UI with current selection count
+ */
+function updateBulkBarUI() {
+    const countEl = document.getElementById('bulk-count');
+    const subtitleEl = document.getElementById('bulk-bar-subtitle');
+    
+    const count = bulkSelections.length;
+    
+    if (countEl) countEl.textContent = count;
+    
+    if (subtitleEl) {
+        if (count === 0) {
+            subtitleEl.textContent = 'Click activities to select';
+        } else if (count === 1) {
+            subtitleEl.textContent = '1 activity selected';
+        } else {
+            subtitleEl.textContent = `${count} activities selected`;
+        }
+    }
+    
+    // Enable/disable action buttons based on selection
+    const bulkBar = document.getElementById('bulk-bar');
+    if (bulkBar) {
+        const actionBtns = bulkBar.querySelectorAll('.bulk-bar-btn.export, .bulk-bar-btn.bookmark, .bulk-bar-btn.pin');
+        actionBtns.forEach(btn => {
+            btn.disabled = count === 0;
+        });
+    }
+}
+
+/**
+ * Export selected activities
+ */
+function bulkExport(format = 'json') {
+    if (bulkSelections.length === 0) {
+        announceToScreenReader('No activities selected');
+        return;
+    }
+    
+    const activities = window.cachedActivities || allActivities || [];
+    const selectedActivities = activities.filter(a => {
+        const hash = a.hash || a.proof?.hash;
+        return bulkSelections.includes(hash);
+    });
+    
+    if (selectedActivities.length === 0) {
+        announceToScreenReader('Could not find selected activities');
+        return;
+    }
+    
+    if (format === 'json') {
+        const blob = new Blob([JSON.stringify(selectedActivities, null, 2)], { type: 'application/json' });
+        downloadBlob(blob, `jarvis-activities-bulk-${Date.now()}.json`);
+    } else if (format === 'csv') {
+        const headers = ['timestamp', 'type', 'description', 'hash', 'signature', 'wallet', 'tags'];
+        const rows = selectedActivities.map(a => [
+            a.timestamp,
+            a.type,
+            `"${(a.description || '').replace(/"/g, '""')}"`,
+            a.hash || a.proof?.hash || '',
+            a.signature || a.proof?.signature || '',
+            a.wallet || '',
+            (a.tags || []).join(';')
+        ]);
+        const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        downloadBlob(blob, `jarvis-activities-bulk-${Date.now()}.csv`);
+    }
+    
+    announceToScreenReader(`Exported ${selectedActivities.length} activities as ${format.toUpperCase()}`);
+}
+
+/**
+ * Bookmark all selected activities
+ */
+function bulkBookmark() {
+    if (bulkSelections.length === 0) {
+        announceToScreenReader('No activities selected');
+        return;
+    }
+    
+    let addedCount = 0;
+    let removedCount = 0;
+    
+    bulkSelections.forEach(hash => {
+        if (typeof isBookmarked === 'function' && typeof toggleBookmark === 'function') {
+            const wasBookmarked = isBookmarked(hash);
+            if (!wasBookmarked) {
+                toggleBookmark(hash);
+                addedCount++;
+            }
+        }
+    });
+    
+    // Re-render to update UI
+    if (typeof applyFilters === 'function') {
+        applyFilters();
+    }
+    
+    announceToScreenReader(`Bookmarked ${addedCount} activities`);
+}
+
+/**
+ * Pin all selected activities
+ */
+async function bulkPin() {
+    if (bulkSelections.length === 0) {
+        announceToScreenReader('No activities selected');
+        return;
+    }
+    
+    let pinnedCount = 0;
+    
+    for (const hash of bulkSelections) {
+        try {
+            const response = await fetch(`/api/activities/${hash}/pin`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            if (response.ok) {
+                pinnedCount++;
+                // Update local cache
+                const activities = window.cachedActivities || allActivities || [];
+                const activity = activities.find(a => (a.hash || a.proof?.hash) === hash);
+                if (activity) {
+                    activity.pinned = true;
+                    activity.pinnedAt = new Date().toISOString();
+                }
+            }
+        } catch (err) {
+            console.error(`Failed to pin ${hash}:`, err);
+        }
+    }
+    
+    // Re-render
+    if (typeof applyFilters === 'function') {
+        applyFilters();
+    }
+    
+    announceToScreenReader(`Pinned ${pinnedCount} activities`);
+}
+
+/**
+ * Download a blob as a file
+ */
+function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+/**
+ * Render bulk select checkbox for activity cards
+ */
+function renderBulkCheckbox(hash) {
+    if (!hash) return '';
+    const isSelected = bulkSelections.includes(hash);
+    return `
+        <div class="bulk-select-checkbox ${isSelected ? 'checked' : ''}"
+             onclick="event.stopPropagation(); toggleBulkSelection('${hash}')"
+             role="checkbox"
+             aria-checked="${isSelected}"
+             aria-label="Select activity for bulk operations"
+             tabindex="0">
+            ${isSelected ? '✓' : ''}
+        </div>
+    `;
+}
+
+// Handle keyboard shortcut actions
+if (typeof handleKeyboardShortcutAction !== 'undefined') {
+    const originalHandler = handleKeyboardShortcutAction;
+    handleKeyboardShortcutAction = function(action) {
+        if (action === 'toggleBulkMode') {
+            toggleBulkMode();
+            return;
+        }
+        return originalHandler(action);
+    };
+}
+
+// Initialize bulk operations when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    initBulkOperations();
 });
