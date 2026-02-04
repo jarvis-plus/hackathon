@@ -18754,3 +18754,257 @@ body.tour-active {
         box-shadow: inset 0 0 0 2px var(--accent-color, #00ffaa);
     }
 }
+
+/* ============================================
+   ACTIVITY QUICK REACTIONS SYSTEM
+   ============================================ */
+
+.activity-reactions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+}
+
+.reactions-existing {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.reaction-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 8px;
+    background: var(--card-bg, rgba(255, 255, 255, 0.05));
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+}
+
+.reaction-badge:hover {
+    background: var(--card-hover-bg, rgba(255, 255, 255, 0.1));
+    transform: scale(1.1);
+}
+
+.reaction-badge.active {
+    background: linear-gradient(135deg, rgba(0, 255, 170, 0.2), rgba(99, 102, 241, 0.2));
+    border-color: var(--accent-color, #00ffaa);
+}
+
+.reaction-badge .reaction-emoji {
+    font-size: 16px;
+}
+
+.reaction-add-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: var(--card-bg, rgba(255, 255, 255, 0.05));
+    border: 1px dashed var(--border-color, rgba(255, 255, 255, 0.2));
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.reaction-add-btn:hover {
+    background: var(--card-hover-bg, rgba(255, 255, 255, 0.1));
+    border-style: solid;
+    border-color: var(--accent-color, #00ffaa);
+    transform: scale(1.1);
+}
+
+.reaction-add-btn:hover .reaction-add-icon {
+    transform: scale(1.2);
+}
+
+.reaction-add-icon {
+    font-size: 16px;
+    transition: transform 0.2s ease;
+}
+
+.reaction-add-plus {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 14px;
+    height: 14px;
+    background: var(--accent-color, #00ffaa);
+    color: var(--bg-color, #0d0d0d);
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+/* Reaction Picker Popup */
+.reaction-picker {
+    position: fixed;
+    z-index: 10000;
+    background: var(--card-bg, #1a1a2e);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.15));
+    border-radius: 24px;
+    padding: 8px;
+    display: flex;
+    gap: 4px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    animation: reactionPickerSlideIn 0.2s ease;
+}
+
+@keyframes reactionPickerSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.reaction-picker-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.reaction-picker-btn:hover {
+    background: var(--card-hover-bg, rgba(255, 255, 255, 0.1));
+    transform: scale(1.2);
+}
+
+.reaction-picker-btn:focus {
+    outline: 2px solid var(--accent-color, #00ffaa);
+    outline-offset: 2px;
+}
+
+.reaction-picker-btn.selected {
+    background: linear-gradient(135deg, rgba(0, 255, 170, 0.2), rgba(99, 102, 241, 0.2));
+}
+
+.reaction-picker-btn.selected::after {
+    content: '✓';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    font-size: 10px;
+    color: var(--accent-color, #00ffaa);
+}
+
+/* Reaction Animations */
+.reaction-badge.reaction-pop {
+    animation: reactionPop 0.3s ease;
+}
+
+@keyframes reactionPop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.4); }
+    100% { transform: scale(1); }
+}
+
+.reaction-badge.reaction-shrink {
+    animation: reactionShrink 0.3s ease;
+}
+
+@keyframes reactionShrink {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(0.8); opacity: 0.5; }
+}
+
+/* Theme Support */
+[data-theme="midnight"] .reaction-picker {
+    background: #1e1e2e;
+}
+
+[data-theme="ocean"] .reaction-picker {
+    background: #0f172a;
+}
+
+[data-theme="forest"] .reaction-picker {
+    background: #1a2e1a;
+}
+
+[data-theme="sunset"] .reaction-picker {
+    background: #2e1a1a;
+}
+
+[data-theme="lavender"] .reaction-picker {
+    background: #1e1a2e;
+}
+
+[data-theme="cyber"] .reaction-picker {
+    background: #0a0a0f;
+}
+
+/* Light mode support */
+[data-theme="light"] .reaction-picker {
+    background: #ffffff;
+    border-color: #e5e7eb;
+}
+
+[data-theme="light"] .reaction-badge {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .reaction-badge.active {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(99, 102, 241, 0.2));
+    border-color: #10b981;
+}
+
+[data-theme="light"] .reaction-add-btn {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="light"] .reaction-add-plus {
+    background: #10b981;
+    color: #ffffff;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .reaction-picker {
+        left: 50% !important;
+        transform: translateX(-50%);
+        bottom: 100px;
+        top: auto !important;
+    }
+    
+    .reaction-picker-btn {
+        width: 44px;
+        height: 44px;
+        font-size: 28px;
+    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .reaction-picker {
+        animation: none;
+    }
+    
+    .reaction-badge.reaction-pop,
+    .reaction-badge.reaction-shrink {
+        animation: none;
+    }
+}

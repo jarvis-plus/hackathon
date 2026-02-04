@@ -1567,6 +1567,7 @@ function renderActivities(activities, highlightNew = false) {
             ${tagsHtml}
             ${notesHtml}
             ${attachmentsHtml}
+            ${typeof renderActivityReactions === 'function' ? renderActivityReactions(hash) : ''}
             <div class="activity-footer">
                 ${hashDisplay ? `<div class="activity-hash">${hashDisplay}</div>` : ''}
                 ${renderActivitySparkline(a)}
@@ -5716,6 +5717,7 @@ function renderGroupedActivitiesFiltered(activities) {
                     </div>
                     <div class="activity-desc">${escapeHtml(a.description)}</div>
                     ${tagsHtml}
+                    ${typeof renderActivityReactions === 'function' ? renderActivityReactions(hash) : ''}
                     <div class="activity-footer">
                         ${hashDisplay ? `<div class="activity-hash">${hashDisplay}</div>` : ''}
                         ${renderActivitySparkline(a)}
@@ -7759,6 +7761,7 @@ function renderGroupedActivities(activities, highlightNew = false) {
                     </div>
                     <div class="activity-desc">${escapeHtml(a.description)}</div>
                     ${tagsHtml}
+                    ${typeof renderActivityReactions === 'function' ? renderActivityReactions(hash) : ''}
                     <div class="activity-footer">
                         ${hashDisplay ? `<div class="activity-hash">${hashDisplay}</div>` : \'\'}
                         ${renderActivitySparkline(a)}
@@ -7863,6 +7866,7 @@ function renderGroupedActivitiesLimited(activities, limit, highlightNew = false)
                     </div>
                     <div class="activity-desc">${escapeHtml(a.description)}</div>
                     ${tagsHtml}
+                    ${typeof renderActivityReactions === 'function' ? renderActivityReactions(hash) : ''}
                     <div class="activity-footer">
                         ${hashDisplay ? `<div class="activity-hash">${hashDisplay}</div>` : \'\'}
                         ${renderActivitySparkline(a)}
@@ -8039,6 +8043,7 @@ function createShortcutsModal() {
                     <div class="shortcut-row"><kbd>d</kbd> Toggle layout edit mode</div>
                     <div class="shortcut-row"><kbd>v</kbd> Voice activity input</div>
                     <div class="shortcut-row"><kbd>w</kbd> Configure widgets</div>
+                    <div class="shortcut-row"><kbd>e</kbd> Add reaction (on focused activity)</div>
                     <div class="shortcut-row"><kbd>y</kbd> Fire confetti 🎉</div>
                     <div class="shortcut-row"><kbd>Shift+y</kbd> Epic confetti cannons 🎆</div>
                     <div class="shortcut-row"><kbd>?</kbd> Show this help</div>
@@ -17735,3 +17740,411 @@ window.showMinimapTooltip = showMinimapTooltip;
 window.hideMinimapTooltip = hideMinimapTooltip;
 window.scrollToMinimapActivity = scrollToMinimapActivity;
 window.handleMinimapKeydown = handleMinimapKeydown;
+
+// ============================================
+// ACTIVITY QUICK REACTIONS SYSTEM
+// ============================================
+
+/**
+ * Activity Quick Reactions
+ * 
+ * Allows users to add emoji reactions to activities, similar to Slack/Discord.
+ * Reactions are stored in localStorage per activity hash.
+ * 
+ * Features:
+ * - 6 reaction types: 👍 ❤️ 🎉 🔥 🤔 👀
+ * - Animated toggle with sound feedback
+ * - Reaction counts displayed on each activity
+ * - Persistent across sessions (localStorage)
+ * - Keyboard shortcut: E to open reaction picker on focused activity
+ */
+
+// Available reaction emojis
+const REACTION_EMOJIS = ['👍', '❤️', '🎉', '🔥', '🤔', '👀'];
+
+// LocalStorage key for reactions
+const REACTIONS_STORAGE_KEY = 'jarvis-pow-reactions';
+
+/**
+ * Load all reactions from localStorage.
+ * @returns {Object} Map of activity hash -> array of emoji strings
+ */
+function loadReactions() {
+    try {
+        const stored = localStorage.getItem(REACTIONS_STORAGE_KEY);
+        return stored ? JSON.parse(stored) : {};
+    } catch (e) {
+        console.error('Failed to load reactions:', e);
+        return {};
+    }
+}
+
+/**
+ * Save reactions to localStorage.
+ * @param {Object} reactions - Map of activity hash -> array of emoji strings
+ */
+function saveReactions(reactions) {
+    try {
+        localStorage.setItem(REACTIONS_STORAGE_KEY, JSON.stringify(reactions));
+    } catch (e) {
+        console.error('Failed to save reactions:', e);
+    }
+}
+
+/**
+ * Get reactions for a specific activity.
+ * @param {string} hash - Activity hash
+ * @returns {Array} Array of emoji strings
+ */
+function getActivityReactions(hash) {
+    if (!hash) return [];
+    const reactions = loadReactions();
+    return reactions[hash] || [];
+}
+
+/**
+ * Toggle a reaction on an activity.
+ * @param {string} hash - Activity hash
+ * @param {string} emoji - Emoji to toggle
+ * @returns {boolean} True if reaction was added, false if removed
+ */
+function toggleReaction(hash, emoji) {
+    if (!hash || !emoji) return false;
+    
+    const reactions = loadReactions();
+    if (!reactions[hash]) {
+        reactions[hash] = [];
+    }
+    
+    const index = reactions[hash].indexOf(emoji);
+    let added = false;
+    
+    if (index === -1) {
+        reactions[hash].push(emoji);
+        added = true;
+    } else {
+        reactions[hash].splice(index, 1);
+        added = false;
+    }
+    
+    // Clean up empty arrays
+    if (reactions[hash].length === 0) {
+        delete reactions[hash];
+    }
+    
+    saveReactions(reactions);
+    return added;
+}
+
+/**
+ * Check if a reaction exists on an activity.
+ * @param {string} hash - Activity hash
+ * @param {string} emoji - Emoji to check
+ * @returns {boolean} True if reaction exists
+ */
+function hasReaction(hash, emoji) {
+    const reactions = getActivityReactions(hash);
+    return reactions.includes(emoji);
+}
+
+/**
+ * Render reaction buttons for an activity.
+ * @param {string} hash - Activity hash
+ * @returns {string} HTML string for reactions UI
+ */
+function renderActivityReactions(hash) {
+    if (!hash) return '';
+    
+    const reactions = getActivityReactions(hash);
+    
+    // Build reaction counts
+    const reactionCounts = {};
+    REACTION_EMOJIS.forEach(emoji => {
+        if (reactions.includes(emoji)) {
+            reactionCounts[emoji] = 1;
+        }
+    });
+    
+    // Render existing reactions as badges
+    const existingReactions = Object.entries(reactionCounts)
+        .filter(([emoji, count]) => count > 0)
+        .map(([emoji, count]) => `
+            <button class="reaction-badge active" 
+                    data-emoji="${emoji}" 
+                    data-hash="${hash}"
+                    onclick="handleReactionClick(event, '${hash}', '${emoji}')"
+                    title="You reacted with ${emoji}. Click to remove."
+                    aria-pressed="true"
+                    aria-label="Remove ${emoji} reaction">
+                <span class="reaction-emoji">${emoji}</span>
+            </button>
+        `).join('');
+    
+    return `
+        <div class="activity-reactions" data-hash="${hash}">
+            <div class="reactions-existing">${existingReactions}</div>
+            <button class="reaction-add-btn" 
+                    onclick="showReactionPicker(event, '${hash}')"
+                    title="Add reaction"
+                    aria-label="Add reaction to this activity"
+                    aria-haspopup="true">
+                <span class="reaction-add-icon">😊</span>
+                <span class="reaction-add-plus">+</span>
+            </button>
+        </div>
+    `;
+}
+
+/**
+ * Handle reaction button click.
+ * @param {Event} event - Click event
+ * @param {string} hash - Activity hash
+ * @param {string} emoji - Emoji to toggle
+ */
+function handleReactionClick(event, hash, emoji) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const added = toggleReaction(hash, emoji);
+    
+    // Play sound feedback
+    if (typeof playNotificationSound === 'function') {
+        playNotificationSound(added ? 'pop' : 'click');
+    }
+    
+    // Animate the reaction
+    const button = event.currentTarget;
+    if (added) {
+        button.classList.add('reaction-pop');
+        setTimeout(() => button.classList.remove('reaction-pop'), 300);
+    } else {
+        button.classList.add('reaction-shrink');
+        setTimeout(() => button.classList.remove('reaction-shrink'), 300);
+    }
+    
+    // Re-render reactions for this activity
+    refreshActivityReactions(hash);
+    
+    // Announce to screen readers
+    if (typeof announceToScreenReader === 'function') {
+        announceToScreenReader(added ? `Added ${emoji} reaction` : `Removed ${emoji} reaction`);
+    }
+}
+
+/**
+ * Show the reaction picker popup.
+ * @param {Event} event - Click event
+ * @param {string} hash - Activity hash
+ */
+function showReactionPicker(event, hash) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    // Remove any existing picker
+    hideReactionPicker();
+    
+    const button = event.currentTarget;
+    const rect = button.getBoundingClientRect();
+    
+    const picker = document.createElement('div');
+    picker.id = 'reactionPicker';
+    picker.className = 'reaction-picker';
+    picker.setAttribute('role', 'menu');
+    picker.setAttribute('aria-label', 'Choose a reaction');
+    picker.innerHTML = REACTION_EMOJIS.map((emoji, index) => `
+        <button class="reaction-picker-btn ${hasReaction(hash, emoji) ? 'selected' : ''}" 
+                data-emoji="${emoji}"
+                onclick="selectReaction(event, '${hash}', '${emoji}')"
+                role="menuitem"
+                tabindex="${index === 0 ? '0' : '-1'}"
+                aria-label="React with ${emoji}${hasReaction(hash, emoji) ? ' (selected)' : ''}">
+            ${emoji}
+        </button>
+    `).join('');
+    
+    document.body.appendChild(picker);
+    
+    // Position the picker
+    const pickerRect = picker.getBoundingClientRect();
+    let top = rect.bottom + 5;
+    let left = rect.left;
+    
+    // Adjust if overflowing viewport
+    if (left + pickerRect.width > window.innerWidth) {
+        left = window.innerWidth - pickerRect.width - 10;
+    }
+    if (top + pickerRect.height > window.innerHeight) {
+        top = rect.top - pickerRect.height - 5;
+    }
+    
+    picker.style.top = `${top}px`;
+    picker.style.left = `${left}px`;
+    
+    // Focus first button
+    const firstBtn = picker.querySelector('.reaction-picker-btn');
+    if (firstBtn) firstBtn.focus();
+    
+    // Close on click outside
+    setTimeout(() => {
+        document.addEventListener('click', closeReactionPickerOnClickOutside);
+        document.addEventListener('keydown', handleReactionPickerKeydown);
+    }, 10);
+}
+
+/**
+ * Hide the reaction picker.
+ */
+function hideReactionPicker() {
+    const picker = document.getElementById('reactionPicker');
+    if (picker) {
+        picker.remove();
+    }
+    document.removeEventListener('click', closeReactionPickerOnClickOutside);
+    document.removeEventListener('keydown', handleReactionPickerKeydown);
+}
+
+/**
+ * Close picker when clicking outside.
+ */
+function closeReactionPickerOnClickOutside(event) {
+    const picker = document.getElementById('reactionPicker');
+    if (picker && !picker.contains(event.target)) {
+        hideReactionPicker();
+    }
+}
+
+/**
+ * Handle keyboard navigation in reaction picker.
+ */
+function handleReactionPickerKeydown(event) {
+    const picker = document.getElementById('reactionPicker');
+    if (!picker) return;
+    
+    if (event.key === 'Escape') {
+        hideReactionPicker();
+        return;
+    }
+    
+    const buttons = Array.from(picker.querySelectorAll('.reaction-picker-btn'));
+    const currentIndex = buttons.indexOf(document.activeElement);
+    
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+        event.preventDefault();
+        const nextIndex = (currentIndex + 1) % buttons.length;
+        buttons[nextIndex].focus();
+    } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        const prevIndex = (currentIndex - 1 + buttons.length) % buttons.length;
+        buttons[prevIndex].focus();
+    }
+}
+
+/**
+ * Select a reaction from the picker.
+ * @param {Event} event - Click event
+ * @param {string} hash - Activity hash
+ * @param {string} emoji - Selected emoji
+ */
+function selectReaction(event, hash, emoji) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const added = toggleReaction(hash, emoji);
+    
+    // Play sound
+    if (typeof playNotificationSound === 'function') {
+        playNotificationSound(added ? 'success' : 'click');
+    }
+    
+    // Hide picker
+    hideReactionPicker();
+    
+    // Refresh the activity's reactions display
+    refreshActivityReactions(hash);
+    
+    // Announce to screen readers
+    if (typeof announceToScreenReader === 'function') {
+        announceToScreenReader(added ? `Added ${emoji} reaction` : `Removed ${emoji} reaction`);
+    }
+}
+
+/**
+ * Refresh the reactions display for a specific activity.
+ * @param {string} hash - Activity hash
+ */
+function refreshActivityReactions(hash) {
+    const container = document.querySelector(`.activity-reactions[data-hash="${hash}"]`);
+    if (!container) return;
+    
+    // Re-render the reactions
+    const newHtml = renderActivityReactions(hash);
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = newHtml;
+    const newReactions = tempDiv.firstElementChild;
+    
+    if (newReactions) {
+        container.replaceWith(newReactions);
+    }
+}
+
+/**
+ * Add keyboard shortcut 'E' to open reaction picker on focused activity.
+ */
+document.addEventListener('keydown', (e) => {
+    // Skip if typing in an input
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
+        return;
+    }
+    
+    // Check for focused activity
+    if (e.key === 'e' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const focused = document.activeElement;
+        if (focused && focused.classList.contains('activity-item')) {
+            const hash = focused.getAttribute('data-hash');
+            if (hash) {
+                e.preventDefault();
+                // Find the reaction add button
+                const addBtn = focused.querySelector('.reaction-add-btn');
+                if (addBtn) {
+                    showReactionPicker({ currentTarget: addBtn, preventDefault: () => {}, stopPropagation: () => {} }, hash);
+                }
+            }
+        }
+    }
+});
+
+// Update KEYBOARD_SHORTCUTS if available
+if (typeof KEYBOARD_SHORTCUTS !== 'undefined') {
+    KEYBOARD_SHORTCUTS['e'] = { action: 'openReactionPicker', description: 'Add reaction to focused activity' };
+}
+
+// Add to command palette if available
+if (typeof window.commandPaletteCommands !== 'undefined') {
+    window.commandPaletteCommands.push({
+        name: 'Add Reaction',
+        shortcut: 'E',
+        description: 'Add emoji reaction to focused activity',
+        icon: '😊',
+        action: () => {
+            const focused = document.querySelector('.activity-item:focus');
+            if (focused) {
+                const hash = focused.getAttribute('data-hash');
+                const addBtn = focused.querySelector('.reaction-add-btn');
+                if (hash && addBtn) {
+                    showReactionPicker({ currentTarget: addBtn, preventDefault: () => {}, stopPropagation: () => {} }, hash);
+                }
+            }
+            if (typeof hideCommandPalette === 'function') hideCommandPalette();
+        },
+        group: 'Activities'
+    });
+}
+
+// Expose functions globally
+window.renderActivityReactions = renderActivityReactions;
+window.handleReactionClick = handleReactionClick;
+window.showReactionPicker = showReactionPicker;
+window.hideReactionPicker = hideReactionPicker;
+window.selectReaction = selectReaction;
+window.toggleReaction = toggleReaction;
+window.getActivityReactions = getActivityReactions;
