@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 16:39 PST
-**Cycle:** 127
+**Last Updated:** 2026-02-03 16:44 PST
+**Cycle:** 128
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -37,7 +37,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] **Chart color refinement** ✅ Cycle 123 - Muted palette across all charts
 - [x] **Stat card icons** ✅ Cycle 124 - Distinctive colored icons per stat type
 - [x] **Activity pulse animation** ✅ Cycle 125 - Color-coded glow rings for new activities
-- [ ] Improve mobile chart readability
+- [x] Improve mobile chart readability ✅ Cycle 128
 - [x] Add loading states for charts ✅ Cycle 126
 - [x] Better empty states for tabs with no data ✅ Cycle 127
 
@@ -58,6 +58,17 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 128 (Mobile Chart Readability)
+- Added responsive Chart.js options detecting mobile viewport
+- Increased tick font sizes from 10px to 11px on mobile
+- Doughnut chart legend moves to bottom on mobile (was right-side)
+- Reduced tick count on mobile (maxTicksLimit: 4 vs 8)
+- Larger touch targets: point radii 4px vs 3px, hover 7px vs 5px
+- Increased mobile chart height (200px vs 180px, doughnut 240px)
+- Added window resize handler for orientation change re-rendering
+- Hides axis titles on mobile to reduce visual clutter
+- 296 activities, all signed on-chain
 
 ### Cycle 127 (Empty States Polish)
 - Added polished empty states for all tabs with styled containers
@@ -98,16 +109,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - Subtle glow effect via filter: drop-shadow
 - Full light theme support with adjusted icon colors
 - 285 activities, all signed on-chain
-
-### Cycle 123 (Chart Color Refinement)
-- Updated all chart colors to muted palette for easier viewing
-- Timeline chart: #4ecdc4 (muted teal) with reduced fill opacity
-- Cumulative chart: #9b87f5 (soft purple) 
-- Doughnut/Daily charts: muted type colors (gold, blue, rose, coral, teal, green)
-- Grid line opacity reduced from 0.05 to 0.03
-- Tick colors softened from #888 to #6b6b6b
-- Smaller point radii for cleaner, less cluttered look
-- 282 activities, all signed on-chain
 
 ---
 
