@@ -6,46 +6,33 @@
  * Uses OpenClaw's presence system to detect activity
  */
 
-import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { execSync } from 'child_process';
+import {
+  type Activity,
+  type SessionState,
+  type SessionMetadata,
+  loadActivities,
+  saveActivities,
+  loadState as loadGenericState,
+  saveState as saveGenericState,
+} from './types.js';
 
-const ACTIVITY_FILE = join(import.meta.dir, '../activity.json');
 const STATE_FILE = join(import.meta.dir, 'session-state.json');
 
-interface Activity {
-  timestamp: string;
-  type: string;
-  description: string;
-  metadata?: Record<string, any>;
-}
-
-interface SessionState {
-  lastCheck: string;
-  sessionsLogged: string[];  // Track logged sessions to avoid duplicates
-  totalSessions: number;
-}
+const DEFAULT_STATE: SessionState = {
+  lastCheck: new Date().toISOString(),
+  sessionsLogged: [],
+  totalSessions: 0,
+};
 
 function loadState(): SessionState {
-  if (existsSync(STATE_FILE)) {
-    return JSON.parse(readFileSync(STATE_FILE, 'utf-8'));
-  }
-  return { lastCheck: new Date().toISOString(), sessionsLogged: [], totalSessions: 0 };
+  return loadGenericState(STATE_FILE, DEFAULT_STATE);
 }
 
-function saveState(state: SessionState) {
-  writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
-}
-
-function loadActivities(): Activity[] {
-  if (existsSync(ACTIVITY_FILE)) {
-    return JSON.parse(readFileSync(ACTIVITY_FILE, 'utf-8'));
-  }
-  return [];
-}
-
-function saveActivities(activities: Activity[]) {
-  writeFileSync(ACTIVITY_FILE, JSON.stringify(activities, null, 2));
+function saveState(state: SessionState): void {
+  saveGenericState(STATE_FILE, state);
 }
 
 interface PresenceEntry {

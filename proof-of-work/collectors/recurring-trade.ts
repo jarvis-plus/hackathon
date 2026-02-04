@@ -12,42 +12,31 @@
  */
 
 import { execSync } from "child_process";
-import { existsSync, readFileSync, writeFileSync } from "fs";
 import { dirname, join } from "path";
+import {
+  type TradeState,
+  loadState as loadGenericState,
+  saveState as saveGenericState,
+} from './types.js';
 
 const PROOF_DIR = dirname(__dirname);
 const STATE_FILE = join(PROOF_DIR, "recurring-trade-state.json");
 const SCRIPTS_DIR = "/root/clawd/scripts";
 
-interface TradeState {
-  lastTradeTimestamp: string | null;
-  totalTrades: number;
-  totalVolumeSOL: number;
-  totalVolumeUSDC: number;
-  history: Array<{
-    timestamp: string;
-    from: string;
-    to: string;
-    amount: number;
-    txSignature?: string;
-  }>;
-}
+const DEFAULT_STATE: TradeState = {
+  lastTradeTimestamp: null,
+  totalTrades: 0,
+  totalVolumeSOL: 0,
+  totalVolumeUSDC: 0,
+  history: [],
+};
 
 function loadState(): TradeState {
-  if (existsSync(STATE_FILE)) {
-    return JSON.parse(readFileSync(STATE_FILE, "utf-8"));
-  }
-  return {
-    lastTradeTimestamp: null,
-    totalTrades: 0,
-    totalVolumeSOL: 0,
-    totalVolumeUSDC: 0,
-    history: []
-  };
+  return loadGenericState(STATE_FILE, DEFAULT_STATE);
 }
 
-function saveState(state: TradeState) {
-  writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
+function saveState(state: TradeState): void {
+  saveGenericState(STATE_FILE, state);
 }
 
 function getEnvRPC(): string {

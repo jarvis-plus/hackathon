@@ -2,13 +2,25 @@
 // Wallet transaction tracker - monitors Solana wallet and logs transfers/swaps
 // Usage: SOLANA_RPC_URL=<url> bun run wallet-tracker.ts
 
-import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { Connection, PublicKey, ParsedTransactionWithMeta } from '@solana/web3.js';
+import {
+  type Activity,
+  type WalletState,
+  type TradeMetadata,
+  loadActivities,
+  saveActivities,
+  loadState as loadGenericState,
+  saveState as saveGenericState,
+} from './types.js';
 
-const ACTIVITY_FILE = join(import.meta.dir, '../activity.json');
 const STATE_FILE = join(import.meta.dir, 'wallet-state.json');
 const WALLET = 'AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX';
+
+const DEFAULT_STATE: WalletState = {
+  lastSignature: null,
+  lastCheck: new Date().toISOString(),
+};
 
 // Known token mints
 const TOKENS: Record<string, string> = {
@@ -20,40 +32,12 @@ const TOKENS: Record<string, string> = {
   'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN': 'JUP',
 };
 
-interface WalletState {
-  lastSignature: string | null;
-  lastCheck: string;
-}
-
-interface Activity {
-  timestamp: string;
-  type: string;
-  description: string;
-  metadata?: Record<string, any>;
-  signature?: string;
-  hash?: string;
-}
-
 function loadState(): WalletState {
-  if (existsSync(STATE_FILE)) {
-    return JSON.parse(readFileSync(STATE_FILE, 'utf-8'));
-  }
-  return { lastSignature: null, lastCheck: new Date().toISOString() };
+  return loadGenericState(STATE_FILE, DEFAULT_STATE);
 }
 
-function saveState(state: WalletState) {
-  writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
-}
-
-function loadActivities(): Activity[] {
-  if (existsSync(ACTIVITY_FILE)) {
-    return JSON.parse(readFileSync(ACTIVITY_FILE, 'utf-8'));
-  }
-  return [];
-}
-
-function saveActivities(activities: Activity[]) {
-  writeFileSync(ACTIVITY_FILE, JSON.stringify(activities, null, 2));
+function saveState(state: WalletState): void {
+  saveGenericState(STATE_FILE, state);
 }
 
 function parseTransaction(tx: ParsedTransactionWithMeta, signature: string): Activity | null {

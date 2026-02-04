@@ -14,27 +14,31 @@
  *   await logTweet({ content: '...', tweetUrl: '...' })
  */
 
-import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
+import {
+  type Activity,
+  type TwitterState,
+  type TweetMetadata,
+  loadActivities,
+  saveActivities,
+  loadState as loadGenericState,
+  saveState as saveGenericState,
+  truncate,
+} from './types.js';
 
-const ACTIVITY_FILE = join(import.meta.dir, '../activity.json');
 const STATE_FILE = join(import.meta.dir, 'twitter-state.json');
 
-interface Activity {
-  timestamp: string;
-  type: string;
-  description: string;
-  metadata?: Record<string, any>;
-}
+const DEFAULT_STATE: TwitterState = {
+  totalTweets: 0,
+  totalThreads: 0,
+  totalReplies: 0,
+  lastTweet: null,
+  tweetIds: [],
+};
 
-interface TwitterState {
-  totalTweets: number;
-  totalThreads: number;
-  totalReplies: number;
-  lastTweet: string | null;
-  tweetIds: string[];  // Track to avoid duplicates
-}
-
+/**
+ * Options for logging a tweet activity
+ */
 interface TweetLogOptions {
   content: string;        // Tweet text (truncated for display)
   tweetUrl?: string;      // Full URL to tweet
@@ -46,36 +50,11 @@ interface TweetLogOptions {
 }
 
 function loadState(): TwitterState {
-  if (existsSync(STATE_FILE)) {
-    return JSON.parse(readFileSync(STATE_FILE, 'utf-8'));
-  }
-  return { 
-    totalTweets: 0, 
-    totalThreads: 0, 
-    totalReplies: 0, 
-    lastTweet: null, 
-    tweetIds: [] 
-  };
+  return loadGenericState(STATE_FILE, DEFAULT_STATE);
 }
 
-function saveState(state: TwitterState) {
-  writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
-}
-
-function loadActivities(): Activity[] {
-  if (existsSync(ACTIVITY_FILE)) {
-    return JSON.parse(readFileSync(ACTIVITY_FILE, 'utf-8'));
-  }
-  return [];
-}
-
-function saveActivities(activities: Activity[]) {
-  writeFileSync(ACTIVITY_FILE, JSON.stringify(activities, null, 2));
-}
-
-function truncate(text: string, maxLen: number): string {
-  if (text.length <= maxLen) return text;
-  return text.slice(0, maxLen - 3) + '...';
+function saveState(state: TwitterState): void {
+  saveGenericState(STATE_FILE, state);
 }
 
 export async function logTweet(opts: TweetLogOptions): Promise<void> {

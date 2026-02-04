@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 16:44 PST
-**Cycle:** 128
+**Last Updated:** 2026-02-03 17:20 PST
+**Cycle:** 130
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -22,8 +22,8 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ### 🔧 Engineering
 - [x] Add unit tests for sign-activity.ts ✅ Cycle 114
 - [x] Add error handling/retry for failed on-chain signatures ✅ Cycle 115
-- [ ] Refactor dashboard JS into modules (currently one big file)
-- [ ] Add TypeScript types to collectors
+- [x] Refactor dashboard into modular structure ✅ Cycle 129
+- [x] Add TypeScript types to collectors ✅ Cycle 130
 - [x] Add health check endpoint (/api/health) ✅ Cycle 113
 - [x] Rate limiting on API endpoints ✅ Cycle 117
 
@@ -59,6 +59,25 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
 
+### Cycle 130 (TypeScript Types for Collectors)
+- Created collectors/types.ts with 200+ lines of shared type definitions
+- Defined Activity type with all metadata variants (Trade, Message, Tweet, Heartbeat, Session, Commit, Build)
+- Added state interfaces: HeartbeatState, SessionState, MessageState, TwitterState, WalletState, TradeState
+- Added utility functions: loadActivities, saveActivities, loadState, saveState, truncate, createActivity
+- Refactored all 6 collectors to import from types.ts instead of duplicating definitions
+- Removes ~180 lines of duplicated code across collectors
+- All collectors tested and verified working
+- 301 activities, all signed on-chain
+
+### Cycle 129 (Dashboard Modular Refactor)
+- Extracted 2809 lines of CSS to dashboard.css (83KB)
+- Extracted 2129 lines of JS to app.js (80KB)
+- Clean HTML structure in index.html (30KB vs original 210KB)
+- Improves browser caching (CSS/JS cached separately from HTML)
+- Better maintainability - concerns now separated into proper files
+- All functionality preserved, service restarted and verified
+- 299 activities, all signed on-chain
+
 ### Cycle 128 (Mobile Chart Readability)
 - Added responsive Chart.js options detecting mobile viewport
 - Increased tick font sizes from 10px to 11px on mobile
@@ -87,28 +106,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - Each loading state auto-hides when chart data loads
 - Improves perceived performance on slower connections
 - 290 activities, all signed on-chain
-
-### Cycle 125 (Activity Pulse Animation)
-- Enhanced new-activity pulse with multi-phase animation + inner glow
-- Added pseudo-element glow ring overlay for more visible effect
-- Color-coded pulse rings per activity type:
-  - Green: default/session/heartbeat
-  - Yellow: commit
-  - Red: trade/transfer
-  - Blue: build/deploy
-  - Pink: decision
-  - Twitter blue: tweet
-  - Teal: message
-- Double-wave pulse effect for more visual impact
-- 288 activities, all signed on-chain
-
-### Cycle 124 (Stat Card Icons)
-- Added distinctive colored icons to all 12 stat cards
-- Icons: ⚡Total ⛓️Chain 📝Commits 🔧Builds 💱Trades 💬Messages 🐦Tweets ⏱️Uptime 💰Volume 🔥Streak 🧠Mood ◎SOL
-- Each icon colored to match its stat value color
-- Subtle glow effect via filter: drop-shadow
-- Full light theme support with adjusted icon colors
-- 285 activities, all signed on-chain
 
 ---
 

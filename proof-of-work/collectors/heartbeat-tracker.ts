@@ -9,46 +9,32 @@
  * - Time since last activity
  */
 
-import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { execSync } from 'child_process';
+import {
+  type Activity,
+  type HeartbeatState,
+  type HeartbeatMetadata,
+  loadActivities,
+  saveActivities,
+  loadState as loadGenericState,
+  saveState as saveGenericState,
+} from './types.js';
 
-const ACTIVITY_FILE = join(import.meta.dir, '../activity.json');
 const STATE_FILE = join(import.meta.dir, 'heartbeat-state.json');
 
-interface Activity {
-  timestamp: string;
-  type: string;
-  description: string;
-  metadata?: Record<string, any>;
-}
-
-interface HeartbeatState {
-  lastHeartbeat: string | null;
-  consecutiveBeats: number;
-  totalBeats: number;
-}
+const DEFAULT_STATE: HeartbeatState = {
+  lastHeartbeat: null,
+  consecutiveBeats: 0,
+  totalBeats: 0,
+};
 
 function loadState(): HeartbeatState {
-  if (existsSync(STATE_FILE)) {
-    return JSON.parse(readFileSync(STATE_FILE, 'utf-8'));
-  }
-  return { lastHeartbeat: null, consecutiveBeats: 0, totalBeats: 0 };
+  return loadGenericState(STATE_FILE, DEFAULT_STATE);
 }
 
-function saveState(state: HeartbeatState) {
-  writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
-}
-
-function loadActivities(): Activity[] {
-  if (existsSync(ACTIVITY_FILE)) {
-    return JSON.parse(readFileSync(ACTIVITY_FILE, 'utf-8'));
-  }
-  return [];
-}
-
-function saveActivities(activities: Activity[]) {
-  writeFileSync(ACTIVITY_FILE, JSON.stringify(activities, null, 2));
+function saveState(state: HeartbeatState): void {
+  saveGenericState(STATE_FILE, state);
 }
 
 function checkGatewayStatus(): { running: boolean; uptime?: string; details?: string } {

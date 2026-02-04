@@ -14,25 +14,28 @@
  *   await logMessage({ channel: 'telegram', target: 'Souren', summary: '...' })
  */
 
-import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
+import {
+  type Activity,
+  type MessageState,
+  type MessageMetadata,
+  loadActivities,
+  saveActivities,
+  loadState as loadGenericState,
+  saveState as saveGenericState,
+} from './types.js';
 
-const ACTIVITY_FILE = join(import.meta.dir, '../activity.json');
 const STATE_FILE = join(import.meta.dir, 'message-state.json');
 
-interface Activity {
-  timestamp: string;
-  type: string;
-  description: string;
-  metadata?: Record<string, any>;
-}
+const DEFAULT_STATE: MessageState = {
+  totalMessages: 0,
+  byChannel: {},
+  lastMessage: null,
+};
 
-interface MessageState {
-  totalMessages: number;
-  byChannel: Record<string, number>;
-  lastMessage: string | null;
-}
-
+/**
+ * Options for logging a message activity
+ */
 interface MessageLogOptions {
   channel: string;       // telegram, discord, email, etc.
   target: string;        // recipient/channel name
@@ -43,25 +46,11 @@ interface MessageLogOptions {
 }
 
 function loadState(): MessageState {
-  if (existsSync(STATE_FILE)) {
-    return JSON.parse(readFileSync(STATE_FILE, 'utf-8'));
-  }
-  return { totalMessages: 0, byChannel: {}, lastMessage: null };
+  return loadGenericState(STATE_FILE, DEFAULT_STATE);
 }
 
-function saveState(state: MessageState) {
-  writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
-}
-
-function loadActivities(): Activity[] {
-  if (existsSync(ACTIVITY_FILE)) {
-    return JSON.parse(readFileSync(ACTIVITY_FILE, 'utf-8'));
-  }
-  return [];
-}
-
-function saveActivities(activities: Activity[]) {
-  writeFileSync(ACTIVITY_FILE, JSON.stringify(activities, null, 2));
+function saveState(state: MessageState): void {
+  saveGenericState(STATE_FILE, state);
 }
 
 export async function logMessage(opts: MessageLogOptions): Promise<void> {
