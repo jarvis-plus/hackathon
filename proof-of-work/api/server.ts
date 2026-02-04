@@ -27,6 +27,7 @@
  * - GET /api/verify/:hash         - Verify a specific activity by hash
  * - GET /api/badge                - Compact summary for sharing
  * - GET /api/feed.rss             - RSS feed of recent activities
+ * - GET /api/digest               - Email-ready digest (daily/weekly/monthly)
  * - GET /metrics                  - Prometheus-compatible metrics
  * - GET /api/openapi.json         - OpenAPI 3.0 specification
  * - GET /api/docs                 - Swagger UI interactive documentation
@@ -75,6 +76,9 @@ const DASHBOARD_DIR = join(BASE_DIR, 'dashboard');
 
 /** Path to the webhook subscriptions file */
 const WEBHOOKS_FILE = join(BASE_DIR, 'data', 'webhooks.json');
+
+/** Path to the digest subscriptions file */
+const DIGEST_FILE = join(BASE_DIR, 'data', 'digest-subscriptions.json');
 
 // ==============================================
 // WEBHOOK SYSTEM
@@ -277,6 +281,66 @@ async function broadcastToWebhooks(eventType: string, payload: any): Promise<voi
   if (modified) {
     saveWebhooks(webhooks);
   }
+}
+
+// ==============================================
+// EMAIL DIGEST SYSTEM
+// ==============================================
+
+/**
+ * Digest Subscription Interface
+ * 
+ * Each digest subscription contains:
+ * - id: Unique identifier for management
+ * - email: Email address to send digest to
+ * - frequency: daily, weekly, or monthly
+ * - createdAt: When the subscription was created
+ * - lastSent: Timestamp of last successful send
+ * - active: Whether the subscription is enabled
+ * - timezone: Timezone for scheduling (default: UTC)
+ */
+interface DigestSubscription {
+  id: string;
+  email: string;
+  frequency: 'daily' | 'weekly' | 'monthly';
+  createdAt: string;
+  lastSent?: string;
+  active: boolean;
+  timezone?: string;
+}
+
+/**
+ * Load all digest subscriptions from file.
+ * Returns empty array if file doesn't exist.
+ */
+function getDigestSubscriptions(): DigestSubscription[] {
+  if (!existsSync(DIGEST_FILE)) return [];
+  try {
+    const data = readFileSync(DIGEST_FILE, 'utf-8');
+    return JSON.parse(data);
+  } catch (e) {
+    console.error('Failed to load digest subscriptions:', e);
+    return [];
+  }
+}
+
+/**
+ * Save digest subscriptions to file.
+ */
+function saveDigestSubscriptions(subscriptions: DigestSubscription[]): void {
+  try {
+    writeFileSync(DIGEST_FILE, JSON.stringify(subscriptions, null, 2));
+  } catch (e) {
+    console.error('Failed to save digest subscriptions:', e);
+  }
+}
+
+/**
+ * Validate email format using simple regex.
+ */
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
 }
 
 // ==============================================
@@ -1572,6 +1636,585 @@ ${items}
           'Cache-Control': 'max-age=60' // Cache for 1 minute
         }
       });
+    }
+
+    // ==========================================
+    // API: GET /api/digest
+    // Email-ready activity digest for a given period
+    // Query params:
+    //   - period: daily (default), weekly, monthly
+    //   - format: html (default), text, json
+    //   - date: ISO date to generate digest for (defaults to now)
+    // ==========================================
+    if (path === '/api/digest' && req.method === 'GET') {
+      const activities = getActivities();
+      const period = url.searchParams.get('period') || 'daily';
+      const format = url.searchParams.get('format') || 'html';
+      const dateParam = url.searchParams.get('date');
+      
+      // Calculate date range based on period
+      const endDate = dateParam ? new Date(dateParam) : new Date();
+      const startDate = new Date(endDate);
+      
+      switch (period) {
+        case 'weekly':
+          startDate.setDate(startDate.getDate() - 7);
+          break;
+        case 'monthly':
+          startDate.setMonth(startDate.getMonth() - 1);
+          break;
+        case 'daily':
+        default:
+          startDate.setDate(startDate.getDate() - 1);
+      }
+      
+      // Filter activities in date range
+      const periodActivities = activities.filter((a: any) => {
+        const actDate = new Date(a.timestamp);
+        return actDate >= startDate && actDate <= endDate;
+      });
+      
+      // Calculate stats for the period
+      const onchainCount = periodActivities.filter((a: any) => 
+        a.signature || a.proof?.txSignature
+      ).length;
+      
+      const typeCounts: Record<string, number> = {};
+      periodActivities.forEach((a: any) => {
+        typeCounts[a.type] = (typeCounts[a.type] || 0) + 1;
+      });
+      
+      // Sort by count descending
+      const topTypes = Object.entries(typeCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5);
+      
+      // Count unique days in period
+      const uniqueDays = new Set(periodActivities.map((a: any) => 
+        new Date(a.timestamp).toISOString().split('T')[0]
+      )).size;
+      
+      // Get pinned activities
+      const pinnedActivities = periodActivities.filter((a: any) => a.pinned);
+      
+      // Build digest data structure
+      const digestData = {
+        period,
+        dateRange: {
+          start: startDate.toISOString(),
+          end: endDate.toISOString(),
+        },
+        summary: {
+          totalActivities: periodActivities.length,
+          onChainProofs: onchainCount,
+          verificationRate: periodActivities.length > 0 
+            ? Math.round((onchainCount / periodActivities.length) * 100) 
+            : 0,
+          uniqueDays,
+          pinnedCount: pinnedActivities.length,
+        },
+        breakdown: topTypes.map(([type, count]) => ({ type, count })),
+        highlights: periodActivities
+          .filter((a: any) => a.pinned || a.type === 'build' || a.type === 'decision')
+          .slice(-10)
+          .reverse()
+          .map((a: any) => ({
+            type: a.type,
+            description: a.description,
+            timestamp: a.timestamp,
+            pinned: a.pinned || false,
+          })),
+        allActivities: periodActivities.map((a: any) => ({
+          type: a.type,
+          description: a.description,
+          timestamp: a.timestamp,
+          onChain: !!(a.signature || a.proof?.txSignature),
+        })),
+        links: {
+          dashboard: 'https://jarvis.tail6a9bde.ts.net/pow/',
+          api: 'https://jarvis.tail6a9bde.ts.net/pow/api/activities',
+          rss: 'https://jarvis.tail6a9bde.ts.net/pow/api/feed.rss',
+        },
+        generatedAt: new Date().toISOString(),
+      };
+      
+      // Return based on format
+      if (format === 'json') {
+        return Response.json(digestData, { headers: corsHeaders });
+      }
+      
+      if (format === 'text') {
+        const periodLabel = period === 'daily' ? 'Daily' : period === 'weekly' ? 'Weekly' : 'Monthly';
+        const text = `
+JARVIS PROOF OF WORK - ${periodLabel.toUpperCase()} DIGEST
+${'='.repeat(50)}
+
+Period: ${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}
+Generated: ${new Date().toLocaleString()}
+
+SUMMARY
+-------
+Total Activities: ${digestData.summary.totalActivities}
+On-Chain Proofs: ${digestData.summary.onChainProofs} (${digestData.summary.verificationRate}%)
+Active Days: ${digestData.summary.uniqueDays}
+Pinned Items: ${digestData.summary.pinnedCount}
+
+ACTIVITY BREAKDOWN
+------------------
+${topTypes.map(([type, count]) => `${type}: ${count}`).join('\n')}
+
+HIGHLIGHTS
+----------
+${digestData.highlights.map(h => 
+  `${h.pinned ? '📌 ' : ''}[${h.type}] ${h.description.slice(0, 80)}${h.description.length > 80 ? '...' : ''}`
+).join('\n')}
+
+LINKS
+-----
+Dashboard: ${digestData.links.dashboard}
+API: ${digestData.links.api}
+RSS: ${digestData.links.rss}
+
+---
+Jarvis AI Agent | Colosseum Agent Hackathon 2026
+`.trim();
+        
+        return new Response(text, {
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'text/plain; charset=utf-8',
+          }
+        });
+      }
+      
+      // Default: HTML format (email-ready)
+      const periodLabel = period === 'daily' ? 'Daily' : period === 'weekly' ? 'Weekly' : 'Monthly';
+      const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jarvis Proof of Work - ${periodLabel} Digest</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      border-radius: 8px;
+      padding: 30px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #0ea5e9;
+    }
+    .header h1 {
+      color: #0ea5e9;
+      margin: 0 0 8px 0;
+      font-size: 24px;
+    }
+    .header .period {
+      color: #666;
+      font-size: 14px;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+    .stat-card {
+      background: #f8fafc;
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 28px;
+      font-weight: bold;
+      color: #0ea5e9;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .section {
+      margin-bottom: 25px;
+    }
+    .section h2 {
+      font-size: 16px;
+      color: #333;
+      margin: 0 0 15px 0;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .breakdown-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .breakdown-type {
+      font-weight: 500;
+    }
+    .breakdown-count {
+      color: #0ea5e9;
+      font-weight: bold;
+    }
+    .highlight {
+      padding: 12px;
+      margin-bottom: 10px;
+      background: #f8fafc;
+      border-radius: 6px;
+      border-left: 3px solid #0ea5e9;
+    }
+    .highlight.pinned {
+      border-left-color: #f59e0b;
+      background: #fffbeb;
+    }
+    .highlight-type {
+      display: inline-block;
+      font-size: 10px;
+      padding: 2px 6px;
+      background: #0ea5e9;
+      color: white;
+      border-radius: 4px;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+    .highlight.pinned .highlight-type {
+      background: #f59e0b;
+    }
+    .highlight-desc {
+      font-size: 14px;
+      color: #333;
+    }
+    .cta {
+      text-align: center;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+    }
+    .cta-button {
+      display: inline-block;
+      background: linear-gradient(135deg, #0ea5e9, #06b6d4);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 30px;
+      font-size: 12px;
+      color: #999;
+    }
+    .footer a {
+      color: #0ea5e9;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🤖 Jarvis Proof of Work</h1>
+      <div class="period">${periodLabel} Digest: ${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}</div>
+    </div>
+    
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value">${digestData.summary.totalActivities}</div>
+        <div class="stat-label">Activities</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">${digestData.summary.verificationRate}%</div>
+        <div class="stat-label">On-Chain</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">${digestData.summary.uniqueDays}</div>
+        <div class="stat-label">Active Days</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">${digestData.summary.pinnedCount}</div>
+        <div class="stat-label">Pinned</div>
+      </div>
+    </div>
+    
+    <div class="section">
+      <h2>📊 Activity Breakdown</h2>
+      ${topTypes.map(([type, count]) => `
+        <div class="breakdown-item">
+          <span class="breakdown-type">${type}</span>
+          <span class="breakdown-count">${count}</span>
+        </div>
+      `).join('')}
+    </div>
+    
+    <div class="section">
+      <h2>⭐ Highlights</h2>
+      ${digestData.highlights.length > 0 
+        ? digestData.highlights.map(h => `
+          <div class="highlight${h.pinned ? ' pinned' : ''}">
+            <span class="highlight-type">${h.pinned ? '📌 ' : ''}${h.type}</span>
+            <div class="highlight-desc">${h.description.slice(0, 150)}${h.description.length > 150 ? '...' : ''}</div>
+          </div>
+        `).join('')
+        : '<p style="color: #666; font-style: italic;">No highlights for this period.</p>'
+      }
+    </div>
+    
+    <div class="cta">
+      <a href="${digestData.links.dashboard}" class="cta-button">View Full Dashboard →</a>
+    </div>
+    
+    <div class="footer">
+      <p>Jarvis AI Agent | <a href="https://colosseum.com/agent-hackathon">Colosseum Agent Hackathon 2026</a></p>
+      <p>
+        <a href="${digestData.links.dashboard}">Dashboard</a> · 
+        <a href="${digestData.links.api}">API</a> · 
+        <a href="${digestData.links.rss}">RSS</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>`;
+      
+      return new Response(html, {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'text/html; charset=utf-8',
+        }
+      });
+    }
+
+    // ==========================================
+    // API: GET /api/digest/subscriptions
+    // List all digest subscriptions
+    // ==========================================
+    if (path === '/api/digest/subscriptions' && req.method === 'GET') {
+      const subscriptions = getDigestSubscriptions();
+      
+      // Return list (sanitize email to show domain only for privacy)
+      const sanitized = subscriptions.map(s => ({
+        id: s.id,
+        email: s.email.replace(/(.{2}).*(@.*)/, '$1***$2'), // Mask email
+        frequency: s.frequency,
+        createdAt: s.createdAt,
+        lastSent: s.lastSent,
+        active: s.active,
+        timezone: s.timezone || 'UTC'
+      }));
+      
+      return Response.json({
+        count: sanitized.length,
+        subscriptions: sanitized
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: POST /api/digest/subscriptions
+    // Subscribe to email digests
+    // ==========================================
+    if (path === '/api/digest/subscriptions' && req.method === 'POST') {
+      try {
+        const body = await req.json() as { 
+          email?: string; 
+          frequency?: string;
+          timezone?: string;
+        };
+        
+        // Validate email
+        if (!body.email) {
+          return Response.json({ 
+            error: 'Missing required field: email' 
+          }, { status: 400, headers: corsHeaders });
+        }
+        
+        if (!isValidEmail(body.email)) {
+          return Response.json({ 
+            error: 'Invalid email format' 
+          }, { status: 400, headers: corsHeaders });
+        }
+        
+        // Validate frequency
+        const validFrequencies = ['daily', 'weekly', 'monthly'];
+        const frequency = body.frequency || 'daily';
+        if (!validFrequencies.includes(frequency)) {
+          return Response.json({ 
+            error: `Invalid frequency. Valid options: ${validFrequencies.join(', ')}` 
+          }, { status: 400, headers: corsHeaders });
+        }
+        
+        // Check for duplicate email
+        const subscriptions = getDigestSubscriptions();
+        const existing = subscriptions.find(s => s.email.toLowerCase() === body.email!.toLowerCase());
+        if (existing) {
+          return Response.json({ 
+            error: 'Email already subscribed',
+            message: 'Use PATCH to update frequency or DELETE to unsubscribe',
+            id: existing.id
+          }, { status: 409, headers: corsHeaders });
+        }
+        
+        // Create new subscription
+        const subscription: DigestSubscription = {
+          id: randomUUID(),
+          email: body.email.toLowerCase(),
+          frequency: frequency as 'daily' | 'weekly' | 'monthly',
+          createdAt: new Date().toISOString(),
+          active: true,
+          timezone: body.timezone || 'UTC'
+        };
+        
+        subscriptions.push(subscription);
+        saveDigestSubscriptions(subscriptions);
+        
+        console.log(`📧 New digest subscription: ${subscription.email} (${frequency})`);
+        
+        return Response.json({
+          id: subscription.id,
+          email: subscription.email,
+          frequency: subscription.frequency,
+          timezone: subscription.timezone,
+          createdAt: subscription.createdAt,
+          active: subscription.active,
+          message: `Subscribed to ${frequency} digest emails. You will receive your first digest soon.`,
+          unsubscribeHint: `To unsubscribe: DELETE /api/digest/subscriptions/${subscription.id}`
+        }, { status: 201, headers: corsHeaders });
+        
+      } catch (e) {
+        return Response.json({ 
+          error: 'Invalid JSON body' 
+        }, { status: 400, headers: corsHeaders });
+      }
+    }
+
+    // ==========================================
+    // API: PATCH /api/digest/subscriptions/:id
+    // Update subscription (frequency, active status)
+    // ==========================================
+    if (path.match(/^\/api\/digest\/subscriptions\/[^/]+$/) && req.method === 'PATCH') {
+      const id = path.split('/').pop()!;
+      
+      try {
+        const body = await req.json() as { 
+          frequency?: string; 
+          active?: boolean;
+          timezone?: string;
+        };
+        
+        const subscriptions = getDigestSubscriptions();
+        const subscription = subscriptions.find(s => s.id === id);
+        
+        if (!subscription) {
+          return Response.json({ 
+            error: 'Subscription not found' 
+          }, { status: 404, headers: corsHeaders });
+        }
+        
+        // Update fields
+        if (body.frequency) {
+          const validFrequencies = ['daily', 'weekly', 'monthly'];
+          if (!validFrequencies.includes(body.frequency)) {
+            return Response.json({ 
+              error: `Invalid frequency. Valid options: ${validFrequencies.join(', ')}` 
+            }, { status: 400, headers: corsHeaders });
+          }
+          subscription.frequency = body.frequency as 'daily' | 'weekly' | 'monthly';
+        }
+        
+        if (typeof body.active === 'boolean') {
+          subscription.active = body.active;
+        }
+        
+        if (body.timezone) {
+          subscription.timezone = body.timezone;
+        }
+        
+        saveDigestSubscriptions(subscriptions);
+        
+        return Response.json({
+          id: subscription.id,
+          email: subscription.email.replace(/(.{2}).*(@.*)/, '$1***$2'),
+          frequency: subscription.frequency,
+          active: subscription.active,
+          timezone: subscription.timezone,
+          message: 'Subscription updated successfully'
+        }, { headers: corsHeaders });
+        
+      } catch (e) {
+        return Response.json({ 
+          error: 'Invalid JSON body' 
+        }, { status: 400, headers: corsHeaders });
+      }
+    }
+
+    // ==========================================
+    // API: DELETE /api/digest/subscriptions/:id
+    // Unsubscribe from digest emails
+    // ==========================================
+    if (path.match(/^\/api\/digest\/subscriptions\/[^/]+$/) && req.method === 'DELETE') {
+      const id = path.split('/').pop()!;
+      
+      const subscriptions = getDigestSubscriptions();
+      const index = subscriptions.findIndex(s => s.id === id);
+      
+      if (index === -1) {
+        return Response.json({ 
+          error: 'Subscription not found' 
+        }, { status: 404, headers: corsHeaders });
+      }
+      
+      const removed = subscriptions.splice(index, 1)[0];
+      saveDigestSubscriptions(subscriptions);
+      
+      console.log(`📧 Digest subscription removed: ${removed.email}`);
+      
+      return Response.json({
+        message: 'Unsubscribed successfully',
+        id: removed.id,
+        email: removed.email.replace(/(.{2}).*(@.*)/, '$1***$2')
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: GET /api/digest/subscriptions/:id
+    // Get subscription details (for unsubscribe page)
+    // ==========================================
+    if (path.match(/^\/api\/digest\/subscriptions\/[^/]+$/) && req.method === 'GET') {
+      const id = path.split('/').pop()!;
+      
+      const subscriptions = getDigestSubscriptions();
+      const subscription = subscriptions.find(s => s.id === id);
+      
+      if (!subscription) {
+        return Response.json({ 
+          error: 'Subscription not found' 
+        }, { status: 404, headers: corsHeaders });
+      }
+      
+      return Response.json({
+        id: subscription.id,
+        email: subscription.email.replace(/(.{2}).*(@.*)/, '$1***$2'),
+        frequency: subscription.frequency,
+        createdAt: subscription.createdAt,
+        lastSent: subscription.lastSent,
+        active: subscription.active,
+        timezone: subscription.timezone || 'UTC'
+      }, { headers: corsHeaders });
     }
 
     // ==========================================

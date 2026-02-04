@@ -496,6 +496,72 @@
         }
       }
     },
+    "/api/digest": {
+      "get": {
+        "tags": ["Stats"],
+        "summary": "Email digest",
+        "description": "Generates an email-ready activity digest for a given time period. Supports daily, weekly, and monthly summaries in HTML, plain text, or JSON format. Perfect for automated email reports or integration with notification services.",
+        "operationId": "getDigest",
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "description": "Time period for the digest",
+            "schema": {
+              "type": "string",
+              "enum": ["daily", "weekly", "monthly"],
+              "default": "daily"
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "description": "Output format. HTML is email-ready with inline styles.",
+            "schema": {
+              "type": "string",
+              "enum": ["html", "text", "json"],
+              "default": "html"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "description": "End date for the digest period (ISO 8601). Defaults to now.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activity digest",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string",
+                  "description": "Email-ready HTML with inline styles"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "description": "Plain text summary"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Digest"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        }
+      }
+    },
     "/api/auth/status": {
       "get": {
         "tags": ["System"],
@@ -1065,6 +1131,82 @@
           "onchain": {
             "type": "integer",
             "description": "Number of activities with on-chain proofs"
+          }
+        }
+      },
+      "Digest": {
+        "type": "object",
+        "description": "Email-ready activity digest for a time period",
+        "properties": {
+          "period": {
+            "type": "string",
+            "enum": ["daily", "weekly", "monthly"],
+            "description": "Time period for the digest"
+          },
+          "dateRange": {
+            "type": "object",
+            "properties": {
+              "start": {"type": "string", "format": "date-time"},
+              "end": {"type": "string", "format": "date-time"}
+            }
+          },
+          "summary": {
+            "type": "object",
+            "properties": {
+              "totalActivities": {"type": "integer"},
+              "onChainProofs": {"type": "integer"},
+              "verificationRate": {"type": "integer", "description": "Percentage (0-100)"},
+              "uniqueDays": {"type": "integer"},
+              "pinnedCount": {"type": "integer"}
+            }
+          },
+          "breakdown": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {"type": "string"},
+                "count": {"type": "integer"}
+              }
+            },
+            "description": "Top activity types by count"
+          },
+          "highlights": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {"type": "string"},
+                "description": {"type": "string"},
+                "timestamp": {"type": "string", "format": "date-time"},
+                "pinned": {"type": "boolean"}
+              }
+            },
+            "description": "Notable activities (pinned, builds, decisions)"
+          },
+          "allActivities": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {"type": "string"},
+                "description": {"type": "string"},
+                "timestamp": {"type": "string", "format": "date-time"},
+                "onChain": {"type": "boolean"}
+              }
+            }
+          },
+          "links": {
+            "type": "object",
+            "properties": {
+              "dashboard": {"type": "string", "format": "uri"},
+              "api": {"type": "string", "format": "uri"},
+              "rss": {"type": "string", "format": "uri"}
+            }
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },

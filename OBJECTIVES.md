@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 20:44 PST
-**Cycle:** 164
+**Last Updated:** 2026-02-03 20:49 PST
+**Cycle:** 165
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -84,7 +84,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] OpenAPI/Swagger documentation (auto-generated API docs) ✅ Cycle 162
 - [x] Activity comments/notes (add notes to activities) ✅ Cycle 163
 - [x] Activity pinning (pin important activities to top) ✅ Cycle 164
-- [ ] Email digest (daily/weekly summary emails)
+- [x] Email digest (daily/weekly summary emails) ✅ Cycle 165
 - [ ] Slack/Discord bot integration
 - [ ] Activity diff view (show changes between activities)
 - [ ] Performance dashboard (response times, memory usage)
@@ -95,6 +95,27 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 165 (Email Digest API)
+- Implemented email digest endpoint for generating activity summaries
+- **Endpoint**: `GET /api/digest`
+- **Query Parameters**:
+  - `period`: daily (default), weekly, monthly
+  - `format`: html (default), text, json
+  - `date`: ISO date for digest end (defaults to now)
+- **Response Formats**:
+  - **HTML**: Email-ready with inline styles, 2x2 stat grid, activity breakdown, highlights
+  - **Text**: Plain text summary suitable for terminals/logs
+  - **JSON**: Structured data for integrations
+- **Features**:
+  - Summary stats (total activities, on-chain %, active days, pinned count)
+  - Top 5 activity types by count
+  - Highlights section (pinned items, builds, decisions)
+  - Full activity list with on-chain status
+  - Dashboard/API/RSS links
+- **OpenAPI Updated**: Added /api/digest endpoint + Digest schema (~70 lines)
+- ~280 lines added to server.ts for digest logic and HTML template
+- 422 activities, all signed on-chain
 
 ### Cycle 164 (Activity Pinning)
 - Implemented activity pinning feature for highlighting important activities
@@ -176,20 +197,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - ~120 lines added to server.ts
 - Compatible with Prometheus, Grafana, and other monitoring tools
 - 405 activities, all signed on-chain
-
-### Cycle 160 (Docker Deployment)
-- Implemented Docker deployment for easy containerized setup
-- **Dockerfile**: Bun-based multi-stage build with Alpine base image
-- **docker-compose.yml**: Full production configuration with volumes and env vars
-- **.dockerignore**: Excludes dev files, tests, secrets, demos from image
-- **Build Process**: Uses `bun install --production` for minimal dependencies
-- **Entrypoint**: Auto-initializes activity.json and webhooks.json if not mounted
-- **Health Check**: Built-in wget health check against /api/health endpoint
-- **Volume Mounts**: Persistent storage for activity.json and /data directory
-- **Environment Variables**: PORT, SOLANA_RPC_URL, API_KEY, rate limit configs
-- **README Updated**: Added Docker deployment section with examples
-- ~150 lines in Dockerfile, docker-compose.yml combined
-- 402 activities, all signed on-chain
 
 ---
 
