@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-04 02:38 PST
-**Cycle:** 189
+**Last Updated:** 2026-02-04 03:05 PST
+**Cycle:** 190
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -109,13 +109,32 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Activity duplicate detection (warn before logging similar activities) ✅ Cycle 187
 - [x] Activity undo/restore (soft delete with trash bin) ✅ Cycle 188
 - [x] Activity scheduled deletion (auto-empty trash after X days) ✅ Cycle 189
-- [ ] Activity export with filters (export only filtered results)
+- [x] Activity export with filters (export only filtered results) ✅ Cycle 190
 - [ ] Activity bulk delete (delete multiple at once)
 - [ ] Undo button toast (quick undo after delete)
 
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 190 (Export with Filters)
+- Updated main export buttons to use filter-aware `exportActivities()` function
+- **Visual Filter Indicator**:
+  - Shows next to export buttons when any filter is active
+  - Displays filtered count (e.g., "🔍 47")
+  - Hover tooltip shows active filter details
+  - Pulse animation draws attention
+- **Respects All Filters**:
+  - Type filter
+  - Search query
+  - Tag filter
+  - Wallet filter
+  - Date range
+  - Bookmark filter
+- **Theme Support**: All 6 themes (Dark, Light, Ocean, Forest, Sunset, Cyberpunk)
+- **Accessibility**: Descriptive title attributes for screen readers
+- **Stats**: 504 activities, all signed on-chain
+- Commit: 6cc680e
 
 ### Cycle 189 (Activity Scheduled Deletion)
 - Implemented configurable auto-empty for trash items
@@ -217,31 +236,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - **Mobile Responsive**: Full-width modal, stacked action buttons
 - **Stats**: 490 activities, all signed on-chain
 - Commit: 2774722
-
-### Cycle 185 (Bulk Activity Operations)
-- Implemented multi-select capability for batch operations on activities
-- **Features**:
-  - Bulk mode toggle button (X keyboard shortcut)
-  - Floating action bar with selection count and actions
-  - Shift+click for range selection
-  - Ctrl/Cmd+A to select all visible activities
-  - Bulk export selected activities as JSON/CSV
-  - Bulk bookmark all selected
-  - Bulk pin all selected
-- **UI/UX**:
-  - Checkboxes appear on activity cards when bulk mode active
-  - Selected activities highlighted with green accent border
-  - Disables compare mode when bulk mode active (prevents conflicts)
-  - Screen reader announcements for accessibility
-  - Mobile responsive design
-- **Keyboard Shortcuts**:
-  - `X` - Toggle bulk select mode
-  - `Ctrl/Cmd+A` - Select all (when in bulk mode)
-  - `Shift+Click` - Range selection
-- **Theme Support**: Full styling for all 6 themes (Dark, Light, Ocean, Forest, Sunset, Cyberpunk)
-- **Command Palette**: Added bulk mode commands
-- **Stats**: 484 activities, all signed on-chain
-- Commit: fc1f43f
 
 ---
 
