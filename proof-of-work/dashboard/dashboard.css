@@ -22003,3 +22003,163 @@ a.activity-location:hover {
         flex-direction: column;
     }
 }
+
+/* =============================================================================
+   Markdown Support Styles - Cycle 221
+   ============================================================================= */
+
+/* Inline code */
+.md-code {
+    background: rgba(0, 255, 170, 0.1);
+    border: 1px solid rgba(0, 255, 170, 0.2);
+    border-radius: 4px;
+    padding: 0.1em 0.4em;
+    font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+    font-size: 0.9em;
+    color: var(--accent);
+    white-space: nowrap;
+}
+
+/* Code blocks */
+.md-code-block {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+    font-size: 0.85em;
+    color: var(--text-primary);
+    overflow-x: auto;
+    margin: 0.5rem 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* Bold text */
+.md-bold {
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+/* Italic text */
+.md-italic {
+    font-style: italic;
+    color: var(--text-secondary);
+}
+
+/* Markdown links */
+.md-link {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--accent);
+    transition: all 0.2s ease;
+}
+
+.md-link:hover {
+    color: #00cc88;
+    border-bottom-style: solid;
+}
+
+/* Auto-linked URLs - slightly different styling */
+.md-autolink {
+    word-break: break-all;
+    font-size: 0.95em;
+}
+
+/* Theme adjustments for markdown */
+.light-mode .md-code {
+    background: rgba(0, 136, 102, 0.1);
+    border-color: rgba(0, 136, 102, 0.2);
+    color: #006644;
+}
+
+.light-mode .md-code-block {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.1);
+    color: #1a1a1a;
+}
+
+.light-mode .md-link {
+    color: #006644;
+    border-color: #006644;
+}
+
+.light-mode .md-link:hover {
+    color: #004d33;
+}
+
+/* Solarized theme */
+.theme-solarized .md-code {
+    background: rgba(38, 139, 210, 0.15);
+    border-color: rgba(38, 139, 210, 0.3);
+    color: #268bd2;
+}
+
+.theme-solarized .md-code-block {
+    background: rgba(0, 43, 54, 0.5);
+}
+
+/* Dracula theme */
+.theme-dracula .md-code {
+    background: rgba(189, 147, 249, 0.15);
+    border-color: rgba(189, 147, 249, 0.3);
+    color: #bd93f9;
+}
+
+.theme-dracula .md-code-block {
+    background: rgba(40, 42, 54, 0.8);
+}
+
+/* Nord theme */
+.theme-nord .md-code {
+    background: rgba(136, 192, 208, 0.15);
+    border-color: rgba(136, 192, 208, 0.3);
+    color: #88c0d0;
+}
+
+.theme-nord .md-code-block {
+    background: rgba(46, 52, 64, 0.8);
+}
+
+/* Monokai theme */
+.theme-monokai .md-code {
+    background: rgba(166, 226, 46, 0.15);
+    border-color: rgba(166, 226, 46, 0.3);
+    color: #a6e22e;
+}
+
+.theme-monokai .md-code-block {
+    background: rgba(39, 40, 34, 0.8);
+}
+
+/* Cyberpunk theme */
+.theme-cyberpunk .md-code {
+    background: rgba(255, 0, 102, 0.15);
+    border-color: rgba(255, 0, 102, 0.3);
+    color: #ff0066;
+}
+
+.theme-cyberpunk .md-code-block {
+    background: rgba(0, 0, 0, 0.5);
+}
+
+/* Print styles for markdown */
+@media print {
+    .md-code {
+        background: #f5f5f5 !important;
+        border: 1px solid #ddd !important;
+        color: #333 !important;
+    }
+    
+    .md-code-block {
+        background: #f5f5f5 !important;
+        border: 1px solid #ddd !important;
+        color: #333 !important;
+    }
+    
+    .md-link {
+        color: #0066cc !important;
+        text-decoration: underline !important;
+        border-bottom: none !important;
+    }
+}

@@ -1568,7 +1568,7 @@ function renderActivities(activities, highlightNew = false) {
                 </div>
                 <div class="activity-time">${formatTime(a.timestamp)}</div>
             </div>
-            <div class="activity-desc">${escapeHtml(a.description)}</div>
+            <div class="activity-desc">${renderMarkdown(a.description)}</div>
             ${typeof renderAISummary === 'function' ? renderAISummary(a) : ''}
             ${typeof renderActivityLocation === 'function' ? renderActivityLocation(a) : ''}
             ${tagsHtml}
@@ -1590,6 +1590,41 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+/**
+ * Render markdown in activity descriptions
+ * Supports: **bold**, *italic*, `code`, [link](url), auto-linked URLs, ```code blocks```
+ */
+function renderMarkdown(text) {
+    if (!text) return '';
+    
+    // First escape HTML to prevent XSS
+    let html = escapeHtml(text);
+    
+    // Code blocks (```...```) - must be done first to protect content
+    html = html.replace(/```([\s\S]*?)```/g, '<pre class="md-code-block">$1</pre>');
+    
+    // Inline code (`...`)
+    html = html.replace(/`([^`]+)`/g, '<code class="md-code">$1</code>');
+    
+    // Bold (**...**)
+    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong class="md-bold">$1</strong>');
+    
+    // Italic (*...*)
+    html = html.replace(/\*([^*]+)\*/g, '<em class="md-italic">$1</em>');
+    
+    // Links [text](url)
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="md-link">$1</a>');
+    
+    // Auto-link URLs (but not if already in a tag)
+    // Match URLs not preceded by href=" or src=" or already in <a> tags
+    html = html.replace(/(?<!href="|src="|">)(https?:\/\/[^\s<]+)/g, (match) => {
+        // Don't double-link URLs that are already linked
+        return `<a href="${match}" target="_blank" rel="noopener noreferrer" class="md-link md-autolink">${match}</a>`;
+    });
+    
+    return html;
 }
 
 // Calculate day streak (consecutive days with activity)
@@ -5737,7 +5772,7 @@ function renderGroupedActivitiesFiltered(activities) {
                         </div>
                         <div class="activity-time">${formatTime(a.timestamp)}</div>
                     </div>
-                    <div class="activity-desc">${escapeHtml(a.description)}</div>
+                    <div class="activity-desc">${renderMarkdown(a.description)}</div>
                     ${tagsHtml}
                     ${typeof renderActivityReactions === 'function' ? renderActivityReactions(hash) : ''}
                     <div class="activity-footer">
@@ -7984,7 +8019,7 @@ function renderGroupedActivities(activities, highlightNew = false) {
                         </div>
                         <div class="activity-time">${formatTime(a.timestamp)}</div>
                     </div>
-                    <div class="activity-desc">${escapeHtml(a.description)}</div>
+                    <div class="activity-desc">${renderMarkdown(a.description)}</div>
                     ${tagsHtml}
                     ${typeof renderActivityReactions === 'function' ? renderActivityReactions(hash) : ''}
                     <div class="activity-footer">
@@ -8089,7 +8124,7 @@ function renderGroupedActivitiesLimited(activities, limit, highlightNew = false)
                         </div>
                         <div class="activity-time">${formatTime(a.timestamp)}</div>
                     </div>
-                    <div class="activity-desc">${escapeHtml(a.description)}</div>
+                    <div class="activity-desc">${renderMarkdown(a.description)}</div>
                     ${tagsHtml}
                     ${typeof renderActivityReactions === 'function' ? renderActivityReactions(hash) : ''}
                     <div class="activity-footer">

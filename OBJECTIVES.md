@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-04 12:42 PST
-**Cycle:** 220
+**Last Updated:** 2026-02-04 12:54 PST
+**Cycle:** 221
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -141,10 +141,36 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Dashboard Analytics Tab (time breakdown, productivity insights) ✅ Cycle 218
 - [x] Presentation Mode (cinematic full-screen for demos) ✅ Cycle 219
 - [x] Activity QR Code Sharing (generate scannable codes for on-chain proof) ✅ Cycle 220
+- [x] Markdown Support in Descriptions (rich text formatting in activities) ✅ Cycle 221
 
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 221 (Markdown Support in Descriptions)
+- Implemented markdown rendering for activity descriptions
+- **Supported Syntax**:
+  - `**bold**` → **bold text**
+  - `*italic*` → *italic text*
+  - `` `code` `` → inline code with accent color
+  - `[link](url)` → clickable links
+  - Auto-linked URLs (https://...)
+  - ``` ```code blocks``` ``` → multi-line code blocks
+- **Security**: HTML escaped first, then markdown applied (XSS-safe)
+- **Implementation**:
+  - `renderMarkdown()` function in app.js
+  - Applied to all 4 activity description render points
+  - Theme-aware CSS for all 7 themes
+  - Print-friendly styles included
+- **CSS Styling (~130 lines)**:
+  - `.md-code` - inline code with accent background
+  - `.md-code-block` - code blocks with monospace font
+  - `.md-bold` - emphasized bold text
+  - `.md-italic` - subtle italic text
+  - `.md-link` - accent-colored links with dotted underline
+  - Theme variants: light, solarized, dracula, nord, monokai, cyberpunk
+- **Stats**: 596 activities, all signed on-chain
+- Great for documenting technical work with code snippets!
 
 ### Cycle 220 (Activity QR Code Sharing)
 - Implemented QR code generation for sharing activities with on-chain verification
@@ -251,30 +277,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - **Mobile**: Responsive modal and coordinate row layout
 - **Stats**: 587 activities, all signed on-chain
 - Commit: c440f66
-
-### Cycle 216 (Print-Friendly View)
-- Implemented comprehensive print styles for activity reports
-- **Print Button**:
-  - Added to header with 🖨️ icon
-  - Uses `screen-only` class (hidden when printing)
-  - Opens native print dialog
-- **Print CSS (~500 lines)**:
-  - Clean white background for paper
-  - Hidden interactive elements (buttons, modals, charts, tooltips)
-  - Activity cards optimized for paper layout
-  - Stats grid in 4-column layout
-  - Full activity descriptions (no truncation)
-  - Proper page breaks (avoid splitting activities/day groups)
-- **Print Header**:
-  - Shows title, subtitle, generation date/time
-  - Border accent at bottom
-  - Only visible when printing (`print-only` class)
-- **Integration**:
-  - Command palette: "Print Activity Report" command
-  - Keyboard shortcuts updated (Ctrl+P documented)
-  - Screen/print-only CSS classes for visibility control
-- **Stats**: 584 activities, all signed on-chain
-- Commit: 66af8cf
 
 ---
 
