@@ -18148,3 +18148,588 @@ window.hideReactionPicker = hideReactionPicker;
 window.selectReaction = selectReaction;
 window.toggleReaction = toggleReaction;
 window.getActivityReactions = getActivityReactions;
+
+// ============================================
+// FOCUS TIMER
+// A productivity stopwatch for timing work sessions
+// ============================================
+
+/**
+ * Focus Timer State
+ */
+const focusTimerState = {
+    isRunning: false,
+    isPaused: false,
+    startTime: null,
+    pausedTime: 0, // Accumulated pause time
+    pauseStart: null,
+    intervalId: null,
+    laps: [],
+    pomodoroLength: 25 * 60 * 1000, // 25 minutes in ms
+    lastMilestone: 0
+};
+
+/**
+ * Format milliseconds to HH:MM:SS
+ * @param {number} ms - Milliseconds
+ * @returns {string} Formatted time string
+ */
+function formatTimerTime(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    
+    return [hours, minutes, seconds]
+        .map(v => v.toString().padStart(2, '0'))
+        .join(':');
+}
+
+/**
+ * Get elapsed time in milliseconds
+ * @returns {number} Elapsed time
+ */
+function getFocusTimerElapsed() {
+    if (!focusTimerState.startTime) return 0;
+    
+    let elapsed = Date.now() - focusTimerState.startTime - focusTimerState.pausedTime;
+    
+    if (focusTimerState.isPaused && focusTimerState.pauseStart) {
+        elapsed -= (Date.now() - focusTimerState.pauseStart);
+    }
+    
+    return Math.max(0, elapsed);
+}
+
+/**
+ * Update the timer display
+ */
+function updateFocusTimerDisplay() {
+    const timeEl = document.getElementById('focusTimerTime');
+    const progressBar = document.getElementById('focusTimerProgressBar');
+    const display = document.getElementById('focusTimerDisplay');
+    
+    if (!timeEl) return;
+    
+    const elapsed = getFocusTimerElapsed();
+    timeEl.textContent = formatTimerTime(elapsed);
+    
+    // Update progress bar (based on pomodoro 25min)
+    if (progressBar) {
+        const progress = Math.min(100, (elapsed / focusTimerState.pomodoroLength) * 100);
+        progressBar.style.width = `${progress}%`;
+    }
+    
+    // Check for milestones (every 25 minutes)
+    const milestones = Math.floor(elapsed / focusTimerState.pomodoroLength);
+    if (milestones > focusTimerState.lastMilestone) {
+        focusTimerState.lastMilestone = milestones;
+        celebratePomodoroMilestone(milestones);
+    }
+}
+
+/**
+ * Celebrate a pomodoro milestone
+ * @param {number} count - Number of pomodoros completed
+ */
+function celebratePomodoroMilestone(count) {
+    const display = document.getElementById('focusTimerDisplay');
+    if (display) {
+        display.classList.add('milestone');
+        setTimeout(() => display.classList.remove('milestone'), 500);
+    }
+    
+    // Play success sound
+    if (typeof playNotificationSound === 'function') {
+        playNotificationSound('success');
+    }
+    
+    // Announce
+    if (typeof announceToScreenReader === 'function') {
+        announceToScreenReader(`Pomodoro ${count} complete! ${count * 25} minutes of focused work.`);
+    }
+    
+    // Show browser notification
+    if (Notification.permission === 'granted') {
+        new Notification('🍅 Pomodoro Complete!', {
+            body: `You've completed ${count} pomodoro${count > 1 ? 's' : ''} (${count * 25} minutes)! Take a short break.`,
+            icon: '/pow/favicon-32.png'
+        });
+    }
+}
+
+/**
+ * Toggle focus timer on/off
+ */
+function toggleFocusTimer() {
+    if (focusTimerState.isRunning) {
+        stopFocusTimer();
+    } else {
+        startFocusTimer();
+    }
+}
+
+/**
+ * Start the focus timer
+ */
+function startFocusTimer() {
+    focusTimerState.isRunning = true;
+    focusTimerState.isPaused = false;
+    focusTimerState.startTime = Date.now();
+    focusTimerState.pausedTime = 0;
+    focusTimerState.pauseStart = null;
+    focusTimerState.laps = [];
+    focusTimerState.lastMilestone = 0;
+    
+    // Update button state
+    const btn = document.getElementById('focusTimerBtn');
+    if (btn) {
+        btn.classList.add('running');
+        btn.classList.remove('paused');
+        btn.setAttribute('aria-pressed', 'true');
+        btn.setAttribute('aria-label', 'Focus Timer: Running');
+        btn.innerHTML = '⏱️ Running';
+    }
+    
+    // Show display
+    const display = document.getElementById('focusTimerDisplay');
+    if (display) {
+        display.style.display = 'block';
+        display.classList.remove('paused');
+    }
+    
+    // Hide laps initially
+    const lapsSection = document.getElementById('focusTimerLaps');
+    if (lapsSection) lapsSection.style.display = 'none';
+    
+    // Update pause button
+    const pauseBtn = document.getElementById('focusTimerPause');
+    if (pauseBtn) {
+        pauseBtn.innerHTML = '⏸️';
+        pauseBtn.setAttribute('aria-label', 'Pause timer');
+    }
+    
+    // Start interval
+    focusTimerState.intervalId = setInterval(updateFocusTimerDisplay, 1000);
+    updateFocusTimerDisplay();
+    
+    // Play sound
+    if (typeof playNotificationSound === 'function') {
+        playNotificationSound('success');
+    }
+    
+    // Announce
+    if (typeof announceToScreenReader === 'function') {
+        announceToScreenReader('Focus timer started');
+    }
+    
+    // Save state to localStorage
+    saveFocusTimerState();
+}
+
+/**
+ * Stop the focus timer
+ */
+function stopFocusTimer() {
+    if (!focusTimerState.isRunning) return;
+    
+    const elapsed = getFocusTimerElapsed();
+    const formattedTime = formatTimerTime(elapsed);
+    
+    // Clear interval
+    if (focusTimerState.intervalId) {
+        clearInterval(focusTimerState.intervalId);
+        focusTimerState.intervalId = null;
+    }
+    
+    // Reset state
+    focusTimerState.isRunning = false;
+    focusTimerState.isPaused = false;
+    focusTimerState.startTime = null;
+    focusTimerState.pausedTime = 0;
+    focusTimerState.pauseStart = null;
+    focusTimerState.laps = [];
+    focusTimerState.lastMilestone = 0;
+    
+    // Update button
+    const btn = document.getElementById('focusTimerBtn');
+    if (btn) {
+        btn.classList.remove('running', 'paused');
+        btn.setAttribute('aria-pressed', 'false');
+        btn.setAttribute('aria-label', 'Focus Timer: Stopped');
+        btn.innerHTML = '⏱️ Timer';
+    }
+    
+    // Hide display
+    const display = document.getElementById('focusTimerDisplay');
+    if (display) {
+        display.style.display = 'none';
+    }
+    
+    // Play sound
+    if (typeof playNotificationSound === 'function') {
+        playNotificationSound('click');
+    }
+    
+    // Announce
+    if (typeof announceToScreenReader === 'function') {
+        announceToScreenReader(`Focus timer stopped. Total time: ${formattedTime}`);
+    }
+    
+    // Show summary if significant time (> 1 minute)
+    if (elapsed > 60000) {
+        showFocusTimerSummary(elapsed);
+    }
+    
+    // Clear localStorage
+    localStorage.removeItem('pow_focus_timer_state');
+}
+
+/**
+ * Toggle pause/resume
+ */
+function toggleFocusTimerPause() {
+    if (!focusTimerState.isRunning) return;
+    
+    const btn = document.getElementById('focusTimerBtn');
+    const pauseBtn = document.getElementById('focusTimerPause');
+    const display = document.getElementById('focusTimerDisplay');
+    
+    if (focusTimerState.isPaused) {
+        // Resume
+        focusTimerState.pausedTime += Date.now() - focusTimerState.pauseStart;
+        focusTimerState.pauseStart = null;
+        focusTimerState.isPaused = false;
+        
+        if (btn) {
+            btn.classList.add('running');
+            btn.classList.remove('paused');
+            btn.innerHTML = '⏱️ Running';
+        }
+        
+        if (pauseBtn) {
+            pauseBtn.innerHTML = '⏸️';
+            pauseBtn.setAttribute('aria-label', 'Pause timer');
+        }
+        
+        if (display) {
+            display.classList.remove('paused');
+        }
+        
+        if (typeof announceToScreenReader === 'function') {
+            announceToScreenReader('Timer resumed');
+        }
+    } else {
+        // Pause
+        focusTimerState.pauseStart = Date.now();
+        focusTimerState.isPaused = true;
+        
+        if (btn) {
+            btn.classList.remove('running');
+            btn.classList.add('paused');
+            btn.innerHTML = '⏱️ Paused';
+        }
+        
+        if (pauseBtn) {
+            pauseBtn.innerHTML = '▶️';
+            pauseBtn.setAttribute('aria-label', 'Resume timer');
+        }
+        
+        if (display) {
+            display.classList.add('paused');
+        }
+        
+        if (typeof announceToScreenReader === 'function') {
+            announceToScreenReader('Timer paused');
+        }
+    }
+    
+    saveFocusTimerState();
+}
+
+/**
+ * Record a lap
+ */
+function recordFocusTimerLap() {
+    if (!focusTimerState.isRunning) return;
+    
+    const elapsed = getFocusTimerElapsed();
+    const lastLapTime = focusTimerState.laps.length > 0 
+        ? focusTimerState.laps[focusTimerState.laps.length - 1].total 
+        : 0;
+    
+    focusTimerState.laps.push({
+        number: focusTimerState.laps.length + 1,
+        total: elapsed,
+        delta: elapsed - lastLapTime
+    });
+    
+    renderFocusTimerLaps();
+    
+    if (typeof playNotificationSound === 'function') {
+        playNotificationSound('click');
+    }
+    
+    if (typeof announceToScreenReader === 'function') {
+        announceToScreenReader(`Lap ${focusTimerState.laps.length}: ${formatTimerTime(elapsed - lastLapTime)}`);
+    }
+    
+    saveFocusTimerState();
+}
+
+/**
+ * Render the laps list
+ */
+function renderFocusTimerLaps() {
+    const lapsSection = document.getElementById('focusTimerLaps');
+    const lapsList = document.getElementById('focusTimerLapsList');
+    
+    if (!lapsSection || !lapsList) return;
+    
+    if (focusTimerState.laps.length === 0) {
+        lapsSection.style.display = 'none';
+        return;
+    }
+    
+    lapsSection.style.display = 'block';
+    lapsList.innerHTML = focusTimerState.laps.slice().reverse().map(lap => `
+        <div class="focus-timer-lap-item">
+            <span class="focus-timer-lap-number">Lap ${lap.number}</span>
+            <span class="focus-timer-lap-time">${formatTimerTime(lap.total)}</span>
+            <span class="focus-timer-lap-delta">+${formatTimerTime(lap.delta)}</span>
+        </div>
+    `).join('');
+}
+
+/**
+ * Show summary when timer stops (if > 1 min)
+ * @param {number} elapsed - Total elapsed time in ms
+ */
+function showFocusTimerSummary(elapsed) {
+    const minutes = Math.floor(elapsed / 60000);
+    const lapsCount = focusTimerState.laps.length;
+    const pomodoros = Math.floor(elapsed / focusTimerState.pomodoroLength);
+    
+    // Create a toast/notification
+    const toast = document.createElement('div');
+    toast.className = 'focus-timer-toast';
+    toast.innerHTML = `
+        <div class="focus-timer-toast-content">
+            <span class="focus-timer-toast-icon">⏱️</span>
+            <div class="focus-timer-toast-text">
+                <strong>Focus Session Complete!</strong>
+                <div>${formatTimerTime(elapsed)} • ${pomodoros} pomodoro${pomodoros !== 1 ? 's' : ''}${lapsCount > 0 ? ` • ${lapsCount} lap${lapsCount !== 1 ? 's' : ''}` : ''}</div>
+            </div>
+            <button class="focus-timer-toast-close" onclick="this.parentElement.parentElement.remove()">×</button>
+        </div>
+    `;
+    
+    // Add toast styles if not present
+    if (!document.getElementById('focus-timer-toast-styles')) {
+        const style = document.createElement('style');
+        style.id = 'focus-timer-toast-styles';
+        style.textContent = `
+            .focus-timer-toast {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                z-index: 2000;
+                animation: toast-slide-in 0.3s ease-out;
+            }
+            @keyframes toast-slide-in {
+                from { opacity: 0; transform: translateY(20px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            .focus-timer-toast-content {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                background: linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(5, 150, 105, 0.95));
+                color: white;
+                padding: 16px 20px;
+                border-radius: 12px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            }
+            .focus-timer-toast-icon { font-size: 24px; }
+            .focus-timer-toast-text strong { display: block; margin-bottom: 4px; }
+            .focus-timer-toast-text div { font-size: 13px; opacity: 0.9; }
+            .focus-timer-toast-close {
+                background: none;
+                border: none;
+                color: white;
+                font-size: 20px;
+                cursor: pointer;
+                opacity: 0.7;
+                transition: opacity 0.2s;
+            }
+            .focus-timer-toast-close:hover { opacity: 1; }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(toast);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (toast.parentElement) {
+            toast.style.animation = 'toast-slide-in 0.3s ease-out reverse';
+            setTimeout(() => toast.remove(), 300);
+        }
+    }, 5000);
+}
+
+/**
+ * Save timer state to localStorage (for persistence across page reloads)
+ */
+function saveFocusTimerState() {
+    if (!focusTimerState.isRunning) return;
+    
+    const state = {
+        isRunning: focusTimerState.isRunning,
+        isPaused: focusTimerState.isPaused,
+        startTime: focusTimerState.startTime,
+        pausedTime: focusTimerState.pausedTime,
+        pauseStart: focusTimerState.pauseStart,
+        laps: focusTimerState.laps,
+        lastMilestone: focusTimerState.lastMilestone
+    };
+    
+    localStorage.setItem('pow_focus_timer_state', JSON.stringify(state));
+}
+
+/**
+ * Restore timer state from localStorage
+ */
+function restoreFocusTimerState() {
+    const saved = localStorage.getItem('pow_focus_timer_state');
+    if (!saved) return;
+    
+    try {
+        const state = JSON.parse(saved);
+        if (!state.isRunning) return;
+        
+        // Restore state
+        focusTimerState.isRunning = state.isRunning;
+        focusTimerState.isPaused = state.isPaused;
+        focusTimerState.startTime = state.startTime;
+        focusTimerState.pausedTime = state.pausedTime;
+        focusTimerState.pauseStart = state.pauseStart;
+        focusTimerState.laps = state.laps || [];
+        focusTimerState.lastMilestone = state.lastMilestone || 0;
+        
+        // Update UI
+        const btn = document.getElementById('focusTimerBtn');
+        const display = document.getElementById('focusTimerDisplay');
+        const pauseBtn = document.getElementById('focusTimerPause');
+        
+        if (btn) {
+            if (focusTimerState.isPaused) {
+                btn.classList.add('paused');
+                btn.innerHTML = '⏱️ Paused';
+            } else {
+                btn.classList.add('running');
+                btn.innerHTML = '⏱️ Running';
+            }
+            btn.setAttribute('aria-pressed', 'true');
+        }
+        
+        if (display) {
+            display.style.display = 'block';
+            if (focusTimerState.isPaused) {
+                display.classList.add('paused');
+            }
+        }
+        
+        if (pauseBtn && focusTimerState.isPaused) {
+            pauseBtn.innerHTML = '▶️';
+        }
+        
+        // Render laps
+        renderFocusTimerLaps();
+        
+        // Start interval
+        focusTimerState.intervalId = setInterval(updateFocusTimerDisplay, 1000);
+        updateFocusTimerDisplay();
+        
+    } catch (e) {
+        console.error('Failed to restore focus timer state:', e);
+        localStorage.removeItem('pow_focus_timer_state');
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+    restoreFocusTimerState();
+});
+
+// Keyboard shortcut: F for focus timer
+document.addEventListener('keydown', (e) => {
+    // Skip if typing in an input
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
+        return;
+    }
+    
+    // F to toggle timer
+    if (e.key === 'f' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        toggleFocusTimer();
+    }
+    
+    // P to pause/resume (when timer is running)
+    if (e.key === 'p' && !e.ctrlKey && !e.metaKey && !e.altKey && focusTimerState.isRunning) {
+        e.preventDefault();
+        toggleFocusTimerPause();
+    }
+});
+
+// Update KEYBOARD_SHORTCUTS if available
+if (typeof KEYBOARD_SHORTCUTS !== 'undefined') {
+    KEYBOARD_SHORTCUTS['f'] = { action: 'toggleFocusTimer', description: 'Start/Stop focus timer' };
+    KEYBOARD_SHORTCUTS['p'] = { action: 'toggleFocusTimerPause', description: 'Pause/Resume focus timer' };
+}
+
+// Add to command palette if available
+if (typeof window.commandPaletteCommands !== 'undefined') {
+    window.commandPaletteCommands.push({
+        name: 'Start Focus Timer',
+        shortcut: 'F',
+        description: 'Start a focus/pomodoro timer',
+        icon: '⏱️',
+        action: () => {
+            if (!focusTimerState.isRunning) startFocusTimer();
+            if (typeof hideCommandPalette === 'function') hideCommandPalette();
+        },
+        group: 'Tools'
+    });
+    
+    window.commandPaletteCommands.push({
+        name: 'Stop Focus Timer',
+        shortcut: '',
+        description: 'Stop the running focus timer',
+        icon: '⏹️',
+        action: () => {
+            if (focusTimerState.isRunning) stopFocusTimer();
+            if (typeof hideCommandPalette === 'function') hideCommandPalette();
+        },
+        group: 'Tools'
+    });
+    
+    window.commandPaletteCommands.push({
+        name: 'Pause Focus Timer',
+        shortcut: 'P',
+        description: 'Pause or resume the focus timer',
+        icon: '⏸️',
+        action: () => {
+            if (focusTimerState.isRunning) toggleFocusTimerPause();
+            if (typeof hideCommandPalette === 'function') hideCommandPalette();
+        },
+        group: 'Tools'
+    });
+}
+
+// Expose functions globally
+window.toggleFocusTimer = toggleFocusTimer;
+window.startFocusTimer = startFocusTimer;
+window.stopFocusTimer = stopFocusTimer;
+window.toggleFocusTimerPause = toggleFocusTimerPause;
+window.recordFocusTimerLap = recordFocusTimerLap;

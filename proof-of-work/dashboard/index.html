@@ -135,8 +135,37 @@
                         </button>
                     </div>
                 </div>
+                <button class="sound-toggle focus-timer-btn" id="focusTimerBtn" onclick="toggleFocusTimer()" title="Start/Stop focus timer (F)" aria-pressed="false" aria-label="Focus Timer: Stopped">
+                    ⏱️ Timer
+                </button>
             </div>
         </header>
+        
+        <!-- Focus Timer Floating Display -->
+        <div id="focusTimerDisplay" class="focus-timer-display" role="timer" aria-live="polite" aria-label="Focus timer" style="display: none;">
+            <div class="focus-timer-inner">
+                <span class="focus-timer-icon">⏱️</span>
+                <span class="focus-timer-time" id="focusTimerTime">00:00:00</span>
+                <div class="focus-timer-controls">
+                    <button class="focus-timer-control-btn pause" id="focusTimerPause" onclick="toggleFocusTimerPause()" title="Pause/Resume" aria-label="Pause timer">
+                        ⏸️
+                    </button>
+                    <button class="focus-timer-control-btn stop" id="focusTimerStop" onclick="stopFocusTimer()" title="Stop timer" aria-label="Stop timer">
+                        ⏹️
+                    </button>
+                    <button class="focus-timer-control-btn lap" id="focusTimerLap" onclick="recordFocusTimerLap()" title="Record lap" aria-label="Record lap">
+                        🏁
+                    </button>
+                </div>
+            </div>
+            <div class="focus-timer-laps" id="focusTimerLaps" style="display: none;">
+                <div class="focus-timer-laps-header">Laps</div>
+                <div class="focus-timer-laps-list" id="focusTimerLapsList"></div>
+            </div>
+            <div class="focus-timer-progress" id="focusTimerProgress">
+                <div class="focus-timer-progress-bar" id="focusTimerProgressBar"></div>
+            </div>
+        </div>
         
         <!-- Dashboard Widgets Modal -->
         <div id="widgetsModal" class="widgets-modal" role="dialog" aria-labelledby="widgetsTitle" aria-modal="true" style="display: none;">
