@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 18:49 PST
-**Cycle:** 147
+**Last Updated:** 2026-02-03 18:51 PST
+**Cycle:** 148
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -30,7 +30,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Browser notifications for new activities (with permission) ✅ Cycle 144
 - [x] PWA support (manifest, service worker, installable) ✅ Cycle 146
 - [x] Activity export (JSON/CSV download with filter support) ✅ Cycle 147
-- [ ] Activity grouping by day (collapsible sections)
+- [x] Activity grouping by day (collapsible sections) ✅ Cycle 148
 - [ ] Webhook notifications API for external integrations
 - [ ] Accessibility improvements (ARIA labels, focus states)
 
@@ -68,6 +68,23 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 148 (Day Grouping)
+- Added activity grouping by day with collapsible sections
+- Day headers show relative dates (Today, Yesterday, weekday + date)
+- Activity count and on-chain count badges in each header
+- Click header to collapse/expand day group
+- Expand All / Collapse All controls at top of feed
+- Collapsed state persists in localStorage
+- Subtle sound feedback on toggle (higher pitch for expand)
+- Smooth CSS animation for collapse/expand transitions
+- Both renderActivities and renderFilteredActivities use grouping
+- Light/dark theme support for all new elements
+- Mobile responsive styling
+- ~200 lines of JavaScript for grouping logic
+- ~130 lines of CSS for day headers and animations
+- Files: app.js, dashboard.css
+- 357 activities, all signed on-chain
 
 ### Cycle 147 (Activity Export)
 - Added activity export feature for data download
@@ -131,22 +148,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - Reuses existing .sound-toggle CSS for button styling
 - Files: app.js, index.html
 - 348 activities, all signed on-chain
-
-### Cycle 143 (Activity Deep Links)
-- Added shareable URL links for individual activities
-- 🔗 Share button appears on hover over any activity card
-- Clicking copies direct link with activity hash (e.g., #activity-abc123)
-- Visiting a deep link auto-scrolls and highlights the activity
-- Green pulse animation draws attention to linked activity
-- Toast notification confirms link copied to clipboard
-- URL hash updates when sharing (supports browser back/forward)
-- handleDeepLink() processes URL hash on page load with retry logic
-- getActivityId() extracts first 8 chars of activity hash
-- renderShareButton() adds share UI to both renderActivities and renderFilteredActivities
-- ~180 lines of JavaScript for deep link handling
-- ~130 lines of CSS with light/dark mode support
-- Files: app.js, dashboard.css
-- 347 activities, all signed on-chain
 
 ---
 

@@ -2221,23 +2221,8 @@ let currentDateFrom = null; // null means no start date filter
 let currentDateTo = null; // null means no end date filter
 let availableTags = new Set();
 
-// Known wallets configuration (matches types.ts)
-const KNOWN_WALLETS = {
-    'AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX': 'Jarvis',
-    // Add additional wallets here
-};
+// Default wallet for signing (matches first wallet in KNOWN_WALLETS above)
 const DEFAULT_WALLET = 'AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX';
-
-// Get display name for wallet
-function getWalletName(address) {
-    return KNOWN_WALLETS[address] || (address.slice(0, 4) + '...' + address.slice(-4));
-}
-
-// Get short wallet address
-function shortWallet(address) {
-    if (!address || address.length <= 12) return address || 'Unknown';
-    return address.slice(0, 4) + '...' + address.slice(-4);
-}
 
 function setTypeFilter(type) {
     currentTypeFilter = type;
@@ -2532,31 +2517,86 @@ function renderFilteredActivities(activities) {
         return;
     }
     
-    const sorted = [...filtered].reverse();
+    // Use day-grouped rendering for filtered activities
+    feed.innerHTML = renderGroupedActivitiesFiltered(filtered);
+}
+
+/**
+ * Render filtered activities with day grouping
+ * Similar to renderGroupedActivities but uses renderActivityWallet instead of renderWalletBadge
+ */
+function renderGroupedActivitiesFiltered(activities) {
+    const sorted = [...activities].reverse(); // Newest first
+    const groups = groupActivitiesByDay(sorted);
     
-    feed.innerHTML = sorted.map((a, i) => {
-        const hash = a.hash || a.proof?.hash;
-        const hashDisplay = hash ? `SHA256: ${hash.slice(0, 12)}...${hash.slice(-6)}` : '';
-        const tagsHtml = renderActivityTags(a.tags);
-        const walletHtml = renderActivityWallet(a);
-        const activityId = getActivityId(a);
-        
-        return `
-        <div class="activity-item ${a.type}" style="animation-delay: ${Math.min(i, 10) * 0.04}s" data-activity-id="${activityId}">
-            ${renderShareButton(activityId)}
-            <div class="activity-header">
-                <div class="activity-badges">
-                    <span class="activity-type">${a.type}</span>
-                    ${getProofBadge(a)}
-                    ${walletHtml}
-                </div>
-                <div class="activity-time">${formatTime(a.timestamp)}</div>
-            </div>
-            <div class="activity-desc">${escapeHtml(a.description)}</div>
-            ${tagsHtml}
-            ${hashDisplay ? `<div class="activity-hash">${hashDisplay}</div>` : ''}
+    let html = '';
+    
+    // Add expand/collapse all controls
+    html += `
+        <div class="day-group-controls">
+            <button class="day-control-btn" onclick="expandAllDays()" title="Expand all days">
+                <span>⊞</span> Expand All
+            </button>
+            <button class="day-control-btn" onclick="collapseAllDays()" title="Collapse all days">
+                <span>⊟</span> Collapse All
+            </button>
         </div>
-    `}).join('');
+    `;
+    
+    for (const [dateKey, dayActivities] of groups) {
+        const isCollapsed = collapsedDays.has(dateKey);
+        const dayLabel = formatDayHeader(dateKey, dayActivities.length);
+        const onChainCount = dayActivities.filter(a => a.signature || a.proof?.txSignature).length;
+        
+        html += `
+            <div class="day-group ${isCollapsed ? 'collapsed' : ''}" data-date="${dateKey}">
+                <div class="day-header" onclick="toggleDayGroup('${dateKey}')">
+                    <div class="day-header-left">
+                        <span class="day-toggle">${isCollapsed ? '▶' : '▼'}</span>
+                        <span class="day-label">${dayLabel}</span>
+                    </div>
+                    <div class="day-header-right">
+                        <span class="day-count">${dayActivities.length} activit${dayActivities.length === 1 ? 'y' : 'ies'}</span>
+                        ${onChainCount > 0 ? `<span class="day-onchain">⛓️ ${onChainCount}</span>` : ''}
+                    </div>
+                </div>
+                <div class="day-activities">
+        `;
+        
+        dayActivities.forEach((a, dayIndex) => {
+            const hash = a.hash || a.proof?.hash;
+            const hashDisplay = hash ? `SHA256: ${hash.slice(0, 12)}...${hash.slice(-6)}` : '';
+            const tagsHtml = renderActivityTags(a.tags);
+            const walletHtml = renderActivityWallet(a);
+            const activityId = getActivityId(a);
+            
+            html += `
+                <div class="activity-item ${a.type}" 
+                     style="animation-delay: ${Math.min(dayIndex, 5) * 0.04}s" 
+                     data-activity-id="${activityId}">
+                    ${renderShareButton(activityId)}
+                    <div class="activity-header">
+                        <div class="activity-badges">
+                            <span class="activity-type">${a.type}</span>
+                            ${getProofBadge(a)}
+                            ${walletHtml}
+                        </div>
+                        <div class="activity-time">${formatTime(a.timestamp)}</div>
+                    </div>
+                    <div class="activity-desc">${escapeHtml(a.description)}</div>
+                    ${tagsHtml}
+                    ${hashDisplay ? `<div class="activity-hash">${hashDisplay}</div>` : ''}
+                </div>
+            `;
+        });
+        
+        html += `
+                </div>
+            </div>
+        `;
+    }
+    
+    return html;
 }
 
 function renderActivityWallet(activity) {
@@ -2781,6 +2821,243 @@ function downloadFile(content, filename, mimeType) {
     }, 100);
 }
 
+// ============================================
+// DAY GROUPING (Collapsible Sections)
+// ============================================
+
+// Track collapsed state of day groups (persisted in localStorage)
+let collapsedDays = new Set();
+
+/**
+ * Initialize collapsed days from localStorage
+ */
+function initCollapsedDays() {
+    try {
+        const stored = localStorage.getItem('jarvis-pow-collapsed-days');
+        if (stored) {
+            collapsedDays = new Set(JSON.parse(stored));
+        }
+    } catch (e) {
+        console.error('Failed to load collapsed days state:', e);
+    }
+}
+
+/**
+ * Save collapsed days to localStorage
+ */
+function saveCollapsedDays() {
+    try {
+        localStorage.setItem('jarvis-pow-collapsed-days', JSON.stringify([...collapsedDays]));
+    } catch (e) {
+        console.error('Failed to save collapsed days state:', e);
+    }
+}
+
+/**
+ * Toggle a day group's collapsed state
+ */
+function toggleDayGroup(dateKey) {
+    const dayGroup = document.querySelector(`.day-group[data-date="${dateKey}"]`);
+    if (!dayGroup) return;
+    
+    const isCollapsed = collapsedDays.has(dateKey);
+    
+    if (isCollapsed) {
+        collapsedDays.delete(dateKey);
+        dayGroup.classList.remove('collapsed');
+    } else {
+        collapsedDays.add(dateKey);
+        dayGroup.classList.add('collapsed');
+    }
+    
+    saveCollapsedDays();
+    
+    // Play subtle sound feedback
+    if (soundEnabled) {
+        try {
+            const ctx = initAudio();
+            if (ctx.state === 'suspended') ctx.resume();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'sine';
+            osc.frequency.value = isCollapsed ? 600 : 400;
+            gain.gain.setValueAtTime(0.05, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.1);
+        } catch (e) {}
+    }
+}
+
+/**
+ * Expand all day groups
+ */
+function expandAllDays() {
+    collapsedDays.clear();
+    saveCollapsedDays();
+    document.querySelectorAll('.day-group.collapsed').forEach(g => g.classList.remove('collapsed'));
+}
+
+/**
+ * Collapse all day groups
+ */
+function collapseAllDays() {
+    document.querySelectorAll('.day-group').forEach(g => {
+        const dateKey = g.dataset.date;
+        if (dateKey) {
+            collapsedDays.add(dateKey);
+            g.classList.add('collapsed');
+        }
+    });
+    saveCollapsedDays();
+}
+
+/**
+ * Group activities by day
+ * @param {Array} activities - Array of activity objects (should be sorted newest first)
+ * @returns {Map} Map of date keys to activity arrays
+ */
+function groupActivitiesByDay(activities) {
+    const groups = new Map();
+    
+    activities.forEach(activity => {
+        const date = new Date(activity.timestamp);
+        // Use local date as key (YYYY-MM-DD format)
+        const dateKey = date.toLocaleDateString('en-CA'); // YYYY-MM-DD
+        
+        if (!groups.has(dateKey)) {
+            groups.set(dateKey, []);
+        }
+        groups.get(dateKey).push(activity);
+    });
+    
+    return groups;
+}
+
+/**
+ * Format a day header with relative date label
+ * @param {string} dateKey - Date in YYYY-MM-DD format
+ * @param {number} count - Number of activities on this day
+ * @returns {string} Formatted header text
+ */
+function formatDayHeader(dateKey, count) {
+    const date = new Date(dateKey + 'T12:00:00');
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    const isToday = date.toLocaleDateString('en-CA') === today.toLocaleDateString('en-CA');
+    const isYesterday = date.toLocaleDateString('en-CA') === yesterday.toLocaleDateString('en-CA');
+    
+    let label;
+    if (isToday) {
+        label = 'Today';
+    } else if (isYesterday) {
+        label = 'Yesterday';
+    } else {
+        // Show full date for older days
+        label = date.toLocaleDateString('en-US', { 
+            weekday: 'long', 
+            month: 'short', 
+            day: 'numeric',
+            year: date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined
+        });
+    }
+    
+    return label;
+}
+
+/**
+ * Render activities grouped by day
+ * @param {Array} activities - Array sorted newest first
+ * @param {boolean} highlightNew - Whether to highlight new activities
+ * @returns {string} HTML string for grouped activities
+ */
+function renderGroupedActivities(activities, highlightNew = false) {
+    const sorted = [...activities].reverse(); // Newest first
+    const groups = groupActivitiesByDay(sorted);
+    const newCount = sorted.length - lastRenderedCount;
+    const shouldHighlight = highlightNew && newCount > 0;
+    
+    let html = '';
+    let itemIndex = 0;
+    
+    // Add expand/collapse all controls
+    html += `
+        <div class="day-group-controls">
+            <button class="day-control-btn" onclick="expandAllDays()" title="Expand all days">
+                <span>⊞</span> Expand All
+            </button>
+            <button class="day-control-btn" onclick="collapseAllDays()" title="Collapse all days">
+                <span>⊟</span> Collapse All
+            </button>
+        </div>
+    `;
+    
+    for (const [dateKey, dayActivities] of groups) {
+        const isCollapsed = collapsedDays.has(dateKey);
+        const dayLabel = formatDayHeader(dateKey, dayActivities.length);
+        const onChainCount = dayActivities.filter(a => a.signature || a.proof?.txSignature).length;
+        
+        html += `
+            <div class="day-group ${isCollapsed ? 'collapsed' : ''}" data-date="${dateKey}">
+                <div class="day-header" onclick="toggleDayGroup('${dateKey}')">
+                    <div class="day-header-left">
+                        <span class="day-toggle">${isCollapsed ? '▶' : '▼'}</span>
+                        <span class="day-label">${dayLabel}</span>
+                    </div>
+                    <div class="day-header-right">
+                        <span class="day-count">${dayActivities.length} activit${dayActivities.length === 1 ? 'y' : 'ies'}</span>
+                        ${onChainCount > 0 ? `<span class="day-onchain">⛓️ ${onChainCount}</span>` : ''}
+                    </div>
+                </div>
+                <div class="day-activities">
+        `;
+        
+        dayActivities.forEach((a, dayIndex) => {
+            const hash = a.hash || a.proof?.hash;
+            const hashDisplay = hash ? `SHA256: ${hash.slice(0, 12)}...${hash.slice(-6)}` : '';
+            const isNew = shouldHighlight && itemIndex < newCount;
+            const tagsHtml = renderActivityTags(a.tags);
+            const walletHtml = renderWalletBadge(a.wallet);
+            const activityId = getActivityId(a);
+            
+            html += `
+                <div class="activity-item ${a.type}${isNew ? ' new-activity' : ''}" 
+                     style="animation-delay: ${Math.min(dayIndex, 5) * 0.04}s" 
+                     data-wallet="${a.wallet || ''}" 
+                     data-activity-id="${activityId}">
+                    ${renderShareButton(activityId)}
+                    <div class="activity-header">
+                        <div class="activity-badges">
+                            <span class="activity-type">${a.type}</span>
+                            ${getProofBadge(a)}
+                            ${walletHtml}
+                        </div>
+                        <div class="activity-time">${formatTime(a.timestamp)}</div>
+                    </div>
+                    <div class="activity-desc">${escapeHtml(a.description)}</div>
+                    ${tagsHtml}
+                    ${hashDisplay ? `<div class="activity-hash">${hashDisplay}</div>` : ''}
+                </div>
+            `;
+            itemIndex++;
+        });
+        
+        html += `
+                </div>
+            </div>
+        `;
+    }
+    
+    return html;
+}
+
+// Initialize collapsed days state on load
+initCollapsedDays();
+
 // Override renderActivities to use filtered rendering when filters are active
 const originalRenderActivities = renderActivities;
 renderActivities = function(activities, highlightNew = false) {
@@ -2792,11 +3069,29 @@ renderActivities = function(activities, highlightNew = false) {
     populateWalletFilters(activities);
     
     // If filters are active, use filtered rendering
-    if (currentTypeFilter !== 'all' || currentSearchQuery || currentTagFilter || currentWalletFilter) {
+    if (currentTypeFilter !== 'all' || currentSearchQuery || currentTagFilter || currentWalletFilter || currentDateFrom || currentDateTo) {
         renderFilteredActivities(activities);
     } else {
-        // Use original rendering
-        originalRenderActivities(activities, highlightNew);
+        // Use day-grouped rendering
+        const feed = document.getElementById('feed');
+        if (!activities.length) {
+            feed.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">🤖</div>
+                    <h4>Agent Warming Up</h4>
+                    <p>Activities will appear here as the agent works — commits, builds, trades, and more.</p>
+                    <div class="empty-state-hint">
+                        Every action is cryptographically signed and verified on <code>Solana</code>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+        
+        feed.classList.add('refreshing');
+        feed.innerHTML = renderGroupedActivities(activities, highlightNew);
+        lastRenderedCount = activities.length;
+        setTimeout(() => feed.classList.remove('refreshing'), 500);
     }
 };
 

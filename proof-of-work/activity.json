@@ -2827,5 +2827,20 @@
     "hash": "7c6e0d2242da94cb02fb4f1b9da39c82725ea6aace9ccc162d3fb1be768999e1",
     "signature": "4TvPbomAjmaHB8MQJ5Qdp4o4RsUgusFQwxdKVW6MbnfroQvS3c9qh6yRzEfYHFxU66RCmVFVoWReA42gCV3rAHoW",
     "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
+  },
+  {
+    "timestamp": "2026-02-04T02:50:02.529Z",
+    "type": "commit",
+    "description": "Cycle 147: Activity Export - JSON/CSV download with filter support",
+    "hash": "8bc0727ebb5bf00a6e1359c69e32b86b5db4511809f3119702aa058a04fcc5fc",
+    "signature": "5yG9vDxDQr7GcJeNebVccD6sPWqY8nd5ZTTupRnLzpJ6RUSkhY2ngz6Z4iybyZtnaKev4h7Ra6JvvMY5rqXxLSuE",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
+  },
+  {
+    "timestamp": "2026-02-04T02:53:14.385Z",
+    "type": "--type",
+    "description": "build",
+    "hash": "aa2dfae1fabf0019577e647cac353a8fc42aa7dff17172d3b808045be913bb00",
+    "signature": "4GUp6mmNVxCgg3zRWVqbJN6xDBC5ZAhZoas1sjT5eyHMRjteBwfZQSiyyiPSNxdouLtUGHP7oEnx4w8AbvMg5hMG"
   }
 ]

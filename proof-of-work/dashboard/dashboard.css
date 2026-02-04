@@ -1636,6 +1636,180 @@
             background: rgba(0,0,0,0.06);
         }
 
+        /* ============================================
+           DAY GROUPING (Collapsible Sections)
+           ============================================ */
+        
+        .day-group-controls {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            padding: 0.5rem 0;
+        }
+        
+        .day-control-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.35rem 0.75rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.75rem;
+            transition: all 0.2s;
+        }
+        
+        .day-control-btn:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+            background: rgba(0, 170, 255, 0.08);
+        }
+        
+        .day-control-btn span {
+            font-size: 0.9rem;
+        }
+        
+        .day-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+            margin-bottom: 0.75rem;
+        }
+        
+        .day-header:hover {
+            border-color: var(--accent-blue);
+            background: linear-gradient(135deg, rgba(0, 170, 255, 0.05), rgba(170, 0, 255, 0.03));
+        }
+        
+        .day-header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .day-toggle {
+            font-size: 0.7rem;
+            color: var(--accent-blue);
+            transition: transform 0.2s;
+        }
+        
+        .day-group.collapsed .day-toggle {
+            transform: rotate(0deg);
+        }
+        
+        .day-label {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+        }
+        
+        .day-header-right {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .day-count {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            padding: 0.2rem 0.5rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+        
+        .day-onchain {
+            font-size: 0.7rem;
+            color: var(--accent-purple);
+            padding: 0.2rem 0.5rem;
+            background: rgba(170, 0, 255, 0.15);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .day-activities {
+            padding-left: 0.5rem;
+            display: grid;
+            gap: 0.75rem;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+        
+        /* Collapsed state animation */
+        .day-group.collapsed .day-activities {
+            max-height: 0;
+            opacity: 0;
+            margin: 0;
+            padding: 0;
+            pointer-events: none;
+        }
+        
+        .day-group:not(.collapsed) .day-activities {
+            max-height: none;
+            opacity: 1;
+        }
+        
+        /* Light theme adjustments */
+        [data-theme="light"] .day-header {
+            background: linear-gradient(135deg, #ffffff, #f8fafc);
+        }
+        
+        [data-theme="light"] .day-header:hover {
+            background: linear-gradient(135deg, #f0f7ff, #f8f0ff);
+        }
+        
+        [data-theme="light"] .day-count {
+            background: rgba(0, 0, 0, 0.06);
+        }
+        
+        [data-theme="light"] .day-onchain {
+            background: rgba(136, 0, 204, 0.1);
+        }
+        
+        [data-theme="light"] .day-control-btn:hover {
+            background: rgba(0, 136, 221, 0.1);
+        }
+        
+        /* Mobile responsive day grouping */
+        @media (max-width: 600px) {
+            .day-header {
+                padding: 0.6rem 0.75rem;
+            }
+            
+            .day-label {
+                font-size: 0.85rem;
+            }
+            
+            .day-count, .day-onchain {
+                font-size: 0.65rem;
+                padding: 0.15rem 0.4rem;
+            }
+            
+            .day-group-controls {
+                flex-wrap: wrap;
+            }
+            
+            .day-control-btn {
+                font-size: 0.7rem;
+                padding: 0.3rem 0.6rem;
+            }
+        }
+
         /* Footer */
         footer {
             margin-top: 3rem;
