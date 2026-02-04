@@ -2254,6 +2254,392 @@ function renderInsights(activities) {
         bar.setAttribute('aria-label', `${formatHour(hour)}: ${count} activities`);
         hourlyBarsContainer.appendChild(bar);
     });
+    
+    // Also render weekly comparison
+    renderWeeklyComparison(activities);
+}
+
+// ============================================
+// WEEKLY COMPARISON
+// ============================================
+
+/**
+ * Calculate and render weekly comparison (this week vs last week)
+ */
+function renderWeeklyComparison(activities) {
+    if (!activities || activities.length === 0) return;
+    
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // 0 = Sunday
+    
+    // Calculate start of this week (Monday)
+    const startOfThisWeek = new Date(now);
+    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    startOfThisWeek.setDate(now.getDate() - daysToMonday);
+    startOfThisWeek.setHours(0, 0, 0, 0);
+    
+    // Calculate start of last week
+    const startOfLastWeek = new Date(startOfThisWeek);
+    startOfLastWeek.setDate(startOfLastWeek.getDate() - 7);
+    
+    // End of last week (start of this week)
+    const endOfLastWeek = new Date(startOfThisWeek);
+    endOfLastWeek.setMilliseconds(-1);
+    
+    // Filter activities for each week
+    const thisWeekActivities = activities.filter(a => {
+        const date = new Date(a.timestamp);
+        return date >= startOfThisWeek && date <= now;
+    });
+    
+    const lastWeekActivities = activities.filter(a => {
+        const date = new Date(a.timestamp);
+        return date >= startOfLastWeek && date < startOfThisWeek;
+    });
+    
+    // Calculate counts
+    const thisWeekCount = thisWeekActivities.length;
+    const lastWeekCount = lastWeekActivities.length;
+    
+    // Calculate on-chain rates
+    const thisWeekOnchain = thisWeekActivities.filter(a => a.signature).length;
+    const lastWeekOnchain = lastWeekActivities.filter(a => a.signature).length;
+    const thisWeekOnchainRate = thisWeekCount > 0 ? (thisWeekOnchain / thisWeekCount * 100) : 0;
+    const lastWeekOnchainRate = lastWeekCount > 0 ? (lastWeekOnchain / lastWeekCount * 100) : 0;
+    
+    // Calculate daily counts for each week
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const thisWeekDaily = new Array(7).fill(0);
+    const lastWeekDaily = new Array(7).fill(0);
+    
+    thisWeekActivities.forEach(a => {
+        const date = new Date(a.timestamp);
+        let day = date.getDay() - 1; // Convert to Mon=0
+        if (day < 0) day = 6; // Sunday becomes 6
+        thisWeekDaily[day]++;
+    });
+    
+    lastWeekActivities.forEach(a => {
+        const date = new Date(a.timestamp);
+        let day = date.getDay() - 1;
+        if (day < 0) day = 6;
+        lastWeekDaily[day]++;
+    });
+    
+    // Find peak days
+    const thisWeekPeakIndex = thisWeekDaily.indexOf(Math.max(...thisWeekDaily));
+    const lastWeekPeakIndex = lastWeekDaily.indexOf(Math.max(...lastWeekDaily));
+    
+    // Calculate daily averages (only count days that have passed this week)
+    const daysPassed = Math.min(daysToMonday + 1, 7); // How many days of this week have passed
+    const thisWeekAvg = daysPassed > 0 ? (thisWeekCount / daysPassed) : 0;
+    const lastWeekAvg = lastWeekCount / 7;
+    
+    // Update UI - Count comparison
+    document.getElementById('weeklyThisCount').textContent = thisWeekCount;
+    document.getElementById('weeklyLastCount').textContent = lastWeekCount;
+    updateChangeIndicator('weeklyCountChange', thisWeekCount, lastWeekCount);
+    
+    // On-chain rate comparison
+    document.getElementById('weeklyThisOnchain').textContent = thisWeekOnchainRate.toFixed(0) + '%';
+    document.getElementById('weeklyLastOnchain').textContent = lastWeekOnchainRate.toFixed(0) + '%';
+    updateChangeIndicator('weeklyOnchainChange', thisWeekOnchainRate, lastWeekOnchainRate, true);
+    
+    // Peak day comparison
+    const thisWeekPeakDay = thisWeekDaily[thisWeekPeakIndex] > 0 ? dayNames[thisWeekPeakIndex] : '--';
+    const lastWeekPeakDay = lastWeekDaily[lastWeekPeakIndex] > 0 ? dayNames[lastWeekPeakIndex] : '--';
+    document.getElementById('weeklyThisPeakDay').textContent = thisWeekPeakDay;
+    document.getElementById('weeklyLastPeakDay').textContent = lastWeekPeakDay;
+    
+    // Daily average comparison
+    document.getElementById('weeklyThisAvg').textContent = thisWeekAvg.toFixed(1);
+    document.getElementById('weeklyLastAvg').textContent = lastWeekAvg.toFixed(1);
+    updateChangeIndicator('weeklyAvgChange', thisWeekAvg, lastWeekAvg);
+    
+    // Render bar charts
+    renderWeeklyBars('weeklyBarsThis', thisWeekDaily, 'This Week', thisWeekPeakIndex);
+    renderWeeklyBars('weeklyBarsLast', lastWeekDaily, 'Last Week', lastWeekPeakIndex);
+}
+
+/**
+ * Update change indicator with positive/negative styling
+ */
+function updateChangeIndicator(elementId, thisValue, lastValue, isPercentage = false) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    
+    const diff = thisValue - lastValue;
+    let percentChange = 0;
+    
+    if (lastValue > 0) {
+        percentChange = ((thisValue - lastValue) / lastValue) * 100;
+    } else if (thisValue > 0) {
+        percentChange = 100;
+    }
+    
+    const arrow = el.querySelector('.change-arrow');
+    const value = el.querySelector('.change-value');
+    
+    el.classList.remove('positive', 'negative', 'neutral');
+    
+    if (diff > 0) {
+        el.classList.add('positive');
+        arrow.textContent = '↑';
+        value.textContent = '+' + (isPercentage ? diff.toFixed(0) + 'pp' : Math.round(percentChange) + '%');
+    } else if (diff < 0) {
+        el.classList.add('negative');
+        arrow.textContent = '↓';
+        value.textContent = (isPercentage ? diff.toFixed(0) + 'pp' : Math.round(percentChange) + '%');
+    } else {
+        el.classList.add('neutral');
+        arrow.textContent = '→';
+        value.textContent = '0%';
+    }
+}
+
+/**
+ * Render weekly bar chart for a given week
+ */
+function renderWeeklyBars(containerId, dailyCounts, label, peakIndex) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const maxCount = Math.max(...dailyCounts, 1);
+    
+    // Create bars row
+    let html = `<div class="weekly-bars-label">${label}</div>`;
+    html += '<div class="weekly-bars-row">';
+    
+    dailyCounts.forEach((count, index) => {
+        const heightPercent = (count / maxCount) * 100;
+        const isPeak = index === peakIndex && count > 0;
+        html += `
+            <div class="weekly-day-bar${isPeak ? ' peak' : ''}" 
+                 style="height: ${Math.max(heightPercent, 3)}%"
+                 data-tooltip="${dayNames[index]}: ${count} activities"
+                 role="img"
+                 aria-label="${dayNames[index]}: ${count} activities">
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// ============================================
+// WEEKLY COMPARISON PANEL
+// ============================================
+
+/**
+ * Render weekly comparison (this week vs last week)
+ * Shows activity counts, on-chain rates, peak days, and daily averages
+ */
+function renderWeeklyComparison(activities) {
+    if (!activities || activities.length === 0) return;
+    
+    // Get current date and calculate week boundaries
+    // Week starts on Monday (getDay(): 0=Sun, 1=Mon, ..., 6=Sat)
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // If Sunday, go back 6 days
+    
+    const thisWeekStart = new Date(now);
+    thisWeekStart.setDate(now.getDate() + mondayOffset);
+    thisWeekStart.setHours(0, 0, 0, 0);
+    
+    const lastWeekStart = new Date(thisWeekStart);
+    lastWeekStart.setDate(thisWeekStart.getDate() - 7);
+    
+    const lastWeekEnd = new Date(thisWeekStart);
+    lastWeekEnd.setMilliseconds(-1); // End of last week (Sunday 23:59:59.999)
+    
+    // Filter activities for each week
+    const thisWeekActivities = activities.filter(a => {
+        const date = new Date(a.timestamp);
+        return date >= thisWeekStart && date <= now;
+    });
+    
+    const lastWeekActivities = activities.filter(a => {
+        const date = new Date(a.timestamp);
+        return date >= lastWeekStart && date < thisWeekStart;
+    });
+    
+    // Calculate stats for each week
+    const thisWeekStats = calculateWeekStats(thisWeekActivities, thisWeekStart, now);
+    const lastWeekStats = calculateWeekStats(lastWeekActivities, lastWeekStart, lastWeekEnd);
+    
+    // Update DOM elements
+    updateWeeklyElement('weeklyThisCount', thisWeekStats.count);
+    updateWeeklyElement('weeklyLastCount', lastWeekStats.count);
+    updateWeeklyChange('weeklyCountChange', thisWeekStats.count, lastWeekStats.count);
+    
+    updateWeeklyElement('weeklyThisOnchain', `${thisWeekStats.onChainRate.toFixed(0)}%`);
+    updateWeeklyElement('weeklyLastOnchain', `${lastWeekStats.onChainRate.toFixed(0)}%`);
+    updateWeeklyChange('weeklyOnchainChange', thisWeekStats.onChainRate, lastWeekStats.onChainRate, '%');
+    
+    updateWeeklyElement('weeklyThisPeakDay', thisWeekStats.peakDay);
+    updateWeeklyElement('weeklyLastPeakDay', lastWeekStats.peakDay);
+    
+    updateWeeklyElement('weeklyThisAvg', thisWeekStats.dailyAvg.toFixed(1));
+    updateWeeklyElement('weeklyLastAvg', lastWeekStats.dailyAvg.toFixed(1));
+    updateWeeklyChange('weeklyAvgChange', thisWeekStats.dailyAvg, lastWeekStats.dailyAvg);
+    
+    // Render daily bar charts
+    renderWeeklyBars('weeklyBarsThis', thisWeekStats.dailyCounts, thisWeekStats.peakDayIndex, true);
+    renderWeeklyBars('weeklyBarsLast', lastWeekStats.dailyCounts, lastWeekStats.peakDayIndex, false);
+}
+
+/**
+ * Calculate stats for a given week of activities
+ */
+function calculateWeekStats(activities, weekStart, weekEnd) {
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const dailyCounts = new Array(7).fill(0); // Mon-Sun
+    
+    activities.forEach(a => {
+        const date = new Date(a.timestamp);
+        // Convert getDay() (0=Sun..6=Sat) to our index (0=Mon..6=Sun)
+        const dayIndex = (date.getDay() + 6) % 7;
+        dailyCounts[dayIndex]++;
+    });
+    
+    // Find peak day
+    const maxCount = Math.max(...dailyCounts);
+    const peakDayIndex = dailyCounts.indexOf(maxCount);
+    const peakDay = maxCount > 0 ? dayNames[peakDayIndex] : '--';
+    
+    // Calculate on-chain rate
+    const onChainCount = activities.filter(a => a.signature).length;
+    const onChainRate = activities.length > 0 ? (onChainCount / activities.length) * 100 : 0;
+    
+    // Calculate daily average (only for days that have passed)
+    const now = new Date();
+    let daysElapsed;
+    if (weekEnd <= now) {
+        // Last week - all 7 days
+        daysElapsed = 7;
+    } else {
+        // This week - count days from Monday to today (inclusive)
+        const dayOfWeek = now.getDay();
+        daysElapsed = dayOfWeek === 0 ? 7 : dayOfWeek; // Sunday = 7 days, Monday = 1, etc.
+    }
+    const dailyAvg = daysElapsed > 0 ? activities.length / daysElapsed : 0;
+    
+    return {
+        count: activities.length,
+        onChainRate,
+        peakDay,
+        peakDayIndex,
+        dailyAvg,
+        dailyCounts
+    };
+}
+
+/**
+ * Update a weekly stat element with animated value
+ */
+function updateWeeklyElement(elementId, value) {
+    const el = document.getElementById(elementId);
+    if (el) {
+        if (typeof value === 'number') {
+            animateNumber(el, value, 600);
+        } else {
+            el.textContent = value;
+        }
+    }
+}
+
+/**
+ * Update a change indicator (arrow + percentage)
+ */
+function updateWeeklyChange(elementId, current, previous, suffix = '') {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    
+    const arrowEl = el.querySelector('.change-arrow');
+    const valueEl = el.querySelector('.change-value');
+    
+    if (previous === 0 && current === 0) {
+        // No change, both zero
+        el.className = 'weekly-change neutral';
+        if (arrowEl) arrowEl.textContent = '→';
+        if (valueEl) valueEl.textContent = '--';
+        return;
+    }
+    
+    let changePercent;
+    if (previous === 0) {
+        changePercent = current > 0 ? 100 : 0;
+    } else {
+        changePercent = ((current - previous) / previous) * 100;
+    }
+    
+    const isPositive = changePercent > 0;
+    const isNeutral = Math.abs(changePercent) < 0.5;
+    
+    el.className = 'weekly-change ' + (isNeutral ? 'neutral' : (isPositive ? 'positive' : 'negative'));
+    
+    if (arrowEl) {
+        arrowEl.textContent = isNeutral ? '→' : (isPositive ? '↑' : '↓');
+    }
+    
+    if (valueEl) {
+        const absChange = Math.abs(changePercent);
+        if (absChange >= 1) {
+            valueEl.textContent = `${isPositive ? '+' : '-'}${absChange.toFixed(0)}%`;
+        } else {
+            valueEl.textContent = isNeutral ? '--' : `${isPositive ? '+' : '-'}${absChange.toFixed(1)}%`;
+        }
+    }
+}
+
+/**
+ * Render bar chart for a week's daily activity
+ */
+function renderWeeklyBars(containerId, dailyCounts, peakDayIndex, isThisWeek) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    // Keep the label but clear bars
+    const label = container.querySelector('.weekly-bars-label');
+    container.innerHTML = '';
+    if (label) {
+        container.appendChild(label);
+    } else {
+        const newLabel = document.createElement('div');
+        newLabel.className = 'weekly-bars-label';
+        newLabel.textContent = isThisWeek ? 'This Week' : 'Last Week';
+        container.appendChild(newLabel);
+    }
+    
+    // Create bars row container
+    const barsRow = document.createElement('div');
+    barsRow.className = 'weekly-bars-row';
+    
+    const maxCount = Math.max(...dailyCounts, 1);
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    
+    dailyCounts.forEach((count, index) => {
+        const bar = document.createElement('div');
+        bar.className = 'weekly-day-bar' + (index === peakDayIndex && count > 0 ? ' peak' : '');
+        
+        const heightPercent = (count / maxCount) * 100;
+        bar.style.height = `${Math.max(heightPercent, 3)}%`;
+        
+        // Tooltip
+        bar.setAttribute('data-tooltip', `${dayNames[index]}: ${count} activities`);
+        bar.setAttribute('role', 'img');
+        bar.setAttribute('aria-label', `${dayNames[index]}: ${count} activities`);
+        
+        // Animation delay for staggered effect
+        bar.style.animationDelay = `${index * 50}ms`;
+        
+        barsRow.appendChild(bar);
+    });
+    
+    container.appendChild(barsRow);
 }
 
 // Store activities globally for export
@@ -2275,6 +2661,7 @@ async function loadActivities() {
         renderCharts(activities);
         renderHeatmap(activities);
         renderInsights(activities);
+        renderWeeklyComparison(activities);
         populateTagFilters(activities);
     } catch (e) {
         try {
@@ -2289,6 +2676,7 @@ async function loadActivities() {
             renderCharts(activities);
             renderHeatmap(activities);
             renderInsights(activities);
+            renderWeeklyComparison(activities);
             populateTagFilters(activities);
         } catch (e2) {
             document.getElementById('feed').innerHTML = `

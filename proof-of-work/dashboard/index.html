@@ -279,6 +279,101 @@
                         <span>11pm</span>
                     </div>
                 </div>
+                
+                <!-- Weekly Activity Comparison -->
+                <div class="weekly-comparison" id="weeklyComparison">
+                    <div class="weekly-title">📆 Weekly Comparison (This Week vs Last Week)</div>
+                    <div class="weekly-stats-grid">
+                        <div class="weekly-stat">
+                            <div class="weekly-stat-label">Activities</div>
+                            <div class="weekly-stat-values">
+                                <div class="weekly-this-week">
+                                    <span class="weekly-value" id="weeklyThisCount">--</span>
+                                    <span class="weekly-week-label">This Week</span>
+                                </div>
+                                <div class="weekly-change" id="weeklyCountChange">
+                                    <span class="change-arrow">→</span>
+                                    <span class="change-value">--</span>
+                                </div>
+                                <div class="weekly-last-week">
+                                    <span class="weekly-value" id="weeklyLastCount">--</span>
+                                    <span class="weekly-week-label">Last Week</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="weekly-stat">
+                            <div class="weekly-stat-label">On-Chain Rate</div>
+                            <div class="weekly-stat-values">
+                                <div class="weekly-this-week">
+                                    <span class="weekly-value" id="weeklyThisOnchain">--</span>
+                                    <span class="weekly-week-label">This Week</span>
+                                </div>
+                                <div class="weekly-change" id="weeklyOnchainChange">
+                                    <span class="change-arrow">→</span>
+                                    <span class="change-value">--</span>
+                                </div>
+                                <div class="weekly-last-week">
+                                    <span class="weekly-value" id="weeklyLastOnchain">--</span>
+                                    <span class="weekly-week-label">Last Week</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="weekly-stat">
+                            <div class="weekly-stat-label">Peak Day</div>
+                            <div class="weekly-stat-values">
+                                <div class="weekly-this-week">
+                                    <span class="weekly-value" id="weeklyThisPeakDay">--</span>
+                                    <span class="weekly-week-label">This Week</span>
+                                </div>
+                                <div class="weekly-vs">vs</div>
+                                <div class="weekly-last-week">
+                                    <span class="weekly-value" id="weeklyLastPeakDay">--</span>
+                                    <span class="weekly-week-label">Last Week</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="weekly-stat">
+                            <div class="weekly-stat-label">Daily Average</div>
+                            <div class="weekly-stat-values">
+                                <div class="weekly-this-week">
+                                    <span class="weekly-value" id="weeklyThisAvg">--</span>
+                                    <span class="weekly-week-label">This Week</span>
+                                </div>
+                                <div class="weekly-change" id="weeklyAvgChange">
+                                    <span class="change-arrow">→</span>
+                                    <span class="change-value">--</span>
+                                </div>
+                                <div class="weekly-last-week">
+                                    <span class="weekly-value" id="weeklyLastAvg">--</span>
+                                    <span class="weekly-week-label">Last Week</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="weekly-chart-container">
+                        <div class="weekly-chart" id="weeklyChart">
+                            <div class="weekly-bars-wrapper">
+                                <div class="weekly-bars this-week" id="weeklyBarsThis">
+                                    <div class="weekly-bars-label">This Week</div>
+                                    <!-- 7 bars for each day -->
+                                </div>
+                                <div class="weekly-bars last-week" id="weeklyBarsLast">
+                                    <div class="weekly-bars-label">Last Week</div>
+                                    <!-- 7 bars for each day -->
+                                </div>
+                            </div>
+                            <div class="weekly-chart-labels">
+                                <span>Mon</span>
+                                <span>Tue</span>
+                                <span>Wed</span>
+                                <span>Thu</span>
+                                <span>Fri</span>
+                                <span>Sat</span>
+                                <span>Sun</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
