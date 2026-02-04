@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 20:23 PST
-**Cycle:** 159
+**Last Updated:** 2026-02-03 20:27 PST
+**Cycle:** 160
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -77,11 +77,27 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] API authentication (optional API keys) ✅ Cycle 157
 - [x] Activity rate limiting per IP ✅ Cycle 158
 - [x] Backup/restore for activity data ✅ Cycle 159
-- [ ] Docker deployment
+- [x] Docker deployment ✅ Cycle 160
 
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 160 (Docker Deployment)
+- Implemented Docker deployment for easy containerized setup
+- **Dockerfile**: Bun-based multi-stage build with Alpine base image
+- **docker-compose.yml**: Full production configuration with volumes and env vars
+- **.dockerignore**: Excludes dev files, tests, secrets, demos from image
+- **Build Process**: Uses `bun install --production` for minimal dependencies
+- **Entrypoint**: Auto-initializes activity.json and webhooks.json if not mounted
+- **Health Check**: Built-in wget health check against /api/health endpoint
+- **Volume Mounts**: Persistent storage for activity.json and /data directory
+- **Environment Variables**: PORT, SOLANA_RPC_URL, API_KEY, rate limit configs
+- **README Updated**: Added Docker deployment section with examples
+- **Tested**: Built image locally, started container, verified /api/health responds
+- **Container Labels**: OCI metadata for image title, description, source, license
+- ~150 lines in Dockerfile, docker-compose.yml combined
+- 402 activities, all signed on-chain
 
 ### Cycle 159 (Backup/Restore API)
 - Implemented backup/restore API for activity data
@@ -150,18 +166,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - Files modified: index.html, dashboard.css, app.js
 - Service restarted to pick up changes
 - 393 activities, all signed on-chain
-
-### Cycle 155 (Activity Velocity Chart Integration)
-- Fixed velocity chart not appearing - function existed but was never called
-- Added `renderVelocityChart(activities)` to main render pipeline (fetchActivities)
-- Added `renderVelocityChart(activities)` to fallback fetch path
-- Added `renderVelocityChart(msg.data.activities)` to WebSocket message handler
-- Chart shows rolling 4-hour average of actions per hour
-- Features: peak highlighting (orange), average line (dashed purple), gradient fill
-- Responsive with mobile-optimized tick labels and fonts
-- Accessibility: ARIA labels with current/peak/avg velocity stats
-- Service restarted to pick up dashboard changes
-- 391 activities, all signed on-chain
 
 ---
 

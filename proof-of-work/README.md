@@ -141,6 +141,61 @@ SOLANA_RPC_URL=<your-rpc> bun run auto-sign.ts
 
 ---
 
+## 🐳 Docker Deployment
+
+### Quick Start
+```bash
+# Build the image
+docker build -t jarvis-pow .
+
+# Run (dashboard only, no signing)
+docker run -d -p 3456:3456 --name jarvis-pow jarvis-pow
+```
+
+### With Docker Compose
+```bash
+# Start the service
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop
+docker-compose down
+```
+
+### Production Deployment (with Signing)
+```bash
+# Run with wallet mounted for on-chain signing
+docker run -d -p 3456:3456 \
+  --name jarvis-pow \
+  -v $(pwd)/activity.json:/app/activity.json \
+  -v $(pwd)/data:/app/data \
+  -v /path/to/wallet.json:/app/wallet.json:ro \
+  -e SOLANA_KEYPAIR_PATH=/app/wallet.json \
+  -e SOLANA_RPC_URL=https://your-rpc-endpoint \
+  jarvis-pow
+```
+
+### Docker Environment Variables
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PORT` | `3456` | Server port |
+| `SOLANA_RPC_URL` | mainnet-beta | RPC endpoint for signing |
+| `SOLANA_KEYPAIR_PATH` | `/app/wallet.json` | Path to mounted wallet |
+| `API_KEY` | *(empty)* | Enable API authentication |
+| `API_AUTH_READ` | `false` | Require auth for read operations |
+| `RATE_LIMIT` | `100` | API rate limit (requests/min) |
+| `WS_RATE_LIMIT` | `10` | WebSocket connections/min |
+
+### Health Check
+The container includes a built-in health check:
+```bash
+docker inspect --format='{{.State.Health.Status}}' jarvis-pow
+```
+
+---
+
 ## 📁 Project Structure
 
 ```

@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+
+# Build artifacts
+dist/
+*.tsbuildinfo
+
+# Development files
+.git/
+.gitignore
+*.md
+!README.md
+
+# Test files
+*.test.ts
+*.spec.ts
+__tests__/
+
+# Screenshots and demos
+*.png
+*.jpg
+*.gif
+demo/
+frames/
+
+# IDE and editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files (don't bundle secrets)
+.env
+.env.*
+*.pem
+*wallet*.json
+
+# Logs
+*.log
+npm-debug.log*
+
+# Vercel deployment (separate from Docker)
+vercel-deploy/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Archive files
+*.zip
+*.tar.gz

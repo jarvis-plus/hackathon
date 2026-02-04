@@ -1,0 +1,80 @@
+# Proof of Work Dashboard - Docker Compose Configuration
+#
+# Quick Start:
+#   docker-compose up -d
+#
+# With signing (requires Solana wallet):
+#   SOLANA_KEYPAIR_PATH=/path/to/wallet.json docker-compose up -d
+#
+# View logs:
+#   docker-compose logs -f
+#
+# Stop:
+#   docker-compose down
+
+version: '3.8'
+
+services:
+  pow-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: jarvis-pow:latest
+    container_name: jarvis-pow
+    restart: unless-stopped
+    
+    ports:
+      - "3456:3456"
+    
+    volumes:
+      # Persist activity data across restarts
+      - ./activity.json:/app/activity.json
+      # Persist webhook subscriptions
+      - ./data:/app/data
+      # Mount wallet for on-chain signing (optional)
+      # Uncomment and set path to your wallet keypair:
+      # - ${SOLANA_KEYPAIR_PATH:-/dev/null}:/app/wallet.json:ro
+    
+    environment:
+      - PORT=3456
+      - NODE_ENV=production
+      # Solana RPC endpoint (required for signing)
+      - SOLANA_RPC_URL=${SOLANA_RPC_URL:-https://api.mainnet-beta.solana.com}
+      # Path to keypair inside container (if mounted)
+      - SOLANA_KEYPAIR_PATH=/app/wallet.json
+      # API authentication (optional)
+      - API_KEY=${API_KEY:-}
+      - API_AUTH_READ=${API_AUTH_READ:-false}
+      # Rate limiting (requests per minute)
+      - RATE_LIMIT=${RATE_LIMIT:-100}
+      - WS_RATE_LIMIT=${WS_RATE_LIMIT:-10}
+      - WEBHOOK_WRITE_LIMIT=${WEBHOOK_WRITE_LIMIT:-5}
+      - WEBHOOK_TEST_LIMIT=${WEBHOOK_TEST_LIMIT:-10}
+    
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3456/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# Optional: Add reverse proxy for HTTPS
+#  nginx:
+#    image: nginx:alpine
+#    ports:
+#      - "443:443"
+#    volumes:
+#      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+#      - /path/to/certs:/etc/ssl/certs:ro
+#    depends_on:
+#      - pow-dashboard
+
+networks:
+  default:
+    name: jarvis-network
