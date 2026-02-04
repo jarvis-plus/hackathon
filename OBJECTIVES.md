@@ -83,6 +83,25 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
 
+### Cycle 153 (Infinite Scroll / Lazy Loading)
+- Implemented infinite scroll for the activity feed
+- **Initial load**: Only first 50 activities render (huge performance win)
+- **Auto-loading**: IntersectionObserver triggers load when scrolling near bottom
+- **Load More button**: Manual control with count of remaining activities
+- **Activity counter**: "Showing X of Y" in day-group-controls
+- **Keyboard shortcut**: Press `l` to load more activities
+- **Loading state**: Animated spinner while fetching more
+- **All-loaded state**: Shows "✅ All N activities loaded" when complete
+- **Accessibility**: Screen reader announces loaded count changes
+- `renderGroupedActivitiesLimited()` renders activities up to current limit
+- `loadMoreActivities()` increments displayCount by 50 and re-renders
+- `initInfiniteScroll()` sets up IntersectionObserver on sentinel element
+- ~200 lines JavaScript for infinite scroll logic
+- ~120 lines CSS with dark/light mode support
+- Updated keyboard shortcuts modal with 'l' shortcut
+- Files: dashboard/app.js, dashboard/dashboard.css
+- 382 activities, all signed on-chain
+
 ### Cycle 152 (Animated Stat Counters)
 - Added staggered entry animations for stat cards on page load
 - Cards fade in sequentially with 60ms stagger (cascade effect)
@@ -164,22 +183,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - ~400 lines of TypeScript for webhook infrastructure
 - Files: api/server.ts, README.md, data/webhooks.json
 - 363 activities, all signed on-chain
-
-### Cycle 148 (Day Grouping - Bug Fix)
-- Fixed critical JavaScript bug preventing dashboard from loading
-- Bug: duplicate `KNOWN_WALLETS` const declaration at lines 597 and 2225
-- Also duplicate `getWalletName` and `shortWallet` functions
-- Removed duplicate declarations, consolidated to single definition
-- Verified day grouping feature now works correctly:
-  - Day headers show relative dates (Today, Yesterday, weekday + date)
-  - Activity count and on-chain count badges in each header
-  - Click header to collapse/expand day group
-  - Expand All / Collapse All controls at top of feed
-  - Collapsed state persists in localStorage
-  - Smooth CSS animation for collapse/expand transitions
-- The feature code and CSS were already present but non-functional
-- Files changed: app.js (removed ~15 lines of duplicates)
-- 360 activities, all signed on-chain
 
 ---
 
