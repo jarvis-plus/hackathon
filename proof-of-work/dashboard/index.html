@@ -877,13 +877,16 @@
                         ⚡ Performance
                     </button>
                 </div>
-                <div class="export-buttons">
-                    <button class="export-btn" onclick="exportJSON()" title="Download as JSON">
+                <div class="export-buttons" id="export-buttons-main">
+                    <button class="export-btn" id="export-json-btn" onclick="exportActivities('json')" title="Download as JSON (respects filters)">
                         📥 JSON
                     </button>
-                    <button class="export-btn" onclick="exportCSV()" title="Download as CSV">
+                    <button class="export-btn" id="export-csv-btn" onclick="exportActivities('csv')" title="Download as CSV (respects filters)">
                         📊 CSV
                     </button>
+                    <span class="export-filter-indicator" id="export-filter-indicator" title="Export includes only filtered results" style="display: none;">
+                        🔍 Filtered
+                    </span>
                 </div>
             </div>
             <div class="feed-filters" id="feedFilters" role="search" aria-label="Filter activities">

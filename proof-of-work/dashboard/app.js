@@ -3697,6 +3697,57 @@ function applyFilters() {
     if (window.cachedActivities) {
         renderFilteredActivities(window.cachedActivities);
     }
+    
+    // Update export filter indicator
+    updateExportFilterIndicator();
+}
+
+/**
+ * Update the export filter indicator visibility
+ * Shows when any filter is active to inform users that export will be filtered
+ */
+function updateExportFilterIndicator() {
+    const indicator = document.getElementById('export-filter-indicator');
+    if (!indicator) return;
+    
+    const hasActiveFilters = 
+        currentTypeFilter !== 'all' ||
+        (currentSearchQuery && currentSearchQuery.length > 0) ||
+        currentTagFilter !== null ||
+        currentWalletFilter !== null ||
+        currentDateFrom !== null ||
+        currentDateTo !== null ||
+        window.bookmarkFilterActive;
+    
+    if (hasActiveFilters) {
+        indicator.style.display = 'inline-flex';
+        
+        // Get filtered count from stats element
+        const statsEl = document.getElementById('filterStats');
+        const countMatch = statsEl?.innerHTML?.match(/Showing <span[^>]*>(\d+)<\/span>/);
+        const filteredCount = countMatch ? countMatch[1] : '?';
+        
+        // Update indicator text with count
+        indicator.innerHTML = `🔍 ${filteredCount}`;
+        
+        // Build filter summary for tooltip
+        const activeFilters = [];
+        if (currentTypeFilter !== 'all') activeFilters.push(`Type: ${currentTypeFilter}`);
+        if (currentSearchQuery) activeFilters.push(`Search: "${currentSearchQuery}"`);
+        if (currentTagFilter) activeFilters.push(`Tag: ${currentTagFilter}`);
+        if (currentWalletFilter) activeFilters.push(`Wallet: ${currentWalletFilter.slice(0, 8)}...`);
+        if (currentDateFrom || currentDateTo) {
+            const from = currentDateFrom ? currentDateFrom.toLocaleDateString() : 'start';
+            const to = currentDateTo ? currentDateTo.toLocaleDateString() : 'now';
+            activeFilters.push(`Date: ${from} → ${to}`);
+        }
+        if (window.bookmarkFilterActive) activeFilters.push('Bookmarked only');
+        
+        indicator.title = `Export will include ${filteredCount} filtered activities:\n${activeFilters.join('\n')}`;
+    } else {
+        indicator.style.display = 'none';
+        indicator.innerHTML = '🔍 Filtered';
+    }
 }
 
 // Quick date range presets

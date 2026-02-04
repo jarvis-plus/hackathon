@@ -4111,5 +4111,41 @@
     "hash": "8dece1a5f5d0bb283caeb01f448b3e836ee60beda0054ee24d896c6b2da82e0e",
     "signature": "3aYDfLXpbu5gjPjhzhZ3BJUJ8wJWtFS7UsJE1EhGXMFvZW4Ye9By9psGKxc5GykWhRMUS4ZohBym5V7eqKPLrAjj",
     "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
+  },
+  {
+    "timestamp": "2026-02-04T10:39:20.528Z",
+    "type": "commit",
+    "description": "Sign remaining activities"
+  },
+  {
+    "timestamp": "2026-02-04T11:04:48.245Z",
+    "type": "build",
+    "description": "Cycle 190: Export with filters - Updated export buttons to use filter-aware exportActivities(). Added visual indicator showing filter count when filters are active. Indicator displays filtered count and hover tooltip with active filter details. All 6 themes supported.",
+    "metadata": {
+      "cycle": 190,
+      "feature": "export-with-filters",
+      "files_modified": [
+        "dashboard/index.html",
+        "dashboard/dashboard.css",
+        "dashboard/app.js"
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-02-04T11:04:51.470Z",
+    "type": "build",
+    "description": "Cycle 190: Export with filters - Updated export buttons to use filter-aware exportActivities(). Added visual indicator showing filter count when filters are active. Indicator displays filtered count and hover tooltip with active filter details. All 6 themes supported.",
+    "metadata": {
+      "cycle": 190,
+      "feature": "export-with-filters",
+      "files_modified": [
+        "dashboard/index.html",
+        "dashboard/dashboard.css",
+        "dashboard/app.js"
+      ]
+    },
+    "hash": "5846225d9f50e70ae22ed6b09494f9eb00a2ca90e5bcbf8d8dba7e8647caddb3",
+    "signature": "2MjNWAV5i3sTTBCeCeg4Kqc3vwyfq6ZwrPTtcZuRDB5PY94sYcWZqvxhyvQCwtRC9TTCYKS9eEn6JY1Smaq4edpZ",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
   }
 ]
