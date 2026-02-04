@@ -1140,6 +1140,9 @@
                     <button class="feed-tab" data-tab="performance" onclick="switchTab('performance')" role="tab" aria-selected="false" aria-controls="performance-feed" id="tab-performance">
                         ⚡ Performance
                     </button>
+                    <button class="feed-tab" data-tab="heatmap" onclick="switchTab('heatmap')" role="tab" aria-selected="false" aria-controls="heatmap-feed" id="tab-heatmap">
+                        📅 Heatmap
+                    </button>
                 </div>
                 <div class="export-buttons" id="export-buttons-main">
                     <button class="export-btn" id="export-json-btn" onclick="exportActivities('json')" title="Download as JSON (respects filters)">
@@ -1585,6 +1588,64 @@
                         <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem;">
                             Returns detailed performance metrics for all endpoints.
                         </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Heatmap Tab -->
+            <div id="heatmap-feed" data-view="heatmap" style="display:none;" role="tabpanel" aria-labelledby="tab-heatmap">
+                <div class="heatmap-content">
+                    <h3>📅 Activity Heatmap</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                        GitHub-style contribution calendar showing activity density over time. Each cell represents one day.
+                    </p>
+                    
+                    <div class="heatmap-controls">
+                        <div class="heatmap-year-nav">
+                            <button class="heatmap-nav-btn" id="heatmapPrevYear" onclick="changeHeatmapYear(-1)" title="Previous year">◀</button>
+                            <span class="heatmap-year" id="heatmapYear">2026</span>
+                            <button class="heatmap-nav-btn" id="heatmapNextYear" onclick="changeHeatmapYear(1)" title="Next year">▶</button>
+                        </div>
+                        <div class="heatmap-stats" id="heatmapStats">
+                            <span class="heatmap-stat"><strong id="heatmapTotal">0</strong> activities</span>
+                            <span class="heatmap-stat"><strong id="heatmapDays">0</strong> active days</span>
+                            <span class="heatmap-stat"><strong id="heatmapStreak">0</strong> day streak</span>
+                            <span class="heatmap-stat"><strong id="heatmapBusiest">--</strong> busiest day</span>
+                        </div>
+                    </div>
+                    
+                    <div class="heatmap-legend">
+                        <span class="legend-label">Less</span>
+                        <div class="legend-cell level-0" title="0 activities"></div>
+                        <div class="legend-cell level-1" title="1-2 activities"></div>
+                        <div class="legend-cell level-2" title="3-5 activities"></div>
+                        <div class="legend-cell level-3" title="6-9 activities"></div>
+                        <div class="legend-cell level-4" title="10+ activities"></div>
+                        <span class="legend-label">More</span>
+                    </div>
+                    
+                    <div class="heatmap-wrapper">
+                        <div class="heatmap-months" id="heatmapMonths"></div>
+                        <div class="heatmap-grid-container">
+                            <div class="heatmap-days">
+                                <span>Mon</span>
+                                <span>Wed</span>
+                                <span>Fri</span>
+                            </div>
+                            <div class="heatmap-grid" id="heatmapGrid"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="heatmap-tooltip" id="heatmapTooltip" style="display: none;">
+                        <span class="tooltip-date" id="tooltipDate"></span>
+                        <span class="tooltip-count" id="tooltipCount"></span>
+                    </div>
+                    
+                    <div class="heatmap-section">
+                        <h4>🔥 Hottest Days</h4>
+                        <div class="hottest-days-list" id="hottestDaysList">
+                            <p class="empty-state">Loading...</p>
+                        </div>
                     </div>
                 </div>
             </div>

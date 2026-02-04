@@ -618,7 +618,8 @@ function switchTab(tabName) {
         decisions: document.getElementById('decisions-feed'),
         meta: document.getElementById('meta-story'),
         verify: document.getElementById('verify-feed'),
-        performance: document.getElementById('performance-feed')
+        performance: document.getElementById('performance-feed'),
+        heatmap: document.getElementById('heatmap-feed')
     };
     
     // Hide all with transition
@@ -656,6 +657,11 @@ function switchTab(tabName) {
     // Initialize performance dashboard when switching to performance tab
     if (tabName === 'performance') {
         initPerformanceDashboard();
+    }
+    
+    // Initialize heatmap when switching to heatmap tab
+    if (tabName === 'heatmap' && window.cachedActivities) {
+        renderHeatmap(window.cachedActivities);
     }
 }
 
@@ -6529,6 +6535,7 @@ const KEYBOARD_SHORTCUTS = {
     '4': { action: () => switchTab('decisions'), description: 'Key Decisions tab' },
     '5': { action: () => switchTab('meta'), description: 'Meta Story tab' },
     '6': { action: () => switchTab('verify'), description: 'Verify tab' },
+    '7': { action: () => switchTab('heatmap'), description: 'Heatmap tab' },
     'r': { action: 'resetFilters', description: 'Reset all filters' },
     'e': { action: 'exportJSON', description: 'Export as JSON' },
     'E': { action: 'exportCSV', description: 'Export as CSV' },
@@ -6786,6 +6793,7 @@ const PALETTE_COMMANDS = [
     { id: 'tab-decisions', title: 'Key Decisions', description: 'View important decisions', icon: '🎯', shortcut: '4', action: () => switchTab('decisions'), group: 'Navigation' },
     { id: 'tab-meta', title: 'Meta Story', description: 'View project narrative', icon: '📖', shortcut: '5', action: () => switchTab('meta'), group: 'Navigation' },
     { id: 'tab-verify', title: 'Verify', description: 'Verify activity proofs', icon: '🔐', shortcut: '6', action: () => switchTab('verify'), group: 'Navigation' },
+    { id: 'tab-heatmap', title: 'Activity Heatmap', description: 'GitHub-style contribution calendar', icon: '📅', shortcut: '7', action: () => switchTab('heatmap'), group: 'Navigation' },
     
     // Search & Filter
     { id: 'search', title: 'Search Activities', description: 'Focus the search input', icon: '🔍', shortcut: '/', action: () => focusSearchInput(), group: 'Search & Filter' },
@@ -15005,3 +15013,305 @@ if (originalRenderActivities) {
         setTimeout(checkMilestoneHook, 2000);
     });
 }
+
+// ============================================
+// ACTIVITY HEATMAP - GitHub-style contribution calendar
+// ============================================
+
+let heatmapYear = new Date().getFullYear();
+let heatmapData = {};
+
+/**
+ * Render the activity heatmap for the current year
+ */
+function renderHeatmap(activities) {
+    if (!activities || !activities.length) return;
+    
+    // Build activity counts by date
+    heatmapData = {};
+    activities.forEach(activity => {
+        const date = new Date(activity.timestamp);
+        const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
+        heatmapData[dateStr] = (heatmapData[dateStr] || 0) + 1;
+    });
+    
+    renderHeatmapGrid();
+    renderHeatmapStats();
+    renderHottestDays();
+}
+
+/**
+ * Render the heatmap grid for the selected year
+ */
+function renderHeatmapGrid() {
+    const grid = document.getElementById('heatmapGrid');
+    const monthsRow = document.getElementById('heatmapMonths');
+    if (!grid || !monthsRow) return;
+    
+    grid.innerHTML = '';
+    monthsRow.innerHTML = '';
+    
+    // Update year display
+    const yearEl = document.getElementById('heatmapYear');
+    if (yearEl) yearEl.textContent = heatmapYear;
+    
+    // Disable next year button if viewing current year
+    const nextBtn = document.getElementById('heatmapNextYear');
+    if (nextBtn) {
+        nextBtn.disabled = heatmapYear >= new Date().getFullYear();
+    }
+    
+    // Get first day of year and calculate starting position
+    const startDate = new Date(heatmapYear, 0, 1);
+    const endDate = new Date(heatmapYear, 11, 31);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Calculate first Sunday to start the grid
+    const firstSunday = new Date(startDate);
+    firstSunday.setDate(firstSunday.getDate() - firstSunday.getDay());
+    
+    // Track months for header
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    let currentMonth = -1;
+    let monthPositions = [];
+    
+    // Generate cells for each day
+    const currentDate = new Date(firstSunday);
+    let weekCount = 0;
+    
+    while (currentDate <= endDate || currentDate.getDay() !== 0) {
+        const dateStr = currentDate.toISOString().split('T')[0];
+        const count = heatmapData[dateStr] || 0;
+        const isFuture = currentDate > today;
+        const isCurrentYear = currentDate.getFullYear() === heatmapYear;
+        
+        // Track month positions
+        if (isCurrentYear && currentDate.getMonth() !== currentMonth && currentDate.getDay() === 0) {
+            currentMonth = currentDate.getMonth();
+            monthPositions.push({ month: months[currentMonth], week: weekCount });
+        }
+        
+        // Create cell
+        const cell = document.createElement('div');
+        cell.className = `heatmap-cell level-${getHeatmapLevel(count)}`;
+        if (isFuture) cell.classList.add('future');
+        if (!isCurrentYear) cell.style.visibility = 'hidden';
+        
+        cell.dataset.date = dateStr;
+        cell.dataset.count = count;
+        
+        // Tooltip events
+        cell.addEventListener('mouseenter', showHeatmapTooltip);
+        cell.addEventListener('mouseleave', hideHeatmapTooltip);
+        cell.addEventListener('click', () => {
+            if (!isFuture && count > 0) {
+                // Filter activities to this day
+                const searchInput = document.getElementById('activitySearch');
+                if (searchInput) {
+                    searchInput.value = dateStr;
+                    applyFilters();
+                    switchTab('timeline');
+                }
+            }
+        });
+        
+        grid.appendChild(cell);
+        
+        // Move to next day
+        currentDate.setDate(currentDate.getDate() + 1);
+        if (currentDate.getDay() === 0) weekCount++;
+        
+        // Safety limit
+        if (weekCount > 60) break;
+    }
+    
+    // Render month headers
+    monthPositions.forEach((pos, i) => {
+        const span = document.createElement('span');
+        span.textContent = pos.month;
+        span.style.marginLeft = i === 0 ? '0' : '';
+        monthsRow.appendChild(span);
+    });
+}
+
+/**
+ * Get heatmap intensity level (0-4) based on count
+ */
+function getHeatmapLevel(count) {
+    if (count === 0) return 0;
+    if (count <= 2) return 1;
+    if (count <= 5) return 2;
+    if (count <= 9) return 3;
+    return 4;
+}
+
+/**
+ * Show tooltip on hover
+ */
+function showHeatmapTooltip(e) {
+    const cell = e.target;
+    const tooltip = document.getElementById('heatmapTooltip');
+    if (!tooltip) return;
+    
+    const date = new Date(cell.dataset.date);
+    const count = parseInt(cell.dataset.count) || 0;
+    
+    document.getElementById('tooltipDate').textContent = date.toLocaleDateString('en-US', {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    });
+    document.getElementById('tooltipCount').textContent = count === 0 ? 'No activities' : 
+        `${count} activit${count === 1 ? 'y' : 'ies'}`;
+    
+    tooltip.style.display = 'flex';
+    
+    // Position tooltip
+    const rect = cell.getBoundingClientRect();
+    tooltip.style.left = `${rect.left + rect.width / 2 - tooltip.offsetWidth / 2}px`;
+    tooltip.style.top = `${rect.top - tooltip.offsetHeight - 8}px`;
+}
+
+/**
+ * Hide tooltip
+ */
+function hideHeatmapTooltip() {
+    const tooltip = document.getElementById('heatmapTooltip');
+    if (tooltip) tooltip.style.display = 'none';
+}
+
+/**
+ * Render heatmap statistics
+ */
+function renderHeatmapStats() {
+    // Calculate stats for the year
+    let totalActivities = 0;
+    let activeDays = 0;
+    let maxCount = 0;
+    let maxDate = null;
+    
+    // Current streak calculation
+    let currentStreak = 0;
+    const today = new Date();
+    const checkDate = new Date(today);
+    checkDate.setHours(0, 0, 0, 0);
+    
+    // Count backwards for streak
+    while (true) {
+        const dateStr = checkDate.toISOString().split('T')[0];
+        if (heatmapData[dateStr] && heatmapData[dateStr] > 0) {
+            currentStreak++;
+            checkDate.setDate(checkDate.getDate() - 1);
+        } else {
+            break;
+        }
+        // Safety limit
+        if (currentStreak > 365) break;
+    }
+    
+    // Calculate year totals
+    const yearStart = `${heatmapYear}-01-01`;
+    const yearEnd = `${heatmapYear}-12-31`;
+    
+    Object.entries(heatmapData).forEach(([date, count]) => {
+        if (date >= yearStart && date <= yearEnd) {
+            totalActivities += count;
+            activeDays++;
+            if (count > maxCount) {
+                maxCount = count;
+                maxDate = date;
+            }
+        }
+    });
+    
+    // Update stats display
+    const totalEl = document.getElementById('heatmapTotal');
+    const daysEl = document.getElementById('heatmapDays');
+    const streakEl = document.getElementById('heatmapStreak');
+    const busiestEl = document.getElementById('heatmapBusiest');
+    
+    if (totalEl) totalEl.textContent = totalActivities.toLocaleString();
+    if (daysEl) daysEl.textContent = activeDays;
+    if (streakEl) streakEl.textContent = currentStreak;
+    if (busiestEl && maxDate) {
+        const busyDate = new Date(maxDate);
+        busiestEl.textContent = busyDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+}
+
+/**
+ * Render hottest (most active) days
+ */
+function renderHottestDays() {
+    const container = document.getElementById('hottestDaysList');
+    if (!container) return;
+    
+    // Get top 8 days for the year
+    const yearStart = `${heatmapYear}-01-01`;
+    const yearEnd = `${heatmapYear}-12-31`;
+    
+    const sortedDays = Object.entries(heatmapData)
+        .filter(([date]) => date >= yearStart && date <= yearEnd)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 8);
+    
+    if (sortedDays.length === 0) {
+        container.innerHTML = '<p class="empty-state">No activities this year yet.</p>';
+        return;
+    }
+    
+    container.innerHTML = sortedDays.map(([date, count]) => {
+        const dateObj = new Date(date);
+        const formatted = dateObj.toLocaleDateString('en-US', { 
+            weekday: 'short', 
+            month: 'short', 
+            day: 'numeric' 
+        });
+        return `
+            <div class="hottest-day-card" onclick="filterToDate('${date}')">
+                <span class="hottest-day-date">${formatted}</span>
+                <span class="hottest-day-count">${count} activities</span>
+            </div>
+        `;
+    }).join('');
+}
+
+/**
+ * Filter activities to a specific date and switch to timeline
+ */
+function filterToDate(dateStr) {
+    const searchInput = document.getElementById('activitySearch');
+    if (searchInput) {
+        searchInput.value = dateStr;
+        applyFilters();
+        switchTab('timeline');
+    }
+}
+
+/**
+ * Change heatmap year
+ */
+function changeHeatmapYear(delta) {
+    const newYear = heatmapYear + delta;
+    const currentYear = new Date().getFullYear();
+    
+    // Don't allow future years
+    if (newYear > currentYear) return;
+    // Don't go too far back (reasonable limit)
+    if (newYear < 2020) return;
+    
+    heatmapYear = newYear;
+    
+    if (window.cachedActivities) {
+        renderHeatmapGrid();
+        renderHeatmapStats();
+        renderHottestDays();
+    }
+}
+
+// Expose functions globally
+window.renderHeatmap = renderHeatmap;
+window.changeHeatmapYear = changeHeatmapYear;
+window.filterToDate = filterToDate;
