@@ -4336,7 +4336,131 @@ input:focus-visible,
 }
 
 /* Day group headers keyboard accessible */
-.day-group-header:focus-visible {
+.day-group-header:focus-visible,
+.day-header:focus-visible {
     outline: 2px solid var(--accent-green);
     outline-offset: 2px;
+}
+
+/* Tag and wallet filter button focus states */
+.tag-filter-btn:focus-visible,
+.wallet-filter-btn:focus-visible {
+    outline: 2px solid var(--accent-green);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(0, 255, 170, 0.15);
+}
+
+/* Chart accessibility - visible focus and descriptions */
+.chart-container:focus-visible {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 4px;
+    border-radius: 8px;
+}
+
+/* Chart screen reader description */
+.chart-sr-description {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Toast notification accessibility */
+.toast[role="alert"] {
+    position: relative;
+}
+
+/* Ensure clickable elements have visible cursor */
+[role="button"],
+button,
+.day-header,
+.hash-item,
+.activity-item[tabindex] {
+    cursor: pointer;
+}
+
+/* Activity items keyboard navigation */
+.activity-item[tabindex="0"]:hover,
+.activity-item[tabindex="0"]:focus-within {
+    z-index: 1;
+}
+
+/* Focus trap indicator for modals */
+.modal-backdrop:focus-visible {
+    outline: none;
+}
+
+.modal-content:focus-visible {
+    outline: 3px solid var(--accent-green);
+    outline-offset: 4px;
+}
+
+/* Stat card focus (for screen reader navigation) */
+.stat-card:focus-visible {
+    outline: 2px solid var(--accent-green);
+    outline-offset: 2px;
+    transform: translateY(-2px);
+}
+
+/* Filter stats live region visual indicator when updated */
+.filter-stats[aria-live="polite"].updated {
+    animation: filterStatsUpdate 0.3s ease;
+}
+
+@keyframes filterStatsUpdate {
+    0% { background: rgba(0, 255, 170, 0.2); }
+    100% { background: transparent; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .filter-stats[aria-live="polite"].updated {
+        animation: none;
+    }
+}
+
+/* Error state styling for form validation */
+input[aria-invalid="true"],
+.verify-input[aria-invalid="true"] {
+    border-color: var(--accent-red);
+    box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.2);
+}
+
+/* Loading state announcement helper */
+[aria-busy="true"] {
+    position: relative;
+}
+
+[aria-busy="true"]::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.1);
+    pointer-events: none;
+}
+
+/* Touch target size minimum (44x44px for mobile) */
+@media (pointer: coarse) {
+    .type-filter,
+    .tag-filter-btn,
+    .wallet-filter-btn,
+    .date-quick-btn,
+    .export-btn,
+    .feed-tab {
+        min-height: 44px;
+        min-width: 44px;
+        padding: 0.6rem 1rem;
+    }
+    
+    .search-clear {
+        min-width: 44px;
+        min-height: 44px;
+    }
 }

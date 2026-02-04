@@ -2497,6 +2497,9 @@ function renderFilteredActivities(activities) {
             if (currentSearchQuery) filterParts.push(`search: "${currentSearchQuery}"`);
             statsEl.innerHTML = `Showing <span class="count">${filtered.length}</span> of ${activities.length} activities`;
             statsEl.classList.add('visible');
+            
+            // Announce filter results to screen readers
+            announceToScreenReader(`Filtered to ${filtered.length} of ${activities.length} activities`);
         } else {
             statsEl.classList.remove('visible');
         }
@@ -3133,11 +3136,14 @@ function createShortcutsModal() {
     const modal = document.createElement('div');
     modal.id = 'shortcuts-modal';
     modal.className = 'shortcuts-modal';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-labelledby', 'shortcuts-modal-title');
     modal.innerHTML = `
-        <div class="shortcuts-modal-content">
+        <div class="shortcuts-modal-content" role="document">
             <div class="shortcuts-header">
-                <h3>⌨️ Keyboard Shortcuts</h3>
-                <button class="shortcuts-close" onclick="hideShortcutsModal()">×</button>
+                <h3 id="shortcuts-modal-title">⌨️ Keyboard Shortcuts</h3>
+                <button class="shortcuts-close" onclick="hideShortcutsModal()" aria-label="Close keyboard shortcuts modal">×</button>
             </div>
             <div class="shortcuts-grid">
                 <div class="shortcut-section">
@@ -3177,6 +3183,13 @@ function showShortcutsModal() {
     const modal = document.getElementById('shortcuts-modal');
     modal.classList.add('visible');
     shortcutsModalOpen = true;
+    // Focus the close button for keyboard accessibility
+    const closeBtn = modal.querySelector('.shortcuts-close');
+    if (closeBtn) {
+        setTimeout(() => closeBtn.focus(), 50);
+    }
+    // Announce modal opening to screen readers
+    announceToScreenReader('Keyboard shortcuts modal opened. Press Escape to close.');
 }
 
 // Hide keyboard shortcuts modal
@@ -3186,6 +3199,7 @@ function hideShortcutsModal() {
         modal.classList.remove('visible');
     }
     shortcutsModalOpen = false;
+    announceToScreenReader('Keyboard shortcuts modal closed');
 }
 
 // Focus the search input
