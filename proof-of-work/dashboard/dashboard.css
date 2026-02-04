@@ -21130,3 +21130,546 @@ a.activity-location:hover {
         height: 200px;
     }
 }
+
+/* ============================================
+   PRESENTATION MODE
+   ============================================ */
+
+/* Presentation button styling */
+.presentation-btn {
+    background: linear-gradient(135deg, #8b5cf6, #ec4899) !important;
+    color: white !important;
+    font-weight: 600;
+}
+
+.presentation-btn:hover {
+    background: linear-gradient(135deg, #7c3aed, #db2777) !important;
+    transform: scale(1.05);
+}
+
+/* Presentation mode overlay */
+.presentation-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #0a0a12 0%, #1a1a2e 50%, #0d0d1a 100%);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    animation: presentationFadeIn 0.5s ease-out;
+    overflow: hidden;
+}
+
+@keyframes presentationFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Animated background particles */
+.presentation-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.presentation-particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: var(--accent-green);
+    border-radius: 50%;
+    opacity: 0.3;
+    animation: particleFloat 10s infinite ease-in-out;
+}
+
+@keyframes particleFloat {
+    0%, 100% { transform: translateY(0) translateX(0); opacity: 0.3; }
+    50% { transform: translateY(-20px) translateX(10px); opacity: 0.6; }
+}
+
+/* Header */
+.presentation-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 3rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    z-index: 1;
+}
+
+.presentation-title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.presentation-title h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #00ffaa, #00aaff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+}
+
+.presentation-subtitle {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.presentation-close {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    font-size: 2rem;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.presentation-close:hover {
+    background: rgba(255, 107, 107, 0.3);
+    transform: scale(1.1);
+}
+
+/* Main content area */
+.presentation-main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    position: relative;
+    z-index: 1;
+}
+
+/* Activity card in presentation mode */
+.presentation-card {
+    max-width: 900px;
+    width: 100%;
+    background: linear-gradient(135deg, rgba(28, 28, 48, 0.9), rgba(24, 36, 64, 0.9));
+    border-radius: 24px;
+    padding: 3rem;
+    box-shadow: 
+        0 0 60px rgba(0, 255, 170, 0.15),
+        0 20px 60px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    animation: cardSlideIn 0.5s ease-out;
+    position: relative;
+    overflow: hidden;
+}
+
+@keyframes cardSlideIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(30px) scale(0.95);
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Activity index badge */
+.presentation-card-index {
+    position: absolute;
+    top: -20px;
+    right: 30px;
+    background: linear-gradient(135deg, #8b5cf6, #ec4899);
+    color: white;
+    font-size: 1rem;
+    font-weight: 700;
+    padding: 0.5rem 1.5rem;
+    border-radius: 20px;
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+}
+
+/* Type badge in presentation */
+.presentation-type {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 30px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    background: rgba(0, 255, 170, 0.15);
+    color: var(--accent-green);
+}
+
+.presentation-type.build { background: rgba(0, 170, 255, 0.15); color: var(--accent-blue); }
+.presentation-type.commit { background: rgba(255, 170, 0, 0.15); color: var(--accent-yellow); }
+.presentation-type.trade { background: rgba(255, 107, 107, 0.15); color: var(--accent-red); }
+.presentation-type.decision { background: rgba(170, 0, 255, 0.15); color: var(--accent-purple); }
+.presentation-type.tweet { background: rgba(29, 161, 242, 0.15); color: #1da1f2; }
+.presentation-type.email { background: rgba(234, 67, 53, 0.15); color: #ea4335; }
+.presentation-type.message { background: rgba(0, 230, 118, 0.15); color: #00e676; }
+.presentation-type.calendar { background: rgba(66, 133, 244, 0.15); color: #4285f4; }
+
+/* Activity description */
+.presentation-description {
+    font-size: 2rem;
+    line-height: 1.5;
+    color: var(--text-primary);
+    margin-bottom: 2rem;
+    font-weight: 500;
+}
+
+/* Timestamp */
+.presentation-timestamp {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+/* On-chain badge */
+.presentation-onchain {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, rgba(0, 255, 170, 0.2), rgba(0, 170, 255, 0.2));
+    border-radius: 20px;
+    color: var(--accent-green);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.presentation-onchain a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.presentation-onchain a:hover {
+    text-decoration: underline;
+}
+
+/* Controls bar */
+.presentation-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem 3rem;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 1;
+}
+
+.presentation-control-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.presentation-control-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+}
+
+.presentation-control-btn.primary {
+    background: linear-gradient(135deg, #00ffaa, #00aaff);
+    color: #0a0a12;
+    width: 80px;
+    height: 80px;
+    font-size: 2rem;
+}
+
+.presentation-control-btn.primary:hover {
+    transform: scale(1.15);
+    box-shadow: 0 0 30px rgba(0, 255, 170, 0.4);
+}
+
+/* Progress bar */
+.presentation-progress {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+    max-width: 400px;
+}
+
+.presentation-progress-bar {
+    flex: 1;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.presentation-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #00ffaa, #00aaff);
+    border-radius: 3px;
+    transition: width 0.1s linear;
+}
+
+.presentation-progress-text {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    min-width: 60px;
+    text-align: center;
+}
+
+/* Speed control */
+.presentation-speed {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+}
+
+.presentation-speed-label {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.presentation-speed-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.presentation-speed-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.presentation-speed-value {
+    color: var(--accent-green);
+    font-weight: 600;
+    min-width: 40px;
+    text-align: center;
+}
+
+/* Counter display */
+.presentation-counter {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    min-width: 80px;
+    text-align: center;
+}
+
+/* Keyboard hints */
+.presentation-hints {
+    position: absolute;
+    bottom: 120px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 2rem;
+    opacity: 0.5;
+    transition: opacity 0.3s;
+}
+
+.presentation-overlay:hover .presentation-hints {
+    opacity: 0.8;
+}
+
+.presentation-hint {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.presentation-hint kbd {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-family: monospace;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Empty state */
+.presentation-empty {
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.presentation-empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.presentation-empty h3 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+/* Stats bar in header */
+.presentation-stats {
+    display: flex;
+    gap: 2rem;
+}
+
+.presentation-stat {
+    text-align: center;
+}
+
+.presentation-stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #00ffaa, #00aaff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.presentation-stat-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Theme support for presentation mode */
+[data-theme="light"] .presentation-overlay {
+    background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 50%, #f0f4f8 100%);
+}
+
+[data-theme="light"] .presentation-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(240, 244, 248, 0.95));
+    box-shadow: 
+        0 0 60px rgba(0, 199, 123, 0.1),
+        0 20px 60px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .presentation-header,
+[data-theme="light"] .presentation-controls {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .presentation-control-btn {
+    background: rgba(0, 0, 0, 0.05);
+    color: #333;
+}
+
+[data-theme="light"] .presentation-control-btn:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .presentation-close {
+    background: rgba(0, 0, 0, 0.05);
+    color: #333;
+}
+
+[data-theme="ocean"] .presentation-overlay {
+    background: linear-gradient(135deg, #0a1628 0%, #0f1f3d 50%, #142440 100%);
+}
+
+[data-theme="forest"] .presentation-overlay {
+    background: linear-gradient(135deg, #0a1810 0%, #0f2518 50%, #142d1f 100%);
+}
+
+[data-theme="sunset"] .presentation-overlay {
+    background: linear-gradient(135deg, #1a0f0a 0%, #2d1810 50%, #3d2015 100%);
+}
+
+[data-theme="cyberpunk"] .presentation-overlay {
+    background: linear-gradient(135deg, #0f0a1a 0%, #1a0f2d 50%, #250f3d 100%);
+}
+
+[data-theme="cyberpunk"] .presentation-card {
+    box-shadow: 
+        0 0 60px rgba(168, 85, 247, 0.2),
+        0 20px 60px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="cyberpunk"] .presentation-control-btn.primary {
+    background: linear-gradient(135deg, #a855f7, #ec4899);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .presentation-header {
+        padding: 1rem 1.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .presentation-stats {
+        gap: 1rem;
+        order: 3;
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .presentation-main {
+        padding: 1.5rem;
+    }
+    
+    .presentation-card {
+        padding: 1.5rem;
+        border-radius: 16px;
+    }
+    
+    .presentation-description {
+        font-size: 1.3rem;
+    }
+    
+    .presentation-controls {
+        padding: 1rem;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+    
+    .presentation-control-btn {
+        width: 50px;
+        height: 50px;
+        font-size: 1.2rem;
+    }
+    
+    .presentation-control-btn.primary {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+    
+    .presentation-progress {
+        width: 100%;
+        order: -1;
+    }
+    
+    .presentation-hints {
+        display: none;
+    }
+}

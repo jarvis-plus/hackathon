@@ -20704,3 +20704,477 @@ document.addEventListener('keydown', function(e) {
         switchTab('analytics');
     }
 });
+
+// ============================================
+// PRESENTATION MODE
+// ============================================
+
+let presentationMode = {
+    active: false,
+    index: 0,
+    activities: [],
+    playing: true,
+    speed: 5, // seconds per slide
+    timer: null,
+    progressInterval: null,
+    progressStart: 0
+};
+
+/**
+ * Toggle presentation mode on/off
+ */
+function togglePresentationMode() {
+    if (presentationMode.active) {
+        hidePresentationMode();
+    } else {
+        showPresentationMode();
+    }
+}
+
+/**
+ * Show presentation mode overlay
+ */
+function showPresentationMode() {
+    // Get activities (use cached or fetch)
+    const activities = window.cachedActivities || [];
+    if (activities.length === 0) {
+        announceToScreenReader('No activities to present.');
+        return;
+    }
+    
+    presentationMode.active = true;
+    presentationMode.activities = [...activities].reverse(); // Most recent first
+    presentationMode.index = 0;
+    presentationMode.playing = true;
+    
+    createPresentationOverlay();
+    renderPresentationCard();
+    startPresentationTimer();
+    
+    // Update button state
+    const btn = document.getElementById('presentationBtn');
+    if (btn) {
+        btn.setAttribute('aria-pressed', 'true');
+        btn.innerHTML = '🎬 Exit';
+    }
+    
+    // Add keyboard listener
+    document.addEventListener('keydown', handlePresentationKeydown);
+    
+    announceToScreenReader('Presentation mode started. Press Space to pause, arrow keys to navigate, Escape to exit.');
+}
+
+/**
+ * Hide presentation mode
+ */
+function hidePresentationMode() {
+    presentationMode.active = false;
+    stopPresentationTimer();
+    
+    const overlay = document.getElementById('presentation-overlay');
+    if (overlay) {
+        overlay.style.animation = 'presentationFadeOut 0.3s ease-out forwards';
+        setTimeout(() => overlay.remove(), 300);
+    }
+    
+    // Update button state
+    const btn = document.getElementById('presentationBtn');
+    if (btn) {
+        btn.setAttribute('aria-pressed', 'false');
+        btn.innerHTML = '🎬 Present';
+    }
+    
+    document.removeEventListener('keydown', handlePresentationKeydown);
+    announceToScreenReader('Presentation mode ended.');
+}
+
+/**
+ * Create the presentation overlay HTML
+ */
+function createPresentationOverlay() {
+    if (document.getElementById('presentation-overlay')) return;
+    
+    const activities = presentationMode.activities;
+    const totalSigned = activities.filter(a => a.signature).length;
+    const signedPercent = activities.length > 0 ? Math.round((totalSigned / activities.length) * 100) : 0;
+    
+    const overlay = document.createElement('div');
+    overlay.id = 'presentation-overlay';
+    overlay.className = 'presentation-overlay';
+    overlay.innerHTML = \`
+        <div class="presentation-bg" id="presentationBg"></div>
+        
+        <div class="presentation-header">
+            <div class="presentation-title">
+                <span style="font-size: 2rem;">🤖</span>
+                <div>
+                    <h2>JARVIS PROOF OF WORK</h2>
+                    <div class="presentation-subtitle">Agent #45 | Colosseum Hackathon 2026</div>
+                </div>
+            </div>
+            
+            <div class="presentation-stats">
+                <div class="presentation-stat">
+                    <div class="presentation-stat-value">\${activities.length}</div>
+                    <div class="presentation-stat-label">Activities</div>
+                </div>
+                <div class="presentation-stat">
+                    <div class="presentation-stat-value">\${signedPercent}%</div>
+                    <div class="presentation-stat-label">On-Chain</div>
+                </div>
+            </div>
+            
+            <button class="presentation-close" onclick="togglePresentationMode()" title="Exit (Escape)" aria-label="Close presentation mode">×</button>
+        </div>
+        
+        <div class="presentation-main">
+            <div class="presentation-card" id="presentationCard">
+                <!-- Card content rendered dynamically -->
+            </div>
+        </div>
+        
+        <div class="presentation-hints">
+            <div class="presentation-hint"><kbd>Space</kbd> Play/Pause</div>
+            <div class="presentation-hint"><kbd>←</kbd> <kbd>→</kbd> Navigate</div>
+            <div class="presentation-hint"><kbd>+</kbd> <kbd>-</kbd> Speed</div>
+            <div class="presentation-hint"><kbd>Esc</kbd> Exit</div>
+        </div>
+        
+        <div class="presentation-controls">
+            <div class="presentation-speed">
+                <span class="presentation-speed-label">Speed:</span>
+                <button class="presentation-speed-btn" onclick="adjustPresentationSpeed(-1)" title="Slower">−</button>
+                <span class="presentation-speed-value" id="presentationSpeedValue">\${presentationMode.speed}s</span>
+                <button class="presentation-speed-btn" onclick="adjustPresentationSpeed(1)" title="Faster">+</button>
+            </div>
+            
+            <button class="presentation-control-btn" onclick="presentationPrev()" title="Previous (Left arrow)">⏮️</button>
+            <button class="presentation-control-btn primary" id="presentationPlayPause" onclick="togglePresentationPlay()" title="Play/Pause (Space)">
+                \${presentationMode.playing ? '⏸️' : '▶️'}
+            </button>
+            <button class="presentation-control-btn" onclick="presentationNext()" title="Next (Right arrow)">⏭️</button>
+            
+            <div class="presentation-progress">
+                <div class="presentation-progress-bar">
+                    <div class="presentation-progress-fill" id="presentationProgressFill"></div>
+                </div>
+                <span class="presentation-counter" id="presentationCounter">1 / \${activities.length}</span>
+            </div>
+        </div>
+    \`;
+    
+    document.body.appendChild(overlay);
+    
+    // Add animated particles
+    createPresentationParticles();
+}
+
+/**
+ * Create animated background particles
+ */
+function createPresentationParticles() {
+    const bg = document.getElementById('presentationBg');
+    if (!bg) return;
+    
+    for (let i = 0; i < 30; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'presentation-particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.top = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 10 + 's';
+        particle.style.animationDuration = (8 + Math.random() * 4) + 's';
+        
+        // Random colors
+        const colors = ['#00ffaa', '#00aaff', '#aa00ff', '#ffaa00'];
+        particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+        
+        bg.appendChild(particle);
+    }
+}
+
+/**
+ * Render the current activity card
+ */
+function renderPresentationCard() {
+    const card = document.getElementById('presentationCard');
+    const counter = document.getElementById('presentationCounter');
+    if (!card) return;
+    
+    const activities = presentationMode.activities;
+    const index = presentationMode.index;
+    
+    if (activities.length === 0) {
+        card.innerHTML = \`
+            <div class="presentation-empty">
+                <div class="presentation-empty-icon">📭</div>
+                <h3>No Activities Yet</h3>
+                <p>Activities will appear here as they're logged.</p>
+            </div>
+        \`;
+        return;
+    }
+    
+    const activity = activities[index];
+    const typeEmoji = getTypeEmoji(activity.type);
+    const timestamp = new Date(activity.timestamp).toLocaleString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    const onChainHTML = activity.signature ? \`
+        <div class="presentation-onchain">
+            ⛓️ Verified On-Chain
+            <a href="https://solscan.io/tx/\${activity.signature}" target="_blank" rel="noopener">
+                View →
+            </a>
+        </div>
+    \` : '';
+    
+    card.innerHTML = \`
+        <div class="presentation-card-index">#\${activities.length - index}</div>
+        <div class="presentation-type \${activity.type}">
+            \${typeEmoji} \${activity.type.charAt(0).toUpperCase() + activity.type.slice(1)}
+        </div>
+        <div class="presentation-description">\${escapeHtml(activity.description)}</div>
+        <div class="presentation-timestamp">🕐 \${timestamp}</div>
+        \${onChainHTML}
+    \`;
+    
+    // Trigger animation
+    card.style.animation = 'none';
+    card.offsetHeight; // Force reflow
+    card.style.animation = 'cardSlideIn 0.5s ease-out';
+    
+    // Update counter
+    if (counter) {
+        counter.textContent = \`\${index + 1} / \${activities.length}\`;
+    }
+    
+    // Reset progress bar
+    resetProgressBar();
+}
+
+/**
+ * Get emoji for activity type
+ */
+function getTypeEmoji(type) {
+    const emojis = {
+        build: '🔧',
+        commit: '📝',
+        trade: '💱',
+        decision: '🧠',
+        tweet: '🐦',
+        email: '📧',
+        message: '💬',
+        calendar: '📅',
+        browser: '🌐',
+        transfer: '💸',
+        swap: '🔄'
+    };
+    return emojis[type] || '⚡';
+}
+
+/**
+ * HTML escape helper
+ */
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+/**
+ * Go to next activity
+ */
+function presentationNext() {
+    const activities = presentationMode.activities;
+    presentationMode.index = (presentationMode.index + 1) % activities.length;
+    renderPresentationCard();
+    
+    if (presentationMode.playing) {
+        restartPresentationTimer();
+    }
+}
+
+/**
+ * Go to previous activity
+ */
+function presentationPrev() {
+    const activities = presentationMode.activities;
+    presentationMode.index = (presentationMode.index - 1 + activities.length) % activities.length;
+    renderPresentationCard();
+    
+    if (presentationMode.playing) {
+        restartPresentationTimer();
+    }
+}
+
+/**
+ * Toggle play/pause
+ */
+function togglePresentationPlay() {
+    presentationMode.playing = !presentationMode.playing;
+    
+    const btn = document.getElementById('presentationPlayPause');
+    if (btn) {
+        btn.innerHTML = presentationMode.playing ? '⏸️' : '▶️';
+    }
+    
+    if (presentationMode.playing) {
+        restartPresentationTimer();
+    } else {
+        stopPresentationTimer();
+    }
+}
+
+/**
+ * Adjust presentation speed
+ */
+function adjustPresentationSpeed(delta) {
+    const speeds = [2, 3, 5, 7, 10, 15];
+    const currentIdx = speeds.indexOf(presentationMode.speed);
+    let newIdx = currentIdx - delta; // Reversed: + means faster (shorter time)
+    newIdx = Math.max(0, Math.min(speeds.length - 1, newIdx));
+    
+    presentationMode.speed = speeds[newIdx];
+    
+    const display = document.getElementById('presentationSpeedValue');
+    if (display) {
+        display.textContent = presentationMode.speed + 's';
+    }
+    
+    if (presentationMode.playing) {
+        restartPresentationTimer();
+    }
+}
+
+/**
+ * Start the auto-advance timer
+ */
+function startPresentationTimer() {
+    if (!presentationMode.playing) return;
+    
+    presentationMode.progressStart = Date.now();
+    
+    presentationMode.timer = setTimeout(() => {
+        presentationNext();
+    }, presentationMode.speed * 1000);
+    
+    // Progress bar animation
+    presentationMode.progressInterval = setInterval(updateProgressBar, 50);
+}
+
+/**
+ * Stop the auto-advance timer
+ */
+function stopPresentationTimer() {
+    if (presentationMode.timer) {
+        clearTimeout(presentationMode.timer);
+        presentationMode.timer = null;
+    }
+    if (presentationMode.progressInterval) {
+        clearInterval(presentationMode.progressInterval);
+        presentationMode.progressInterval = null;
+    }
+}
+
+/**
+ * Restart the timer (after navigation)
+ */
+function restartPresentationTimer() {
+    stopPresentationTimer();
+    startPresentationTimer();
+}
+
+/**
+ * Update progress bar
+ */
+function updateProgressBar() {
+    const fill = document.getElementById('presentationProgressFill');
+    if (!fill || !presentationMode.playing) return;
+    
+    const elapsed = Date.now() - presentationMode.progressStart;
+    const progress = Math.min(100, (elapsed / (presentationMode.speed * 1000)) * 100);
+    fill.style.width = progress + '%';
+}
+
+/**
+ * Reset progress bar
+ */
+function resetProgressBar() {
+    const fill = document.getElementById('presentationProgressFill');
+    if (fill) {
+        fill.style.width = '0%';
+    }
+    presentationMode.progressStart = Date.now();
+}
+
+/**
+ * Handle keyboard shortcuts in presentation mode
+ */
+function handlePresentationKeydown(e) {
+    if (!presentationMode.active) return;
+    
+    switch (e.key) {
+        case 'Escape':
+            e.preventDefault();
+            togglePresentationMode();
+            break;
+        case ' ':
+            e.preventDefault();
+            togglePresentationPlay();
+            break;
+        case 'ArrowRight':
+        case 'ArrowDown':
+            e.preventDefault();
+            presentationNext();
+            break;
+        case 'ArrowLeft':
+        case 'ArrowUp':
+            e.preventDefault();
+            presentationPrev();
+            break;
+        case '+':
+        case '=':
+            e.preventDefault();
+            adjustPresentationSpeed(1);
+            break;
+        case '-':
+        case '_':
+            e.preventDefault();
+            adjustPresentationSpeed(-1);
+            break;
+    }
+}
+
+// Add 'P' keyboard shortcut to toggle presentation mode
+(function() {
+    const existingKeydownHandler = document.onkeydown;
+    document.addEventListener('keydown', function(e) {
+        // Don't trigger in inputs/textareas
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        
+        // P for presentation mode
+        if (e.key === 'p' || e.key === 'P') {
+            if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+                e.preventDefault();
+                togglePresentationMode();
+            }
+        }
+    });
+})();
+
+// Add fadeout animation
+const style = document.createElement('style');
+style.textContent = \`
+    @keyframes presentationFadeOut {
+        from { opacity: 1; }
+        to { opacity: 0; }
+    }
+\`;
+document.head.appendChild(style);
+
+console.log('🎬 Presentation Mode loaded - Press P to present');
