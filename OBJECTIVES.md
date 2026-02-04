@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 18:54 PST
-**Cycle:** 148
+**Last Updated:** 2026-02-03 18:57 PST
+**Cycle:** 149
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -31,7 +31,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] PWA support (manifest, service worker, installable) ✅ Cycle 146
 - [x] Activity export (JSON/CSV download with filter support) ✅ Cycle 147
 - [x] Activity grouping by day (collapsible sections) ✅ Cycle 148
-- [ ] Webhook notifications API for external integrations
+- [x] Webhook notifications API for external integrations ✅ Cycle 149
 - [ ] Accessibility improvements (ARIA labels, focus states)
 
 ### 🎨 Design (see docs/DESIGN-INSPIRATION.md)
@@ -68,6 +68,24 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 149 (Webhook Notifications API)
+- Added webhook notifications API for external integrations
+- POST /api/webhooks - register webhook with URL, secret, event types
+- GET /api/webhooks - list all registered webhooks (secrets hidden)
+- DELETE /api/webhooks/:id - remove a webhook subscription
+- PATCH /api/webhooks/:id - update webhook (enable/disable, change events)
+- POST /api/webhooks/:id/test - send test payload to verify endpoint
+- Automatic webhook delivery when new activities are logged
+- Events: activity.new (single), activity.batch (multiple), * (all)
+- HMAC signature verification with X-Webhook-Signature header
+- Retry logic: 3 attempts with exponential backoff (1s, 2s, 4s)
+- Auto-disable after 10 consecutive failures
+- Webhooks stored in data/webhooks.json
+- Updated README with webhook API documentation
+- ~400 lines of TypeScript for webhook infrastructure
+- Files: api/server.ts, README.md, data/webhooks.json
+- 363 activities, all signed on-chain
 
 ### Cycle 148 (Day Grouping - Bug Fix)
 - Fixed critical JavaScript bug preventing dashboard from loading
@@ -131,22 +149,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - ~100 lines of CSS with animations
 - Files: app.js, dashboard.css, index.html
 - 349 activities, all signed on-chain
-
-### Cycle 144 (Browser Notifications)
-- Added browser notification support for new activities
-- 🔕 Toggle button in header (next to sounds and theme toggles)
-- One-click permission request with user-friendly toast feedback
-- Notifications only show when page is not visible (background tab)
-- Single activity: shows type emoji, title, and description snippet
-- Multiple activities: shows summary "⚡ N new activities"
-- Click notification to focus window and scroll to activity
-- Notifications auto-close after 8 seconds
-- Silent notifications (audio already handled by sound system)
-- Permission state and preference stored in localStorage
-- ~180 lines of JavaScript for notification handling
-- Reuses existing .sound-toggle CSS for button styling
-- Files: app.js, index.html
-- 348 activities, all signed on-chain
 
 ---
 
