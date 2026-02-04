@@ -65,14 +65,33 @@ You are executing a build cycle for the Proof of Work dashboard.
 - Don't add new features on top of broken code
 - Log the fix as your cycle's activity
 
-## Quality Gates
+## Quality Gates (MANDATORY)
 
 Before committing, ALL must pass:
-- [ ] API health check (`curl localhost:3457/api/stats`)
-- [ ] Visual check passes (no console errors)
-- [ ] No infinite loading spinners
-- [ ] Page loads in reasonable time (<5s)
-- [ ] New feature actually works (test it!)
+
+```bash
+# 1. Syntax check (BLOCKING - must pass)
+node --check dashboard/app.js
+
+# 2. API health
+curl -s localhost:3457/api/stats | jq .total
+
+# 3. Visual check 
+cd /root/clawd/hackathon/proof-of-work
+PLAYWRIGHT_BROWSERS_PATH=/root/.cache/ms-playwright node visual-check.js
+```
+
+**If ANY check fails, FIX IT before committing!**
+
+## Code Quality Rules
+
+To prevent the duplicate function disaster that corrupted cycles 178-223:
+
+1. **NEVER copy-paste entire functions** - check if they already exist
+2. **Use `grep -n "function yourFunctionName" dashboard/app.js`** before adding new functions
+3. **Run `node --check`** after EVERY edit to the JS file
+4. **If you see escaped characters** (`\'` `\`` `\$`) in template literals, FIX THEM
+5. **The file is 21K lines** - be surgical, don't append blindly
 
 ## Archive Rotation
 
