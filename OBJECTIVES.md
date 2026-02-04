@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 19:12 PST
-**Cycle:** 153
+**Last Updated:** 2026-02-03 19:14 PST
+**Cycle:** 154
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -69,7 +69,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ### 📊 Analytics & Visualization
 - [x] Activity Insights Panel ✅ Cycle 151 - Peak hours, busiest day, productivity score
 - [x] Animated stat counters (count up on load) ✅ Cycle 152
-- [ ] Weekly activity comparison (this week vs last)
+- [x] Weekly activity comparison (this week vs last) ✅ Cycle 154
 - [ ] Activity velocity chart (actions per hour over time)
 - [ ] Goal tracking (set daily targets)
 
@@ -82,6 +82,26 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 154 (Weekly Activity Comparison)
+- Implemented side-by-side comparison of this week vs last week
+- **Activity Count**: Shows this week vs last week with % change
+- **On-Chain Rate**: Compares signing rates with percentage point change
+- **Peak Day**: Shows busiest day for each week
+- **Daily Average**: Adjusted for days passed this week
+- **Visual Bar Charts**: Side-by-side daily distribution for both weeks
+- **Change Indicators**: ↑ green for positive, ↓ red for negative
+- **Peak Highlighting**: Peak day bars have glow effect
+- **Interactive Tooltips**: Hover on bars shows exact counts
+- **Responsive**: Stacks vertically on mobile
+- **Theme Support**: Works in both dark and light modes
+- `renderWeeklyComparison()` calculates all weekly metrics
+- `updateChangeIndicator()` updates +/- styling for comparisons
+- `renderWeeklyBars()` creates the bar chart for each week
+- ~150 lines JavaScript for calculations and rendering
+- ~220 lines CSS with animations and theming
+- Files: index.html, dashboard.css, app.js
+- 388 activities, all signed on-chain
 
 ### Cycle 153 (Infinite Scroll / Lazy Loading)
 - Implemented infinite scroll for the activity feed
@@ -165,24 +185,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - Fixed missing showToast() function bug discovered during implementation
 - Files: index.html, dashboard.css, app.js
 - 374 activities, all signed on-chain
-
-### Cycle 149 (Webhook Notifications API)
-- Added webhook notifications API for external integrations
-- POST /api/webhooks - register webhook with URL, secret, event types
-- GET /api/webhooks - list all registered webhooks (secrets hidden)
-- DELETE /api/webhooks/:id - remove a webhook subscription
-- PATCH /api/webhooks/:id - update webhook (enable/disable, change events)
-- POST /api/webhooks/:id/test - send test payload to verify endpoint
-- Automatic webhook delivery when new activities are logged
-- Events: activity.new (single), activity.batch (multiple), * (all)
-- HMAC signature verification with X-Webhook-Signature header
-- Retry logic: 3 attempts with exponential backoff (1s, 2s, 4s)
-- Auto-disable after 10 consecutive failures
-- Webhooks stored in data/webhooks.json
-- Updated README with webhook API documentation
-- ~400 lines of TypeScript for webhook infrastructure
-- Files: api/server.ts, README.md, data/webhooks.json
-- 363 activities, all signed on-chain
 
 ---
 
