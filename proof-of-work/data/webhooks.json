@@ -1,0 +1,14 @@
+[
+  {
+    "id": "87ccf55f-c3a6-4d2f-9412-243a122311cb",
+    "url": "https://httpbin.org/post",
+    "secret": "test-secret-123",
+    "events": [
+      "activity.new"
+    ],
+    "createdAt": "2026-02-04T02:57:07.204Z",
+    "failureCount": 0,
+    "active": true,
+    "lastDelivery": "2026-02-04T02:57:20.360Z"
+  }
+]

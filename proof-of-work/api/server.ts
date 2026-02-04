@@ -29,8 +29,9 @@
  * @see https://jarvis.tail6a9bde.ts.net/pow/
  */
 
-import { readFileSync, existsSync, watchFile, statSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, watchFile, statSync } from 'fs';
 import { join } from 'path';
+import { randomUUID } from 'crypto';
 
 // ==============================================
 // CONFIGURATION
@@ -47,6 +48,212 @@ const ACTIVITY_FILE = join(BASE_DIR, 'activity.json');
 
 /** Path to the dashboard static files */
 const DASHBOARD_DIR = join(BASE_DIR, 'dashboard');
+
+/** Path to the webhook subscriptions file */
+const WEBHOOKS_FILE = join(BASE_DIR, 'data', 'webhooks.json');
+
+// ==============================================
+// WEBHOOK SYSTEM
+// ==============================================
+
+/**
+ * Webhook Subscription Interface
+ * 
+ * Each webhook subscription contains:
+ * - id: Unique identifier for management
+ * - url: The endpoint to POST activity data to
+ * - secret: Optional shared secret for HMAC signature verification
+ * - events: Array of event types to subscribe to (or ['*'] for all)
+ * - createdAt: When the webhook was registered
+ * - lastDelivery: Timestamp of last successful delivery
+ * - failureCount: Consecutive failures (reset on success)
+ * - active: Whether the webhook is enabled
+ */
+interface WebhookSubscription {
+  id: string;
+  url: string;
+  secret?: string;
+  events: string[];
+  createdAt: string;
+  lastDelivery?: string;
+  failureCount: number;
+  active: boolean;
+}
+
+/**
+ * Load all webhook subscriptions from file.
+ * Returns empty array if file doesn't exist.
+ */
+function getWebhooks(): WebhookSubscription[] {
+  if (!existsSync(WEBHOOKS_FILE)) return [];
+  try {
+    const data = readFileSync(WEBHOOKS_FILE, 'utf-8');
+    return JSON.parse(data);
+  } catch (e) {
+    console.error('Failed to load webhooks:', e);
+    return [];
+  }
+}
+
+/**
+ * Save webhook subscriptions to file.
+ */
+function saveWebhooks(webhooks: WebhookSubscription[]): void {
+  try {
+    writeFileSync(WEBHOOKS_FILE, JSON.stringify(webhooks, null, 2));
+  } catch (e) {
+    console.error('Failed to save webhooks:', e);
+  }
+}
+
+/**
+ * Create HMAC signature for webhook payload.
+ * Uses SHA256 with the webhook's secret as key.
+ */
+async function createWebhookSignature(payload: string, secret: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(payload));
+  return Array.from(new Uint8Array(signature))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+/**
+ * Deliver webhook payload to a single subscription.
+ * Includes retry logic with exponential backoff.
+ * 
+ * @param webhook - The webhook subscription
+ * @param eventType - Type of event (e.g., 'activity.new')
+ * @param payload - The data to send
+ * @returns Success status
+ */
+async function deliverWebhook(
+  webhook: WebhookSubscription,
+  eventType: string,
+  payload: any
+): Promise<boolean> {
+  if (!webhook.active) return false;
+  
+  // Check if webhook is subscribed to this event type
+  if (!webhook.events.includes('*') && !webhook.events.includes(eventType)) {
+    return true; // Not subscribed, but not a failure
+  }
+  
+  const body = JSON.stringify({
+    event: eventType,
+    timestamp: new Date().toISOString(),
+    data: payload
+  });
+  
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'User-Agent': 'Jarvis-PoW-Webhook/1.0',
+    'X-Webhook-Event': eventType,
+    'X-Webhook-Delivery': randomUUID(),
+  };
+  
+  // Add HMAC signature if secret is configured
+  if (webhook.secret) {
+    const signature = await createWebhookSignature(body, webhook.secret);
+    headers['X-Webhook-Signature'] = `sha256=${signature}`;
+  }
+  
+  // Retry with exponential backoff: 1s, 2s, 4s (3 attempts)
+  const maxRetries = 3;
+  let lastError: Error | null = null;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const response = await fetch(webhook.url, {
+        method: 'POST',
+        headers,
+        body,
+        signal: AbortSignal.timeout(10000), // 10 second timeout
+      });
+      
+      if (response.ok) {
+        console.log(`✅ Webhook delivered to ${webhook.url} (attempt ${attempt + 1})`);
+        return true;
+      }
+      
+      // Non-retryable status codes
+      if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+        console.warn(`❌ Webhook rejected by ${webhook.url}: ${response.status}`);
+        return false;
+      }
+      
+      lastError = new Error(`HTTP ${response.status}`);
+    } catch (e) {
+      lastError = e as Error;
+    }
+    
+    // Wait before retry (exponential backoff)
+    if (attempt < maxRetries - 1) {
+      await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+    }
+  }
+  
+  console.error(`❌ Webhook delivery failed to ${webhook.url} after ${maxRetries} attempts:`, lastError);
+  return false;
+}
+
+/**
+ * Broadcast event to all registered webhooks.
+ * Updates webhook status (lastDelivery, failureCount).
+ * 
+ * @param eventType - Type of event (e.g., 'activity.new', 'activity.batch')
+ * @param payload - The data to send
+ */
+async function broadcastToWebhooks(eventType: string, payload: any): Promise<void> {
+  const webhooks = getWebhooks();
+  if (webhooks.length === 0) return;
+  
+  const activeWebhooks = webhooks.filter(w => w.active);
+  if (activeWebhooks.length === 0) return;
+  
+  console.log(`🔔 Broadcasting ${eventType} to ${activeWebhooks.length} webhooks`);
+  
+  // Deliver in parallel
+  const results = await Promise.all(
+    activeWebhooks.map(async (webhook) => {
+      const success = await deliverWebhook(webhook, eventType, payload);
+      return { id: webhook.id, success };
+    })
+  );
+  
+  // Update webhook statuses
+  let modified = false;
+  for (const result of results) {
+    const webhook = webhooks.find(w => w.id === result.id);
+    if (!webhook) continue;
+    
+    if (result.success) {
+      webhook.lastDelivery = new Date().toISOString();
+      webhook.failureCount = 0;
+      modified = true;
+    } else {
+      webhook.failureCount++;
+      modified = true;
+      
+      // Disable webhook after 10 consecutive failures
+      if (webhook.failureCount >= 10) {
+        webhook.active = false;
+        console.warn(`⚠️ Webhook ${webhook.id} disabled after 10 consecutive failures`);
+      }
+    }
+  }
+  
+  if (modified) {
+    saveWebhooks(webhooks);
+  }
+}
 
 // ==============================================
 // WEBSOCKET CLIENT TRACKING
@@ -374,20 +581,39 @@ function checkForChanges() {
         const newActivities = activities.slice(lastActivityCount);
         console.log(`📡 Broadcasting ${newActivities.length} new activities to ${wsClients.size} clients`);
         
-        // Send full state + specifically highlight new items
+        const stats = {
+          total: activities.length,
+          onchain: activities.filter((a: any) => a.signature || a.proof?.txSignature).length,
+          commits: activities.filter((a: any) => a.type === 'commit').length,
+          builds: activities.filter((a: any) => ['build', 'deploy', 'decision'].includes(a.type)).length,
+          trades: activities.filter((a: any) => ['trade', 'transfer'].includes(a.type)).length,
+          messages: activities.filter((a: any) => a.type === 'message').length,
+          tweets: activities.filter((a: any) => a.type === 'tweet').length,
+        };
+        
+        // Send full state + specifically highlight new items to WebSocket clients
         broadcastUpdate('new_activities', {
           activities,
           newItems: newActivities,
-          stats: {
-            total: activities.length,
-            onchain: activities.filter((a: any) => a.signature || a.proof?.txSignature).length,
-            commits: activities.filter((a: any) => a.type === 'commit').length,
-            builds: activities.filter((a: any) => ['build', 'deploy', 'decision'].includes(a.type)).length,
-            trades: activities.filter((a: any) => ['trade', 'transfer'].includes(a.type)).length,
-            messages: activities.filter((a: any) => a.type === 'message').length,
-            tweets: activities.filter((a: any) => a.type === 'tweet').length,
-          }
+          stats
         });
+        
+        // Also broadcast to webhooks
+        // Use different event types based on batch size
+        if (newActivities.length === 1) {
+          // Single activity - send activity.new event
+          broadcastToWebhooks('activity.new', {
+            activity: newActivities[0],
+            stats
+          });
+        } else {
+          // Multiple activities - send activity.batch event
+          broadcastToWebhooks('activity.batch', {
+            activities: newActivities,
+            count: newActivities.length,
+            stats
+          });
+        }
       }
       
       lastActivityCount = newCount;
@@ -434,7 +660,7 @@ const server = Bun.serve({
   /**
    * Main request handler - routes all HTTP requests
    */
-  fetch(req, server) {
+  async fetch(req, server) {
     const url = new URL(req.url);
     const path = url.pathname;
     const clientIP = getClientIP(req, server);
@@ -442,8 +668,14 @@ const server = Bun.serve({
     // CORS headers - allow cross-origin requests for API
     const corsHeaders = {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     };
+
+    // Handle preflight OPTIONS requests
+    if (req.method === 'OPTIONS') {
+      return new Response(null, { status: 204, headers: corsHeaders });
+    }
 
     // ==========================================
     // WEBSOCKET UPGRADE
@@ -806,6 +1038,251 @@ Colosseum Agent Hackathon 2026`;
       };
       
       return Response.json(verification, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: POST /api/webhooks
+    // Register a new webhook subscription
+    // ==========================================
+    if (path === '/api/webhooks' && req.method === 'POST') {
+      try {
+        const body = await req.json() as { url?: string; secret?: string; events?: string[] };
+        
+        // Validate URL
+        if (!body.url) {
+          return Response.json({ 
+            error: 'Missing required field: url' 
+          }, { status: 400, headers: corsHeaders });
+        }
+        
+        // Validate URL format
+        try {
+          const parsed = new URL(body.url);
+          if (!['http:', 'https:'].includes(parsed.protocol)) {
+            throw new Error('Invalid protocol');
+          }
+        } catch {
+          return Response.json({ 
+            error: 'Invalid URL format. Must be http:// or https://' 
+          }, { status: 400, headers: corsHeaders });
+        }
+        
+        // Validate events
+        const validEvents = ['*', 'activity.new', 'activity.batch', 'activity.signed'];
+        const events = body.events || ['*'];
+        for (const event of events) {
+          if (!validEvents.includes(event)) {
+            return Response.json({ 
+              error: `Invalid event type: ${event}. Valid types: ${validEvents.join(', ')}` 
+            }, { status: 400, headers: corsHeaders });
+          }
+        }
+        
+        // Check for duplicate URL
+        const webhooks = getWebhooks();
+        if (webhooks.find(w => w.url === body.url)) {
+          return Response.json({ 
+            error: 'Webhook URL already registered' 
+          }, { status: 409, headers: corsHeaders });
+        }
+        
+        // Create new webhook
+        const webhook: WebhookSubscription = {
+          id: randomUUID(),
+          url: body.url,
+          secret: body.secret,
+          events,
+          createdAt: new Date().toISOString(),
+          failureCount: 0,
+          active: true
+        };
+        
+        webhooks.push(webhook);
+        saveWebhooks(webhooks);
+        
+        console.log(`🔔 New webhook registered: ${webhook.url} (events: ${events.join(', ')})`);
+        
+        return Response.json({
+          id: webhook.id,
+          url: webhook.url,
+          events: webhook.events,
+          createdAt: webhook.createdAt,
+          active: webhook.active,
+          message: 'Webhook registered successfully. You will receive POST requests at this URL when activities occur.',
+          testEndpoint: `curl -X POST ${body.url} -H "Content-Type: application/json" -d '{"event":"test","timestamp":"${new Date().toISOString()}","data":{}}'`
+        }, { status: 201, headers: corsHeaders });
+        
+      } catch (e) {
+        return Response.json({ 
+          error: 'Invalid JSON body' 
+        }, { status: 400, headers: corsHeaders });
+      }
+    }
+
+    // ==========================================
+    // API: GET /api/webhooks
+    // List all registered webhooks
+    // ==========================================
+    if (path === '/api/webhooks' && req.method === 'GET') {
+      const webhooks = getWebhooks();
+      
+      // Return sanitized list (hide secrets)
+      const sanitized = webhooks.map(w => ({
+        id: w.id,
+        url: w.url,
+        events: w.events,
+        createdAt: w.createdAt,
+        lastDelivery: w.lastDelivery,
+        failureCount: w.failureCount,
+        active: w.active,
+        hasSecret: !!w.secret
+      }));
+      
+      return Response.json({
+        count: sanitized.length,
+        webhooks: sanitized
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: DELETE /api/webhooks/:id
+    // Remove a webhook subscription
+    // ==========================================
+    if (path.startsWith('/api/webhooks/') && req.method === 'DELETE') {
+      const id = path.replace('/api/webhooks/', '');
+      
+      if (!id) {
+        return Response.json({ 
+          error: 'Missing webhook ID' 
+        }, { status: 400, headers: corsHeaders });
+      }
+      
+      const webhooks = getWebhooks();
+      const index = webhooks.findIndex(w => w.id === id);
+      
+      if (index === -1) {
+        return Response.json({ 
+          error: 'Webhook not found' 
+        }, { status: 404, headers: corsHeaders });
+      }
+      
+      const removed = webhooks.splice(index, 1)[0];
+      saveWebhooks(webhooks);
+      
+      console.log(`🔔 Webhook removed: ${removed.url}`);
+      
+      return Response.json({
+        message: 'Webhook removed successfully',
+        id: removed.id,
+        url: removed.url
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: PATCH /api/webhooks/:id
+    // Update webhook (enable/disable, change events)
+    // ==========================================
+    if (path.startsWith('/api/webhooks/') && req.method === 'PATCH') {
+      const id = path.replace('/api/webhooks/', '');
+      
+      try {
+        const body = await req.json() as { active?: boolean; events?: string[]; secret?: string };
+        
+        const webhooks = getWebhooks();
+        const webhook = webhooks.find(w => w.id === id);
+        
+        if (!webhook) {
+          return Response.json({ 
+            error: 'Webhook not found' 
+          }, { status: 404, headers: corsHeaders });
+        }
+        
+        // Update fields
+        if (typeof body.active === 'boolean') {
+          webhook.active = body.active;
+          if (body.active) {
+            webhook.failureCount = 0; // Reset failure count when re-enabling
+          }
+        }
+        
+        if (body.events) {
+          const validEvents = ['*', 'activity.new', 'activity.batch', 'activity.signed'];
+          for (const event of body.events) {
+            if (!validEvents.includes(event)) {
+              return Response.json({ 
+                error: `Invalid event type: ${event}` 
+              }, { status: 400, headers: corsHeaders });
+            }
+          }
+          webhook.events = body.events;
+        }
+        
+        if (body.secret !== undefined) {
+          webhook.secret = body.secret || undefined;
+        }
+        
+        saveWebhooks(webhooks);
+        
+        return Response.json({
+          id: webhook.id,
+          url: webhook.url,
+          events: webhook.events,
+          active: webhook.active,
+          failureCount: webhook.failureCount,
+          hasSecret: !!webhook.secret,
+          message: 'Webhook updated successfully'
+        }, { headers: corsHeaders });
+        
+      } catch (e) {
+        return Response.json({ 
+          error: 'Invalid JSON body' 
+        }, { status: 400, headers: corsHeaders });
+      }
+    }
+
+    // ==========================================
+    // API: POST /api/webhooks/:id/test
+    // Send a test payload to a webhook
+    // ==========================================
+    if (path.match(/^\/api\/webhooks\/[^/]+\/test$/) && req.method === 'POST') {
+      const id = path.replace('/api/webhooks/', '').replace('/test', '');
+      
+      const webhooks = getWebhooks();
+      const webhook = webhooks.find(w => w.id === id);
+      
+      if (!webhook) {
+        return Response.json({ 
+          error: 'Webhook not found' 
+        }, { status: 404, headers: corsHeaders });
+      }
+      
+      // Send test payload
+      const testPayload = {
+        type: 'test',
+        description: 'This is a test webhook delivery from Jarvis Proof of Work',
+        timestamp: new Date().toISOString(),
+        metadata: { test: true }
+      };
+      
+      const success = await deliverWebhook(
+        { ...webhook, events: ['*'] }, // Force delivery for test
+        'test',
+        testPayload
+      );
+      
+      if (success) {
+        return Response.json({
+          success: true,
+          message: 'Test webhook delivered successfully',
+          url: webhook.url
+        }, { headers: corsHeaders });
+      } else {
+        return Response.json({
+          success: false,
+          message: 'Test webhook delivery failed. Check your endpoint.',
+          url: webhook.url
+        }, { status: 502, headers: corsHeaders });
+      }
     }
 
     // ==========================================

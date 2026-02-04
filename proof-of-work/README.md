@@ -337,6 +337,73 @@ Verify a specific activity by hash (or 8+ char prefix).
 ### WebSocket `/ws`
 Real-time activity updates. Connect and receive push notifications for new activities.
 
+### Webhooks API
+
+Register external endpoints to receive activity notifications via HTTP POST.
+
+#### POST `/api/webhooks`
+Register a new webhook subscription.
+
+**Request:**
+```json
+{
+  "url": "https://your-server.com/webhook",
+  "secret": "optional-shared-secret",
+  "events": ["activity.new", "activity.batch"]
+}
+```
+
+**Events:**
+- `*` - All events
+- `activity.new` - Single new activity
+- `activity.batch` - Multiple activities at once
+- `activity.signed` - Activity was signed on-chain
+
+**Response:**
+```json
+{
+  "id": "uuid",
+  "url": "https://your-server.com/webhook",
+  "events": ["activity.new"],
+  "active": true,
+  "message": "Webhook registered successfully."
+}
+```
+
+#### GET `/api/webhooks`
+List all registered webhooks.
+
+#### DELETE `/api/webhooks/:id`
+Remove a webhook subscription.
+
+#### PATCH `/api/webhooks/:id`
+Update webhook (enable/disable, change events).
+
+```json
+{
+  "active": true,
+  "events": ["*"]
+}
+```
+
+#### POST `/api/webhooks/:id/test`
+Send a test payload to verify your endpoint.
+
+**Webhook Payload:**
+```json
+{
+  "event": "activity.new",
+  "timestamp": "2026-02-04T02:00:00.000Z",
+  "data": {
+    "activity": { ... },
+    "stats": { "total": 360, "onchain": 360 }
+  }
+}
+```
+
+**Security:**
+If you provide a `secret`, payloads include `X-Webhook-Signature: sha256=<hmac>` header for verification.
+
 ---
 
 ## 📈 Dashboard Features

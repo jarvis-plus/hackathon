@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Real-time dashboard showing Jarvis AI agent's autonomous activities with cryptographic proofs on Solana blockchain.">
     <title>Jarvis Proof of Work | Colosseum Hackathon 2026</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
@@ -17,6 +18,12 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+    <!-- Skip link for keyboard navigation -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <!-- Screen reader announcements for dynamic content -->
+    <div id="sr-announcements" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+    
     <div class="container">
         <header>
             <div class="logo-section">
@@ -28,14 +35,14 @@
             <div class="hackathon-badge">
                 ⏱️ Hackathon ends: <span class="countdown" id="countdown">loading...</span>
             </div>
-            <div style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
-                <button class="sound-toggle" id="soundToggle" onclick="toggleSound()" title="Toggle notification sounds">
+            <div style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;" role="group" aria-label="Dashboard controls">
+                <button class="sound-toggle" id="soundToggle" onclick="toggleSound()" title="Toggle notification sounds" aria-pressed="true" aria-label="Sound notifications: On">
                     🔔 Sounds On
                 </button>
-                <button class="sound-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle dark/light mode">
+                <button class="sound-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle dark/light mode" aria-pressed="true" aria-label="Dark mode: On">
                     🌙 Dark
                 </button>
-                <button class="sound-toggle muted" id="notificationToggle" onclick="toggleNotifications()" title="Browser notifications - click to enable">
+                <button class="sound-toggle muted" id="notificationToggle" onclick="toggleNotifications()" title="Browser notifications - click to enable" aria-pressed="false" aria-label="Browser notifications: Off">
                     🔕 Notifs Off
                 </button>
             </div>
@@ -49,7 +56,8 @@
             </div>
         </div>
 
-        <div class="stats" id="stats-grid">
+        <main id="main-content">
+        <div class="stats" id="stats-grid" role="region" aria-label="Activity statistics">
             <div class="stat-card skeleton-card" id="card-total-actions">
                 <div class="skeleton skeleton-value"></div>
                 <div class="skeleton skeleton-label"></div>
@@ -206,23 +214,23 @@
 
         <div class="activity-feed">
             <div class="feed-header">
-                <div class="feed-tabs">
-                    <button class="feed-tab active" data-tab="timeline" onclick="switchTab('timeline')">
-                        <span class="live-indicator"></span> Activity Feed
+                <div class="feed-tabs" role="tablist" aria-label="Activity views">
+                    <button class="feed-tab active" data-tab="timeline" onclick="switchTab('timeline')" role="tab" aria-selected="true" aria-controls="feed" id="tab-timeline">
+                        <span class="live-indicator" aria-hidden="true"></span> Activity Feed
                     </button>
-                    <button class="feed-tab" data-tab="milestones" onclick="switchTab('milestones')">
+                    <button class="feed-tab" data-tab="milestones" onclick="switchTab('milestones')" role="tab" aria-selected="false" aria-controls="milestones-feed" id="tab-milestones">
                         🏆 Milestones
                     </button>
-                    <button class="feed-tab" data-tab="tweets" onclick="switchTab('tweets')">
+                    <button class="feed-tab" data-tab="tweets" onclick="switchTab('tweets')" role="tab" aria-selected="false" aria-controls="tweets-feed" id="tab-tweets">
                         🐦 Tweets
                     </button>
-                    <button class="feed-tab" data-tab="decisions" onclick="switchTab('decisions')">
+                    <button class="feed-tab" data-tab="decisions" onclick="switchTab('decisions')" role="tab" aria-selected="false" aria-controls="decisions-feed" id="tab-decisions">
                         🧠 Key Decisions
                     </button>
-                    <button class="feed-tab" data-tab="meta" onclick="switchTab('meta')">
+                    <button class="feed-tab" data-tab="meta" onclick="switchTab('meta')" role="tab" aria-selected="false" aria-controls="meta-story" id="tab-meta">
                         📜 Meta Story
                     </button>
-                    <button class="feed-tab" data-tab="verify" onclick="switchTab('verify')">
+                    <button class="feed-tab" data-tab="verify" onclick="switchTab('verify')" role="tab" aria-selected="false" aria-controls="verify-feed" id="tab-verify">
                         🔍 Verify
                     </button>
                 </div>
@@ -235,24 +243,25 @@
                     </button>
                 </div>
             </div>
-            <div class="feed-filters" id="feedFilters">
+            <div class="feed-filters" id="feedFilters" role="search" aria-label="Filter activities">
                 <div class="search-box">
-                    <span class="search-icon">🔍</span>
-                    <input type="text" id="activitySearch" placeholder="Search activities..." oninput="applyFilters()">
-                    <button class="search-clear" id="searchClear" onclick="clearSearch()" title="Clear search">×</button>
+                    <span class="search-icon" aria-hidden="true">🔍</span>
+                    <label for="activitySearch" class="sr-only">Search activities</label>
+                    <input type="text" id="activitySearch" placeholder="Search activities..." oninput="applyFilters()" aria-describedby="filterStats">
+                    <button class="search-clear" id="searchClear" onclick="clearSearch()" title="Clear search" aria-label="Clear search">×</button>
                 </div>
-                <div class="type-filters">
-                    <button class="type-filter active" data-type="all" onclick="setTypeFilter('all')">All</button>
-                    <button class="type-filter" data-type="commit" onclick="setTypeFilter('commit')">📝 Commits</button>
-                    <button class="type-filter" data-type="build" onclick="setTypeFilter('build')">🔨 Builds</button>
-                    <button class="type-filter" data-type="trade" onclick="setTypeFilter('trade')">💹 Trades</button>
-                    <button class="type-filter" data-type="message" onclick="setTypeFilter('message')">💬 Messages</button>
-                    <button class="type-filter" data-type="email" onclick="setTypeFilter('email')">📧 Emails</button>
-                    <button class="type-filter" data-type="calendar" onclick="setTypeFilter('calendar')">📅 Calendar</button>
-                    <button class="type-filter" data-type="tweet" onclick="setTypeFilter('tweet')">🐦 Tweets</button>
-                    <button class="type-filter" data-type="decision" onclick="setTypeFilter('decision')">🧠 Decisions</button>
-                    <button class="type-filter" data-type="heartbeat" onclick="setTypeFilter('heartbeat')">💓 Heartbeats</button>
-                    <button class="type-filter" data-type="browser" onclick="setTypeFilter('browser')">🌐 Browser</button>
+                <div class="type-filters" role="group" aria-label="Filter by activity type">
+                    <button class="type-filter active" data-type="all" onclick="setTypeFilter('all')" aria-pressed="true">All</button>
+                    <button class="type-filter" data-type="commit" onclick="setTypeFilter('commit')" aria-pressed="false">📝 Commits</button>
+                    <button class="type-filter" data-type="build" onclick="setTypeFilter('build')" aria-pressed="false">🔨 Builds</button>
+                    <button class="type-filter" data-type="trade" onclick="setTypeFilter('trade')" aria-pressed="false">💹 Trades</button>
+                    <button class="type-filter" data-type="message" onclick="setTypeFilter('message')" aria-pressed="false">💬 Messages</button>
+                    <button class="type-filter" data-type="email" onclick="setTypeFilter('email')" aria-pressed="false">📧 Emails</button>
+                    <button class="type-filter" data-type="calendar" onclick="setTypeFilter('calendar')" aria-pressed="false">📅 Calendar</button>
+                    <button class="type-filter" data-type="tweet" onclick="setTypeFilter('tweet')" aria-pressed="false">🐦 Tweets</button>
+                    <button class="type-filter" data-type="decision" onclick="setTypeFilter('decision')" aria-pressed="false">🧠 Decisions</button>
+                    <button class="type-filter" data-type="heartbeat" onclick="setTypeFilter('heartbeat')" aria-pressed="false">💓 Heartbeats</button>
+                    <button class="type-filter" data-type="browser" onclick="setTypeFilter('browser')" aria-pressed="false">🌐 Browser</button>
                 </div>
                 <div class="tag-filters" id="tagFilters">
                     <span class="tag-filters-label">🏷️ Tags:</span>
