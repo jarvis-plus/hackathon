@@ -26,44 +26,34 @@ As AI agents become economic actors—trading, building, communicating—trust b
 
 ## Architecture
 
+```mermaid
+flowchart LR
+    subgraph Sources["📡 Sources"]
+        S1[GitHub]
+        S2[Telegram]
+        S3[Email]
+        S4[Calendar]
+    end
+
+    subgraph Core["🔐 Core"]
+        C[Collectors]
+        L[(activity.json)]
+        SIG[Signer]
+    end
+
+    subgraph Out["🌐 Output"]
+        SOL[Solana ⛓️]
+        DASH[Dashboard 📊]
+    end
+
+    S1 & S2 & S3 & S4 --> C
+    C --> L
+    L --> SIG
+    SIG --> SOL
+    L --> DASH
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    Activity Sources                      │
-│  GitHub │ Telegram │ Trading │ Email │ Calendar │ ...   │
-└────────────────────────┬────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────┐
-│                   Collector Layer                        │
-│  - Fetches activities from each source                  │
-│  - Normalizes to common ActivityRecord format           │
-│  - Deduplicates based on source + timestamp             │
-└────────────────────────┬────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────┐
-│                   Signing Layer                          │
-│  - Signs activity hash with Ed25519 (Solana keypair)    │
-│  - Stores signature + pubkey with activity              │
-└────────────────────────┬────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────┐
-│                  On-Chain Anchor                         │
-│  - Batches signed activities into Merkle tree           │
-│  - Anchors root hash on Solana via memo program         │
-│  - Links tx signature to activity batch                 │
-└────────────────────────┬────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────┐
-│                    Dashboard                             │
-│  - Real-time activity feed                              │
-│  - Charts: activity over time, by type, by source       │
-│  - Signature verification UI                            │
-│  - On-chain proof links                                 │
-└─────────────────────────────────────────────────────────┘
-```
+
+> 📐 **[Full Architecture Diagrams →](docs/ARCHITECTURE.md)** — Detailed Mermaid diagrams including activity lifecycle, component breakdown, and security model.
 
 ## Tech Stack
 

@@ -2538,5 +2538,24 @@
     },
     "hash": "2caf692f933756aff7dfe5501714f4110ff71026e4edbdbbab4ab8e3b11b4118",
     "signature": "DVP3rbZ1Be4NWtnHeBYXZXM9oP8RP6bzrXmYVSbunN89HTWh4XNs981jnaTGKF2k2qoxQZAAs5HyZYzZg9pTUGP"
+  },
+  {
+    "timestamp": "2026-02-04T02:14:00.112Z",
+    "type": "commit",
+    "description": "Cycle 136: Document collector API in README",
+    "hash": "f831d42eaf30fa86b03bdd3bae7e862ca28a5ddf1bef6cbcbd777a9d260fd613",
+    "signature": "4gETpxVNTruF3DiF3rQqW9S5nYCqGyrn8hyP2qu5BDBoh797DbMCMbDzZZ3vjsGLpzz1aPxY9mvGoaGiGtYyDh7H"
+  },
+  {
+    "timestamp": "2026-02-04T02:17:20.847Z",
+    "type": "build",
+    "description": "Cycle 137: Add Mermaid architecture diagrams - Created docs/ARCHITECTURE.md with 5 diagrams, updated README",
+    "metadata": {
+      "cycle": 137,
+      "filesChanged": 2,
+      "diagramsAdded": 5
+    },
+    "hash": "68693fcdc56df137e622089ed7a16018778ead30370700e76a97f7ec4461d3e6",
+    "signature": "3Mk4o7CXvJUNv5ootiEugDRiKyqnsQpuGPDc7AhUoaEYwtfvnHUMhoEf7UJhj6W4Kj23f41T8kvPHs5CMjWi3vvH"
   }
 ]
