@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 21:42 PST
-**Cycle:** 179
+**Last Updated:** 2026-02-03 21:57 PST
+**Cycle:** 180
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -99,7 +99,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Mini activity preview on hover (quick peek) ✅ Cycle 176
 - [x] Activity comparison mode (select 2 to compare) ✅ Cycle 178
 - [x] Custom activity types (user-defined) ✅ Cycle 179
-- [ ] Activity attachment support (link files/images)
+- [x] Activity attachment support (link files/images) ✅ Cycle 180
 - [ ] Dashboard tour/onboarding for new users
 - [ ] Activity importance scoring (auto-prioritize)
 - [ ] Voice input for activity logging (web speech API)
@@ -107,6 +107,40 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 180 (Activity Attachment Support)
+- Implemented ability to attach images, files, and links to activities
+- **New API Endpoints**:
+  - `GET /api/activities/:hash/attachments` - List attachments
+  - `POST /api/activities/:hash/attachments` - Add attachment
+  - `DELETE /api/activities/:hash/attachments/:id` - Remove attachment
+- **Attachment Properties**:
+  - id (auto-generated 8-char UUID)
+  - type ('image' | 'file' | 'link')
+  - url (max 2000 chars, validated)
+  - name (display name, max 200 chars)
+  - size (optional, bytes)
+  - mimeType (optional)
+  - addedAt (ISO timestamp)
+- **Limits**: Max 10 attachments per activity
+- **Dashboard UI**:
+  - Attachments section shows below notes
+  - Image attachments display thumbnail preview
+  - File/link attachments show as clickable pills with icons
+  - Click opens attachment in new tab
+  - Full theme support (dark, light, cyberpunk)
+  - Mobile responsive layout
+- **CSS Changes (~130 lines)**:
+  - `.activity-attachments` container styling
+  - `.attachment-item` link/file pill styling
+  - `.attachment-image` thumbnail with preview
+  - Theme variants for all color schemes
+- **JS Changes (~60 lines)**:
+  - `renderActivityAttachments()` - builds HTML
+  - `formatBytes()` - size formatter helper
+  - Updated activity card template to include attachments
+- **OpenAPI Updated**: Added Attachment schema, 3 new endpoints
+- 468 activities, all signed on-chain
 
 ### Cycle 179 (Custom Activity Types)
 - Implemented user-defined activity types beyond the built-in ones
@@ -233,33 +267,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
   - `positionPreview()` - smart viewport-aware positioning
   - `renderPreviewContent()` - builds tooltip HTML with activity data
 - 451 activities, all signed on-chain
-
-### Cycle 175 (Focus Mode / Zen Mode)
-- Implemented distraction-free view for quick dashboard overview
-- **Features**:
-  - Full-screen overlay with key stats (total activities, on-chain %, streak)
-  - Latest 5 activities with type emoji, description, time ago, on-chain badge
-  - 'Z' keyboard shortcut to toggle (also Escape to close)
-  - Focus button in header next to theme/notification toggles
-  - Animated gradient for on-chain percentage, yellow streak counter
-  - Mobile responsive design
-- **CSS Changes (~200 lines)**:
-  - Overlay positioning and fade-in animation
-  - 3-column stat cards with hover glow effect
-  - Activity list items with slide animation on hover
-  - Dark/light theme support via CSS variables
-  - Mobile grid adjustment (single column)
-- **JS Changes (~200 lines)**:
-  - `createFocusModeOverlay()` - injects modal HTML
-  - `toggleFocusMode()`, `showFocusMode()`, `hideFocusMode()` - toggle logic
-  - `updateFocusModeContent()` - populates stats and activities
-  - `calculateFocusStreak()` - simplified streak calculation
-  - `getActivityEmoji()`, `formatTimeAgo()`, `escapeHtml()` - helper functions
-  - Updated `handleShortcutAction()` for 'z' shortcut
-  - Updated both shortcuts modals with Focus Mode entry
-- **HTML Changes**:
-  - Added Focus button in header controls
-- 449 activities, all signed on-chain
 
 ---
 
