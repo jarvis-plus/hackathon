@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 22:42 PST
-**Cycle:** 183
+**Last Updated:** 2026-02-03 23:09 PST
+**Cycle:** 184
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -103,10 +103,34 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Dashboard tour/onboarding for new users ✅ Cycle 181
 - [x] Activity importance scoring (auto-prioritize) ✅ Cycle 182
 - [x] Voice input for activity logging (web speech API) ✅ Cycle 183
+- [x] Activity calendar view (month-view with daily details) ✅ Cycle 184
 
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 184 (Activity Calendar View)
+- Implemented month-view calendar showing daily activities
+- **New API Endpoints**:
+  - `GET /api/calendar` - Month data with daily activities, stats, navigation
+  - `GET /api/heatmap` - GitHub-style heatmap data with configurable weeks
+- **Calendar Features**:
+  - Day cells showing activity count and colored dots by type
+  - Navigation (prev/next month) with disabled state for future
+  - Month stats (total activities, active days, avg/day)
+  - Interactive tooltips showing activity details on hover
+  - Today highlighted with accent ring
+  - Activity dots color-coded: commit=green, build=blue, deploy=red, trade=yellow, etc.
+- **Heatmap API Enhancements**:
+  - Server-calculated intensity levels (0-4)
+  - Type breakdown per day
+  - Day-of-week distribution stats
+  - Configurable weeks parameter (1-104)
+- **Theme Support**: All 6 themes (Dark, Light, Ocean, Forest, Sunset, Cyberpunk)
+- **Mobile Responsive**: Smaller cells and dots on mobile
+- **OpenAPI Updated**: CalendarView and HeatmapData schemas
+- **Stats**: 482 activities, all signed on-chain
+- Commit: f15d216
 
 ### Cycle 183 (Voice Input for Activity Logging)
 - Implemented Web Speech API integration for voice-based activity logging
@@ -236,38 +260,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
   - Updated activity card template to include attachments
 - **OpenAPI Updated**: Added Attachment schema, 3 new endpoints
 - 468 activities, all signed on-chain
-
-### Cycle 179 (Custom Activity Types)
-- Implemented user-defined activity types beyond the built-in ones
-- **New API Endpoints**:
-  - `GET /api/custom-types` - List all types (built-in + custom)
-  - `POST /api/custom-types` - Create new custom type
-  - `PUT /api/custom-types/:id` - Update custom type properties
-  - `DELETE /api/custom-types/:id` - Delete custom type
-- **Built-in Types (14)** - Protected from modification:
-  - commit, build, trade, message, email, calendar, tweet, decision
-  - heartbeat, browser, transfer, deploy, session, research
-- **Custom Type Properties**:
-  - id (auto-generated from name, lowercase/hyphenated)
-  - name (display name, max 50 chars)
-  - emoji (single emoji icon)
-  - color (hex code, optional)
-  - description (optional, max 200 chars)
-- **Dashboard UI**:
-  - ➕ button in type filter section opens management modal
-  - Create form with emoji, name, color picker, description fields
-  - List of custom types with activity counts
-  - Delete button on each custom type
-  - Custom types appear as filter buttons in the activity list
-  - Dynamic filter integration with custom type buttons
-- **Validation**:
-  - Cannot create types with built-in names (409 conflict)
-  - Unique ID enforcement for custom types
-  - Proper error messages for all edge cases
-  - Max 50 custom types limit
-- **OpenAPI Updated**: Added Custom Types tag, ActivityType and CustomActivityType schemas
-- ~200 lines server.ts, ~280 lines CSS, ~320 lines JS
-- 466 activities, all signed on-chain
 
 ---
 
