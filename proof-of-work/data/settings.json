@@ -1,0 +1,8 @@
+{
+  "trash": {
+    "retentionDays": 30,
+    "autoCleanOnStartup": true,
+    "totalCleaned": 0
+  },
+  "updatedAt": "2026-02-04T10:37:40.320Z"
+}

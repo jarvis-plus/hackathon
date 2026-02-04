@@ -13879,6 +13879,140 @@ body.tour-active {
     color: #ff4444;
 }
 
+/* Trash Cleanup Button */
+.trash-cleanup-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: #4a9eff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.trash-cleanup-btn:hover:not(:disabled) {
+    background: #66aeff;
+    transform: translateY(-1px);
+}
+
+.trash-cleanup-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Trash Settings Panel */
+.trash-settings {
+    margin-top: 1rem;
+    border: 1px solid var(--border-color, #333);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.trash-settings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: var(--bg-tertiary, #1a1a2e);
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s ease;
+}
+
+.trash-settings-header:hover {
+    background: var(--bg-secondary, #252535);
+}
+
+.settings-toggle-icon {
+    font-size: 0.8rem;
+    transition: transform 0.2s ease;
+}
+
+.settings-toggle-icon.expanded {
+    transform: rotate(90deg);
+}
+
+.trash-settings-body {
+    padding: 1rem;
+    background: var(--bg-secondary, #252535);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.settings-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.settings-row label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary, #a0a0a0);
+}
+
+.settings-row label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent-color, #4a9eff);
+}
+
+.retention-input-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.retention-input-group select {
+    padding: 0.5rem 0.75rem;
+    background: var(--bg-tertiary, #1a1a2e);
+    border: 1px solid var(--border-color, #333);
+    border-radius: 6px;
+    color: var(--text-primary, #e0e0e0);
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.retention-input-group select:focus {
+    outline: none;
+    border-color: var(--accent-color, #4a9eff);
+}
+
+.settings-info {
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    background: var(--bg-tertiary, #1a1a2e);
+    border-radius: 6px;
+    font-size: 0.85rem;
+}
+
+.settings-info p {
+    margin: 0 0 0.5rem 0;
+    color: var(--text-primary, #e0e0e0);
+}
+
+.settings-info ul {
+    margin: 0;
+    padding-left: 1.5rem;
+}
+
+.settings-info li {
+    color: var(--text-secondary, #a0a0a0);
+    margin-bottom: 0.25rem;
+}
+
+.settings-info li span {
+    color: var(--text-primary, #e0e0e0);
+    font-weight: 500;
+}
+
 /* Mobile responsive */
 @media (max-width: 600px) {
     .trash-content {
@@ -13897,6 +14031,17 @@ body.tour-active {
     .trash-actions {
         flex-direction: column;
         align-items: flex-start;
+    }
+    
+    .trash-cleanup-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .settings-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
     }
     
     .trash-item {
@@ -13938,25 +14083,79 @@ body.tour-active {
     background: #f5f5f5;
 }
 
+[data-theme="light"] .trash-settings-header {
+    background: #f5f5f5;
+}
+
+[data-theme="light"] .trash-settings-header:hover {
+    background: #eee;
+}
+
+[data-theme="light"] .trash-settings-body {
+    background: #fff;
+}
+
+[data-theme="light"] .settings-info {
+    background: #f5f5f5;
+}
+
+[data-theme="light"] .retention-input-group select {
+    background: #f5f5f5;
+    border-color: #ddd;
+    color: #333;
+}
+
 /* Ocean theme */
+[data-theme="ocean"] .trash-cleanup-btn {
+    background: #00acc1;
+}
+
+[data-theme="ocean"] .trash-cleanup-btn:hover:not(:disabled) {
+    background: #26c6da;
+}
+
 [data-theme="ocean"] .trash-btn[aria-pressed="true"] {
     background: #00acc1;
     border-color: #00acc1;
 }
 
 /* Forest theme */
+[data-theme="forest"] .trash-cleanup-btn {
+    background: #66bb6a;
+}
+
+[data-theme="forest"] .trash-cleanup-btn:hover:not(:disabled) {
+    background: #81c784;
+}
+
 [data-theme="forest"] .trash-btn[aria-pressed="true"] {
     background: #66bb6a;
     border-color: #66bb6a;
 }
 
 /* Sunset theme */
+[data-theme="sunset"] .trash-cleanup-btn {
+    background: #ff7043;
+}
+
+[data-theme="sunset"] .trash-cleanup-btn:hover:not(:disabled) {
+    background: #ff8a65;
+}
+
 [data-theme="sunset"] .trash-btn[aria-pressed="true"] {
     background: #ff7043;
     border-color: #ff7043;
 }
 
 /* Cyberpunk theme */
+[data-theme="cyberpunk"] .trash-cleanup-btn {
+    background: #ff00ff;
+}
+
+[data-theme="cyberpunk"] .trash-cleanup-btn:hover:not(:disabled) {
+    background: #ff33ff;
+}
+
 [data-theme="cyberpunk"] .trash-btn[aria-pressed="true"] {
     background: #ff00ff;
     border-color: #ff00ff;

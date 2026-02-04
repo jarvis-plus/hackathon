@@ -11892,6 +11892,151 @@ async function updateTrashCount() {
     }
 }
 
+// ==============================================
+// SCHEDULED DELETION / TRASH SETTINGS
+// ==============================================
+
+// Toggle trash settings panel visibility
+function toggleTrashSettings() {
+    const body = document.getElementById('trash-settings-body');
+    const icon = document.getElementById('settings-toggle-icon');
+    
+    if (body.style.display === 'none') {
+        body.style.display = 'flex';
+        icon.classList.add('expanded');
+        loadTrashSettings();
+    } else {
+        body.style.display = 'none';
+        icon.classList.remove('expanded');
+    }
+}
+
+// Load and display trash settings
+async function loadTrashSettings() {
+    try {
+        const response = await fetch('/api/settings/trash');
+        const data = await response.json();
+        
+        // Update retention days dropdown
+        const retentionSelect = document.getElementById('retention-days');
+        if (retentionSelect) {
+            retentionSelect.value = String(data.retentionDays);
+        }
+        
+        // Update auto-clean checkbox
+        const autoCleanCheckbox = document.getElementById('auto-clean-startup');
+        if (autoCleanCheckbox) {
+            autoCleanCheckbox.checked = data.autoCleanOnStartup ?? true;
+        }
+        
+        // Update stats
+        const totalCleaned = document.getElementById('total-cleaned');
+        const lastCleanup = document.getElementById('last-cleanup');
+        const expiredCount = document.getElementById('expired-count');
+        
+        if (totalCleaned) totalCleaned.textContent = data.totalCleaned ?? 0;
+        if (lastCleanup) {
+            lastCleanup.textContent = data.lastCleanup 
+                ? new Date(data.lastCleanup).toLocaleString()
+                : 'Never';
+        }
+        if (expiredCount) expiredCount.textContent = data.expiredCount ?? 0;
+        
+        // Update cleanup button state
+        const cleanupBtn = document.getElementById('trash-cleanup-btn');
+        if (cleanupBtn) {
+            cleanupBtn.disabled = data.retentionDays <= 0 || data.expiredCount === 0;
+            cleanupBtn.title = data.retentionDays <= 0 
+                ? 'Enable scheduled deletion to use cleanup'
+                : data.expiredCount === 0 
+                    ? 'No expired items to clean'
+                    : `Delete ${data.expiredCount} items older than ${data.retentionDays} days`;
+        }
+    } catch (e) {
+        console.error('Error loading trash settings:', e);
+    }
+}
+
+// Update retention days setting
+async function updateRetentionDays(days) {
+    try {
+        const response = await fetch('/api/settings/trash', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ retentionDays: parseInt(days, 10) })
+        });
+        
+        if (!response.ok) {
+            const data = await response.json();
+            announce(data.error || 'Failed to update settings');
+            return;
+        }
+        
+        const data = await response.json();
+        announce(data.message);
+        
+        // Reload settings to update UI
+        await loadTrashSettings();
+    } catch (e) {
+        console.error('Error updating retention days:', e);
+        announce('Failed to update settings');
+    }
+}
+
+// Update auto-clean on startup setting
+async function updateAutoCleanStartup(enabled) {
+    try {
+        const response = await fetch('/api/settings/trash', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ autoCleanOnStartup: enabled })
+        });
+        
+        if (!response.ok) {
+            const data = await response.json();
+            announce(data.error || 'Failed to update settings');
+            return;
+        }
+        
+        announce(enabled ? 'Cleanup on startup enabled' : 'Cleanup on startup disabled');
+    } catch (e) {
+        console.error('Error updating auto-clean setting:', e);
+        announce('Failed to update settings');
+    }
+}
+
+// Run manual cleanup of expired trash
+async function cleanupExpiredTrash() {
+    const cleanupBtn = document.getElementById('trash-cleanup-btn');
+    if (cleanupBtn && cleanupBtn.disabled) {
+        announce('No expired items to clean');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/activities/trash/cleanup', {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            announce(data.message || data.error || 'Failed to cleanup');
+            return;
+        }
+        
+        announce(data.message);
+        
+        // Reload trash items and settings
+        await loadTrashItems();
+        await loadTrashSettings();
+        await updateTrashCount();
+    } catch (e) {
+        console.error('Error running cleanup:', e);
+        announce('Failed to cleanup expired trash');
+    }
+}
+
 // Keyboard shortcut for trash (Del key)
 document.addEventListener('keydown', (e) => {
     // Skip if typing in an input
@@ -11932,7 +12077,9 @@ if (typeof commandPaletteCommands !== 'undefined') {
     commandPaletteCommands.push(
         { name: 'Open Trash', shortcut: 'Del', action: () => openTrashModal() },
         { name: 'Close Trash', shortcut: 'Escape', action: () => closeTrashModal() },
-        { name: 'Empty Trash', action: () => emptyTrash() }
+        { name: 'Empty Trash', action: () => emptyTrash() },
+        { name: 'Cleanup Expired Trash', action: () => cleanupExpiredTrash() },
+        { name: 'Trash Settings', action: () => { openTrashModal(); setTimeout(toggleTrashSettings, 100); } }
     );
 }
 

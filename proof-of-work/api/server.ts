@@ -94,6 +94,130 @@ const CUSTOM_TYPES_FILE = join(BASE_DIR, 'data', 'custom-types.json');
 /** Path to the activity templates file */
 const TEMPLATES_FILE = join(BASE_DIR, 'data', 'templates.json');
 
+/** Path to the settings file */
+const SETTINGS_FILE = join(BASE_DIR, 'data', 'settings.json');
+
+// ==============================================
+// SETTINGS SYSTEM (including trash retention)
+// ==============================================
+
+/**
+ * Settings Interface
+ * 
+ * Global application settings including:
+ * - trash.retentionDays: Number of days before trash is auto-emptied (0 = disabled, -1 = never)
+ * - trash.lastCleanup: ISO timestamp of last auto-cleanup
+ * - trash.totalCleaned: Running total of activities auto-cleaned
+ */
+interface Settings {
+  trash: {
+    retentionDays: number;
+    lastCleanup?: string;
+    totalCleaned?: number;
+    autoCleanOnStartup?: boolean;
+  };
+  updatedAt: string;
+}
+
+const DEFAULT_SETTINGS: Settings = {
+  trash: {
+    retentionDays: 30,  // Default: auto-empty after 30 days
+    autoCleanOnStartup: true,
+    totalCleaned: 0,
+  },
+  updatedAt: new Date().toISOString(),
+};
+
+/**
+ * Load settings from disk. Creates default settings if file doesn't exist.
+ */
+function getSettings(): Settings {
+  if (!existsSync(SETTINGS_FILE)) {
+    saveSettings(DEFAULT_SETTINGS);
+    return DEFAULT_SETTINGS;
+  }
+  try {
+    const data = readFileSync(SETTINGS_FILE, 'utf-8');
+    const settings = JSON.parse(data);
+    // Merge with defaults to handle new fields
+    return {
+      ...DEFAULT_SETTINGS,
+      ...settings,
+      trash: { ...DEFAULT_SETTINGS.trash, ...settings.trash },
+    };
+  } catch (e) {
+    console.error('Failed to load settings:', e);
+    return DEFAULT_SETTINGS;
+  }
+}
+
+/**
+ * Save settings to disk.
+ */
+function saveSettings(settings: Settings): void {
+  try {
+    settings.updatedAt = new Date().toISOString();
+    writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2));
+  } catch (e) {
+    console.error('Failed to save settings:', e);
+  }
+}
+
+/**
+ * Clean up expired trash items based on retention settings.
+ * Returns the number of activities permanently deleted.
+ */
+function cleanupExpiredTrash(): { cleaned: number; remaining: number; oldestDeleted?: string } {
+  const settings = getSettings();
+  const { retentionDays } = settings.trash;
+  
+  // retentionDays <= 0 means disabled
+  if (retentionDays <= 0) {
+    return { cleaned: 0, remaining: 0 };
+  }
+  
+  const activities = getActivities();
+  const now = new Date();
+  const cutoffDate = new Date(now.getTime() - retentionDays * 24 * 60 * 60 * 1000);
+  
+  const toKeep: any[] = [];
+  const toDelete: any[] = [];
+  let oldestDeleted: Date | null = null;
+  
+  for (const activity of activities) {
+    if (activity.deleted && activity.deletedAt) {
+      const deletedAt = new Date(activity.deletedAt);
+      if (deletedAt < cutoffDate) {
+        toDelete.push(activity);
+        if (!oldestDeleted || deletedAt < oldestDeleted) {
+          oldestDeleted = deletedAt;
+        }
+      } else {
+        toKeep.push(activity);
+      }
+    } else {
+      toKeep.push(activity);
+    }
+  }
+  
+  if (toDelete.length > 0) {
+    saveActivities(toKeep);
+    
+    // Update cleanup stats
+    settings.trash.lastCleanup = now.toISOString();
+    settings.trash.totalCleaned = (settings.trash.totalCleaned || 0) + toDelete.length;
+    saveSettings(settings);
+    
+    console.log(`🧹 Trash cleanup: ${toDelete.length} expired activities permanently deleted (older than ${retentionDays} days)`);
+  }
+  
+  return { 
+    cleaned: toDelete.length, 
+    remaining: toKeep.filter((a: any) => a.deleted).length,
+    oldestDeleted: oldestDeleted?.toISOString()
+  };
+}
+
 // ==============================================
 // CUSTOM ACTIVITY TYPES SYSTEM
 // ==============================================
@@ -2647,6 +2771,159 @@ const server = Bun.serve({
         remainingCount: remaining.length,
         message: `${deleted.length} activities permanently deleted`
       }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: POST /api/activities/trash/cleanup
+    // Clean up expired trash based on retention settings
+    // ==========================================
+    if (path === '/api/activities/trash/cleanup' && req.method === 'POST') {
+      const settings = getSettings();
+      const { retentionDays } = settings.trash;
+      
+      if (retentionDays <= 0) {
+        return Response.json({
+          success: false,
+          message: 'Scheduled deletion is disabled (retentionDays <= 0)',
+          retentionDays,
+        }, { status: 400, headers: corsHeaders });
+      }
+      
+      const result = cleanupExpiredTrash();
+      
+      if (result.cleaned > 0) {
+        broadcastUpdate('trash_cleaned', {
+          cleaned: result.cleaned,
+          remaining: result.remaining,
+          retentionDays,
+        });
+        broadcastToWebhooks('trash.cleaned', {
+          cleaned: result.cleaned,
+          remaining: result.remaining,
+          retentionDays,
+        });
+      }
+      
+      return Response.json({
+        success: true,
+        cleaned: result.cleaned,
+        remaining: result.remaining,
+        retentionDays,
+        oldestDeleted: result.oldestDeleted,
+        message: result.cleaned > 0 
+          ? `${result.cleaned} activities older than ${retentionDays} days permanently deleted`
+          : `No expired trash to clean (retention: ${retentionDays} days)`,
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: GET /api/settings/trash
+    // Get current trash/scheduled deletion settings
+    // ==========================================
+    if (path === '/api/settings/trash' && req.method === 'GET') {
+      const settings = getSettings();
+      const activities = getActivities();
+      const trashItems = activities.filter((a: any) => a.deleted);
+      
+      // Calculate how many would be cleaned now
+      const now = new Date();
+      const cutoffDate = settings.trash.retentionDays > 0 
+        ? new Date(now.getTime() - settings.trash.retentionDays * 24 * 60 * 60 * 1000)
+        : null;
+      
+      const expiredCount = cutoffDate 
+        ? trashItems.filter((a: any) => new Date(a.deletedAt) < cutoffDate).length
+        : 0;
+      
+      // Find oldest and newest items in trash
+      let oldestItem: { hash: string; deletedAt: string; daysAgo: number } | null = null;
+      let newestItem: { hash: string; deletedAt: string; daysAgo: number } | null = null;
+      
+      for (const item of trashItems) {
+        if (item.deletedAt) {
+          const deletedAt = new Date(item.deletedAt);
+          const daysAgo = Math.floor((now.getTime() - deletedAt.getTime()) / (24 * 60 * 60 * 1000));
+          const itemInfo = { hash: item.hash, deletedAt: item.deletedAt, daysAgo };
+          
+          if (!oldestItem || deletedAt < new Date(oldestItem.deletedAt)) {
+            oldestItem = itemInfo;
+          }
+          if (!newestItem || deletedAt > new Date(newestItem.deletedAt)) {
+            newestItem = itemInfo;
+          }
+        }
+      }
+      
+      return Response.json({
+        retentionDays: settings.trash.retentionDays,
+        autoCleanOnStartup: settings.trash.autoCleanOnStartup ?? true,
+        lastCleanup: settings.trash.lastCleanup,
+        totalCleaned: settings.trash.totalCleaned ?? 0,
+        currentTrashCount: trashItems.length,
+        expiredCount,
+        oldestItem,
+        newestItem,
+        updatedAt: settings.updatedAt,
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: PATCH /api/settings/trash
+    // Update trash/scheduled deletion settings
+    // ==========================================
+    if (path === '/api/settings/trash' && req.method === 'PATCH') {
+      try {
+        const body = await req.json() as {
+          retentionDays?: number;
+          autoCleanOnStartup?: boolean;
+        };
+        
+        const settings = getSettings();
+        const oldRetention = settings.trash.retentionDays;
+        
+        // Validate retentionDays
+        if (body.retentionDays !== undefined) {
+          if (typeof body.retentionDays !== 'number') {
+            return Response.json({
+              error: 'retentionDays must be a number',
+            }, { status: 400, headers: corsHeaders });
+          }
+          if (body.retentionDays < -1 || body.retentionDays > 365) {
+            return Response.json({
+              error: 'retentionDays must be between -1 (never) and 365 days. Use 0 to disable.',
+            }, { status: 400, headers: corsHeaders });
+          }
+          settings.trash.retentionDays = Math.floor(body.retentionDays);
+        }
+        
+        // Validate autoCleanOnStartup
+        if (body.autoCleanOnStartup !== undefined) {
+          if (typeof body.autoCleanOnStartup !== 'boolean') {
+            return Response.json({
+              error: 'autoCleanOnStartup must be a boolean',
+            }, { status: 400, headers: corsHeaders });
+          }
+          settings.trash.autoCleanOnStartup = body.autoCleanOnStartup;
+        }
+        
+        saveSettings(settings);
+        
+        console.log(`⚙️ Trash settings updated: retentionDays=${settings.trash.retentionDays}, autoCleanOnStartup=${settings.trash.autoCleanOnStartup}`);
+        
+        return Response.json({
+          success: true,
+          retentionDays: settings.trash.retentionDays,
+          autoCleanOnStartup: settings.trash.autoCleanOnStartup,
+          previousRetentionDays: oldRetention,
+          message: settings.trash.retentionDays <= 0 
+            ? 'Scheduled deletion disabled'
+            : `Trash items will be auto-deleted after ${settings.trash.retentionDays} days`,
+        }, { headers: corsHeaders });
+      } catch (e) {
+        return Response.json({
+          error: 'Invalid JSON body',
+        }, { status: 400, headers: corsHeaders });
+      }
     }
 
     // ==========================================
@@ -6986,3 +7263,21 @@ console.log(`🚀 Proof of Work server running at http://localhost:${PORT}`);
 console.log(`🔌 WebSocket endpoint: ws://localhost:${PORT}/ws`);
 console.log(`🔐 API Auth: ${API_KEY ? 'ENABLED' : 'disabled'}${API_KEY && API_AUTH_READ ? ' (read auth required)' : ''}`);
 console.log(`⏱️  Rate limits: API=${API_RATE_LIMIT}/min, WS=${WS_RATE_LIMIT}/min, Webhook=${WEBHOOK_WRITE_LIMIT}/min, Test=${WEBHOOK_TEST_LIMIT}/min`);
+
+// ==============================================
+// STARTUP TRASH CLEANUP
+// ==============================================
+// Run automatic trash cleanup on server start if enabled
+const startupSettings = getSettings();
+if (startupSettings.trash.autoCleanOnStartup && startupSettings.trash.retentionDays > 0) {
+  const cleanupResult = cleanupExpiredTrash();
+  if (cleanupResult.cleaned > 0) {
+    console.log(`🧹 Startup cleanup: ${cleanupResult.cleaned} expired trash items removed (retention: ${startupSettings.trash.retentionDays} days)`);
+  } else {
+    console.log(`🧹 Trash retention: ${startupSettings.trash.retentionDays} days (no expired items)`);
+  }
+} else if (startupSettings.trash.retentionDays <= 0) {
+  console.log(`🧹 Scheduled trash deletion: disabled`);
+} else {
+  console.log(`🧹 Startup trash cleanup: disabled`);
+}

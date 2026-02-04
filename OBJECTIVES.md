@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-04 01:55 PST
-**Cycle:** 187
+**Last Updated:** 2026-02-04 02:38 PST
+**Cycle:** 189
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -107,10 +107,61 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Bulk activity operations (multi-select for batch actions) ✅ Cycle 185
 - [x] Activity templates (reusable presets for quick logging) ✅ Cycle 186
 - [x] Activity duplicate detection (warn before logging similar activities) ✅ Cycle 187
+- [x] Activity undo/restore (soft delete with trash bin) ✅ Cycle 188
+- [x] Activity scheduled deletion (auto-empty trash after X days) ✅ Cycle 189
+- [ ] Activity export with filters (export only filtered results)
+- [ ] Activity bulk delete (delete multiple at once)
+- [ ] Undo button toast (quick undo after delete)
 
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 189 (Activity Scheduled Deletion)
+- Implemented configurable auto-empty for trash items
+- **New API Endpoints**:
+  - `GET /api/settings/trash` - Get trash retention settings and stats
+  - `PATCH /api/settings/trash` - Update retention period and auto-cleanup settings
+  - `POST /api/activities/trash/cleanup` - Manually run cleanup of expired items
+- **Settings System**:
+  - `retentionDays`: 0=disabled, -1=never, 1-365 days (default: 30)
+  - `autoCleanOnStartup`: Run cleanup when server starts
+  - Stats tracking: totalCleaned, lastCleanup, expiredCount
+- **Dashboard UI**:
+  - ⚙️ Collapsible settings panel in trash modal
+  - Dropdown for retention period selection
+  - Checkbox for auto-clean on startup
+  - Cleanup stats display
+  - 🧹 Cleanup Expired button
+- **Startup Behavior**: Auto-cleans expired trash on server start (if enabled)
+- **Theme Support**: All 6 themes (Dark, Light, Ocean, Forest, Sunset, Cyberpunk)
+- **Command Palette**: Added "Cleanup Expired Trash" and "Trash Settings" commands
+- **OpenAPI Updated**: TrashSettings, TrashCleanupResult, TrashSettingsUpdateResult schemas
+- **WebSocket/Webhook Events**: trash_cleaned event
+- **Stats**: 498 activities, all signed on-chain
+- Commit: pending
+
+### Cycle 188 (Activity Undo/Restore - Soft Delete)
+- Implemented soft delete with trash bin functionality
+- **New API Endpoints**:
+  - `DELETE /api/activities/:hash` - Soft delete (move to trash)
+  - `PATCH /api/activities/:hash/restore` - Restore from trash
+  - `GET /api/activities/trash` - List deleted activities (sorted by deletedAt)
+  - `DELETE /api/activities/trash/empty` - Permanently delete all trash
+- **Activity Fields Added**: `deleted`, `deletedAt`, `restoredAt`
+- **GET /api/activities Updated**: Excludes deleted by default, add `?includeDeleted=true`
+- **Dashboard UI**:
+  - 🗑️ Trash button in filter section with count badge
+  - Full trash modal with restore buttons per item
+  - Empty trash button with confirmation dialog
+  - Del/Backspace keyboard shortcut to open trash
+  - Command palette commands added
+- **Theme Support**: All 6 themes (Dark, Light, Ocean, Forest, Sunset, Cyberpunk)
+- **Mobile Responsive**: Full-width modal, stacked buttons
+- **OpenAPI Updated**: DeleteResult, RestoreResult, TrashList, EmptyTrashResult schemas
+- **WebSocket/Webhook Events**: activity_deleted, activity_restored, trash_emptied
+- **Stats**: 496 activities, all signed on-chain
+- Commit: 73ed5da
 
 ### Cycle 187 (Activity Duplicate Detection)
 - Implemented warning system for potential duplicate activities
@@ -191,58 +242,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - **Command Palette**: Added bulk mode commands
 - **Stats**: 484 activities, all signed on-chain
 - Commit: fc1f43f
-
-### Cycle 184 (Activity Calendar View)
-- Implemented month-view calendar showing daily activities
-- **New API Endpoints**:
-  - `GET /api/calendar` - Month data with daily activities, stats, navigation
-  - `GET /api/heatmap` - GitHub-style heatmap data with configurable weeks
-- **Calendar Features**:
-  - Day cells showing activity count and colored dots by type
-  - Navigation (prev/next month) with disabled state for future
-  - Month stats (total activities, active days, avg/day)
-  - Interactive tooltips showing activity details on hover
-  - Today highlighted with accent ring
-  - Activity dots color-coded: commit=green, build=blue, deploy=red, trade=yellow, etc.
-- **Heatmap API Enhancements**:
-  - Server-calculated intensity levels (0-4)
-  - Type breakdown per day
-  - Day-of-week distribution stats
-  - Configurable weeks parameter (1-104)
-- **Theme Support**: All 6 themes (Dark, Light, Ocean, Forest, Sunset, Cyberpunk)
-- **Mobile Responsive**: Smaller cells and dots on mobile
-- **OpenAPI Updated**: CalendarView and HeatmapData schemas
-- **Stats**: 482 activities, all signed on-chain
-- Commit: f15d216
-
-### Cycle 183 (Voice Input for Activity Logging)
-- Implemented Web Speech API integration for voice-based activity logging
-- **New Features**:
-  - Real-time speech-to-text transcription
-  - Continuous recognition for longer descriptions
-  - Voice input modal with recording indicator
-  - 'V' keyboard shortcut to toggle modal
-- **API Changes**:
-  - `POST /api/activities` - Create new activities via API
-  - Validates type (built-in or custom types only)
-  - Broadcasts new activities via WebSocket and webhooks
-  - Activities created unsigned, signed in next cycle
-- **Dashboard UI**:
-  - 🎤 Voice button in filter section
-  - Recording pulse animation when listening
-  - Transcript preview auto-fills description
-  - Activity type dropdown selector
-  - Tips for usage and keyboard shortcuts
-- **Keyboard Shortcuts**:
-  - `V` - Open/close voice modal
-  - `Space` - Toggle recording (when modal open)
-  - `Enter` - Submit activity
-  - `Escape` - Close modal
-- **Theme Support**: All 6 themes with unique styling
-- **Mobile Responsive**: Full-width modal on small screens
-- **OpenAPI Updated**: Added POST /api/activities endpoint
-- **Stats**: 479 activities, all signed on-chain
-- Commit: 5a544a1
 
 ---
 

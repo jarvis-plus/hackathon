@@ -276,7 +276,50 @@
                         <button class="trash-empty-btn" id="trash-empty-btn" onclick="emptyTrash()" title="Permanently delete all trashed activities">
                             <span>🗑️</span> Empty Trash
                         </button>
+                        <button class="trash-cleanup-btn" id="trash-cleanup-btn" onclick="cleanupExpiredTrash()" title="Delete items older than retention period">
+                            <span>🧹</span> Cleanup Expired
+                        </button>
                         <span class="trash-stats" id="trash-stats"></span>
+                    </div>
+                    
+                    <!-- Scheduled Deletion Settings -->
+                    <div class="trash-settings" id="trash-settings">
+                        <div class="trash-settings-header" onclick="toggleTrashSettings()">
+                            <span>⚙️ Scheduled Deletion Settings</span>
+                            <span class="settings-toggle-icon" id="settings-toggle-icon">▶</span>
+                        </div>
+                        <div class="trash-settings-body" id="trash-settings-body" style="display: none;">
+                            <div class="settings-row">
+                                <label for="retention-days">Auto-delete after:</label>
+                                <div class="retention-input-group">
+                                    <select id="retention-days" onchange="updateRetentionDays(this.value)">
+                                        <option value="0">Disabled (manual only)</option>
+                                        <option value="7">7 days</option>
+                                        <option value="14">14 days</option>
+                                        <option value="30" selected>30 days (default)</option>
+                                        <option value="60">60 days</option>
+                                        <option value="90">90 days</option>
+                                        <option value="180">6 months</option>
+                                        <option value="365">1 year</option>
+                                        <option value="-1">Never (keep forever)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="settings-row">
+                                <label for="auto-clean-startup">
+                                    <input type="checkbox" id="auto-clean-startup" onchange="updateAutoCleanStartup(this.checked)" checked>
+                                    Run cleanup on server startup
+                                </label>
+                            </div>
+                            <div class="settings-info" id="settings-info">
+                                <p><strong>📊 Cleanup Stats:</strong></p>
+                                <ul id="cleanup-stats">
+                                    <li>Total cleaned: <span id="total-cleaned">0</span></li>
+                                    <li>Last cleanup: <span id="last-cleanup">Never</span></li>
+                                    <li>Expired items: <span id="expired-count">0</span></li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                     
                     <div id="trashList" class="trash-list">

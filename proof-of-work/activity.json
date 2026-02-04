@@ -4037,5 +4037,60 @@
     "metadata": {},
     "hash": "7f69d858a07a4f43187c057f3cf6bfeaa3ea06f596fdaf91dd6536a113d76f63",
     "signature": "3WUCCSHP4Hg9tTz4aprqi2DpSVN6eXzqSHUWzEnA4h6FF7HmKta1ZEazZfQNiJj8uGnh3vJPVa9qTt7qTTMQuC9c"
+  },
+  {
+    "timestamp": "2026-02-04T10:30:57.416Z",
+    "type": "commit",
+    "description": "Cycle 188: Activity undo/restore (soft delete with trash bin)",
+    "hash": "b56662439492417298afe1318d22e75c835d50fca69d3c9ceaffeb69dd1be924",
+    "signature": "616KAq6zFnX6QMdgCmyVnmasqapiyDMKNTaDuC3iSgBL6E8E6m44eQhj4Lcrn3xCi7i87sDkJU3gYs2q5SYx7qZF",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
+  },
+  {
+    "timestamp": "2026-02-04T10:37:51.943Z",
+    "type": "build",
+    "description": "Cycle 189: Activity scheduled deletion (auto-empty trash after X days)",
+    "metadata": {
+      "cycle": 189,
+      "features": [
+        "Configurable trash retention period (0=disabled, -1=never, 1-365 days)",
+        "Auto-cleanup on server startup (configurable)",
+        "Manual cleanup endpoint POST /api/activities/trash/cleanup",
+        "Settings API: GET/PATCH /api/settings/trash",
+        "Dashboard UI: Settings panel in trash modal",
+        "Stats: total cleaned, last cleanup, expired count",
+        "Theme support for all 6 themes"
+      ],
+      "endpoints_added": [
+        "GET /api/settings/trash",
+        "PATCH /api/settings/trash",
+        "POST /api/activities/trash/cleanup"
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-02-04T10:37:55.128Z",
+    "type": "build",
+    "description": "Cycle 189: Activity scheduled deletion (auto-empty trash after X days)",
+    "metadata": {
+      "cycle": 189,
+      "features": [
+        "Configurable trash retention period (0=disabled, -1=never, 1-365 days)",
+        "Auto-cleanup on server startup (configurable)",
+        "Manual cleanup endpoint POST /api/activities/trash/cleanup",
+        "Settings API: GET/PATCH /api/settings/trash",
+        "Dashboard UI: Settings panel in trash modal",
+        "Stats: total cleaned, last cleanup, expired count",
+        "Theme support for all 6 themes"
+      ],
+      "endpoints_added": [
+        "GET /api/settings/trash",
+        "PATCH /api/settings/trash",
+        "POST /api/activities/trash/cleanup"
+      ]
+    },
+    "hash": "d98107c3211b2e0acbf085d90dbf79256c9abaeace96a0a93fd4579c59ee149f",
+    "signature": "nGFHz1m47FXPj42MZHaJMwFUR9knPx64WH2rza6ivVe3BwK1KRiW1abBqMpzKDM2TyTdenQ4K5gp59w51VkNRAi",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
   }
 ]

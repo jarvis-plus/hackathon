@@ -55,6 +55,10 @@
     {
       "name": "Custom Types",
       "description": "User-defined activity type management"
+    },
+    {
+      "name": "Settings",
+      "description": "Application settings (trash retention, cleanup, etc.)"
     }
   ],
   "paths": {
@@ -417,6 +421,128 @@
           },
           "400": {
             "description": "Trash is already empty",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/activities/trash/cleanup": {
+      "post": {
+        "tags": [
+          "Activities"
+        ],
+        "summary": "Clean up expired trash",
+        "description": "Permanently deletes trash items older than the configured retention period. Run automatically on server startup if enabled.",
+        "operationId": "cleanupTrash",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyHeader": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cleanup completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrashCleanupResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Scheduled deletion is disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/settings/trash": {
+      "get": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Get trash settings",
+        "description": "Returns current trash retention settings, cleanup statistics, and trash status.",
+        "operationId": "getTrashSettings",
+        "responses": {
+          "200": {
+            "description": "Trash settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrashSettings"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Update trash settings",
+        "description": "Update trash retention period and auto-cleanup behavior. Set retentionDays to 0 to disable scheduled deletion, or -1 to never auto-delete.",
+        "operationId": "updateTrashSettings",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyHeader": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "retentionDays": {
+                    "type": "integer",
+                    "minimum": -1,
+                    "maximum": 365,
+                    "description": "Days before trash is auto-emptied. 0 = disabled, -1 = never delete."
+                  },
+                  "autoCleanOnStartup": {
+                    "type": "boolean",
+                    "description": "Whether to run cleanup automatically when server starts."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Settings updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrashSettingsUpdateResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid settings values",
             "content": {
               "application/json": {
                 "schema": {
@@ -4282,6 +4408,125 @@
           },
           "remainingCount": {
             "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "TrashCleanupResult": {
+        "type": "object",
+        "description": "Result of trash cleanup operation",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "cleaned": {
+            "type": "integer",
+            "description": "Number of expired activities permanently deleted"
+          },
+          "remaining": {
+            "type": "integer",
+            "description": "Number of activities still in trash"
+          },
+          "retentionDays": {
+            "type": "integer",
+            "description": "Current retention period in days"
+          },
+          "oldestDeleted": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of the oldest deleted activity (if any were cleaned)"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "TrashSettings": {
+        "type": "object",
+        "description": "Current trash/scheduled deletion settings and statistics",
+        "properties": {
+          "retentionDays": {
+            "type": "integer",
+            "description": "Days before trash is auto-emptied. 0 = disabled, -1 = never."
+          },
+          "autoCleanOnStartup": {
+            "type": "boolean",
+            "description": "Whether cleanup runs automatically on server startup"
+          },
+          "lastCleanup": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of last automatic cleanup"
+          },
+          "totalCleaned": {
+            "type": "integer",
+            "description": "Total activities auto-cleaned since tracking began"
+          },
+          "currentTrashCount": {
+            "type": "integer",
+            "description": "Current number of items in trash"
+          },
+          "expiredCount": {
+            "type": "integer",
+            "description": "Number of items that would be cleaned now"
+          },
+          "oldestItem": {
+            "type": "object",
+            "description": "Oldest item in trash",
+            "properties": {
+              "hash": {
+                "type": "string"
+              },
+              "deletedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "daysAgo": {
+                "type": "integer"
+              }
+            }
+          },
+          "newestItem": {
+            "type": "object",
+            "description": "Newest item in trash",
+            "properties": {
+              "hash": {
+                "type": "string"
+              },
+              "deletedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "daysAgo": {
+                "type": "integer"
+              }
+            }
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TrashSettingsUpdateResult": {
+        "type": "object",
+        "description": "Result of updating trash settings",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "retentionDays": {
+            "type": "integer",
+            "description": "New retention period"
+          },
+          "autoCleanOnStartup": {
+            "type": "boolean"
+          },
+          "previousRetentionDays": {
+            "type": "integer",
+            "description": "Previous retention period"
           },
           "message": {
             "type": "string"
