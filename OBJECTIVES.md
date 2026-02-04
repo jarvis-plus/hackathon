@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 18:45 PST
-**Cycle:** 145
+**Last Updated:** 2026-02-03 18:47 PST
+**Cycle:** 146
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -28,6 +28,10 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Rate limiting on API endpoints ✅ Cycle 117
 - [x] Activity deep links (share specific activity via URL hash) ✅ Cycle 143
 - [x] Browser notifications for new activities (with permission) ✅ Cycle 144
+- [x] PWA support (manifest, service worker, installable) ✅ Cycle 146
+- [ ] Activity grouping by day (collapsible sections)
+- [ ] Webhook notifications API for external integrations
+- [ ] Accessibility improvements (ARIA labels, focus states)
 
 ### 🎨 Design (see docs/DESIGN-INSPIRATION.md)
 - [x] Dark/light mode toggle ✅ Cycle 116
@@ -63,6 +67,22 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 146 (PWA Support)
+- Added Progressive Web App support for installable experience
+- manifest.json with app metadata, icons, and shortcuts
+- Service worker (sw.js) for offline caching and background sync
+- Cache-first strategy for static assets, network-first for API
+- Install prompt detection with custom "📲 Install App" button
+- Update toast when new service worker version is available
+- SVG icons for 192x192 and 512x512 sizes
+- Apple PWA meta tags (apple-mobile-web-app-capable, etc.)
+- Background sync hooks for activity refresh
+- Push notification infrastructure ready
+- ~150 lines JS for SW registration and install handling
+- ~80 lines CSS for update toast styling
+- Files: manifest.json, sw.js, icon-*.svg, app.js, dashboard.css, index.html
+- 354 activities, all signed on-chain
 
 ### Cycle 145 (Scroll-to-Top Button)
 - Added floating scroll-to-top button that appears when scrolling past 400px
@@ -125,19 +145,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - Mobile responsive: hint hidden on small screens, modal adapts
 - Files: app.js, dashboard.css
 - 342 activities, all signed on-chain
-
-### Cycle 141 (Date Range Filter)
-- Added date range filtering to activity feed
-- HTML: Date inputs (from/to), quick preset buttons (Today, Week, All)
-- CSS: ~100 lines for date filter styling with dark/light mode support
-- JavaScript: currentDateFrom/currentDateTo state variables
-- setQuickDateRange() function for preset date ranges
-- applyFilters() now reads date inputs and updates filter state
-- renderFilteredActivities() applies date range to activity filtering
-- resetFilters() clears date range and resets date input values
-- Filter stats display shows date range when active
-- Mobile responsive layout for date range inputs
-- 343 activities, all signed on-chain
 
 ---
 
