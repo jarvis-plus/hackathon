@@ -227,6 +227,24 @@
                     </button>
                 </div>
             </div>
+            <div class="feed-filters" id="feedFilters">
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="activitySearch" placeholder="Search activities..." oninput="applyFilters()">
+                    <button class="search-clear" id="searchClear" onclick="clearSearch()" title="Clear search">×</button>
+                </div>
+                <div class="type-filters">
+                    <button class="type-filter active" data-type="all" onclick="setTypeFilter('all')">All</button>
+                    <button class="type-filter" data-type="commit" onclick="setTypeFilter('commit')">📝 Commits</button>
+                    <button class="type-filter" data-type="build" onclick="setTypeFilter('build')">🔨 Builds</button>
+                    <button class="type-filter" data-type="trade" onclick="setTypeFilter('trade')">💹 Trades</button>
+                    <button class="type-filter" data-type="message" onclick="setTypeFilter('message')">💬 Messages</button>
+                    <button class="type-filter" data-type="tweet" onclick="setTypeFilter('tweet')">🐦 Tweets</button>
+                    <button class="type-filter" data-type="decision" onclick="setTypeFilter('decision')">🧠 Decisions</button>
+                    <button class="type-filter" data-type="heartbeat" onclick="setTypeFilter('heartbeat')">💓 Heartbeats</button>
+                </div>
+                <div class="filter-stats" id="filterStats"></div>
+            </div>
             <div id="feed" class="timeline" data-view="timeline">
                 <div class="skeleton-activity">
                     <div class="skeleton-header">

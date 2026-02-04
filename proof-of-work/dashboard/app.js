@@ -2127,3 +2127,155 @@ setInterval(() => {
         loadActivities();
     }
 }, 30000);
+
+// ============================================
+// ACTIVITY SEARCH & FILTER
+// ============================================
+let currentTypeFilter = 'all';
+let currentSearchQuery = '';
+
+function setTypeFilter(type) {
+    currentTypeFilter = type;
+    
+    // Update active state on buttons
+    document.querySelectorAll('.type-filter').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.type === type);
+    });
+    
+    applyFilters();
+}
+
+function clearSearch() {
+    const input = document.getElementById('activitySearch');
+    if (input) {
+        input.value = '';
+        currentSearchQuery = '';
+    }
+    applyFilters();
+}
+
+function applyFilters() {
+    const input = document.getElementById('activitySearch');
+    const clearBtn = document.getElementById('searchClear');
+    currentSearchQuery = input ? input.value.toLowerCase().trim() : '';
+    
+    // Show/hide clear button
+    if (clearBtn) {
+        clearBtn.classList.toggle('visible', currentSearchQuery.length > 0);
+    }
+    
+    // Re-render with filters
+    if (window.cachedActivities) {
+        renderFilteredActivities(window.cachedActivities);
+    }
+}
+
+function renderFilteredActivities(activities) {
+    let filtered = activities;
+    
+    // Apply type filter
+    if (currentTypeFilter !== 'all') {
+        filtered = filtered.filter(a => a.type === currentTypeFilter);
+    }
+    
+    // Apply search filter
+    if (currentSearchQuery) {
+        filtered = filtered.filter(a => {
+            const desc = (a.description || '').toLowerCase();
+            const type = (a.type || '').toLowerCase();
+            const hash = (a.hash || '').toLowerCase();
+            const metadata = JSON.stringify(a.metadata || {}).toLowerCase();
+            return desc.includes(currentSearchQuery) || 
+                   type.includes(currentSearchQuery) ||
+                   hash.includes(currentSearchQuery) ||
+                   metadata.includes(currentSearchQuery);
+        });
+    }
+    
+    // Update filter stats
+    const statsEl = document.getElementById('filterStats');
+    if (statsEl) {
+        const isFiltered = currentTypeFilter !== 'all' || currentSearchQuery;
+        if (isFiltered) {
+            statsEl.innerHTML = `Showing <span class="count">${filtered.length}</span> of ${activities.length} activities`;
+            statsEl.classList.add('visible');
+        } else {
+            statsEl.classList.remove('visible');
+        }
+    }
+    
+    // Render the filtered activities
+    const feed = document.getElementById('feed');
+    if (!filtered.length) {
+        const hasFilters = currentTypeFilter !== 'all' || currentSearchQuery;
+        feed.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">${hasFilters ? '🔍' : '🤖'}</div>
+                <h4>${hasFilters ? 'No Matching Activities' : 'Agent Warming Up'}</h4>
+                <p>${hasFilters 
+                    ? `No activities match your current filters. Try adjusting your search or type filter.`
+                    : 'Activities will appear here as the agent works — commits, builds, trades, and more.'
+                }</p>
+                ${hasFilters ? `
+                <button class="reset-filters-btn" onclick="resetFilters()">
+                    ↺ Reset Filters
+                </button>
+                ` : ''}
+            </div>
+        `;
+        return;
+    }
+    
+    const sorted = [...filtered].reverse();
+    
+    feed.innerHTML = sorted.map((a, i) => {
+        const hash = a.hash || a.proof?.hash;
+        const hashDisplay = hash ? `SHA256: ${hash.slice(0, 12)}...${hash.slice(-6)}` : '';
+        
+        return `
+        <div class="activity-item ${a.type}" style="animation-delay: ${Math.min(i, 10) * 0.04}s">
+            <div class="activity-header">
+                <div class="activity-badges">
+                    <span class="activity-type">${a.type}</span>
+                    ${getProofBadge(a)}
+                </div>
+                <div class="activity-time">${formatTime(a.timestamp)}</div>
+            </div>
+            <div class="activity-desc">${escapeHtml(a.description)}</div>
+            ${hashDisplay ? `<div class="activity-hash">${hashDisplay}</div>` : ''}
+        </div>
+    `}).join('');
+}
+
+function resetFilters() {
+    currentTypeFilter = 'all';
+    currentSearchQuery = '';
+    
+    // Reset UI
+    document.querySelectorAll('.type-filter').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.type === 'all');
+    });
+    
+    const input = document.getElementById('activitySearch');
+    if (input) input.value = '';
+    
+    const clearBtn = document.getElementById('searchClear');
+    if (clearBtn) clearBtn.classList.remove('visible');
+    
+    applyFilters();
+}
+
+// Override renderActivities to use filtered rendering when filters are active
+const originalRenderActivities = renderActivities;
+renderActivities = function(activities, highlightNew = false) {
+    // Cache activities for filtering
+    window.cachedActivities = activities;
+    
+    // If filters are active, use filtered rendering
+    if (currentTypeFilter !== 'all' || currentSearchQuery) {
+        renderFilteredActivities(activities);
+    } else {
+        // Use original rendering
+        originalRenderActivities(activities, highlightNew);
+    }
+};
