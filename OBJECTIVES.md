@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 22:32 PST
-**Cycle:** 182
+**Last Updated:** 2026-02-03 22:42 PST
+**Cycle:** 183
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -102,11 +102,40 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Activity attachment support (link files/images) ✅ Cycle 180
 - [x] Dashboard tour/onboarding for new users ✅ Cycle 181
 - [x] Activity importance scoring (auto-prioritize) ✅ Cycle 182
-- [ ] Voice input for activity logging (web speech API)
+- [x] Voice input for activity logging (web speech API) ✅ Cycle 183
 
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 183 (Voice Input for Activity Logging)
+- Implemented Web Speech API integration for voice-based activity logging
+- **New Features**:
+  - Real-time speech-to-text transcription
+  - Continuous recognition for longer descriptions
+  - Voice input modal with recording indicator
+  - 'V' keyboard shortcut to toggle modal
+- **API Changes**:
+  - `POST /api/activities` - Create new activities via API
+  - Validates type (built-in or custom types only)
+  - Broadcasts new activities via WebSocket and webhooks
+  - Activities created unsigned, signed in next cycle
+- **Dashboard UI**:
+  - 🎤 Voice button in filter section
+  - Recording pulse animation when listening
+  - Transcript preview auto-fills description
+  - Activity type dropdown selector
+  - Tips for usage and keyboard shortcuts
+- **Keyboard Shortcuts**:
+  - `V` - Open/close voice modal
+  - `Space` - Toggle recording (when modal open)
+  - `Enter` - Submit activity
+  - `Escape` - Close modal
+- **Theme Support**: All 6 themes with unique styling
+- **Mobile Responsive**: Full-width modal on small screens
+- **OpenAPI Updated**: Added POST /api/activities endpoint
+- **Stats**: 479 activities, all signed on-chain
+- Commit: 5a544a1
 
 ### Cycle 182 (Activity Importance Scoring)
 - Implemented auto-prioritization system for activities
@@ -239,47 +268,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - **OpenAPI Updated**: Added Custom Types tag, ActivityType and CustomActivityType schemas
 - ~200 lines server.ts, ~280 lines CSS, ~320 lines JS
 - 466 activities, all signed on-chain
-
-### Cycle 178 (Activity Comparison Mode)
-- Implemented ability to select any 2 activities and compare them side-by-side
-- **New UI Components**:
-  - Compare Mode toggle button in filter section
-  - Floating selection panel showing 2 slots for selected activities
-  - Side-by-side comparison modal with analysis stats
-- **Features**:
-  - 'C' keyboard shortcut to toggle compare mode
-  - Click on activities to select (up to 2)
-  - Floating panel with activity preview in each slot
-  - Remove individual selections or clear all
-  - Compare button opens detailed comparison modal
-- **Comparison Modal**:
-  - Side-by-side layout with activity details
-  - Visual divider with "VS" indicator
-  - Analysis section with comparison stats:
-    - Time Gap (hours/days apart)
-    - Type Match (same or different)
-    - On-Chain status (both/one/neither verified)
-    - Detail Level (which is more detailed)
-    - Wallet comparison (same or different)
-    - Shared Tags (if any overlap)
-- **CSS Changes (~400 lines)**:
-  - `.compare-mode-toggle` button styling
-  - `.compare-selection-panel` floating panel with slots
-  - `.compare-modal` full comparison overlay
-  - `.compare-side-by-side` grid layout
-  - Mobile responsive (stacks vertically)
-  - Light/dark/cyberpunk theme support
-- **JS Changes (~400 lines)**:
-  - `initComparisonMode()` - sets up panel and listeners
-  - `toggleCompareMode()` - enable/disable selection mode
-  - `handleCompareClick()` - click handler for activity cards
-  - `updateCompareSelectionUI()` - refresh floating panel
-  - `openComparisonModal()` / `closeComparisonModal()`
-  - `renderCompareActivityCard()` - card renderer
-  - `calculateComparisonStats()` - stat analysis
-  - Added to command palette with 'C' shortcut
-  - Updated both keyboard shortcuts modals
-- 456 activities, all signed on-chain
 
 ---
 
