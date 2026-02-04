@@ -2269,6 +2269,7 @@ function connectWebSocket() {
                     updateStats(msg.data.activities);
                     renderCharts(msg.data.activities);
                     renderHeatmap(msg.data.activities);
+                    renderInsights(msg.data.activities);
                     populateTagFilters(msg.data.activities);
                     
                     // Flash notification + sound for new activities

@@ -69,7 +69,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
 
-### Cycle 150 (Accessibility Improvements)
+### Cycle 150 (Accessibility Improvements - Enhanced)
 - Comprehensive accessibility overhaul for WCAG compliance
 - **Skip link** for keyboard users to bypass navigation
 - **ARIA labels** on all interactive elements (buttons, toggles, tabs)
@@ -83,10 +83,17 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - **Touch target sizes** minimum 44x44px on mobile (pointer: coarse)
 - **Modal accessibility** (role=dialog, aria-modal, aria-labelledby)
 - **Chart/stat card focus** states for screen reader navigation
-- Additional: error state styling, filter stats live region animation
-- ~230 lines CSS, ~80 lines JS added
+- Additional enhancements in this cycle:
+  - Activity items now keyboard navigable with tabindex="0" and role="article"
+  - j/k vim-style navigation between activity items
+  - Day group headers have proper ARIA (role=button, aria-expanded, aria-controls)
+  - Screen reader announces new activities arriving via WebSocket
+  - Screen reader announces filter results count
+  - announceToScreenReader() for day group collapse/expand
+  - Tag/wallet filter buttons have focus states
+- ~280 lines CSS, ~150 lines JS for comprehensive a11y
 - Files: index.html, dashboard.css, app.js
-- 370 activities, all signed on-chain
+- 372 activities, all signed on-chain
 
 ### Cycle 149 (Webhook Notifications API)
 - Added webhook notifications API for external integrations
