@@ -106,6 +106,12 @@
                 <button class="sound-toggle" id="relationshipsBtn" onclick="openRelationshipsModal()" title="View activity relationships (L)" aria-label="View activity relationships">
                     🔗 Links
                 </button>
+                <div class="suggestions-wrapper" style="position: relative;">
+                    <button class="sound-toggle" id="suggestionsBtn" onclick="toggleSuggestionsDropdown()" title="Smart activity suggestions based on your patterns (G)" aria-expanded="false" aria-haspopup="listbox" aria-pressed="true" aria-label="Smart Suggestions">
+                        💡 Suggest
+                    </button>
+                    <div id="suggestionsDropdown" class="suggestions-dropdown" role="listbox" aria-label="Activity suggestions" style="display: none;"></div>
+                </div>
                 <div class="feed-subscribe-dropdown" style="position: relative;">
                     <button class="sound-toggle" id="feedSubscribeBtn" onclick="toggleFeedDropdown()" title="Subscribe to activity feed" aria-expanded="false" aria-haspopup="listbox" aria-label="Subscribe to feed">
                         📡 Subscribe

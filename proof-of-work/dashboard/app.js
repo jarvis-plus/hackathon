@@ -7980,6 +7980,7 @@ const KEYBOARD_SHORTCUTS = {
     'f': { action: 'toggleFuzzySearch', description: 'Toggle fuzzy search (typo tolerance)' },
     's': { action: 'cycleSentiment', description: 'Cycle sentiment filter (all → positive → neutral → negative)' },
     'a': { action: 'toggleAISummaries', description: 'Toggle AI-generated summaries' },
+    'g': { action: 'toggleSuggestions', description: 'Toggle smart suggestions dropdown' },
     '?': { action: 'showShortcuts', description: 'Show keyboard shortcuts' },
 };
 
@@ -8008,6 +8009,7 @@ function createShortcutsModal() {
                     <div class="shortcut-row"><kbd>f</kbd> Toggle fuzzy search</div>
                     <div class="shortcut-row"><kbd>s</kbd> Cycle sentiment filter</div>
                     <div class="shortcut-row"><kbd>a</kbd> Toggle AI summaries</div>
+                    <div class="shortcut-row"><kbd>g</kbd> Smart suggestions</div>
                 </div>
                 <div class="shortcut-section">
                     <h4>Tabs</h4>
@@ -8139,6 +8141,8 @@ function handleShortcutAction(action) {
         cycleSentimentFilter();
     } else if (action === 'toggleAISummaries') {
         toggleAISummaries();
+    } else if (action === 'toggleSuggestions') {
+        toggleSuggestionsDropdown();
     }
 }
 
@@ -8256,6 +8260,7 @@ const PALETTE_COMMANDS = [
     { id: 'search', title: 'Search Activities', description: 'Focus the search input', icon: '🔍', shortcut: '/', action: () => focusSearchInput(), group: 'Search & Filter' },
     { id: 'fuzzy-search', title: 'Toggle Fuzzy Search', description: 'Enable/disable typo-tolerant search', icon: '🔎', shortcut: 'F', action: () => { toggleFuzzySearch(); hideCommandPalette(); }, group: 'Search & Filter' },
     { id: 'ai-summaries', title: 'Toggle AI Summaries', description: 'Show/hide AI-generated activity summaries', icon: '🤖', shortcut: 'A', action: () => { toggleAISummaries(); hideCommandPalette(); }, group: 'Search & Filter' },
+    { id: 'smart-suggestions', title: 'Smart Suggestions', description: 'Get contextual activity suggestions based on your patterns', icon: '💡', shortcut: 'G', action: () => { toggleSuggestionsDropdown(); hideCommandPalette(); }, group: 'Search & Filter' },
     { id: 'reset-filters', title: 'Reset All Filters', description: 'Clear all active filters', icon: '🔄', shortcut: 'R', action: () => resetFilters(), group: 'Search & Filter' },
     { id: 'filter-bookmarks', title: 'Toggle Bookmarks Filter', description: 'Show only bookmarked items', icon: '⭐', shortcut: 'B', action: () => toggleBookmarkFilter(), group: 'Search & Filter' },
     { id: 'filter-build', title: 'Filter: Build', description: 'Show only build activities', icon: '🔨', action: () => { setTypeFilter('build'); hideCommandPalette(); }, group: 'Search & Filter' },
@@ -17070,3 +17075,336 @@ function hideWordCloudTooltip() {
 // Expose word cloud functions globally
 window.renderWordCloud = renderWordCloud;
 window.filterByWord = filterByWord;
+
+// ============================================================================
+// SMART ACTIVITY SUGGESTIONS
+// Cycle 210: Contextual suggestions based on patterns, time, and sequences
+// ============================================================================
+
+let smartSuggestionsEnabled = localStorage.getItem('smartSuggestionsEnabled') !== 'false';
+let suggestionsCache = null;
+let lastSuggestionsUpdate = 0;
+const SUGGESTIONS_CACHE_TTL = 60000; // 1 minute
+
+/**
+ * Activity type metadata for suggestions
+ */
+const activityTypeMeta = {
+    commit: { emoji: '💻', verb: 'commit', action: 'Push a code commit' },
+    build: { emoji: '🔨', verb: 'build', action: 'Run a build cycle' },
+    trade: { emoji: '💰', verb: 'trade', action: 'Execute a trade' },
+    message: { emoji: '💬', verb: 'send message', action: 'Send a message' },
+    tweet: { emoji: '🐦', verb: 'tweet', action: 'Post a tweet' },
+    research: { emoji: '🔍', verb: 'research', action: 'Do research' },
+    email: { emoji: '📧', verb: 'send email', action: 'Send an email' },
+    calendar: { emoji: '📅', verb: 'calendar', action: 'Check calendar' },
+    browser: { emoji: '🌐', verb: 'browse', action: 'Browse the web' }
+};
+
+/**
+ * Analyze activity patterns from historical data
+ */
+function analyzeActivityPatterns(activities) {
+    if (!activities || activities.length === 0) return null;
+    
+    const now = new Date();
+    const currentHour = now.getHours();
+    const today = now.toDateString();
+    
+    // Initialize analysis structures
+    const hourlyDistribution = {}; // type -> hour -> count
+    const sequences = {}; // type -> nextType -> count
+    const dailyTypes = new Set(); // types done today
+    const typeFrequency = {}; // type -> total count
+    const lastByType = {}; // type -> most recent timestamp
+    
+    // Sort by timestamp (newest first)
+    const sorted = [...activities].sort((a, b) => 
+        new Date(b.timestamp) - new Date(a.timestamp)
+    );
+    
+    // Analyze each activity
+    sorted.forEach((activity, index) => {
+        const type = activity.type || 'other';
+        const ts = new Date(activity.timestamp);
+        const hour = ts.getHours();
+        
+        // Track today's activities
+        if (ts.toDateString() === today) {
+            dailyTypes.add(type);
+        }
+        
+        // Hourly distribution
+        if (!hourlyDistribution[type]) hourlyDistribution[type] = {};
+        hourlyDistribution[type][hour] = (hourlyDistribution[type][hour] || 0) + 1;
+        
+        // Type frequency
+        typeFrequency[type] = (typeFrequency[type] || 0) + 1;
+        
+        // Track most recent by type
+        if (!lastByType[type] || ts > lastByType[type]) {
+            lastByType[type] = ts;
+        }
+        
+        // Sequence analysis (what follows this type)
+        if (index > 0) {
+            const nextActivity = sorted[index - 1];
+            const nextType = nextActivity.type || 'other';
+            if (!sequences[type]) sequences[type] = {};
+            sequences[type][nextType] = (sequences[type][nextType] || 0) + 1;
+        }
+    });
+    
+    return {
+        hourlyDistribution,
+        sequences,
+        dailyTypes,
+        typeFrequency,
+        lastByType,
+        totalActivities: activities.length
+    };
+}
+
+/**
+ * Score suggestion relevance based on multiple factors
+ */
+function scoreSuggestion(type, patterns, currentHour) {
+    let score = 0;
+    const reasons = [];
+    
+    // Factor 1: Time-of-day match (0-40 points)
+    const hourDist = patterns.hourlyDistribution[type];
+    if (hourDist) {
+        const hourlyTotal = Object.values(hourDist).reduce((a, b) => a + b, 0);
+        const currentHourCount = hourDist[currentHour] || 0;
+        // Check 2-hour window
+        const nearbyCount = (hourDist[(currentHour - 1 + 24) % 24] || 0) + 
+                           currentHourCount + 
+                           (hourDist[(currentHour + 1) % 24] || 0);
+        const timeScore = Math.round((nearbyCount / hourlyTotal) * 40);
+        score += timeScore;
+        if (timeScore >= 15) {
+            reasons.push(`Common at this time (${Math.round((nearbyCount/hourlyTotal)*100)}% of ${type}s)`);
+        }
+    }
+    
+    // Factor 2: Not done today (0-25 points)
+    if (!patterns.dailyTypes.has(type)) {
+        const freq = patterns.typeFrequency[type] || 0;
+        const avgDaily = freq / 7; // rough avg assuming ~week of data
+        if (avgDaily >= 1) {
+            score += 25;
+            reasons.push(`Not done today (usually ${Math.round(avgDaily)}/day)`);
+        } else if (avgDaily >= 0.3) {
+            score += 15;
+            reasons.push('Not done today');
+        }
+    }
+    
+    // Factor 3: Sequence likelihood (0-20 points)
+    const recentTypes = [...patterns.dailyTypes];
+    if (recentTypes.length > 0) {
+        let seqScore = 0;
+        recentTypes.forEach(recentType => {
+            const seqs = patterns.sequences[recentType];
+            if (seqs && seqs[type]) {
+                const seqTotal = Object.values(seqs).reduce((a, b) => a + b, 0);
+                const likelihood = seqs[type] / seqTotal;
+                if (likelihood > 0.2) {
+                    seqScore = Math.max(seqScore, Math.round(likelihood * 20));
+                }
+            }
+        });
+        if (seqScore >= 10) {
+            score += seqScore;
+            reasons.push(`Often follows recent activities`);
+        }
+    }
+    
+    // Factor 4: Time since last (0-15 points)
+    const lastTime = patterns.lastByType[type];
+    if (lastTime) {
+        const hoursSince = (Date.now() - lastTime.getTime()) / (1000 * 60 * 60);
+        const avgGap = (7 * 24) / (patterns.typeFrequency[type] || 1); // avg hours between
+        if (hoursSince > avgGap * 1.5) {
+            score += 15;
+            reasons.push(`${Math.round(hoursSince)}h since last ${type}`);
+        } else if (hoursSince > avgGap) {
+            score += 10;
+        }
+    }
+    
+    return { score, reasons };
+}
+
+/**
+ * Generate smart suggestions based on patterns
+ */
+function generateSmartSuggestions(activities) {
+    // Use cache if fresh
+    const now = Date.now();
+    if (suggestionsCache && (now - lastSuggestionsUpdate) < SUGGESTIONS_CACHE_TTL) {
+        return suggestionsCache;
+    }
+    
+    const patterns = analyzeActivityPatterns(activities);
+    if (!patterns) return [];
+    
+    const currentHour = new Date().getHours();
+    const suggestions = [];
+    
+    // Score each activity type
+    const types = Object.keys(patterns.typeFrequency);
+    types.forEach(type => {
+        if (patterns.typeFrequency[type] < 3) return; // Skip rare types
+        
+        const { score, reasons } = scoreSuggestion(type, patterns, currentHour);
+        const meta = activityTypeMeta[type] || { emoji: '📝', verb: type, action: `Log a ${type} activity` };
+        
+        if (score >= 15 && reasons.length > 0) {
+            suggestions.push({
+                type,
+                score,
+                reasons,
+                emoji: meta.emoji,
+                action: meta.action,
+                verb: meta.verb
+            });
+        }
+    });
+    
+    // Sort by score and take top 5
+    suggestions.sort((a, b) => b.score - a.score);
+    const topSuggestions = suggestions.slice(0, 5);
+    
+    // Cache results
+    suggestionsCache = topSuggestions;
+    lastSuggestionsUpdate = now;
+    
+    return topSuggestions;
+}
+
+/**
+ * Render suggestions dropdown content
+ */
+function renderSuggestionsDropdown(suggestions) {
+    const dropdown = document.getElementById('suggestionsDropdown');
+    if (!dropdown) return;
+    
+    if (suggestions.length === 0) {
+        dropdown.innerHTML = `
+            <div class="suggestion-empty">
+                <span class="suggestion-empty-icon">🎯</span>
+                <span>Keep working! Suggestions appear based on your patterns.</span>
+            </div>
+        `;
+        return;
+    }
+    
+    dropdown.innerHTML = suggestions.map((s, i) => `
+        <button class="suggestion-item" onclick="applySuggestion('${s.type}')" data-type="${s.type}">
+            <span class="suggestion-rank">${i + 1}</span>
+            <span class="suggestion-emoji">${s.emoji}</span>
+            <div class="suggestion-content">
+                <span class="suggestion-action">${s.action}</span>
+                <span class="suggestion-reasons">${s.reasons.slice(0, 2).join(' • ')}</span>
+            </div>
+            <span class="suggestion-score" title="Relevance score">${s.score}</span>
+        </button>
+    `).join('');
+}
+
+/**
+ * Apply a suggestion (pre-fill activity type)
+ */
+function applySuggestion(type) {
+    // Close dropdown
+    toggleSuggestionsDropdown(false);
+    
+    // If there's a voice input or activity form, pre-fill it
+    const typeSelect = document.querySelector('#activityTypeSelect, #voiceActivityType, [name="activityType"]');
+    if (typeSelect) {
+        typeSelect.value = type;
+        typeSelect.dispatchEvent(new Event('change'));
+    }
+    
+    // Toast feedback
+    const meta = activityTypeMeta[type] || { emoji: '📝', action: `Log ${type}` };
+    showToast(`${meta.emoji} Suggested: ${meta.action}`);
+    
+    // Focus input if exists
+    const input = document.querySelector('#activityDescription, #voiceTranscript, [name="description"]');
+    if (input) {
+        input.focus();
+    }
+}
+
+/**
+ * Toggle suggestions dropdown visibility
+ */
+function toggleSuggestionsDropdown(forceState) {
+    const dropdown = document.getElementById('suggestionsDropdown');
+    const btn = document.getElementById('suggestionsBtn');
+    if (!dropdown || !btn) return;
+    
+    const shouldShow = typeof forceState === 'boolean' ? forceState : dropdown.style.display === 'none';
+    
+    if (shouldShow) {
+        // Generate fresh suggestions
+        const suggestions = generateSmartSuggestions(window.allActivities || []);
+        renderSuggestionsDropdown(suggestions);
+        dropdown.style.display = 'block';
+        btn.setAttribute('aria-expanded', 'true');
+    } else {
+        dropdown.style.display = 'none';
+        btn.setAttribute('aria-expanded', 'false');
+    }
+}
+
+/**
+ * Toggle smart suggestions feature on/off
+ */
+function toggleSmartSuggestions() {
+    smartSuggestionsEnabled = !smartSuggestionsEnabled;
+    localStorage.setItem('smartSuggestionsEnabled', smartSuggestionsEnabled);
+    
+    const btn = document.getElementById('suggestionsBtn');
+    if (btn) {
+        btn.classList.toggle('muted', !smartSuggestionsEnabled);
+        btn.setAttribute('aria-pressed', smartSuggestionsEnabled);
+    }
+    
+    // Clear cache
+    suggestionsCache = null;
+    
+    showToast(smartSuggestionsEnabled ? '💡 Smart Suggestions enabled' : '💡 Smart Suggestions disabled');
+    announceToScreenReader(`Smart Suggestions ${smartSuggestionsEnabled ? 'enabled' : 'disabled'}`);
+}
+
+/**
+ * Initialize smart suggestions on page load
+ */
+function initSmartSuggestions() {
+    const btn = document.getElementById('suggestionsBtn');
+    if (btn) {
+        btn.classList.toggle('muted', !smartSuggestionsEnabled);
+        btn.setAttribute('aria-pressed', smartSuggestionsEnabled);
+    }
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        const dropdown = document.getElementById('suggestionsDropdown');
+        const btn = document.getElementById('suggestionsBtn');
+        if (dropdown && btn && !dropdown.contains(e.target) && !btn.contains(e.target)) {
+            toggleSuggestionsDropdown(false);
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', initSmartSuggestions);
+
+// Expose functions globally
+window.generateSmartSuggestions = generateSmartSuggestions;
+window.toggleSuggestionsDropdown = toggleSuggestionsDropdown;
+window.toggleSmartSuggestions = toggleSmartSuggestions;
+window.applySuggestion = applySuggestion;
