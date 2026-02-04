@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-04 06:07 PST
-**Cycle:** 198
+**Last Updated:** 2026-02-04 06:13 PST
+**Cycle:** 199
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -119,10 +119,35 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Dashboard widgets (customizable stat cards) ✅ Cycle 196
 - [x] Activity reminder system (set reminders for follow-ups) ✅ Cycle 197
 - [x] Activity relationships (link activities together) ✅ Cycle 198
+- [x] Relationship Network Graph (force-directed D3 visualization) ✅ Cycle 199
 
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 199 (Relationship Network Graph Visualization)
+- Implemented interactive force-directed graph using D3.js
+- **Graph Features**:
+  - Drag nodes to rearrange
+  - Scroll/pinch to zoom
+  - Reset button to restore default view
+  - Fullscreen mode (F key / button, Escape to exit)
+  - Click node to jump to that activity
+  - Hover for tooltip with activity details
+- **Visual Design**:
+  - Color-coded nodes by activity type (commit=green, build=indigo, etc.)
+  - Color-coded edges by relationship type (follows-up=green, fixes=amber, etc.)
+  - Arrow markers showing direction
+  - Legend showing all relationship types
+- **Stats Display**:
+  - Node count
+  - Connection count
+  - Cluster count (using union-find algorithm)
+- **Command Palette**: "View Relationship Network" with G shortcut
+- **Theme Support**: All 7 themes (Auto, Dark, Light, Ocean, Forest, Sunset, Cyberpunk)
+- **Mobile Responsive**: Adjusted height and touch support
+- **Stats**: 533 activities, all signed on-chain
+- Commit: 07c4024
 
 ### Cycle 198 (Activity Relationships)
 - Implemented Activity Relationships feature - link activities with typed connections
@@ -226,25 +251,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - **Mobile Responsive**: Larger touch targets, hidden shortcuts on small screens
 - **Stats**: 522 activities, all signed on-chain
 - Commit: e579df4
-
-### Cycle 194 (Batch Restore from Trash)
-- Implemented bulk restore for restoring multiple activities from trash at once
-- **New API Endpoint**:
-  - `POST /api/activities/bulk-restore` - Accept array of hashes, restore all
-  - Returns detailed results: restored, notFound, notDeleted counts
-  - Validation: max 100 hashes, valid hash format required
-- **Dashboard UI**:
-  - Selection bar in trash modal with checkboxes
-  - Select All toggle with indeterminate state support
-  - "Restore Selected (N)" button with count indicator
-  - Visual highlighting for selected items (.selected class)
-  - Selection resets on modal open/reload
-- **Command Palette**: Added "Restore Selected from Trash" command
-- **WebSocket/Webhook Events**: activities_bulk_restored event with hash list
-- **Theme Support**: All 7 themes (Auto, Dark, Light, Ocean, Forest, Sunset, Cyberpunk)
-- **OpenAPI Updated**: BulkRestoreResult schema, new endpoint documented
-- **Stats**: 519 activities, all signed on-chain
-- Commit: 45b6698
 
 ---
 
