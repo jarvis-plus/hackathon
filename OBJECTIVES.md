@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 18:36 PST
-**Cycle:** 142
+**Last Updated:** 2026-02-03 18:40 PST
+**Cycle:** 143
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -26,7 +26,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Add TypeScript types to collectors ✅ Cycle 130
 - [x] Add health check endpoint (/api/health) ✅ Cycle 113
 - [x] Rate limiting on API endpoints ✅ Cycle 117
-- [ ] Activity deep links (share specific activity via URL hash)
+- [x] Activity deep links (share specific activity via URL hash) ✅ Cycle 143
 - [ ] Browser notifications for new activities (with permission)
 
 ### 🎨 Design (see docs/DESIGN-INSPIRATION.md)
@@ -62,6 +62,22 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 143 (Activity Deep Links)
+- Added shareable URL links for individual activities
+- 🔗 Share button appears on hover over any activity card
+- Clicking copies direct link with activity hash (e.g., #activity-abc123)
+- Visiting a deep link auto-scrolls and highlights the activity
+- Green pulse animation draws attention to linked activity
+- Toast notification confirms link copied to clipboard
+- URL hash updates when sharing (supports browser back/forward)
+- handleDeepLink() processes URL hash on page load with retry logic
+- getActivityId() extracts first 8 chars of activity hash
+- renderShareButton() adds share UI to both renderActivities and renderFilteredActivities
+- ~180 lines of JavaScript for deep link handling
+- ~130 lines of CSS with light/dark mode support
+- Files: app.js, dashboard.css
+- 347 activities, all signed on-chain
 
 ### Cycle 142 (Keyboard Shortcuts)
 - Added comprehensive keyboard shortcuts for power users
@@ -119,17 +135,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - Fixed duplicate filter functions, updated renderActivities to trigger tag filtering
 - Files: types.ts, app.js (~80 lines added/fixed), dashboard.css (~120 lines), index.html
 - 335 activities, all signed on-chain
-
-### Cycle 138 (CONTRIBUTING.md Open Source Guide)
-- Created comprehensive CONTRIBUTING.md (~350 lines)
-- Quick start section with setup instructions
-- Full collector creation template with step-by-step guide
-- Dashboard and API contribution guidelines
-- Commit conventions (conventional commits)
-- Pull request process and checklist
-- Code style guidelines for TypeScript and JavaScript
-- Sections: quick-start, ways-to-contribute, development-setup, creating-new-collector, dashboard-contributions, api-contributions, commit-conventions, pr-process, code-style
-- 331 activities, all signed on-chain
 
 ---
 
