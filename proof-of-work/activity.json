@@ -2896,5 +2896,12 @@
     "description": "chore: update activity data and webhook subscriptions",
     "hash": "cf76496a64c5a8130b40324cb1398d0275e0ce37bc43932f7ad9a8b2338f50b9",
     "signature": "5Vk6rUEC3iyv46NXCtkeBcNwggKbnP6QsGxwDV2raVwiTD8YwNkMx3K37M5ytT1qcPN1iYcut8mTtp3Fa7hw2G2q"
+  },
+  {
+    "timestamp": "2026-02-04T02:59:07.598Z",
+    "type": "commit",
+    "description": "chore: sign latest activity on-chain",
+    "hash": "149c791d150ae9e1a449f5eebe3ae0ffe1a221957f35e8fc729675d2108584e5",
+    "signature": "3ZaQR3egb8gM3yVnzHyGsZidLPQ1wnAbaaGmWb5daadTNEeJYfPCNV3Js7WcmTk2cmrmCYKqWzpoZXnRgqUY4d1r"
   }
 ]
