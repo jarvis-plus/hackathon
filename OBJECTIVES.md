@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 20:27 PST
-**Cycle:** 160
+**Last Updated:** 2026-02-03 20:32 PST
+**Cycle:** 161
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -78,10 +78,48 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Activity rate limiting per IP ✅ Cycle 158
 - [x] Backup/restore for activity data ✅ Cycle 159
 - [x] Docker deployment ✅ Cycle 160
+- [x] Prometheus metrics endpoint ✅ Cycle 161
+
+### 🆕 Future Improvements (New Items)
+- [ ] OpenAPI/Swagger documentation (auto-generated API docs)
+- [ ] Activity comments/notes (add notes to activities)
+- [ ] Activity pinning (pin important activities to top)
+- [ ] Email digest (daily/weekly summary emails)
+- [ ] Slack/Discord bot integration
+- [ ] Activity diff view (show changes between activities)
+- [ ] Performance dashboard (response times, memory usage)
+- [ ] Multi-theme support (more color schemes)
+- [ ] Activity timeline slider (zoom in/out on time ranges)
+- [ ] Social sharing cards (OG images for activities)
 
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 161 (Prometheus Metrics Endpoint)
+- Implemented Prometheus-compatible metrics endpoint for monitoring integration
+- **Endpoints**: `/metrics` and `/api/metrics` (both work)
+- **15+ Metrics Exposed**:
+  - `jarvis_pow_activities_total` - Total activities count
+  - `jarvis_pow_activities_onchain` - On-chain verified count
+  - `jarvis_pow_activities_unsigned` - Pending signatures
+  - `jarvis_pow_onchain_ratio` - Verification rate (0-1)
+  - `jarvis_pow_activities_by_type{type="..."}` - Breakdown by activity type
+  - `jarvis_pow_activities_last_hour` - Hourly activity count
+  - `jarvis_pow_activities_last_day` - Daily activity count
+  - `jarvis_pow_active_days` - Total unique days with activity
+  - `jarvis_pow_last_activity_timestamp` - Unix timestamp of latest activity
+  - `jarvis_pow_first_activity_timestamp` - Unix timestamp of first activity
+  - `jarvis_pow_websocket_clients` - Connected WebSocket clients
+  - `jarvis_pow_webhooks_total` / `jarvis_pow_webhooks_active` - Webhook counts
+  - `jarvis_pow_server_uptime_seconds` - Server uptime
+  - `jarvis_pow_info{version, wallet, hackathon}` - Server metadata
+- **Format**: Standard Prometheus text format (text/plain; version=0.0.4)
+- **Headers**: No-cache to ensure fresh metrics on each scrape
+- **Documentation**: Updated server.ts header comments
+- ~120 lines added to server.ts
+- Compatible with Prometheus, Grafana, and other monitoring tools
+- 405 activities, all signed on-chain
 
 ### Cycle 160 (Docker Deployment)
 - Implemented Docker deployment for easy containerized setup
@@ -94,8 +132,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - **Volume Mounts**: Persistent storage for activity.json and /data directory
 - **Environment Variables**: PORT, SOLANA_RPC_URL, API_KEY, rate limit configs
 - **README Updated**: Added Docker deployment section with examples
-- **Tested**: Built image locally, started container, verified /api/health responds
-- **Container Labels**: OCI metadata for image title, description, source, license
 - ~150 lines in Dockerfile, docker-compose.yml combined
 - 402 activities, all signed on-chain
 
@@ -108,10 +144,8 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - **Dry Run**: Add `?dry_run=true` to preview changes without writing
 - **Webhook Backup**: Add `?webhooks=true` to include webhooks (secrets excluded)
 - **Validation**: Checks version, format, activity structure (timestamp, type, description)
-- **Download Headers**: Content-Disposition for automatic file download
 - Added `validateBackup()` helper function (~60 lines)
 - ~180 lines added to server.ts
-- Service restarted and tested all endpoints
 - 400 activities, all signed on-chain
 
 ### Cycle 158 (Per-IP Rate Limiting for Webhooks)
@@ -120,15 +154,8 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - **Environment Variables**: `WEBHOOK_WRITE_LIMIT`, `WEBHOOK_TEST_LIMIT` to customize
 - **Rate Limit Endpoint**: `/api/ratelimit` shows current usage across all categories
 - **Categories Tracked**: api, websocket, webhookWrite, webhookTest
-- **Response Details**: Shows used/remaining/resetIn for each category
-- Applied rate limiting to POST /api/webhooks, DELETE /api/webhooks/:id, POST /api/webhooks/:id/test
 - Added `webhookWriteRateLimitStore` and `webhookTestRateLimitStore` Maps
-- Added `getRateLimitStatus()` function for comprehensive status reporting
-- Updated `rateLimitResponse()` to accept limit and category parameters
-- Startup logging now shows all rate limit values
 - ~80 lines added to server.ts
-- Tested: 5 webhook registrations succeed, 6th gets 429
-- Service restarted with new rate limit logging
 - 397 activities, all signed on-chain
 
 ### Cycle 157 (API Authentication)
@@ -136,36 +163,10 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - **Environment Variables**: `API_KEY` to enable auth, `API_AUTH_READ` to require auth for reads
 - **Auth Methods**: `Authorization: Bearer <key>` or `X-API-Key: <key>` headers
 - **Write Protection**: POST/PATCH/DELETE always require auth when API_KEY is set
-- **Read Access**: GET requests public by default, optionally protected via API_AUTH_READ
 - **Status Endpoint**: `/api/auth/status` always public, shows auth configuration
-- **CORS Updated**: Added `X-API-Key` to allowed headers
-- **Startup Logging**: Shows auth status (enabled/disabled) on server start
-- Added `checkApiAuth()` function for validating API keys
-- Added `requiresAuth()` function to determine if request needs auth
-- Added `unauthorizedResponse()` for 401 responses with WWW-Authenticate header
+- Added `checkApiAuth()`, `requiresAuth()`, `unauthorizedResponse()` functions
 - ~100 lines added to server.ts
-- Service restarted, auth shows "disabled" (no API_KEY set)
 - 395 activities, all signed on-chain
-
-### Cycle 156 (Daily Goal Tracking)
-- Implemented daily goal tracking feature for setting activity targets
-- **Circular Progress Ring**: SVG-based ring shows progress toward daily goal
-- **Color-coded progress**: Purple < 50%, Blue 50-75%, Yellow 75-99%, Green 100%+
-- **Goal Status**: Shows "In Progress", "Halfway There", "Almost There!", "Goal Achieved!"
-- **Streak Tracking**: Current goal streak + best streak ever
-- **Remaining Counter**: Shows how many activities left to reach goal
-- **Goal Settings**: Input field + preset buttons (5, 10, 20, 50)
-- **localStorage Persistence**: Goals and history saved across sessions
-- **7-Day History Chart**: Bar chart showing goal achievement over past week
-- **Responsive Design**: Stacks vertically on mobile with centered layout
-- **Light/Dark Theme**: Full theme support with appropriate colors
-- **Celebration Animation**: Emoji bounce when goal achieved
-- Added `renderGoalTracker()` function (~200 lines JavaScript)
-- Added ~280 lines CSS for goal tracking components
-- Called from `loadActivities()`, fallback fetch, and WebSocket handler
-- Files modified: index.html, dashboard.css, app.js
-- Service restarted to pick up changes
-- 393 activities, all signed on-chain
 
 ---
 
