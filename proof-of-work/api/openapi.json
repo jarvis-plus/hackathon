@@ -60,7 +60,9 @@
   "paths": {
     "/api/activities": {
       "get": {
-        "tags": ["Activities"],
+        "tags": [
+          "Activities"
+        ],
         "summary": "List all activities",
         "description": "Returns all logged activities as a JSON array, ordered by timestamp.",
         "operationId": "getActivities",
@@ -86,7 +88,9 @@
     },
     "/api/activities/{hash}": {
       "get": {
-        "tags": ["Activities"],
+        "tags": [
+          "Activities"
+        ],
         "summary": "Get activity by hash",
         "description": "Returns a single activity by its SHA256 hash.",
         "operationId": "getActivityByHash",
@@ -128,11 +132,20 @@
     },
     "/api/activities/{hash}/notes": {
       "patch": {
-        "tags": ["Activities"],
+        "tags": [
+          "Activities"
+        ],
         "summary": "Add or update notes",
         "description": "Add or update notes on an activity. Notes are user annotations that are not part of the cryptographically signed content.",
         "operationId": "updateActivityNotes",
-        "security": [{"bearerAuth": []}, {"apiKeyHeader": []}],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyHeader": []
+          }
+        ],
         "parameters": [
           {
             "name": "hash",
@@ -151,7 +164,9 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["notes"],
+                "required": [
+                  "notes"
+                ],
                 "properties": {
                   "notes": {
                     "type": "string",
@@ -171,10 +186,21 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "hash": {"type": "string"},
-                    "notes": {"type": "string", "nullable": true},
-                    "notesUpdatedAt": {"type": "string", "format": "date-time", "nullable": true},
-                    "message": {"type": "string"}
+                    "hash": {
+                      "type": "string"
+                    },
+                    "notes": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "notesUpdatedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true
+                    },
+                    "message": {
+                      "type": "string"
+                    }
                   }
                 }
               }
@@ -203,11 +229,20 @@
         }
       },
       "delete": {
-        "tags": ["Activities"],
+        "tags": [
+          "Activities"
+        ],
         "summary": "Remove notes",
         "description": "Remove notes from an activity.",
         "operationId": "deleteActivityNotes",
-        "security": [{"bearerAuth": []}, {"apiKeyHeader": []}],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyHeader": []
+          }
+        ],
         "parameters": [
           {
             "name": "hash",
@@ -228,8 +263,12 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "hash": {"type": "string"},
-                    "message": {"type": "string"}
+                    "hash": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
                   }
                 }
               }
@@ -250,11 +289,20 @@
     },
     "/api/activities/{hash}/pin": {
       "patch": {
-        "tags": ["Activities"],
+        "tags": [
+          "Activities"
+        ],
         "summary": "Pin or unpin activity",
         "description": "Toggle or set pin status on an activity. Pinned activities appear at the top of the feed.",
         "operationId": "toggleActivityPin",
-        "security": [{"bearerAuth": []}, {"apiKeyHeader": []}],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyHeader": []
+          }
+        ],
         "parameters": [
           {
             "name": "hash",
@@ -291,10 +339,20 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "hash": {"type": "string"},
-                    "pinned": {"type": "boolean"},
-                    "pinnedAt": {"type": "string", "format": "date-time", "nullable": true},
-                    "message": {"type": "string"}
+                    "hash": {
+                      "type": "string"
+                    },
+                    "pinned": {
+                      "type": "boolean"
+                    },
+                    "pinnedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true
+                    },
+                    "message": {
+                      "type": "string"
+                    }
                   }
                 }
               }
@@ -315,7 +373,9 @@
     },
     "/api/activities/pinned": {
       "get": {
-        "tags": ["Activities"],
+        "tags": [
+          "Activities"
+        ],
         "summary": "Get pinned activities",
         "description": "Returns all pinned activities, sorted by most recently pinned first.",
         "operationId": "getPinnedActivities",
@@ -327,7 +387,9 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "count": {"type": "integer"},
+                    "count": {
+                      "type": "integer"
+                    },
                     "activities": {
                       "type": "array",
                       "items": {
@@ -344,7 +406,9 @@
     },
     "/api/activities/{hash}/attachments": {
       "get": {
-        "tags": ["Activities"],
+        "tags": [
+          "Activities"
+        ],
         "summary": "Get attachments",
         "description": "Get all attachments for an activity.",
         "operationId": "getActivityAttachments",
@@ -368,22 +432,32 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "hash": {"type": "string"},
+                    "hash": {
+                      "type": "string"
+                    },
                     "attachments": {
                       "type": "array",
-                      "items": {"$ref": "#/components/schemas/Attachment"}
+                      "items": {
+                        "$ref": "#/components/schemas/Attachment"
+                      }
                     },
-                    "count": {"type": "integer"}
+                    "count": {
+                      "type": "integer"
+                    }
                   }
                 }
               }
             }
           },
-          "404": {"description": "Activity not found"}
+          "404": {
+            "description": "Activity not found"
+          }
         }
       },
       "post": {
-        "tags": ["Activities"],
+        "tags": [
+          "Activities"
+        ],
         "summary": "Add attachment",
         "description": "Add an attachment (image, file, or link) to an activity. Maximum 10 attachments per activity.",
         "operationId": "addActivityAttachment",
@@ -405,11 +479,18 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["type", "url"],
+                "required": [
+                  "type",
+                  "url"
+                ],
                 "properties": {
                   "type": {
                     "type": "string",
-                    "enum": ["image", "file", "link"],
+                    "enum": [
+                      "image",
+                      "file",
+                      "link"
+                    ],
                     "description": "Type of attachment"
                   },
                   "url": {
@@ -444,23 +525,37 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "hash": {"type": "string"},
-                    "attachment": {"$ref": "#/components/schemas/Attachment"},
-                    "totalAttachments": {"type": "integer"},
-                    "message": {"type": "string"}
+                    "hash": {
+                      "type": "string"
+                    },
+                    "attachment": {
+                      "$ref": "#/components/schemas/Attachment"
+                    },
+                    "totalAttachments": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
                   }
                 }
               }
             }
           },
-          "400": {"description": "Invalid input or max attachments reached"},
-          "404": {"description": "Activity not found"}
+          "400": {
+            "description": "Invalid input or max attachments reached"
+          },
+          "404": {
+            "description": "Activity not found"
+          }
         }
       }
     },
     "/api/activities/{hash}/attachments/{attachmentId}": {
       "delete": {
-        "tags": ["Activities"],
+        "tags": [
+          "Activities"
+        ],
         "summary": "Remove attachment",
         "description": "Remove an attachment from an activity.",
         "operationId": "removeActivityAttachment",
@@ -480,7 +575,9 @@
             "in": "path",
             "required": true,
             "description": "Attachment ID",
-            "schema": {"type": "string"}
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -491,22 +588,34 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "hash": {"type": "string"},
-                    "removed": {"$ref": "#/components/schemas/Attachment"},
-                    "remainingAttachments": {"type": "integer"},
-                    "message": {"type": "string"}
+                    "hash": {
+                      "type": "string"
+                    },
+                    "removed": {
+                      "$ref": "#/components/schemas/Attachment"
+                    },
+                    "remainingAttachments": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
                   }
                 }
               }
             }
           },
-          "404": {"description": "Activity or attachment not found"}
+          "404": {
+            "description": "Activity or attachment not found"
+          }
         }
       }
     },
     "/api/activities/{hash}/diff": {
       "get": {
-        "tags": ["Activities"],
+        "tags": [
+          "Activities"
+        ],
         "summary": "Compare with previous activity",
         "description": "Compare an activity with the previous activity of the same type. Returns description diff, metadata changes, and time delta.",
         "operationId": "getActivityDiff",
@@ -548,43 +657,44 @@
     },
     "/api/og/{hash}": {
       "get": {
-        "tags": ["Activities"],
-        "summary": "Get OG image for activity",
-        "description": "Returns an SVG image (1200x630) suitable for Open Graph social sharing. The image displays the activity type, description, hash, and verification status with type-specific colors.",
-        "operationId": "getOgImage",
+        "tags": [
+          "Social"
+        ],
+        "summary": "Get activity Open Graph image",
+        "description": "Returns a dynamic SVG image (1200x630) for a specific activity. Shows activity type, description, hash, and on-chain status. Perfect for sharing individual activities on social media.",
+        "operationId": "getActivityOgImage",
         "parameters": [
           {
             "name": "hash",
             "in": "path",
             "required": true,
-            "description": "SHA256 hash of the activity (64 hex characters)",
+            "description": "Activity hash or prefix (minimum 8 characters)",
             "schema": {
               "type": "string",
-              "pattern": "^[a-f0-9]{64}$"
+              "minLength": 8
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "OG image in SVG format",
+            "description": "SVG Open Graph image for the activity",
             "content": {
               "image/svg+xml": {
                 "schema": {
                   "type": "string",
-                  "description": "SVG image data"
+                  "format": "binary"
                 }
               }
             }
-          },
-          "404": {
-            "description": "Activity not found"
           }
         }
       }
     },
     "/share/{hash}": {
       "get": {
-        "tags": ["Activities"],
+        "tags": [
+          "Activities"
+        ],
         "summary": "Social share page",
         "description": "Returns an HTML page with proper OG meta tags for social sharing. The page automatically redirects to the dashboard with the activity highlighted. Use this URL for sharing activities on Twitter, Facebook, Discord, etc.",
         "operationId": "getSharePage",
@@ -620,7 +730,9 @@
     },
     "/api/activity-types": {
       "get": {
-        "tags": ["Activities"],
+        "tags": [
+          "Activities"
+        ],
         "summary": "List all activity types",
         "description": "Returns all activity types (built-in + custom) with usage counts.",
         "operationId": "getActivityTypes",
@@ -638,7 +750,9 @@
         }
       },
       "post": {
-        "tags": ["Activities"],
+        "tags": [
+          "Activities"
+        ],
         "summary": "Create a custom activity type",
         "description": "Create a new custom activity type. Cannot override built-in types.",
         "operationId": "createActivityType",
@@ -648,7 +762,9 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["name"],
+                "required": [
+                  "name"
+                ],
                 "properties": {
                   "name": {
                     "type": "string",
@@ -697,7 +813,9 @@
     },
     "/api/activity-types/{id}": {
       "delete": {
-        "tags": ["Activities"],
+        "tags": [
+          "Activities"
+        ],
         "summary": "Delete a custom activity type",
         "description": "Delete a custom activity type. Cannot delete built-in types.",
         "operationId": "deleteActivityType",
@@ -726,7 +844,9 @@
         }
       },
       "patch": {
-        "tags": ["Activities"],
+        "tags": [
+          "Activities"
+        ],
         "summary": "Update a custom activity type",
         "description": "Update properties of a custom activity type.",
         "operationId": "updateActivityType",
@@ -748,10 +868,22 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "name": { "type": "string", "maxLength": 50 },
-                  "emoji": { "type": "string", "maxLength": 4 },
-                  "color": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
-                  "description": { "type": "string", "maxLength": 200 }
+                  "name": {
+                    "type": "string",
+                    "maxLength": 50
+                  },
+                  "emoji": {
+                    "type": "string",
+                    "maxLength": 4
+                  },
+                  "color": {
+                    "type": "string",
+                    "pattern": "^#[0-9A-Fa-f]{6}$"
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 200
+                  }
                 }
               }
             }
@@ -772,7 +904,9 @@
     },
     "/api/stats": {
       "get": {
-        "tags": ["Stats"],
+        "tags": [
+          "Stats"
+        ],
         "summary": "Get activity statistics",
         "description": "Returns aggregated statistics about all activities, including streak data.",
         "operationId": "getStats",
@@ -792,7 +926,9 @@
     },
     "/api/streaks": {
       "get": {
-        "tags": ["Stats"],
+        "tags": [
+          "Stats"
+        ],
         "summary": "Get detailed streak information",
         "description": "Returns comprehensive activity streak tracking data including current streak, longest streak, milestones, and activity patterns.",
         "operationId": "getStreaks",
@@ -812,7 +948,9 @@
     },
     "/api/achievements": {
       "get": {
-        "tags": ["Stats"],
+        "tags": [
+          "Stats"
+        ],
         "summary": "Get achievement badges",
         "description": "Returns all achievement badges with earned status, progress, and points. Badges are organized by category (activity, streak, onchain, diversity, special) with tier levels (bronze, silver, gold, platinum, diamond).",
         "operationId": "getAchievements",
@@ -832,7 +970,9 @@
     },
     "/api/health": {
       "get": {
-        "tags": ["System"],
+        "tags": [
+          "System"
+        ],
         "summary": "Health check",
         "description": "Returns server health status. Returns 200 if healthy, 503 if degraded.",
         "operationId": "healthCheck",
@@ -862,7 +1002,9 @@
     },
     "/api/badge": {
       "get": {
-        "tags": ["Stats"],
+        "tags": [
+          "Stats"
+        ],
         "summary": "Get badge summary",
         "description": "Returns a compact verification summary suitable for sharing.",
         "operationId": "getBadge",
@@ -882,7 +1024,9 @@
     },
     "/api/badge.txt": {
       "get": {
-        "tags": ["Stats"],
+        "tags": [
+          "Stats"
+        ],
         "summary": "Get plain text badge",
         "description": "Returns a plain text version of the badge for copy-paste sharing.",
         "operationId": "getBadgeText",
@@ -902,7 +1046,9 @@
     },
     "/api/og": {
       "get": {
-        "tags": ["Social"],
+        "tags": [
+          "Social"
+        ],
         "summary": "Get Open Graph image",
         "description": "Returns a dynamic SVG image (1200x630) for social media sharing. Shows aggregate stats for the dashboard.",
         "operationId": "getOgImage",
@@ -921,42 +1067,11 @@
         }
       }
     },
-    "/api/og/{hash}": {
-      "get": {
-        "tags": ["Social"],
-        "summary": "Get activity Open Graph image",
-        "description": "Returns a dynamic SVG image (1200x630) for a specific activity. Shows activity type, description, hash, and on-chain status. Perfect for sharing individual activities on social media.",
-        "operationId": "getActivityOgImage",
-        "parameters": [
-          {
-            "name": "hash",
-            "in": "path",
-            "required": true,
-            "description": "Activity hash or prefix (minimum 8 characters)",
-            "schema": {
-              "type": "string",
-              "minLength": 8
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "SVG Open Graph image for the activity",
-            "content": {
-              "image/svg+xml": {
-                "schema": {
-                  "type": "string",
-                  "format": "binary"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/verify/{hash}": {
       "get": {
-        "tags": ["Verification"],
+        "tags": [
+          "Verification"
+        ],
         "summary": "Verify activity by hash",
         "description": "Looks up an activity by its SHA256 hash and returns verification details including on-chain proof links.",
         "operationId": "verifyActivity",
@@ -1008,7 +1123,9 @@
     },
     "/api/feed.rss": {
       "get": {
-        "tags": ["Activities"],
+        "tags": [
+          "Activities"
+        ],
         "summary": "RSS feed",
         "description": "Returns the last 50 activities as an RSS feed for feed readers.",
         "operationId": "getRssFeed",
@@ -1028,35 +1145,45 @@
     },
     "/api/digest": {
       "get": {
-        "tags": ["Stats"],
-        "summary": "Email digest",
-        "description": "Generates an email-ready activity digest for a given time period. Supports daily, weekly, and monthly summaries in HTML, plain text, or JSON format. Perfect for automated email reports or integration with notification services.",
+        "tags": [
+          "Digest"
+        ],
+        "summary": "Generate digest",
+        "description": "Generate an activity digest for a given period. Returns HTML by default (email-ready).",
         "operationId": "getDigest",
         "parameters": [
           {
             "name": "period",
             "in": "query",
-            "description": "Time period for the digest",
+            "description": "Digest period",
             "schema": {
               "type": "string",
-              "enum": ["daily", "weekly", "monthly"],
+              "enum": [
+                "daily",
+                "weekly",
+                "monthly"
+              ],
               "default": "daily"
             }
           },
           {
             "name": "format",
             "in": "query",
-            "description": "Output format. HTML is email-ready with inline styles.",
+            "description": "Output format",
             "schema": {
               "type": "string",
-              "enum": ["html", "text", "json"],
+              "enum": [
+                "html",
+                "text",
+                "json"
+              ],
               "default": "html"
             }
           },
           {
             "name": "date",
             "in": "query",
-            "description": "End date for the digest period (ISO 8601). Defaults to now.",
+            "description": "End date for the digest period (ISO format)",
             "schema": {
               "type": "string",
               "format": "date-time"
@@ -1065,36 +1192,33 @@
         ],
         "responses": {
           "200": {
-            "description": "Activity digest",
+            "description": "Digest content",
             "content": {
               "text/html": {
                 "schema": {
-                  "type": "string",
-                  "description": "Email-ready HTML with inline styles"
+                  "type": "string"
                 }
               },
               "text/plain": {
                 "schema": {
-                  "type": "string",
-                  "description": "Plain text summary"
+                  "type": "string"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Digest"
+                  "$ref": "#/components/schemas/DigestData"
                 }
               }
             }
-          },
-          "429": {
-            "$ref": "#/components/responses/RateLimited"
           }
         }
       }
     },
     "/api/auth/status": {
       "get": {
-        "tags": ["System"],
+        "tags": [
+          "System"
+        ],
         "summary": "Authentication status",
         "description": "Returns authentication configuration and whether the current request is authenticated.",
         "operationId": "getAuthStatus",
@@ -1114,7 +1238,9 @@
     },
     "/api/ratelimit": {
       "get": {
-        "tags": ["System"],
+        "tags": [
+          "System"
+        ],
         "summary": "Rate limit status",
         "description": "Returns current rate limit usage for the requesting IP across all categories.",
         "operationId": "getRateLimitStatus",
@@ -1134,7 +1260,9 @@
     },
     "/api/metrics": {
       "get": {
-        "tags": ["System"],
+        "tags": [
+          "System"
+        ],
         "summary": "Prometheus metrics",
         "description": "Returns Prometheus-compatible metrics for monitoring integration.",
         "operationId": "getMetrics",
@@ -1154,7 +1282,9 @@
     },
     "/api/webhooks": {
       "get": {
-        "tags": ["Webhooks"],
+        "tags": [
+          "Webhooks"
+        ],
         "summary": "List webhooks",
         "description": "Returns all registered webhook subscriptions. Secrets are hidden.",
         "operationId": "listWebhooks",
@@ -1183,13 +1313,19 @@
         }
       },
       "post": {
-        "tags": ["Webhooks"],
+        "tags": [
+          "Webhooks"
+        ],
         "summary": "Create webhook",
         "description": "Register a new webhook subscription. Rate limited to 5/minute.",
         "operationId": "createWebhook",
         "security": [
-          {"ApiKeyAuth": []},
-          {"BearerAuth": []}
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
         ],
         "requestBody": {
           "required": true,
@@ -1240,13 +1376,19 @@
     },
     "/api/webhooks/{id}": {
       "patch": {
-        "tags": ["Webhooks"],
+        "tags": [
+          "Webhooks"
+        ],
         "summary": "Update webhook",
         "description": "Update a webhook subscription (enable/disable, change events, update secret).",
         "operationId": "updateWebhook",
         "security": [
-          {"ApiKeyAuth": []},
-          {"BearerAuth": []}
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
         ],
         "parameters": [
           {
@@ -1293,13 +1435,19 @@
         }
       },
       "delete": {
-        "tags": ["Webhooks"],
+        "tags": [
+          "Webhooks"
+        ],
         "summary": "Delete webhook",
         "description": "Remove a webhook subscription. Rate limited to 5/minute.",
         "operationId": "deleteWebhook",
         "security": [
-          {"ApiKeyAuth": []},
-          {"BearerAuth": []}
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
         ],
         "parameters": [
           {
@@ -1320,9 +1468,15 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "message": {"type": "string"},
-                    "id": {"type": "string"},
-                    "url": {"type": "string"}
+                    "message": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    }
                   }
                 }
               }
@@ -1346,13 +1500,19 @@
     },
     "/api/webhooks/{id}/test": {
       "post": {
-        "tags": ["Webhooks"],
+        "tags": [
+          "Webhooks"
+        ],
         "summary": "Test webhook",
         "description": "Send a test payload to a webhook. Rate limited to 10/minute.",
         "operationId": "testWebhook",
         "security": [
-          {"ApiKeyAuth": []},
-          {"BearerAuth": []}
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
         ],
         "parameters": [
           {
@@ -1373,9 +1533,15 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": {"type": "boolean"},
-                    "message": {"type": "string"},
-                    "url": {"type": "string"}
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    }
                   }
                 }
               }
@@ -1395,7 +1561,9 @@
     },
     "/api/custom-types": {
       "get": {
-        "tags": ["Custom Types"],
+        "tags": [
+          "Custom Types"
+        ],
         "summary": "List all activity types",
         "description": "Returns both built-in and user-defined custom activity types.",
         "operationId": "getCustomTypes",
@@ -1430,7 +1598,9 @@
         }
       },
       "post": {
-        "tags": ["Custom Types"],
+        "tags": [
+          "Custom Types"
+        ],
         "summary": "Create custom type",
         "description": "Create a new custom activity type. Cannot conflict with built-in types.",
         "operationId": "createCustomType",
@@ -1440,7 +1610,10 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["name", "emoji"],
+                "required": [
+                  "name",
+                  "emoji"
+                ],
                 "properties": {
                   "name": {
                     "type": "string",
@@ -1476,9 +1649,15 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
-                    "type": { "$ref": "#/components/schemas/CustomActivityType" },
-                    "message": { "type": "string" }
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "type": {
+                      "$ref": "#/components/schemas/CustomActivityType"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
                   }
                 }
               }
@@ -1495,7 +1674,9 @@
     },
     "/api/custom-types/{id}": {
       "put": {
-        "tags": ["Custom Types"],
+        "tags": [
+          "Custom Types"
+        ],
         "summary": "Update custom type",
         "description": "Update an existing custom activity type.",
         "operationId": "updateCustomType",
@@ -1504,7 +1685,9 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -1513,10 +1696,18 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "name": { "type": "string" },
-                  "emoji": { "type": "string" },
-                  "color": { "type": "string" },
-                  "description": { "type": "string" }
+                  "name": {
+                    "type": "string"
+                  },
+                  "emoji": {
+                    "type": "string"
+                  },
+                  "color": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
                 }
               }
             }
@@ -1535,7 +1726,9 @@
         }
       },
       "delete": {
-        "tags": ["Custom Types"],
+        "tags": [
+          "Custom Types"
+        ],
         "summary": "Delete custom type",
         "description": "Delete a custom activity type. Existing activities are preserved.",
         "operationId": "deleteCustomType",
@@ -1544,7 +1737,9 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -1555,9 +1750,15 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
-                    "message": { "type": "string" },
-                    "affectedActivities": { "type": "integer" }
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "affectedActivities": {
+                      "type": "integer"
+                    }
                   }
                 }
               }
@@ -1574,7 +1775,9 @@
     },
     "/api/backup": {
       "get": {
-        "tags": ["Backup"],
+        "tags": [
+          "Backup"
+        ],
         "summary": "Export backup",
         "description": "Export all activities as a downloadable JSON backup file.",
         "operationId": "exportBackup",
@@ -1605,7 +1808,9 @@
     },
     "/api/backup/validate": {
       "post": {
-        "tags": ["Backup"],
+        "tags": [
+          "Backup"
+        ],
         "summary": "Validate backup",
         "description": "Validate a backup file format without importing.",
         "operationId": "validateBackup",
@@ -1645,13 +1850,19 @@
     },
     "/api/restore": {
       "post": {
-        "tags": ["Backup"],
+        "tags": [
+          "Backup"
+        ],
         "summary": "Restore from backup",
         "description": "Restore activities from a backup file. Supports merge (skip duplicates) or replace (full overwrite) modes.",
         "operationId": "restoreBackup",
         "security": [
-          {"ApiKeyAuth": []},
-          {"BearerAuth": []}
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
         ],
         "parameters": [
           {
@@ -1660,7 +1871,10 @@
             "description": "Restore mode",
             "schema": {
               "type": "string",
-              "enum": ["merge", "replace"],
+              "enum": [
+                "merge",
+                "replace"
+              ],
               "default": "merge"
             }
           },
@@ -1710,70 +1924,11 @@
         }
       }
     },
-    "/api/digest": {
-      "get": {
-        "tags": ["Digest"],
-        "summary": "Generate digest",
-        "description": "Generate an activity digest for a given period. Returns HTML by default (email-ready).",
-        "operationId": "getDigest",
-        "parameters": [
-          {
-            "name": "period",
-            "in": "query",
-            "description": "Digest period",
-            "schema": {
-              "type": "string",
-              "enum": ["daily", "weekly", "monthly"],
-              "default": "daily"
-            }
-          },
-          {
-            "name": "format",
-            "in": "query",
-            "description": "Output format",
-            "schema": {
-              "type": "string",
-              "enum": ["html", "text", "json"],
-              "default": "html"
-            }
-          },
-          {
-            "name": "date",
-            "in": "query",
-            "description": "End date for the digest period (ISO format)",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Digest content",
-            "content": {
-              "text/html": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DigestData"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/digest/subscriptions": {
       "get": {
-        "tags": ["Digest"],
+        "tags": [
+          "Digest"
+        ],
         "summary": "List digest subscriptions",
         "description": "Returns all email digest subscriptions. Email addresses are partially masked for privacy.",
         "operationId": "listDigestSubscriptions",
@@ -1802,7 +1957,9 @@
         }
       },
       "post": {
-        "tags": ["Digest"],
+        "tags": [
+          "Digest"
+        ],
         "summary": "Subscribe to digest",
         "description": "Subscribe an email address to receive periodic activity digests.",
         "operationId": "createDigestSubscription",
@@ -1812,7 +1969,9 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["email"],
+                "required": [
+                  "email"
+                ],
                 "properties": {
                   "email": {
                     "type": "string",
@@ -1821,7 +1980,11 @@
                   },
                   "frequency": {
                     "type": "string",
-                    "enum": ["daily", "weekly", "monthly"],
+                    "enum": [
+                      "daily",
+                      "weekly",
+                      "monthly"
+                    ],
                     "default": "daily",
                     "description": "How often to send digests"
                   },
@@ -1857,7 +2020,9 @@
     },
     "/api/digest/subscriptions/{id}": {
       "get": {
-        "tags": ["Digest"],
+        "tags": [
+          "Digest"
+        ],
         "summary": "Get subscription",
         "description": "Get details for a specific digest subscription.",
         "operationId": "getDigestSubscription",
@@ -1890,7 +2055,9 @@
         }
       },
       "patch": {
-        "tags": ["Digest"],
+        "tags": [
+          "Digest"
+        ],
         "summary": "Update subscription",
         "description": "Update subscription frequency or status.",
         "operationId": "updateDigestSubscription",
@@ -1913,7 +2080,11 @@
                 "properties": {
                   "frequency": {
                     "type": "string",
-                    "enum": ["daily", "weekly", "monthly"]
+                    "enum": [
+                      "daily",
+                      "weekly",
+                      "monthly"
+                    ]
                   },
                   "active": {
                     "type": "boolean"
@@ -1943,7 +2114,9 @@
         }
       },
       "delete": {
-        "tags": ["Digest"],
+        "tags": [
+          "Digest"
+        ],
         "summary": "Unsubscribe",
         "description": "Remove a digest subscription (unsubscribe).",
         "operationId": "deleteDigestSubscription",
@@ -1964,6 +2137,158 @@
           },
           "404": {
             "description": "Subscription not found"
+          }
+        }
+      }
+    },
+    "/api/activities/importance": {
+      "get": {
+        "tags": [
+          "Activities"
+        ],
+        "summary": "Get importance scores for all activities",
+        "description": "Returns all activities with their auto-calculated importance scores based on type, keywords, metadata richness, on-chain status, and time patterns.",
+        "parameters": [
+          {
+            "name": "level",
+            "in": "query",
+            "description": "Filter by importance level",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "critical",
+                "high",
+                "medium",
+                "low",
+                "minimal"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Importance scores with distribution stats",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "count": {
+                      "type": "integer"
+                    },
+                    "totalActivities": {
+                      "type": "integer"
+                    },
+                    "averageScore": {
+                      "type": "integer"
+                    },
+                    "distribution": {
+                      "type": "object",
+                      "properties": {
+                        "critical": {
+                          "type": "integer"
+                        },
+                        "high": {
+                          "type": "integer"
+                        },
+                        "medium": {
+                          "type": "integer"
+                        },
+                        "low": {
+                          "type": "integer"
+                        },
+                        "minimal": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "activities": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "hash": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "timestamp": {
+                            "type": "string"
+                          },
+                          "importance": {
+                            "$ref": "#/components/schemas/ImportanceScore"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/activities/{hash}/importance": {
+      "get": {
+        "tags": [
+          "Activities"
+        ],
+        "summary": "Get importance score for a specific activity",
+        "description": "Returns the auto-calculated importance score breakdown for a single activity.",
+        "parameters": [
+          {
+            "name": "hash",
+            "in": "path",
+            "required": true,
+            "description": "Activity hash (64 hex characters)",
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activity with importance score",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "hash": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string"
+                    },
+                    "importance": {
+                      "$ref": "#/components/schemas/ImportanceScore"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Activity not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -1989,16 +2314,24 @@
             "schema": {
               "type": "object",
               "properties": {
-                "error": {"type": "string"},
-                "message": {"type": "string"},
-                "retryAfter": {"type": "integer"}
+                "error": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "retryAfter": {
+                  "type": "integer"
+                }
               }
             }
           }
         },
         "headers": {
           "Retry-After": {
-            "schema": {"type": "integer"},
+            "schema": {
+              "type": "integer"
+            },
             "description": "Seconds until rate limit resets"
           }
         }
@@ -2007,12 +2340,28 @@
     "schemas": {
       "Activity": {
         "type": "object",
-        "required": ["type", "description", "timestamp"],
+        "required": [
+          "type",
+          "description",
+          "timestamp"
+        ],
         "properties": {
           "type": {
             "type": "string",
             "description": "Activity type",
-            "enum": ["build", "commit", "trade", "transfer", "message", "tweet", "decision", "deploy", "email", "browser", "calendar"]
+            "enum": [
+              "build",
+              "commit",
+              "trade",
+              "transfer",
+              "message",
+              "tweet",
+              "decision",
+              "deploy",
+              "email",
+              "browser",
+              "calendar"
+            ]
           },
           "description": {
             "type": "string",
@@ -2043,8 +2392,12 @@
             "type": "object",
             "description": "Legacy proof format",
             "properties": {
-              "hash": {"type": "string"},
-              "txSignature": {"type": "string"}
+              "hash": {
+                "type": "string"
+              },
+              "txSignature": {
+                "type": "string"
+              }
             }
           },
           "notes": {
@@ -2069,14 +2422,22 @@
           "attachments": {
             "type": "array",
             "description": "Attached files, images, or links",
-            "items": {"$ref": "#/components/schemas/Attachment"}
+            "items": {
+              "$ref": "#/components/schemas/Attachment"
+            }
           }
         }
       },
       "Attachment": {
         "type": "object",
         "description": "File, image, or link attachment on an activity",
-        "required": ["id", "type", "url", "name", "addedAt"],
+        "required": [
+          "id",
+          "type",
+          "url",
+          "name",
+          "addedAt"
+        ],
         "properties": {
           "id": {
             "type": "string",
@@ -2084,7 +2445,11 @@
           },
           "type": {
             "type": "string",
-            "enum": ["image", "file", "link"],
+            "enum": [
+              "image",
+              "file",
+              "link"
+            ],
             "description": "Type of attachment"
           },
           "url": {
@@ -2135,33 +2500,40 @@
       },
       "CustomActivityType": {
         "type": "object",
-        "description": "User-defined custom activity type",
-        "required": ["id", "name", "emoji", "createdAt"],
+        "description": "A custom user-defined activity type",
         "properties": {
           "id": {
             "type": "string",
-            "description": "Unique identifier (lowercase, no spaces)"
+            "description": "Unique identifier (lowercase, hyphenated)"
           },
           "name": {
             "type": "string",
-            "description": "Display name (e.g., 'Code Review')"
+            "description": "Display name"
           },
           "emoji": {
             "type": "string",
-            "description": "Emoji icon for the type"
+            "description": "Emoji icon"
           },
           "color": {
             "type": "string",
-            "description": "Hex color (e.g., '#ff6b6b')"
+            "description": "Hex color code"
           },
           "description": {
             "type": "string",
-            "description": "Description of what this type represents"
+            "description": "Optional description"
           },
           "createdAt": {
             "type": "string",
             "format": "date-time",
             "description": "When the type was created"
+          },
+          "builtin": {
+            "type": "boolean",
+            "description": "Whether this is a built-in type (always false for custom)"
+          },
+          "usageCount": {
+            "type": "integer",
+            "description": "Number of activities using this type"
           }
         }
       },
@@ -2175,8 +2547,12 @@
           },
           "previous": {
             "oneOf": [
-              {"$ref": "#/components/schemas/Activity"},
-              {"type": "null"}
+              {
+                "$ref": "#/components/schemas/Activity"
+              },
+              {
+                "type": "null"
+              }
             ],
             "description": "Previous activity of the same type (null if none exists)"
           },
@@ -2192,46 +2568,85 @@
             "type": "object",
             "description": "Time difference between activities",
             "properties": {
-              "ms": {"type": "integer", "description": "Milliseconds between activities"},
-              "display": {"type": "string", "description": "Human-readable time difference"},
-              "seconds": {"type": "integer"},
-              "minutes": {"type": "integer"},
-              "hours": {"type": "integer"},
-              "days": {"type": "integer"}
+              "ms": {
+                "type": "integer",
+                "description": "Milliseconds between activities"
+              },
+              "display": {
+                "type": "string",
+                "description": "Human-readable time difference"
+              },
+              "seconds": {
+                "type": "integer"
+              },
+              "minutes": {
+                "type": "integer"
+              },
+              "hours": {
+                "type": "integer"
+              },
+              "days": {
+                "type": "integer"
+              }
             }
           },
           "descriptionDiff": {
             "type": "object",
             "description": "Word-level comparison of descriptions",
             "properties": {
-              "previous": {"type": "string"},
-              "current": {"type": "string"},
-              "commonWordCount": {"type": "integer"},
-              "previousWordCount": {"type": "integer"},
-              "currentWordCount": {"type": "integer"},
-              "similarity": {"type": "integer", "description": "Percentage similarity (0-100)"}
+              "previous": {
+                "type": "string"
+              },
+              "current": {
+                "type": "string"
+              },
+              "commonWordCount": {
+                "type": "integer"
+              },
+              "previousWordCount": {
+                "type": "integer"
+              },
+              "currentWordCount": {
+                "type": "integer"
+              },
+              "similarity": {
+                "type": "integer",
+                "description": "Percentage similarity (0-100)"
+              }
             }
           },
           "metadataDiff": {
             "type": "object",
             "description": "Changes in metadata fields",
             "properties": {
-              "added": {"type": "object", "description": "New fields in current"},
-              "removed": {"type": "object", "description": "Fields removed from previous"},
+              "added": {
+                "type": "object",
+                "description": "New fields in current"
+              },
+              "removed": {
+                "type": "object",
+                "description": "Fields removed from previous"
+              },
               "changed": {
                 "type": "object",
                 "description": "Fields with different values",
                 "additionalProperties": {
                   "type": "object",
                   "properties": {
-                    "from": {"description": "Previous value"},
-                    "to": {"description": "Current value"}
+                    "from": {
+                      "description": "Previous value"
+                    },
+                    "to": {
+                      "description": "Current value"
+                    }
                   }
                 }
               },
               "unchanged": {
                 "type": "array",
-                "items": {"type": "string"},
+                "items": {
+                  "type": "string"
+                },
                 "description": "Field names that are unchanged"
               }
             }
@@ -2247,12 +2662,16 @@
           },
           "byType": {
             "type": "object",
-            "additionalProperties": {"type": "integer"},
+            "additionalProperties": {
+              "type": "integer"
+            },
             "description": "Activity count by type"
           },
           "byWallet": {
             "type": "object",
-            "additionalProperties": {"type": "integer"},
+            "additionalProperties": {
+              "type": "integer"
+            },
             "description": "Activity count by wallet"
           },
           "firstActivity": {
@@ -2283,7 +2702,12 @@
               },
               "status": {
                 "type": "string",
-                "enum": ["active", "at_risk", "broken", "none"],
+                "enum": [
+                  "active",
+                  "at_risk",
+                  "broken",
+                  "none"
+                ],
                 "description": "Current streak status"
               },
               "todayActive": {
@@ -2308,7 +2732,10 @@
           },
           "streakDates": {
             "type": "array",
-            "items": {"type": "string", "format": "date"},
+            "items": {
+              "type": "string",
+              "format": "date"
+            },
             "description": "Array of dates in the current streak"
           },
           "todayActive": {
@@ -2335,7 +2762,12 @@
           },
           "streakStatus": {
             "type": "string",
-            "enum": ["active", "at_risk", "broken", "none"],
+            "enum": [
+              "active",
+              "at_risk",
+              "broken",
+              "none"
+            ],
             "description": "Status of current streak (active, at_risk if no activity today, broken, or none)"
           },
           "message": {
@@ -2389,12 +2821,24 @@
           },
           "category": {
             "type": "string",
-            "enum": ["activity", "streak", "onchain", "diversity", "special"],
+            "enum": [
+              "activity",
+              "streak",
+              "onchain",
+              "diversity",
+              "special"
+            ],
             "description": "Badge category for grouping"
           },
           "tier": {
             "type": "string",
-            "enum": ["bronze", "silver", "gold", "platinum", "diamond"],
+            "enum": [
+              "bronze",
+              "silver",
+              "gold",
+              "platinum",
+              "diamond"
+            ],
             "description": "Badge tier level affecting point value"
           }
         }
@@ -2445,23 +2889,33 @@
             "properties": {
               "activity": {
                 "type": "array",
-                "items": {"$ref": "#/components/schemas/AchievementBadge"}
+                "items": {
+                  "$ref": "#/components/schemas/AchievementBadge"
+                }
               },
               "streak": {
                 "type": "array",
-                "items": {"$ref": "#/components/schemas/AchievementBadge"}
+                "items": {
+                  "$ref": "#/components/schemas/AchievementBadge"
+                }
               },
               "onchain": {
                 "type": "array",
-                "items": {"$ref": "#/components/schemas/AchievementBadge"}
+                "items": {
+                  "$ref": "#/components/schemas/AchievementBadge"
+                }
               },
               "diversity": {
                 "type": "array",
-                "items": {"$ref": "#/components/schemas/AchievementBadge"}
+                "items": {
+                  "$ref": "#/components/schemas/AchievementBadge"
+                }
               },
               "special": {
                 "type": "array",
-                "items": {"$ref": "#/components/schemas/AchievementBadge"}
+                "items": {
+                  "$ref": "#/components/schemas/AchievementBadge"
+                }
               }
             }
           },
@@ -2471,45 +2925,6 @@
               "$ref": "#/components/schemas/AchievementBadge"
             },
             "description": "All badges in a flat array"
-          }
-        }
-      },
-      "CustomActivityType": {
-        "type": "object",
-        "description": "A custom user-defined activity type",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Unique identifier (lowercase, hyphenated)"
-          },
-          "name": {
-            "type": "string",
-            "description": "Display name"
-          },
-          "emoji": {
-            "type": "string",
-            "description": "Emoji icon"
-          },
-          "color": {
-            "type": "string",
-            "description": "Hex color code"
-          },
-          "description": {
-            "type": "string",
-            "description": "Optional description"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "When the type was created"
-          },
-          "builtin": {
-            "type": "boolean",
-            "description": "Whether this is a built-in type (always false for custom)"
-          },
-          "usageCount": {
-            "type": "integer",
-            "description": "Number of activities using this type"
           }
         }
       },
@@ -2554,24 +2969,45 @@
         "properties": {
           "period": {
             "type": "string",
-            "enum": ["daily", "weekly", "monthly"],
+            "enum": [
+              "daily",
+              "weekly",
+              "monthly"
+            ],
             "description": "Time period for the digest"
           },
           "dateRange": {
             "type": "object",
             "properties": {
-              "start": {"type": "string", "format": "date-time"},
-              "end": {"type": "string", "format": "date-time"}
+              "start": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "end": {
+                "type": "string",
+                "format": "date-time"
+              }
             }
           },
           "summary": {
             "type": "object",
             "properties": {
-              "totalActivities": {"type": "integer"},
-              "onChainProofs": {"type": "integer"},
-              "verificationRate": {"type": "integer", "description": "Percentage (0-100)"},
-              "uniqueDays": {"type": "integer"},
-              "pinnedCount": {"type": "integer"}
+              "totalActivities": {
+                "type": "integer"
+              },
+              "onChainProofs": {
+                "type": "integer"
+              },
+              "verificationRate": {
+                "type": "integer",
+                "description": "Percentage (0-100)"
+              },
+              "uniqueDays": {
+                "type": "integer"
+              },
+              "pinnedCount": {
+                "type": "integer"
+              }
             }
           },
           "breakdown": {
@@ -2579,8 +3015,12 @@
             "items": {
               "type": "object",
               "properties": {
-                "type": {"type": "string"},
-                "count": {"type": "integer"}
+                "type": {
+                  "type": "string"
+                },
+                "count": {
+                  "type": "integer"
+                }
               }
             },
             "description": "Top activity types by count"
@@ -2590,10 +3030,19 @@
             "items": {
               "type": "object",
               "properties": {
-                "type": {"type": "string"},
-                "description": {"type": "string"},
-                "timestamp": {"type": "string", "format": "date-time"},
-                "pinned": {"type": "boolean"}
+                "type": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "timestamp": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "pinned": {
+                  "type": "boolean"
+                }
               }
             },
             "description": "Notable activities (pinned, builds, decisions)"
@@ -2603,19 +3052,37 @@
             "items": {
               "type": "object",
               "properties": {
-                "type": {"type": "string"},
-                "description": {"type": "string"},
-                "timestamp": {"type": "string", "format": "date-time"},
-                "onChain": {"type": "boolean"}
+                "type": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "timestamp": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "onChain": {
+                  "type": "boolean"
+                }
               }
             }
           },
           "links": {
             "type": "object",
             "properties": {
-              "dashboard": {"type": "string", "format": "uri"},
-              "api": {"type": "string", "format": "uri"},
-              "rss": {"type": "string", "format": "uri"}
+              "dashboard": {
+                "type": "string",
+                "format": "uri"
+              },
+              "api": {
+                "type": "string",
+                "format": "uri"
+              },
+              "rss": {
+                "type": "string",
+                "format": "uri"
+              }
             }
           },
           "generatedAt": {
@@ -2629,7 +3096,10 @@
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["healthy", "degraded"]
+            "enum": [
+              "healthy",
+              "degraded"
+            ]
           },
           "timestamp": {
             "type": "string",
@@ -2638,104 +3108,205 @@
           "checks": {
             "type": "object",
             "properties": {
-              "activityFile": {"type": "string"},
-              "activityCount": {"type": "integer"},
-              "unsignedActivities": {"type": "integer"},
-              "lastActivity": {"type": "string", "nullable": true},
-              "lastActivityAge": {"type": "string", "nullable": true},
-              "websocketClients": {"type": "integer"}
+              "activityFile": {
+                "type": "string"
+              },
+              "activityCount": {
+                "type": "integer"
+              },
+              "unsignedActivities": {
+                "type": "integer"
+              },
+              "lastActivity": {
+                "type": "string",
+                "nullable": true
+              },
+              "lastActivityAge": {
+                "type": "string",
+                "nullable": true
+              },
+              "websocketClients": {
+                "type": "integer"
+              }
             }
           },
           "server": {
             "type": "object",
             "properties": {
-              "uptime": {"type": "string"},
-              "port": {"type": "integer"},
-              "version": {"type": "string"}
+              "uptime": {
+                "type": "string"
+              },
+              "port": {
+                "type": "integer"
+              },
+              "version": {
+                "type": "string"
+              }
             }
           },
-          "responseTime": {"type": "string"}
+          "responseTime": {
+            "type": "string"
+          }
         }
       },
       "Badge": {
         "type": "object",
         "properties": {
-          "project": {"type": "string"},
-          "hackathon": {"type": "string"},
-          "status": {"type": "string"},
+          "project": {
+            "type": "string"
+          },
+          "hackathon": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
           "stats": {
             "type": "object",
             "properties": {
-              "totalActivities": {"type": "integer"},
-              "onChainProofs": {"type": "integer"},
-              "verificationRate": {"type": "string"},
-              "buildCycles": {"type": "integer"},
-              "activeDays": {"type": "integer"},
-              "commits": {"type": "integer"},
-              "trades": {"type": "integer"}
+              "totalActivities": {
+                "type": "integer"
+              },
+              "onChainProofs": {
+                "type": "integer"
+              },
+              "verificationRate": {
+                "type": "string"
+              },
+              "buildCycles": {
+                "type": "integer"
+              },
+              "activeDays": {
+                "type": "integer"
+              },
+              "commits": {
+                "type": "integer"
+              },
+              "trades": {
+                "type": "integer"
+              }
             }
           },
           "timeline": {
             "type": "object",
             "properties": {
-              "started": {"type": "string", "nullable": true},
-              "latest": {"type": "string", "nullable": true},
-              "uptime": {"type": "string", "nullable": true}
+              "started": {
+                "type": "string",
+                "nullable": true
+              },
+              "latest": {
+                "type": "string",
+                "nullable": true
+              },
+              "uptime": {
+                "type": "string",
+                "nullable": true
+              }
             }
           },
-          "wallet": {"type": "string"},
+          "wallet": {
+            "type": "string"
+          },
           "verify": {
             "type": "object",
             "properties": {
-              "dashboard": {"type": "string"},
-              "api": {"type": "string"},
-              "anyHash": {"type": "string"}
+              "dashboard": {
+                "type": "string"
+              },
+              "api": {
+                "type": "string"
+              },
+              "anyHash": {
+                "type": "string"
+              }
             }
           },
-          "oneLiner": {"type": "string"}
+          "oneLiner": {
+            "type": "string"
+          }
         }
       },
       "Verification": {
         "type": "object",
         "properties": {
-          "verified": {"type": "boolean"},
+          "verified": {
+            "type": "boolean"
+          },
           "activity": {
             "type": "object",
             "properties": {
-              "type": {"type": "string"},
-              "description": {"type": "string"},
-              "timestamp": {"type": "string"},
-              "metadata": {"type": "object"}
+              "type": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "timestamp": {
+                "type": "string"
+              },
+              "metadata": {
+                "type": "object"
+              }
             }
           },
           "proof": {
             "type": "object",
             "properties": {
-              "hash": {"type": "string"},
-              "algorithm": {"type": "string"},
-              "signatureType": {"type": "string"},
-              "signature": {"type": "string", "nullable": true},
-              "wallet": {"type": "string"},
-              "network": {"type": "string"}
+              "hash": {
+                "type": "string"
+              },
+              "algorithm": {
+                "type": "string"
+              },
+              "signatureType": {
+                "type": "string"
+              },
+              "signature": {
+                "type": "string",
+                "nullable": true
+              },
+              "wallet": {
+                "type": "string"
+              },
+              "network": {
+                "type": "string"
+              }
             }
           },
           "verification": {
             "type": "object",
             "properties": {
-              "solscan": {"type": "string", "nullable": true},
-              "status": {"type": "string", "enum": ["on-chain", "pending"]},
+              "solscan": {
+                "type": "string",
+                "nullable": true
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "on-chain",
+                  "pending"
+                ]
+              },
               "instructions": {
                 "type": "array",
-                "items": {"type": "string"}
+                "items": {
+                  "type": "string"
+                }
               }
             }
           },
           "agent": {
             "type": "object",
             "properties": {
-              "id": {"type": "integer"},
-              "name": {"type": "string"},
-              "hackathon": {"type": "string"}
+              "id": {
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              },
+              "hackathon": {
+                "type": "string"
+              }
             }
           }
         }
@@ -2743,25 +3314,41 @@
       "AuthStatus": {
         "type": "object",
         "properties": {
-          "authEnabled": {"type": "boolean"},
-          "authRequiredForReads": {"type": "boolean"},
-          "authRequiredForWrites": {"type": "boolean"},
-          "authenticated": {"type": "boolean"},
-          "message": {"type": "string"},
+          "authEnabled": {
+            "type": "boolean"
+          },
+          "authRequiredForReads": {
+            "type": "boolean"
+          },
+          "authRequiredForWrites": {
+            "type": "boolean"
+          },
+          "authenticated": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
           "endpoints": {
             "type": "object",
             "properties": {
               "publicAlways": {
                 "type": "array",
-                "items": {"type": "string"}
+                "items": {
+                  "type": "string"
+                }
               },
               "requiresAuthForWrites": {
                 "type": "array",
-                "items": {"type": "string"}
+                "items": {
+                  "type": "string"
+                }
               },
               "configurable": {
                 "type": "array",
-                "items": {"type": "string"}
+                "items": {
+                  "type": "string"
+                }
               }
             }
           }
@@ -2770,49 +3357,94 @@
       "RateLimitStatus": {
         "type": "object",
         "properties": {
-          "ip": {"type": "string"},
-          "windowMs": {"type": "integer"},
-          "windowSeconds": {"type": "integer"},
+          "ip": {
+            "type": "string"
+          },
+          "windowMs": {
+            "type": "integer"
+          },
+          "windowSeconds": {
+            "type": "integer"
+          },
           "limits": {
             "type": "object",
             "additionalProperties": {
               "type": "object",
               "properties": {
-                "description": {"type": "string"},
-                "limit": {"type": "integer"},
-                "used": {"type": "integer"},
-                "remaining": {"type": "integer"},
-                "resetIn": {"type": "integer"}
+                "description": {
+                  "type": "string"
+                },
+                "limit": {
+                  "type": "integer"
+                },
+                "used": {
+                  "type": "integer"
+                },
+                "remaining": {
+                  "type": "integer"
+                },
+                "resetIn": {
+                  "type": "integer"
+                }
               }
             }
           },
-          "hint": {"type": "string"}
+          "hint": {
+            "type": "string"
+          }
         }
       },
       "WebhookSummary": {
         "type": "object",
         "properties": {
-          "id": {"type": "string", "format": "uuid"},
-          "url": {"type": "string", "format": "uri"},
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
           "events": {
             "type": "array",
-            "items": {"type": "string"}
+            "items": {
+              "type": "string"
+            }
           },
           "format": {
             "type": "string",
-            "enum": ["json", "slack", "discord"],
+            "enum": [
+              "json",
+              "slack",
+              "discord"
+            ],
             "description": "Payload format: json (default), slack (Block Kit), discord (Embed)"
           },
-          "createdAt": {"type": "string", "format": "date-time"},
-          "lastDelivery": {"type": "string", "format": "date-time", "nullable": true},
-          "failureCount": {"type": "integer"},
-          "active": {"type": "boolean"},
-          "hasSecret": {"type": "boolean"}
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastDelivery": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "failureCount": {
+            "type": "integer"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "hasSecret": {
+            "type": "boolean"
+          }
         }
       },
       "WebhookCreate": {
         "type": "object",
-        "required": ["url"],
+        "required": [
+          "url"
+        ],
         "properties": {
           "url": {
             "type": "string",
@@ -2827,14 +3459,25 @@
             "type": "array",
             "items": {
               "type": "string",
-              "enum": ["*", "activity.new", "activity.batch", "activity.signed"]
+              "enum": [
+                "*",
+                "activity.new",
+                "activity.batch",
+                "activity.signed"
+              ]
             },
-            "default": ["*"],
+            "default": [
+              "*"
+            ],
             "description": "Event types to subscribe to"
           },
           "format": {
             "type": "string",
-            "enum": ["json", "slack", "discord"],
+            "enum": [
+              "json",
+              "slack",
+              "discord"
+            ],
             "default": "json",
             "description": "Payload format for webhook delivery. Use 'slack' for Slack incoming webhooks (Block Kit format) or 'discord' for Discord webhooks (Embed format)."
           }
@@ -2843,92 +3486,163 @@
       "WebhookCreated": {
         "type": "object",
         "properties": {
-          "id": {"type": "string", "format": "uuid"},
-          "url": {"type": "string"},
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "url": {
+            "type": "string"
+          },
           "events": {
             "type": "array",
-            "items": {"type": "string"}
+            "items": {
+              "type": "string"
+            }
           },
           "format": {
             "type": "string",
-            "enum": ["json", "slack", "discord"],
+            "enum": [
+              "json",
+              "slack",
+              "discord"
+            ],
             "description": "Payload format configured for this webhook"
           },
-          "createdAt": {"type": "string"},
-          "active": {"type": "boolean"},
-          "message": {"type": "string"},
-          "testEndpoint": {"type": "string"}
+          "createdAt": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "testEndpoint": {
+            "type": "string"
+          }
         }
       },
       "WebhookUpdate": {
         "type": "object",
         "properties": {
-          "active": {"type": "boolean"},
+          "active": {
+            "type": "boolean"
+          },
           "events": {
             "type": "array",
-            "items": {"type": "string"}
+            "items": {
+              "type": "string"
+            }
           },
-          "secret": {"type": "string", "nullable": true}
+          "secret": {
+            "type": "string",
+            "nullable": true
+          }
         }
       },
       "Backup": {
         "type": "object",
         "properties": {
-          "version": {"type": "string"},
-          "format": {"type": "string"},
-          "createdAt": {"type": "string", "format": "date-time"},
+          "version": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
           "server": {
             "type": "object",
             "properties": {
-              "version": {"type": "string"},
-              "wallet": {"type": "string"},
-              "dashboardUrl": {"type": "string"}
+              "version": {
+                "type": "string"
+              },
+              "wallet": {
+                "type": "string"
+              },
+              "dashboardUrl": {
+                "type": "string"
+              }
             }
           },
           "stats": {
             "type": "object",
             "properties": {
-              "totalActivities": {"type": "integer"},
-              "onChainActivities": {"type": "integer"},
-              "firstActivity": {"type": "string", "nullable": true},
-              "lastActivity": {"type": "string", "nullable": true},
+              "totalActivities": {
+                "type": "integer"
+              },
+              "onChainActivities": {
+                "type": "integer"
+              },
+              "firstActivity": {
+                "type": "string",
+                "nullable": true
+              },
+              "lastActivity": {
+                "type": "string",
+                "nullable": true
+              },
               "activityTypes": {
                 "type": "object",
-                "additionalProperties": {"type": "integer"}
+                "additionalProperties": {
+                  "type": "integer"
+                }
               }
             }
           },
           "activities": {
             "type": "array",
-            "items": {"$ref": "#/components/schemas/Activity"}
+            "items": {
+              "$ref": "#/components/schemas/Activity"
+            }
           },
           "webhooks": {
             "type": "array",
-            "items": {"$ref": "#/components/schemas/WebhookSummary"}
+            "items": {
+              "$ref": "#/components/schemas/WebhookSummary"
+            }
           }
         }
       },
       "ValidationResult": {
         "type": "object",
         "properties": {
-          "valid": {"type": "boolean"},
+          "valid": {
+            "type": "boolean"
+          },
           "errors": {
             "type": "array",
-            "items": {"type": "string"}
+            "items": {
+              "type": "string"
+            }
           },
           "warnings": {
             "type": "array",
-            "items": {"type": "string"}
+            "items": {
+              "type": "string"
+            }
           },
           "summary": {
             "type": "object",
             "nullable": true,
             "properties": {
-              "version": {"type": "string"},
-              "createdAt": {"type": "string"},
-              "activityCount": {"type": "integer"},
-              "hasWebhooks": {"type": "boolean"},
-              "webhookCount": {"type": "integer"}
+              "version": {
+                "type": "string"
+              },
+              "createdAt": {
+                "type": "string"
+              },
+              "activityCount": {
+                "type": "integer"
+              },
+              "hasWebhooks": {
+                "type": "boolean"
+              },
+              "webhookCount": {
+                "type": "integer"
+              }
             }
           }
         }
@@ -2936,35 +3650,63 @@
       "RestoreResult": {
         "type": "object",
         "properties": {
-          "success": {"type": "boolean"},
-          "dryRun": {"type": "boolean"},
-          "mode": {"type": "string"},
+          "success": {
+            "type": "boolean"
+          },
+          "dryRun": {
+            "type": "boolean"
+          },
+          "mode": {
+            "type": "string"
+          },
           "activities": {
             "type": "object",
             "properties": {
-              "before": {"type": "integer"},
-              "after": {"type": "integer"},
-              "added": {"type": "integer"},
-              "skipped": {"type": "integer"},
-              "replaced": {"type": "integer"}
+              "before": {
+                "type": "integer"
+              },
+              "after": {
+                "type": "integer"
+              },
+              "added": {
+                "type": "integer"
+              },
+              "skipped": {
+                "type": "integer"
+              },
+              "replaced": {
+                "type": "integer"
+              }
             }
           },
           "webhooks": {
             "type": "object",
             "properties": {
-              "added": {"type": "integer"},
-              "skipped": {"type": "integer"}
+              "added": {
+                "type": "integer"
+              },
+              "skipped": {
+                "type": "integer"
+              }
             }
           },
-          "message": {"type": "string"}
+          "message": {
+            "type": "string"
+          }
         }
       },
       "Error": {
         "type": "object",
         "properties": {
-          "error": {"type": "string"},
-          "message": {"type": "string"},
-          "hint": {"type": "string"}
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "hint": {
+            "type": "string"
+          }
         }
       },
       "DigestSubscription": {
@@ -2981,7 +3723,11 @@
           },
           "frequency": {
             "type": "string",
-            "enum": ["daily", "weekly", "monthly"],
+            "enum": [
+              "daily",
+              "weekly",
+              "monthly"
+            ],
             "description": "How often digests are sent"
           },
           "createdAt": {
@@ -3009,23 +3755,43 @@
         "properties": {
           "period": {
             "type": "string",
-            "enum": ["daily", "weekly", "monthly"]
+            "enum": [
+              "daily",
+              "weekly",
+              "monthly"
+            ]
           },
           "dateRange": {
             "type": "object",
             "properties": {
-              "start": {"type": "string", "format": "date-time"},
-              "end": {"type": "string", "format": "date-time"}
+              "start": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "end": {
+                "type": "string",
+                "format": "date-time"
+              }
             }
           },
           "summary": {
             "type": "object",
             "properties": {
-              "totalActivities": {"type": "integer"},
-              "onChainProofs": {"type": "integer"},
-              "verificationRate": {"type": "integer"},
-              "uniqueDays": {"type": "integer"},
-              "pinnedCount": {"type": "integer"}
+              "totalActivities": {
+                "type": "integer"
+              },
+              "onChainProofs": {
+                "type": "integer"
+              },
+              "verificationRate": {
+                "type": "integer"
+              },
+              "uniqueDays": {
+                "type": "integer"
+              },
+              "pinnedCount": {
+                "type": "integer"
+              }
             }
           },
           "breakdown": {
@@ -3033,8 +3799,12 @@
             "items": {
               "type": "object",
               "properties": {
-                "type": {"type": "string"},
-                "count": {"type": "integer"}
+                "type": {
+                  "type": "string"
+                },
+                "count": {
+                  "type": "integer"
+                }
               }
             }
           },
@@ -3043,24 +3813,101 @@
             "items": {
               "type": "object",
               "properties": {
-                "type": {"type": "string"},
-                "description": {"type": "string"},
-                "timestamp": {"type": "string", "format": "date-time"},
-                "pinned": {"type": "boolean"}
+                "type": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "timestamp": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "pinned": {
+                  "type": "boolean"
+                }
               }
             }
           },
           "links": {
             "type": "object",
             "properties": {
-              "dashboard": {"type": "string", "format": "uri"},
-              "api": {"type": "string", "format": "uri"},
-              "rss": {"type": "string", "format": "uri"}
+              "dashboard": {
+                "type": "string",
+                "format": "uri"
+              },
+              "api": {
+                "type": "string",
+                "format": "uri"
+              },
+              "rss": {
+                "type": "string",
+                "format": "uri"
+              }
             }
           },
           "generatedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "ImportanceScore": {
+        "type": "object",
+        "description": "Auto-calculated importance score for an activity",
+        "properties": {
+          "score": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Overall importance score (0-100)"
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "critical",
+              "high",
+              "medium",
+              "low",
+              "minimal"
+            ],
+            "description": "Priority level based on score"
+          },
+          "emoji": {
+            "type": "string",
+            "description": "Visual indicator emoji"
+          },
+          "breakdown": {
+            "type": "object",
+            "properties": {
+              "typeWeight": {
+                "type": "integer",
+                "description": "Points from activity type (0-30)"
+              },
+              "keywordBoost": {
+                "type": "integer",
+                "description": "Points from important keywords (0-25)"
+              },
+              "metadataRichness": {
+                "type": "integer",
+                "description": "Points from metadata detail (0-15)"
+              },
+              "onChainBonus": {
+                "type": "integer",
+                "description": "Points for on-chain verification (0-15)"
+              },
+              "timePattern": {
+                "type": "integer",
+                "description": "Points from work hour patterns (0-15)"
+              }
+            }
+          },
+          "factors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Human-readable factors contributing to score"
           }
         }
       }

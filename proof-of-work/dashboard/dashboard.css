@@ -11407,3 +11407,148 @@ body.tour-active {
         text-align: center;
     }
 }
+
+/* ============================================
+   IMPORTANCE SCORING BADGES
+   ============================================ */
+
+.importance-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: help;
+    transition: all 0.2s ease;
+}
+
+.importance-badge:hover {
+    transform: scale(1.05);
+}
+
+/* Importance levels */
+.importance-critical {
+    background: rgba(255, 59, 48, 0.2);
+    color: #ff3b30;
+    border: 1px solid rgba(255, 59, 48, 0.4);
+}
+
+.importance-high {
+    background: rgba(255, 149, 0, 0.2);
+    color: #ff9500;
+    border: 1px solid rgba(255, 149, 0, 0.4);
+}
+
+.importance-medium {
+    background: rgba(255, 204, 0, 0.2);
+    color: #ffcc00;
+    border: 1px solid rgba(255, 204, 0, 0.4);
+}
+
+.importance-low {
+    background: rgba(52, 199, 89, 0.2);
+    color: #34c759;
+    border: 1px solid rgba(52, 199, 89, 0.4);
+}
+
+.importance-minimal {
+    background: rgba(142, 142, 147, 0.2);
+    color: #8e8e93;
+    border: 1px solid rgba(142, 142, 147, 0.4);
+}
+
+/* Light theme adjustments */
+[data-theme="light"] .importance-critical {
+    background: rgba(255, 59, 48, 0.1);
+    color: #d32f2f;
+}
+
+[data-theme="light"] .importance-high {
+    background: rgba(255, 149, 0, 0.15);
+    color: #e65100;
+}
+
+[data-theme="light"] .importance-medium {
+    background: rgba(255, 204, 0, 0.15);
+    color: #b8860b;
+}
+
+[data-theme="light"] .importance-low {
+    background: rgba(52, 199, 89, 0.15);
+    color: #2e7d32;
+}
+
+[data-theme="light"] .importance-minimal {
+    background: rgba(142, 142, 147, 0.15);
+    color: #666;
+}
+
+/* Cyberpunk theme - neon effect */
+[data-theme="cyberpunk"] .importance-critical {
+    background: rgba(255, 0, 85, 0.2);
+    color: #ff0055;
+    border-color: rgba(255, 0, 85, 0.6);
+    text-shadow: 0 0 10px rgba(255, 0, 85, 0.5);
+}
+
+[data-theme="cyberpunk"] .importance-high {
+    background: rgba(255, 119, 0, 0.2);
+    color: #ff7700;
+    border-color: rgba(255, 119, 0, 0.6);
+    text-shadow: 0 0 10px rgba(255, 119, 0, 0.5);
+}
+
+[data-theme="cyberpunk"] .importance-medium {
+    background: rgba(255, 255, 0, 0.15);
+    color: #ffff00;
+    border-color: rgba(255, 255, 0, 0.5);
+    text-shadow: 0 0 10px rgba(255, 255, 0, 0.4);
+}
+
+[data-theme="cyberpunk"] .importance-low {
+    background: rgba(0, 255, 136, 0.15);
+    color: #00ff88;
+    border-color: rgba(0, 255, 136, 0.5);
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.4);
+}
+
+[data-theme="cyberpunk"] .importance-minimal {
+    background: rgba(136, 136, 170, 0.15);
+    color: #8888aa;
+    border-color: rgba(136, 136, 170, 0.4);
+}
+
+/* Ocean theme */
+[data-theme="ocean"] .importance-critical {
+    background: rgba(255, 82, 82, 0.2);
+    color: #ff5252;
+}
+
+[data-theme="ocean"] .importance-high {
+    background: rgba(255, 171, 64, 0.2);
+    color: #ffab40;
+}
+
+/* Forest theme */
+[data-theme="forest"] .importance-critical {
+    background: rgba(239, 83, 80, 0.2);
+    color: #ef5350;
+}
+
+[data-theme="forest"] .importance-low {
+    background: rgba(129, 199, 132, 0.2);
+    color: #81c784;
+}
+
+/* Sunset theme */
+[data-theme="sunset"] .importance-critical {
+    background: rgba(244, 67, 54, 0.25);
+    color: #f44336;
+}
+
+[data-theme="sunset"] .importance-high {
+    background: rgba(255, 152, 0, 0.25);
+    color: #ff9800;
+}

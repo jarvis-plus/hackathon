@@ -185,6 +185,207 @@ function getBuiltInTypeEmoji(type: string): string {
 }
 
 // ==============================================
+// ACTIVITY IMPORTANCE SCORING
+// ==============================================
+
+/**
+ * Activity Importance Score Interface
+ * 
+ * Automatically scores activities based on multiple factors.
+ * Score range: 0-100, with labeled priority levels.
+ */
+interface ImportanceScore {
+  score: number;           // 0-100 overall score
+  level: 'critical' | 'high' | 'medium' | 'low' | 'minimal';
+  emoji: string;           // Visual indicator
+  breakdown: {
+    typeWeight: number;    // 0-30: Activity type importance
+    keywordBoost: number;  // 0-25: Important keywords
+    metadataRichness: number; // 0-15: Detail level
+    onChainBonus: number;  // 0-15: Cryptographic verification
+    timePattern: number;   // 0-15: Work hour patterns
+  };
+  factors: string[];       // Human-readable factors
+}
+
+/**
+ * Type weights for activity importance.
+ * Higher = more important to the project.
+ */
+const TYPE_WEIGHTS: Record<string, number> = {
+  'deploy': 30,
+  'decision': 30,
+  'build': 28,
+  'commit': 25,
+  'trade': 25,
+  'transfer': 22,
+  'email': 20,
+  'calendar': 18,
+  'research': 15,
+  'browser': 12,
+  'message': 10,
+  'tweet': 10,
+  'session': 8,
+  'heartbeat': 5
+};
+
+/**
+ * Keywords that indicate high-priority activities.
+ * Format: { keyword: pointBoost }
+ */
+const IMPORTANCE_KEYWORDS: Record<string, number> = {
+  // Critical indicators (+15)
+  'critical': 15, 'urgent': 15, 'emergency': 15, 'breaking': 15, 'outage': 15,
+  // Milestone indicators (+12)
+  'milestone': 12, 'deployed': 12, 'shipped': 12, 'launched': 12, 'released': 12,
+  // Important work (+10)
+  'fix': 10, 'bug': 10, 'security': 10, 'production': 10, 'hotfix': 10,
+  // Valuable work (+8)
+  'feature': 8, 'implement': 8, 'complete': 8, 'finished': 8, 'added': 8,
+  // Progress indicators (+5)
+  'progress': 5, 'update': 5, 'improve': 5, 'refactor': 5, 'cycle': 5
+};
+
+/**
+ * Calculate importance score for an activity.
+ * 
+ * Factors considered:
+ * 1. Activity type (0-30 points)
+ * 2. Keyword analysis (0-25 points)
+ * 3. Metadata richness (0-15 points)
+ * 4. On-chain status (0-15 points)
+ * 5. Time patterns (0-15 points)
+ * 
+ * Total max: 100 points
+ */
+function calculateImportanceScore(activity: any): ImportanceScore {
+  const factors: string[] = [];
+  let typeWeight = 0;
+  let keywordBoost = 0;
+  let metadataRichness = 0;
+  let onChainBonus = 0;
+  let timePattern = 0;
+
+  // 1. Type Weight (0-30)
+  const activityType = activity.type?.toLowerCase() || 'unknown';
+  typeWeight = TYPE_WEIGHTS[activityType] || 10;
+  if (typeWeight >= 25) factors.push(`High-value activity type: ${activityType}`);
+
+  // 2. Keyword Analysis (0-25, capped)
+  const description = (activity.description || '').toLowerCase();
+  const metadata = activity.metadata || {};
+  const searchText = description + ' ' + JSON.stringify(metadata).toLowerCase();
+  
+  const matchedKeywords: string[] = [];
+  for (const [keyword, points] of Object.entries(IMPORTANCE_KEYWORDS)) {
+    if (searchText.includes(keyword)) {
+      keywordBoost += points;
+      matchedKeywords.push(keyword);
+    }
+  }
+  keywordBoost = Math.min(keywordBoost, 25); // Cap at 25
+  if (matchedKeywords.length > 0) {
+    factors.push(`Keywords: ${matchedKeywords.slice(0, 3).join(', ')}`);
+  }
+
+  // 3. Metadata Richness (0-15)
+  if (metadata && Object.keys(metadata).length > 0) {
+    const fieldCount = Object.keys(metadata).length;
+    metadataRichness = Math.min(5 + (fieldCount * 2), 15);
+    if (fieldCount >= 3) factors.push(`Rich metadata (${fieldCount} fields)`);
+  }
+
+  // 4. On-Chain Status (0-15)
+  if (activity.signature) {
+    onChainBonus = 15;
+    factors.push('Cryptographically verified on-chain');
+  }
+
+  // 5. Time Pattern Analysis (0-15)
+  try {
+    const timestamp = new Date(activity.timestamp);
+    const hour = timestamp.getUTCHours();
+    const day = timestamp.getUTCDay();
+    
+    // Work hours (9 AM - 6 PM UTC) = more focused work
+    if (hour >= 9 && hour <= 18) {
+      timePattern += 10;
+    } else if (hour >= 6 && hour <= 22) {
+      timePattern += 5;
+    }
+    
+    // Weekend work = extra dedication
+    if (day === 0 || day === 6) {
+      timePattern += 5;
+      factors.push('Weekend work');
+    }
+    timePattern = Math.min(timePattern, 15);
+  } catch (e) {
+    // Invalid timestamp, skip time scoring
+  }
+
+  // Calculate total score
+  const score = Math.min(
+    typeWeight + keywordBoost + metadataRichness + onChainBonus + timePattern,
+    100
+  );
+
+  // Determine level and emoji
+  let level: ImportanceScore['level'];
+  let emoji: string;
+  if (score >= 80) {
+    level = 'critical';
+    emoji = '🔴';
+  } else if (score >= 60) {
+    level = 'high';
+    emoji = '🟠';
+  } else if (score >= 40) {
+    level = 'medium';
+    emoji = '🟡';
+  } else if (score >= 20) {
+    level = 'low';
+    emoji = '🟢';
+  } else {
+    level = 'minimal';
+    emoji = '⚪';
+  }
+
+  return {
+    score,
+    level,
+    emoji,
+    breakdown: {
+      typeWeight,
+      keywordBoost,
+      metadataRichness,
+      onChainBonus,
+      timePattern
+    },
+    factors
+  };
+}
+
+/**
+ * Get importance distribution stats across all activities.
+ */
+function getImportanceDistribution(activities: any[]): Record<string, number> {
+  const distribution: Record<string, number> = {
+    critical: 0,
+    high: 0,
+    medium: 0,
+    low: 0,
+    minimal: 0
+  };
+  
+  for (const activity of activities) {
+    const { level } = calculateImportanceScore(activity);
+    distribution[level]++;
+  }
+  
+  return distribution;
+}
+
+// ==============================================
 // WEBHOOK SYSTEM
 // ==============================================
 
@@ -2312,6 +2513,71 @@ const server = Bun.serve({
       return Response.json({
         count: pinned.length,
         activities: pinned
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: GET /api/activities/importance
+    // Get importance scores for all activities
+    // Query params: ?level=high (filter by level)
+    // ==========================================
+    if (path === '/api/activities/importance' && req.method === 'GET') {
+      const activities = getActivities();
+      const levelFilter = url.searchParams.get('level');
+      
+      const scored = activities.map((activity: any) => ({
+        hash: activity.hash,
+        type: activity.type,
+        description: activity.description,
+        timestamp: activity.timestamp,
+        importance: calculateImportanceScore(activity)
+      }));
+      
+      // Filter by level if specified
+      const filtered = levelFilter 
+        ? scored.filter((a: any) => a.importance.level === levelFilter)
+        : scored;
+      
+      // Sort by score descending
+      filtered.sort((a: any, b: any) => b.importance.score - a.importance.score);
+      
+      const distribution = getImportanceDistribution(activities);
+      const avgScore = activities.length > 0
+        ? Math.round(scored.reduce((sum: number, a: any) => sum + a.importance.score, 0) / activities.length)
+        : 0;
+      
+      return Response.json({
+        count: filtered.length,
+        totalActivities: activities.length,
+        averageScore: avgScore,
+        distribution,
+        activities: filtered
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: GET /api/activities/:hash/importance
+    // Get importance score for a single activity
+    // ==========================================
+    if (path.match(/^\/api\/activities\/[a-f0-9]{64}\/importance$/) && req.method === 'GET') {
+      const hash = path.split('/')[3];
+      const activities = getActivities();
+      const activity = activities.find((a: any) => a.hash === hash);
+      
+      if (!activity) {
+        return Response.json({ 
+          error: 'Activity not found' 
+        }, { status: 404, headers: corsHeaders });
+      }
+      
+      const importance = calculateImportanceScore(activity);
+      
+      return Response.json({
+        hash,
+        type: activity.type,
+        description: activity.description,
+        timestamp: activity.timestamp,
+        importance
       }, { headers: corsHeaders });
     }
 

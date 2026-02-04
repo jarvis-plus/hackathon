@@ -3818,5 +3818,19 @@
     "description": "--type",
     "hash": "39c5b722904ab5045b6ce76127eb936ac48df2c6098ef192e4f7f7358c6b9c79",
     "signature": "5g7pnQVGgRv4pfL3WLNLT9W7J5the6apA12gpg3F6L1QJzqrn5ngCDJY5vPehhHbhcqT5TzPbk4XxVgKCRNakagY"
+  },
+  {
+    "timestamp": "2026-02-04T06:02:27.873Z",
+    "type": "commit",
+    "description": "Cycle 181: Dashboard tour/onboarding for new users",
+    "hash": "b5dad1cd382842f118c7228d434167446b905dd87eee390adc0d37adf4372cb8",
+    "signature": "3ZgV556YGefERoHqZE6xXLGJyTcdUJMP5nDa1o9Df4p2gS4jTUw2CNocg56yrEwW8kWWYeogx9cEXApE9LwdgpGq"
+  },
+  {
+    "timestamp": "2026-02-04T06:32:29.871Z",
+    "type": "build",
+    "description": "Cycle 182: Activity importance scoring (auto-prioritize)",
+    "hash": "0a4acdb4cfe6368426104679c7914740a2fd0e8424dc1054f405266a0e699792",
+    "signature": "8KS6X8eufngUeTML4eqVp1TE6dRDJLjfaqSS5uJ7v7hiAU3zUtLwkVoJuJD653fX2TwLLuwgNM8JpEbSxAeD6nR"
   }
 ]

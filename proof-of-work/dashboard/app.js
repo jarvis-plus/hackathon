@@ -940,6 +940,7 @@ function renderActivities(activities, highlightNew = false) {
         
         const compareSelected = typeof compareSelections !== 'undefined' && compareSelections.includes(hash);
         const compareCheckboxHtml = typeof renderCompareCheckbox === 'function' ? renderCompareCheckbox(hash) : '';
+        const importanceBadgeHtml = renderImportanceBadge(a);
         
         return `
         <div class="activity-item ${a.type}${isNew ? ' new-activity' : ''}${isPinned ? ' pinned' : ''}${bookmarked ? ' bookmarked' : ''}${compareSelected ? ' compare-selected' : ''}" 
@@ -962,6 +963,7 @@ function renderActivities(activities, highlightNew = false) {
                     ${isPinned ? '<span class="pinned-badge" title="Pinned activity">📌</span>' : ''}
                     ${bookmarked ? '<span class="bookmarked-badge" title="Bookmarked">⭐</span>' : ''}
                     <span class="activity-type">${a.type}</span>
+                    ${importanceBadgeHtml}
                     ${getProofBadge(a)}
                     ${walletHtml}
                 </div>
@@ -4946,6 +4948,91 @@ function formatBytes(bytes) {
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+// ============================================
+// IMPORTANCE SCORING
+// ============================================
+
+/**
+ * Type weights for activity importance scoring.
+ */
+const IMPORTANCE_TYPE_WEIGHTS = {
+    'deploy': 30, 'decision': 30, 'build': 28, 'commit': 25, 'trade': 25,
+    'transfer': 22, 'email': 20, 'calendar': 18, 'research': 15, 'browser': 12,
+    'message': 10, 'tweet': 10, 'session': 8, 'heartbeat': 5
+};
+
+/**
+ * Keywords that boost importance.
+ */
+const IMPORTANCE_KEYWORDS = {
+    'critical': 15, 'urgent': 15, 'emergency': 15, 'breaking': 15, 'outage': 15,
+    'milestone': 12, 'deployed': 12, 'shipped': 12, 'launched': 12, 'released': 12,
+    'fix': 10, 'bug': 10, 'security': 10, 'production': 10, 'hotfix': 10,
+    'feature': 8, 'implement': 8, 'complete': 8, 'finished': 8, 'added': 8,
+    'progress': 5, 'update': 5, 'improve': 5, 'refactor': 5, 'cycle': 5
+};
+
+/**
+ * Calculate importance score for an activity (client-side mirror of server logic).
+ * @param {Object} activity - The activity object
+ * @returns {Object} Importance score with level, emoji, and score
+ */
+function calculateImportance(activity) {
+    let score = 0;
+    
+    // Type weight (0-30)
+    const type = (activity.type || '').toLowerCase();
+    score += IMPORTANCE_TYPE_WEIGHTS[type] || 10;
+    
+    // Keyword boost (0-25)
+    const text = ((activity.description || '') + ' ' + JSON.stringify(activity.metadata || {})).toLowerCase();
+    let keywordBoost = 0;
+    for (const [kw, pts] of Object.entries(IMPORTANCE_KEYWORDS)) {
+        if (text.includes(kw)) keywordBoost += pts;
+    }
+    score += Math.min(keywordBoost, 25);
+    
+    // Metadata richness (0-15)
+    if (activity.metadata && Object.keys(activity.metadata).length > 0) {
+        score += Math.min(5 + Object.keys(activity.metadata).length * 2, 15);
+    }
+    
+    // On-chain bonus (0-15)
+    if (activity.signature) score += 15;
+    
+    // Time pattern (0-15)
+    try {
+        const ts = new Date(activity.timestamp);
+        const hour = ts.getUTCHours();
+        const day = ts.getUTCDay();
+        if (hour >= 9 && hour <= 18) score += 10;
+        else if (hour >= 6 && hour <= 22) score += 5;
+        if (day === 0 || day === 6) score += 5;
+    } catch (e) {}
+    
+    score = Math.min(score, 100);
+    
+    // Determine level
+    let level, emoji;
+    if (score >= 80) { level = 'critical'; emoji = '🔴'; }
+    else if (score >= 60) { level = 'high'; emoji = '🟠'; }
+    else if (score >= 40) { level = 'medium'; emoji = '🟡'; }
+    else if (score >= 20) { level = 'low'; emoji = '🟢'; }
+    else { level = 'minimal'; emoji = '⚪'; }
+    
+    return { score, level, emoji };
+}
+
+/**
+ * Render importance badge for an activity.
+ * @param {Object} activity - The activity object
+ * @returns {string} HTML string for importance badge
+ */
+function renderImportanceBadge(activity) {
+    const { score, level, emoji } = calculateImportance(activity);
+    return `<span class="importance-badge importance-${level}" title="Importance: ${score}/100 (${level})">${emoji} ${score}</span>`;
 }
 
 function renderActivityTags(tags) {
