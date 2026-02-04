@@ -87,6 +87,9 @@ const DIGEST_FILE = join(BASE_DIR, 'data', 'digest-subscriptions.json');
 /** Path to the custom activity types file */
 const CUSTOM_TYPES_FILE = join(BASE_DIR, 'data', 'custom-types.json');
 
+/** Path to the activity templates file */
+const TEMPLATES_FILE = join(BASE_DIR, 'data', 'templates.json');
+
 // ==============================================
 // CUSTOM ACTIVITY TYPES SYSTEM
 // ==============================================
@@ -110,6 +113,78 @@ interface CustomActivityType {
   color?: string;
   description?: string;
   createdAt: string;
+}
+
+// ==============================================
+// ACTIVITY TEMPLATES SYSTEM
+// ==============================================
+
+/**
+ * Activity Template Interface
+ * 
+ * Templates allow users to create reusable activity presets for quick logging.
+ * Each template includes:
+ * - id: Unique identifier (auto-generated UUID)
+ * - name: Template name (e.g., "Daily Standup")
+ * - type: Activity type (built-in or custom)
+ * - description: Pre-filled description (supports {{date}}, {{time}} placeholders)
+ * - metadata: Pre-filled metadata fields
+ * - shortcut: Optional keyboard shortcut (e.g., "Alt+1")
+ * - usageCount: Times this template has been used
+ * - createdAt: When the template was created
+ * - lastUsedAt: When the template was last used
+ */
+interface ActivityTemplate {
+  id: string;
+  name: string;
+  type: string;
+  description: string;
+  metadata?: Record<string, any>;
+  shortcut?: string;
+  usageCount: number;
+  createdAt: string;
+  lastUsedAt?: string;
+}
+
+/**
+ * Load activity templates from disk.
+ */
+function getTemplates(): ActivityTemplate[] {
+  if (!existsSync(TEMPLATES_FILE)) return [];
+  try {
+    const data = readFileSync(TEMPLATES_FILE, 'utf-8');
+    return JSON.parse(data);
+  } catch (e) {
+    console.error('Failed to load templates:', e);
+    return [];
+  }
+}
+
+/**
+ * Save activity templates to disk.
+ */
+function saveTemplates(templates: ActivityTemplate[]): void {
+  try {
+    writeFileSync(TEMPLATES_FILE, JSON.stringify(templates, null, 2));
+  } catch (e) {
+    console.error('Failed to save templates:', e);
+  }
+}
+
+/**
+ * Process template placeholders.
+ * Replaces {{date}}, {{time}}, {{datetime}} with current values.
+ */
+function processTemplatePlaceholders(text: string): string {
+  const now = new Date();
+  const date = now.toISOString().split('T')[0];
+  const time = now.toTimeString().split(' ')[0].slice(0, 5);
+  const datetime = `${date} ${time}`;
+  
+  return text
+    .replace(/\{\{date\}\}/g, date)
+    .replace(/\{\{time\}\}/g, time)
+    .replace(/\{\{datetime\}\}/g, datetime);
 }
 
 /**
@@ -3033,6 +3108,306 @@ const server = Bun.serve({
     }
 
     // ==========================================
+    // API: POST /api/activities/:hash/link
+    // Link two activities together (creates bidirectional relationship)
+    // Body: { targetHash: string, relationship?: string }
+    // Relationship types: "causes", "blocks", "relates", "parent", "child"
+    // ==========================================
+    if (path.match(/^\/api\/activities\/[a-f0-9]{64}\/link$/) && req.method === 'POST') {
+      const sourceHash = path.split('/')[3];
+      
+      try {
+        const body = await req.json() as { targetHash: string; relationship?: string };
+        
+        if (!body.targetHash || !/^[a-f0-9]{64}$/.test(body.targetHash)) {
+          return Response.json({ 
+            error: 'Invalid targetHash - must be 64 character hex string' 
+          }, { status: 400, headers: corsHeaders });
+        }
+        
+        if (sourceHash === body.targetHash) {
+          return Response.json({ 
+            error: 'Cannot link activity to itself' 
+          }, { status: 400, headers: corsHeaders });
+        }
+        
+        const validRelationships = ['causes', 'blocks', 'relates', 'parent', 'child'];
+        const relationship = body.relationship || 'relates';
+        if (!validRelationships.includes(relationship)) {
+          return Response.json({ 
+            error: `Invalid relationship type. Must be one of: ${validRelationships.join(', ')}` 
+          }, { status: 400, headers: corsHeaders });
+        }
+        
+        const activities = getActivities();
+        const sourceIdx = activities.findIndex((a: any) => a.hash === sourceHash);
+        const targetIdx = activities.findIndex((a: any) => a.hash === body.targetHash);
+        
+        if (sourceIdx === -1) {
+          return Response.json({ 
+            error: 'Source activity not found' 
+          }, { status: 404, headers: corsHeaders });
+        }
+        
+        if (targetIdx === -1) {
+          return Response.json({ 
+            error: 'Target activity not found' 
+          }, { status: 404, headers: corsHeaders });
+        }
+        
+        // Initialize links array if not present
+        if (!activities[sourceIdx].links) {
+          activities[sourceIdx].links = [];
+        }
+        if (!activities[targetIdx].links) {
+          activities[targetIdx].links = [];
+        }
+        
+        // Check if link already exists
+        const existingLink = activities[sourceIdx].links.find(
+          (l: any) => l.hash === body.targetHash
+        );
+        if (existingLink) {
+          return Response.json({ 
+            error: 'Link already exists',
+            existingRelationship: existingLink.relationship
+          }, { status: 409, headers: corsHeaders });
+        }
+        
+        // Add bidirectional links with inverse relationships
+        const inverseRelationships: Record<string, string> = {
+          'causes': 'caused-by',
+          'blocks': 'blocked-by',
+          'relates': 'relates',
+          'parent': 'child',
+          'child': 'parent'
+        };
+        
+        const timestamp = new Date().toISOString();
+        
+        activities[sourceIdx].links.push({
+          hash: body.targetHash,
+          relationship,
+          createdAt: timestamp
+        });
+        
+        activities[targetIdx].links.push({
+          hash: sourceHash,
+          relationship: inverseRelationships[relationship],
+          createdAt: timestamp
+        });
+        
+        saveActivities(activities);
+        
+        console.log(`🔗 Linked activities: ${sourceHash.slice(0, 8)}... --[${relationship}]--> ${body.targetHash.slice(0, 8)}...`);
+        
+        return Response.json({
+          success: true,
+          link: {
+            source: sourceHash,
+            target: body.targetHash,
+            relationship,
+            inverseRelationship: inverseRelationships[relationship],
+            createdAt: timestamp
+          },
+          message: 'Activities linked successfully'
+        }, { headers: corsHeaders });
+        
+      } catch (e) {
+        return Response.json({ 
+          error: 'Invalid JSON body' 
+        }, { status: 400, headers: corsHeaders });
+      }
+    }
+
+    // ==========================================
+    // API: DELETE /api/activities/:hash/link/:targetHash
+    // Remove link between two activities (bidirectional removal)
+    // ==========================================
+    if (path.match(/^\/api\/activities\/[a-f0-9]{64}\/link\/[a-f0-9]{64}$/) && req.method === 'DELETE') {
+      const parts = path.split('/');
+      const sourceHash = parts[3];
+      const targetHash = parts[5];
+      
+      const activities = getActivities();
+      const sourceIdx = activities.findIndex((a: any) => a.hash === sourceHash);
+      const targetIdx = activities.findIndex((a: any) => a.hash === targetHash);
+      
+      if (sourceIdx === -1 || targetIdx === -1) {
+        return Response.json({ 
+          error: 'One or both activities not found' 
+        }, { status: 404, headers: corsHeaders });
+      }
+      
+      // Remove from source
+      const sourceLinks = activities[sourceIdx].links || [];
+      const sourceLinkIdx = sourceLinks.findIndex((l: any) => l.hash === targetHash);
+      
+      // Remove from target
+      const targetLinks = activities[targetIdx].links || [];
+      const targetLinkIdx = targetLinks.findIndex((l: any) => l.hash === sourceHash);
+      
+      if (sourceLinkIdx === -1 && targetLinkIdx === -1) {
+        return Response.json({ 
+          error: 'No link exists between these activities' 
+        }, { status: 404, headers: corsHeaders });
+      }
+      
+      if (sourceLinkIdx !== -1) {
+        sourceLinks.splice(sourceLinkIdx, 1);
+      }
+      if (targetLinkIdx !== -1) {
+        targetLinks.splice(targetLinkIdx, 1);
+      }
+      
+      // Clean up empty arrays
+      if (sourceLinks.length === 0) delete activities[sourceIdx].links;
+      if (targetLinks.length === 0) delete activities[targetIdx].links;
+      
+      saveActivities(activities);
+      
+      console.log(`🔗 Unlinked activities: ${sourceHash.slice(0, 8)}... <--> ${targetHash.slice(0, 8)}...`);
+      
+      return Response.json({
+        success: true,
+        source: sourceHash,
+        target: targetHash,
+        message: 'Link removed successfully'
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: GET /api/activities/:hash/related
+    // Get all activities linked to this activity (with relationship info)
+    // Query: ?depth=2 for multi-hop traversal (default 1)
+    // ==========================================
+    if (path.match(/^\/api\/activities\/[a-f0-9]{64}\/related$/) && req.method === 'GET') {
+      const hash = path.split('/')[3];
+      const depth = Math.min(parseInt(url.searchParams.get('depth') || '1'), 3);
+      
+      const activities = getActivities();
+      const activityMap = new Map(activities.map((a: any) => [a.hash, a]));
+      
+      const rootActivity = activityMap.get(hash);
+      if (!rootActivity) {
+        return Response.json({ 
+          error: 'Activity not found' 
+        }, { status: 404, headers: corsHeaders });
+      }
+      
+      // BFS to find all related activities up to depth
+      const visited = new Set<string>([hash]);
+      const related: Array<{
+        activity: any;
+        relationship: string;
+        distance: number;
+        path: string[];
+      }> = [];
+      
+      let currentLevel = [{ hash, path: [hash] }];
+      
+      for (let d = 1; d <= depth && currentLevel.length > 0; d++) {
+        const nextLevel: typeof currentLevel = [];
+        
+        for (const { hash: currentHash, path: currentPath } of currentLevel) {
+          const activity = activityMap.get(currentHash);
+          if (!activity?.links) continue;
+          
+          for (const link of activity.links) {
+            if (visited.has(link.hash)) continue;
+            visited.add(link.hash);
+            
+            const linkedActivity = activityMap.get(link.hash);
+            if (linkedActivity) {
+              const newPath = [...currentPath, link.hash];
+              related.push({
+                activity: {
+                  hash: linkedActivity.hash,
+                  type: linkedActivity.type,
+                  description: linkedActivity.description,
+                  timestamp: linkedActivity.timestamp,
+                  signature: linkedActivity.signature
+                },
+                relationship: link.relationship,
+                distance: d,
+                path: newPath
+              });
+              nextLevel.push({ hash: link.hash, path: newPath });
+            }
+          }
+        }
+        
+        currentLevel = nextLevel;
+      }
+      
+      // Sort by distance then by timestamp
+      related.sort((a, b) => {
+        if (a.distance !== b.distance) return a.distance - b.distance;
+        return new Date(b.activity.timestamp).getTime() - new Date(a.activity.timestamp).getTime();
+      });
+      
+      return Response.json({
+        source: {
+          hash: rootActivity.hash,
+          type: rootActivity.type,
+          description: rootActivity.description,
+          linksCount: rootActivity.links?.length || 0
+        },
+        depth,
+        totalRelated: related.length,
+        related
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: GET /api/links
+    // Get all activity links in the system (activity graph)
+    // ==========================================
+    if (path === '/api/links' && req.method === 'GET') {
+      const activities = getActivities();
+      
+      const links: Array<{
+        source: string;
+        target: string;
+        relationship: string;
+        createdAt: string;
+      }> = [];
+      
+      const seenPairs = new Set<string>();
+      
+      for (const activity of activities) {
+        if (!activity.links) continue;
+        
+        for (const link of activity.links) {
+          // Create normalized pair key to avoid duplicates
+          const pairKey = [activity.hash, link.hash].sort().join('::');
+          if (seenPairs.has(pairKey)) continue;
+          seenPairs.add(pairKey);
+          
+          links.push({
+            source: activity.hash,
+            target: link.hash,
+            relationship: link.relationship,
+            createdAt: link.createdAt
+          });
+        }
+      }
+      
+      // Stats
+      const activitiesWithLinks = activities.filter((a: any) => a.links?.length > 0).length;
+      
+      return Response.json({
+        totalLinks: links.length,
+        activitiesWithLinks,
+        totalActivities: activities.length,
+        linkCoverage: activities.length > 0 
+          ? Math.round((activitiesWithLinks / activities.length) * 100) 
+          : 0,
+        links
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
     // API: GET /api/og/:hash
     // Generate Open Graph image for social sharing
     // Returns an SVG image suitable for Twitter/Facebook/Discord
@@ -5686,6 +6061,376 @@ Colosseum Agent Hackathon 2026`;
         affectedActivities: affectedCount,
         note: 'Existing activities with this type are preserved but the type will appear as unknown.'
       }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: GET /api/templates
+    // List all activity templates
+    // ==========================================
+    if (path === '/api/templates' && req.method === 'GET') {
+      const templates = getTemplates();
+      
+      // Sort by usage count (most used first), then by name
+      templates.sort((a, b) => {
+        if (b.usageCount !== a.usageCount) return b.usageCount - a.usageCount;
+        return a.name.localeCompare(b.name);
+      });
+      
+      return Response.json(templates, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: POST /api/templates
+    // Create a new activity template
+    // ==========================================
+    if (path === '/api/templates' && req.method === 'POST') {
+      // Authentication required for writes
+      if (API_KEY && !authenticateRequest(req)) {
+        return Response.json({ error: 'Unauthorized' }, { 
+          status: 401, 
+          headers: corsHeaders 
+        });
+      }
+      
+      try {
+        const body = await req.json() as any;
+        const { name, type, description, metadata, shortcut } = body;
+        
+        // Validate required fields
+        if (!name || typeof name !== 'string' || name.trim().length === 0) {
+          return Response.json({ error: 'Template name is required' }, { 
+            status: 400, 
+            headers: corsHeaders 
+          });
+        }
+        
+        if (!type || typeof type !== 'string') {
+          return Response.json({ error: 'Activity type is required' }, { 
+            status: 400, 
+            headers: corsHeaders 
+          });
+        }
+        
+        if (!description || typeof description !== 'string') {
+          return Response.json({ error: 'Description is required' }, { 
+            status: 400, 
+            headers: corsHeaders 
+          });
+        }
+        
+        // Validate type exists (built-in or custom)
+        const customTypes = getCustomTypes();
+        const validTypes = [...BUILT_IN_TYPES, ...customTypes.map(t => t.id)];
+        if (!validTypes.includes(type)) {
+          return Response.json({ 
+            error: `Invalid activity type: ${type}`,
+            validTypes 
+          }, { status: 400, headers: corsHeaders });
+        }
+        
+        // Validate shortcut format if provided
+        if (shortcut && typeof shortcut === 'string') {
+          // Format: "Alt+1", "Ctrl+Shift+T", etc.
+          const shortcutPattern = /^(Ctrl\+)?(Alt\+)?(Shift\+)?[A-Z0-9]$/i;
+          if (!shortcutPattern.test(shortcut)) {
+            return Response.json({ 
+              error: 'Invalid shortcut format. Use format like "Alt+1" or "Ctrl+Shift+T"' 
+            }, { status: 400, headers: corsHeaders });
+          }
+        }
+        
+        // Check for duplicate names
+        const templates = getTemplates();
+        if (templates.some(t => t.name.toLowerCase() === name.trim().toLowerCase())) {
+          return Response.json({ 
+            error: `Template with name "${name}" already exists` 
+          }, { status: 409, headers: corsHeaders });
+        }
+        
+        // Check for duplicate shortcuts
+        if (shortcut) {
+          const existingShortcut = templates.find(t => t.shortcut?.toLowerCase() === shortcut.toLowerCase());
+          if (existingShortcut) {
+            return Response.json({ 
+              error: `Shortcut "${shortcut}" is already used by template "${existingShortcut.name}"` 
+            }, { status: 409, headers: corsHeaders });
+          }
+        }
+        
+        const template: ActivityTemplate = {
+          id: randomUUID(),
+          name: name.trim(),
+          type,
+          description: description.trim(),
+          metadata: metadata || undefined,
+          shortcut: shortcut || undefined,
+          usageCount: 0,
+          createdAt: new Date().toISOString()
+        };
+        
+        templates.push(template);
+        saveTemplates(templates);
+        
+        console.log(`📋 Template created: ${template.name} (${template.type})`);
+        
+        return Response.json(template, { 
+          status: 201, 
+          headers: corsHeaders 
+        });
+      } catch (e) {
+        return Response.json({ error: 'Invalid request body' }, { 
+          status: 400, 
+          headers: corsHeaders 
+        });
+      }
+    }
+
+    // ==========================================
+    // API: GET /api/templates/:id
+    // Get a specific template by ID
+    // ==========================================
+    if (path.match(/^\/api\/templates\/[a-f0-9-]{36}$/) && req.method === 'GET') {
+      const id = path.split('/').pop()!;
+      const templates = getTemplates();
+      const template = templates.find(t => t.id === id);
+      
+      if (!template) {
+        return Response.json({ error: 'Template not found' }, { 
+          status: 404, 
+          headers: corsHeaders 
+        });
+      }
+      
+      return Response.json(template, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: PUT /api/templates/:id
+    // Update an existing template
+    // ==========================================
+    if (path.match(/^\/api\/templates\/[a-f0-9-]{36}$/) && req.method === 'PUT') {
+      // Authentication required for writes
+      if (API_KEY && !authenticateRequest(req)) {
+        return Response.json({ error: 'Unauthorized' }, { 
+          status: 401, 
+          headers: corsHeaders 
+        });
+      }
+      
+      const id = path.split('/').pop()!;
+      
+      try {
+        const body = await req.json() as any;
+        const templates = getTemplates();
+        const templateIndex = templates.findIndex(t => t.id === id);
+        
+        if (templateIndex === -1) {
+          return Response.json({ error: 'Template not found' }, { 
+            status: 404, 
+            headers: corsHeaders 
+          });
+        }
+        
+        const template = templates[templateIndex];
+        
+        // Update allowed fields
+        if (body.name && typeof body.name === 'string') {
+          // Check for duplicate names (excluding current)
+          const duplicate = templates.find(t => 
+            t.id !== id && t.name.toLowerCase() === body.name.trim().toLowerCase()
+          );
+          if (duplicate) {
+            return Response.json({ 
+              error: `Template with name "${body.name}" already exists` 
+            }, { status: 409, headers: corsHeaders });
+          }
+          template.name = body.name.trim();
+        }
+        
+        if (body.type && typeof body.type === 'string') {
+          const customTypes = getCustomTypes();
+          const validTypes = [...BUILT_IN_TYPES, ...customTypes.map(t => t.id)];
+          if (!validTypes.includes(body.type)) {
+            return Response.json({ 
+              error: `Invalid activity type: ${body.type}` 
+            }, { status: 400, headers: corsHeaders });
+          }
+          template.type = body.type;
+        }
+        
+        if (body.description !== undefined) {
+          template.description = String(body.description).trim();
+        }
+        
+        if (body.metadata !== undefined) {
+          template.metadata = body.metadata || undefined;
+        }
+        
+        if (body.shortcut !== undefined) {
+          if (body.shortcut) {
+            const shortcutPattern = /^(Ctrl\+)?(Alt\+)?(Shift\+)?[A-Z0-9]$/i;
+            if (!shortcutPattern.test(body.shortcut)) {
+              return Response.json({ 
+                error: 'Invalid shortcut format' 
+              }, { status: 400, headers: corsHeaders });
+            }
+            // Check for duplicate shortcuts (excluding current)
+            const existingShortcut = templates.find(t => 
+              t.id !== id && t.shortcut?.toLowerCase() === body.shortcut.toLowerCase()
+            );
+            if (existingShortcut) {
+              return Response.json({ 
+                error: `Shortcut "${body.shortcut}" is already used by template "${existingShortcut.name}"` 
+              }, { status: 409, headers: corsHeaders });
+            }
+          }
+          template.shortcut = body.shortcut || undefined;
+        }
+        
+        saveTemplates(templates);
+        
+        console.log(`📋 Template updated: ${template.name}`);
+        
+        return Response.json(template, { headers: corsHeaders });
+      } catch (e) {
+        return Response.json({ error: 'Invalid request body' }, { 
+          status: 400, 
+          headers: corsHeaders 
+        });
+      }
+    }
+
+    // ==========================================
+    // API: DELETE /api/templates/:id
+    // Delete a template
+    // ==========================================
+    if (path.match(/^\/api\/templates\/[a-f0-9-]{36}$/) && req.method === 'DELETE') {
+      // Authentication required for writes
+      if (API_KEY && !authenticateRequest(req)) {
+        return Response.json({ error: 'Unauthorized' }, { 
+          status: 401, 
+          headers: corsHeaders 
+        });
+      }
+      
+      const id = path.split('/').pop()!;
+      const templates = getTemplates();
+      const templateIndex = templates.findIndex(t => t.id === id);
+      
+      if (templateIndex === -1) {
+        return Response.json({ error: 'Template not found' }, { 
+          status: 404, 
+          headers: corsHeaders 
+        });
+      }
+      
+      const deletedTemplate = templates.splice(templateIndex, 1)[0];
+      saveTemplates(templates);
+      
+      console.log(`📋 Template deleted: ${deletedTemplate.name}`);
+      
+      return Response.json({
+        success: true,
+        message: `Template "${deletedTemplate.name}" deleted`
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: POST /api/templates/:id/use
+    // Create an activity from a template
+    // ==========================================
+    if (path.match(/^\/api\/templates\/[a-f0-9-]{36}\/use$/) && req.method === 'POST') {
+      // Authentication required for writes
+      if (API_KEY && !authenticateRequest(req)) {
+        return Response.json({ error: 'Unauthorized' }, { 
+          status: 401, 
+          headers: corsHeaders 
+        });
+      }
+      
+      const id = path.split('/')[3];
+      const templates = getTemplates();
+      const template = templates.find(t => t.id === id);
+      
+      if (!template) {
+        return Response.json({ error: 'Template not found' }, { 
+          status: 404, 
+          headers: corsHeaders 
+        });
+      }
+      
+      try {
+        const body = await req.json().catch(() => ({})) as any;
+        
+        // Process placeholders in description
+        let description = processTemplatePlaceholders(template.description);
+        
+        // Allow overriding with body description
+        if (body.description && typeof body.description === 'string') {
+          description = body.description.trim();
+        }
+        
+        // Merge metadata
+        const metadata = {
+          ...template.metadata,
+          ...(body.metadata || {}),
+          template: template.name,
+          templateId: template.id
+        };
+        
+        // Create the activity
+        const activities = getActivities();
+        const timestamp = new Date().toISOString();
+        const hash = require('crypto').createHash('sha256')
+          .update(`${timestamp}|${template.type}|${description}`)
+          .digest('hex');
+        
+        const activity = {
+          id: activities.length,
+          type: template.type,
+          description,
+          metadata,
+          timestamp,
+          hash,
+          signature: null
+        };
+        
+        activities.push(activity);
+        saveActivities(activities);
+        
+        // Update template usage stats
+        template.usageCount++;
+        template.lastUsedAt = timestamp;
+        saveTemplates(templates);
+        
+        // Broadcast to WebSocket clients
+        broadcastUpdate('new_activity', activity);
+        
+        // Trigger webhooks
+        broadcastToWebhooks('activity.new', {
+          activity,
+          source: 'template',
+          templateName: template.name
+        });
+        
+        console.log(`📋 Activity created from template: ${template.name} → ${activity.hash.slice(0, 8)}`);
+        
+        return Response.json({
+          success: true,
+          activity,
+          template: {
+            id: template.id,
+            name: template.name,
+            usageCount: template.usageCount
+          }
+        }, { status: 201, headers: corsHeaders });
+      } catch (e) {
+        console.error('Error using template:', e);
+        return Response.json({ error: 'Failed to create activity' }, { 
+          status: 500, 
+          headers: corsHeaders 
+        });
+      }
     }
 
     // ==========================================

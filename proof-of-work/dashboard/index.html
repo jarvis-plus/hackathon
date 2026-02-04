@@ -81,6 +81,9 @@
                 <button class="sound-toggle" id="customTypesBtn" onclick="openCustomTypesModal()" title="Manage custom activity types" aria-label="Manage custom activity types">
                     ✨ Types
                 </button>
+                <button class="sound-toggle" id="templatesBtn" onclick="openTemplatesModal()" title="Activity templates for quick logging (T)" aria-label="Activity templates">
+                    📝 Templates
+                </button>
                 <button class="tour-start-btn" id="tourStartBtn" onclick="startTour()" title="Take a guided tour of the dashboard" aria-label="Start dashboard tour">
                     🎓 Tour
                 </button>
@@ -185,6 +188,73 @@
                     
                     <div class="voice-browser-support" id="voiceBrowserSupport" style="display: none;">
                         <p>⚠️ Your browser doesn't support speech recognition. Try Chrome, Edge, or Safari.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Templates Modal -->
+        <div id="templatesModal" class="templates-modal" role="dialog" aria-labelledby="templatesTitle" aria-modal="true" style="display: none;">
+            <div class="templates-content">
+                <div class="templates-header">
+                    <h2 id="templatesTitle">📝 Activity Templates</h2>
+                    <button class="modal-close" onclick="closeTemplatesModal()" aria-label="Close modal">&times;</button>
+                </div>
+                <div class="templates-body">
+                    <div class="templates-intro">
+                        <p>Create reusable templates for quick activity logging. Use placeholders like <code>{{date}}</code>, <code>{{time}}</code>, or <code>{{datetime}}</code>.</p>
+                    </div>
+                    
+                    <div class="templates-create-section">
+                        <h3>➕ Create New Template</h3>
+                        <form id="templateCreateForm" onsubmit="createTemplate(event)">
+                            <div class="template-form-row">
+                                <label for="templateName">Name:</label>
+                                <input type="text" id="templateName" placeholder="e.g., Daily Standup" required maxlength="50">
+                            </div>
+                            <div class="template-form-row">
+                                <label for="templateType">Type:</label>
+                                <select id="templateType" required>
+                                    <option value="build">🔨 Build</option>
+                                    <option value="commit">📝 Commit</option>
+                                    <option value="decision">🧠 Decision</option>
+                                    <option value="research">🔬 Research</option>
+                                    <option value="message">💬 Message</option>
+                                    <option value="email">📧 Email</option>
+                                    <option value="trade">💹 Trade</option>
+                                    <option value="deploy">🚀 Deploy</option>
+                                    <option value="session">💻 Session</option>
+                                </select>
+                            </div>
+                            <div class="template-form-row">
+                                <label for="templateDescription">Description:</label>
+                                <textarea id="templateDescription" placeholder="e.g., Morning standup on {{date}}" required rows="2" maxlength="500"></textarea>
+                            </div>
+                            <div class="template-form-row">
+                                <label for="templateShortcut">Shortcut (optional):</label>
+                                <input type="text" id="templateShortcut" placeholder="e.g., Alt+1" pattern="^(Ctrl\+)?(Alt\+)?(Shift\+)?[A-Za-z0-9]$" title="Format: Alt+1, Ctrl+Shift+T, etc.">
+                            </div>
+                            <button type="submit" class="template-create-btn">
+                                <span>➕</span> Create Template
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <div class="templates-list-section">
+                        <h3>📋 Your Templates</h3>
+                        <div id="templatesList" class="templates-list">
+                            <p class="templates-loading">Loading templates...</p>
+                        </div>
+                    </div>
+                    
+                    <div class="templates-tips">
+                        <p><strong>💡 Tips:</strong></p>
+                        <ul>
+                            <li>Use placeholders: <code>{{date}}</code> → 2026-02-04, <code>{{time}}</code> → 01:13</li>
+                            <li>Assign keyboard shortcuts for instant logging</li>
+                            <li>Templates track usage count and last used time</li>
+                            <li>Quick-use templates with the ⚡ button</li>
+                        </ul>
                     </div>
                 </div>
             </div>

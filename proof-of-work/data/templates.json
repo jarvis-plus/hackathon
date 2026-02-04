@@ -1,0 +1,12 @@
+[
+  {
+    "id": "3ed7cff1-0fe9-4873-8ac7-b1962a28ae6e",
+    "name": "Build Loop Cycle",
+    "type": "build",
+    "description": "Completed build loop cycle on {{date}} at {{time}}",
+    "shortcut": "Alt+1",
+    "usageCount": 2,
+    "createdAt": "2026-02-04T09:18:10.243Z",
+    "lastUsedAt": "2026-02-04T09:18:38.215Z"
+  }
+]

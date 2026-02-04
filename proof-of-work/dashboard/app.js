@@ -943,6 +943,7 @@ function renderActivities(activities, highlightNew = false) {
         const bulkSelected = typeof bulkSelections !== 'undefined' && bulkSelections.includes(hash);
         const bulkCheckboxHtml = typeof renderBulkCheckbox === 'function' ? renderBulkCheckbox(hash) : '';
         const importanceBadgeHtml = renderImportanceBadge(a);
+        const linksIndicatorHtml = renderLinksIndicator(a);
         
         return `
         <div class="activity-item ${a.type}${isNew ? ' new-activity' : ''}${isPinned ? ' pinned' : ''}${bookmarked ? ' bookmarked' : ''}${compareSelected ? ' compare-selected' : ''}${bulkSelected ? ' bulk-selected' : ''}" 
@@ -5039,6 +5040,306 @@ function calculateImportance(activity) {
 function renderImportanceBadge(activity) {
     const { score, level, emoji } = calculateImportance(activity);
     return `<span class="importance-badge importance-${level}" title="Importance: ${score}/100 (${level})">${emoji} ${score}</span>`;
+}
+
+/**
+ * Render links indicator for an activity.
+ * Shows a badge when activity has relationships to other activities.
+ * @param {Object} activity - The activity object
+ * @returns {string} HTML string for links indicator
+ */
+function renderLinksIndicator(activity) {
+    if (!activity.links || activity.links.length === 0) return '';
+    
+    const count = activity.links.length;
+    const relationships = activity.links.map(l => l.relationship).filter((v, i, a) => a.indexOf(v) === i);
+    const tooltip = `${count} linked activit${count === 1 ? 'y' : 'ies'}: ${relationships.join(', ')}`;
+    
+    return `<span class="links-indicator" title="${tooltip}" onclick="event.stopPropagation(); openLinksModal('${activity.hash}')">
+        🔗 ${count}
+    </span>`;
+}
+
+/**
+ * Open the links modal for an activity.
+ * Shows existing links and allows adding new ones.
+ * @param {string} hash - Activity hash
+ */
+async function openLinksModal(hash) {
+    const activities = window.allActivities || [];
+    const activity = activities.find(a => a.hash === hash);
+    
+    if (!activity) {
+        console.error('Activity not found:', hash);
+        return;
+    }
+    
+    // Fetch related activities from API for full details
+    let relatedData = { related: [] };
+    try {
+        const response = await fetch(`/api/activities/${hash}/related?depth=2`);
+        if (response.ok) {
+            relatedData = await response.json();
+        }
+    } catch (e) {
+        console.error('Failed to fetch related activities:', e);
+    }
+    
+    // Create modal
+    const modal = document.createElement('div');
+    modal.className = 'links-modal-overlay';
+    modal.innerHTML = `
+        <div class="links-modal">
+            <div class="links-modal-header">
+                <h3>🔗 Activity Relationships</h3>
+                <button class="links-modal-close" onclick="closeLinksModal()">&times;</button>
+            </div>
+            <div class="links-modal-source">
+                <div class="links-source-type">${activity.type}</div>
+                <div class="links-source-desc">${escapeHtml(activity.description.substring(0, 100))}${activity.description.length > 100 ? '...' : ''}</div>
+            </div>
+            <div class="links-modal-section">
+                <h4>Linked Activities (${relatedData.related.length})</h4>
+                <div class="links-list" id="linksList">
+                    ${relatedData.related.length === 0 ? 
+                        '<div class="links-empty">No linked activities yet</div>' :
+                        relatedData.related.map(r => `
+                            <div class="links-item" data-hash="${r.activity.hash}">
+                                <div class="links-item-rel">
+                                    <span class="rel-badge rel-${r.relationship}">${getRelationshipEmoji(r.relationship)} ${r.relationship}</span>
+                                    ${r.distance > 1 ? `<span class="rel-distance">${r.distance} hops</span>` : ''}
+                                </div>
+                                <div class="links-item-type">${r.activity.type}</div>
+                                <div class="links-item-desc">${escapeHtml(r.activity.description.substring(0, 80))}...</div>
+                                <div class="links-item-actions">
+                                    <button class="links-goto-btn" onclick="gotoActivity('${r.activity.hash}')" title="Go to activity">↗️</button>
+                                    ${r.distance === 1 ? `<button class="links-remove-btn" onclick="removeLink('${hash}', '${r.activity.hash}')" title="Remove link">🗑️</button>` : ''}
+                                </div>
+                            </div>
+                        `).join('')
+                    }
+                </div>
+            </div>
+            <div class="links-modal-section">
+                <h4>Add New Link</h4>
+                <div class="links-add-form">
+                    <select id="linkRelationship" class="links-select">
+                        <option value="relates">🔄 relates to</option>
+                        <option value="causes">➡️ causes</option>
+                        <option value="blocks">🚫 blocks</option>
+                        <option value="parent">⬆️ parent of</option>
+                        <option value="child">⬇️ child of</option>
+                    </select>
+                    <input type="text" id="linkTargetSearch" class="links-search" placeholder="Search activities to link..." onkeyup="searchActivitiesToLink(event, '${hash}')">
+                </div>
+                <div class="links-search-results" id="linkSearchResults"></div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Close on overlay click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeLinksModal();
+    });
+    
+    // Close on Escape
+    const escHandler = (e) => {
+        if (e.key === 'Escape') closeLinksModal();
+    };
+    document.addEventListener('keydown', escHandler);
+    modal._escHandler = escHandler;
+}
+
+/**
+ * Close the links modal.
+ */
+function closeLinksModal() {
+    const modal = document.querySelector('.links-modal-overlay');
+    if (modal) {
+        if (modal._escHandler) {
+            document.removeEventListener('keydown', modal._escHandler);
+        }
+        modal.remove();
+    }
+}
+
+/**
+ * Get emoji for relationship type.
+ * @param {string} relationship - Relationship type
+ * @returns {string} Emoji
+ */
+function getRelationshipEmoji(relationship) {
+    const emojis = {
+        'relates': '🔄',
+        'causes': '➡️',
+        'caused-by': '⬅️',
+        'blocks': '🚫',
+        'blocked-by': '⛔',
+        'parent': '⬆️',
+        'child': '⬇️'
+    };
+    return emojis[relationship] || '🔗';
+}
+
+/**
+ * Search activities to link.
+ * @param {Event} event - Keyup event
+ * @param {string} sourceHash - Source activity hash
+ */
+function searchActivitiesToLink(event, sourceHash) {
+    const query = event.target.value.toLowerCase().trim();
+    const resultsContainer = document.getElementById('linkSearchResults');
+    
+    if (query.length < 2) {
+        resultsContainer.innerHTML = '<div class="links-search-hint">Type at least 2 characters to search...</div>';
+        return;
+    }
+    
+    const activities = window.allActivities || [];
+    const matches = activities
+        .filter(a => 
+            a.hash !== sourceHash && 
+            (a.description.toLowerCase().includes(query) || 
+             a.type.toLowerCase().includes(query) ||
+             (a.hash && a.hash.startsWith(query)))
+        )
+        .slice(0, 5);
+    
+    if (matches.length === 0) {
+        resultsContainer.innerHTML = '<div class="links-search-empty">No matching activities found</div>';
+        return;
+    }
+    
+    resultsContainer.innerHTML = matches.map(a => `
+        <div class="links-search-result" onclick="createLink('${sourceHash}', '${a.hash}')">
+            <div class="links-result-type">${a.type}</div>
+            <div class="links-result-desc">${escapeHtml(a.description.substring(0, 60))}...</div>
+            <div class="links-result-time">${formatTime(a.timestamp)}</div>
+        </div>
+    `).join('');
+}
+
+/**
+ * Create a link between two activities.
+ * @param {string} sourceHash - Source activity hash
+ * @param {string} targetHash - Target activity hash
+ */
+async function createLink(sourceHash, targetHash) {
+    const relationship = document.getElementById('linkRelationship')?.value || 'relates';
+    
+    try {
+        const response = await fetch(`/api/activities/${sourceHash}/link`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ targetHash, relationship })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            // Update local activity data
+            const activities = window.allActivities || [];
+            const sourceActivity = activities.find(a => a.hash === sourceHash);
+            const targetActivity = activities.find(a => a.hash === targetHash);
+            
+            if (sourceActivity) {
+                if (!sourceActivity.links) sourceActivity.links = [];
+                sourceActivity.links.push({ hash: targetHash, relationship, createdAt: new Date().toISOString() });
+            }
+            
+            if (targetActivity) {
+                const inverse = { 'causes': 'caused-by', 'blocks': 'blocked-by', 'parent': 'child', 'child': 'parent', 'relates': 'relates' };
+                if (!targetActivity.links) targetActivity.links = [];
+                targetActivity.links.push({ hash: sourceHash, relationship: inverse[relationship] || 'relates', createdAt: new Date().toISOString() });
+            }
+            
+            // Close and reopen modal to refresh
+            closeLinksModal();
+            openLinksModal(sourceHash);
+            
+            // Refresh activity feed
+            renderActivities(activities);
+        } else {
+            alert(data.error || 'Failed to create link');
+        }
+    } catch (e) {
+        console.error('Failed to create link:', e);
+        alert('Failed to create link: ' + e.message);
+    }
+}
+
+/**
+ * Remove a link between two activities.
+ * @param {string} sourceHash - Source activity hash
+ * @param {string} targetHash - Target activity hash
+ */
+async function removeLink(sourceHash, targetHash) {
+    if (!confirm('Remove this link?')) return;
+    
+    try {
+        const response = await fetch(`/api/activities/${sourceHash}/link/${targetHash}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            // Update local activity data
+            const activities = window.allActivities || [];
+            const sourceActivity = activities.find(a => a.hash === sourceHash);
+            const targetActivity = activities.find(a => a.hash === targetHash);
+            
+            if (sourceActivity?.links) {
+                sourceActivity.links = sourceActivity.links.filter(l => l.hash !== targetHash);
+                if (sourceActivity.links.length === 0) delete sourceActivity.links;
+            }
+            
+            if (targetActivity?.links) {
+                targetActivity.links = targetActivity.links.filter(l => l.hash !== sourceHash);
+                if (targetActivity.links.length === 0) delete targetActivity.links;
+            }
+            
+            // Refresh modal
+            closeLinksModal();
+            openLinksModal(sourceHash);
+            
+            // Refresh activity feed
+            renderActivities(activities);
+        } else {
+            const data = await response.json();
+            alert(data.error || 'Failed to remove link');
+        }
+    } catch (e) {
+        console.error('Failed to remove link:', e);
+        alert('Failed to remove link: ' + e.message);
+    }
+}
+
+/**
+ * Navigate to a specific activity by hash.
+ * @param {string} hash - Activity hash
+ */
+function gotoActivity(hash) {
+    closeLinksModal();
+    
+    // Find the activity element
+    const activityEl = document.querySelector(`[data-hash="${hash}"]`);
+    if (activityEl) {
+        activityEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        activityEl.classList.add('highlight-flash');
+        setTimeout(() => activityEl.classList.remove('highlight-flash'), 2000);
+    } else {
+        // Activity might be filtered out - reset filters and try again
+        resetFilters();
+        setTimeout(() => {
+            const el = document.querySelector(`[data-hash="${hash}"]`);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                el.classList.add('highlight-flash');
+                setTimeout(() => el.classList.remove('highlight-flash'), 2000);
+            }
+        }, 300);
+    }
 }
 
 function renderActivityTags(tags) {
@@ -10941,4 +11242,299 @@ if (typeof handleKeyboardShortcutAction !== 'undefined') {
 // Initialize bulk operations when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     initBulkOperations();
+});
+
+// =========================================
+// Activity Templates System
+// =========================================
+
+let templates = [];
+
+// Open templates modal
+function openTemplatesModal() {
+    const modal = document.getElementById('templatesModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        loadTemplates();
+        announce('Templates modal opened');
+    }
+}
+
+// Close templates modal
+function closeTemplatesModal() {
+    const modal = document.getElementById('templatesModal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+        announce('Templates modal closed');
+    }
+}
+
+// Load templates from API
+async function loadTemplates() {
+    const listEl = document.getElementById('templatesList');
+    if (!listEl) return;
+    
+    listEl.innerHTML = '<p class="templates-loading">Loading templates...</p>';
+    
+    try {
+        const response = await fetch('/api/templates');
+        if (!response.ok) throw new Error('Failed to load templates');
+        
+        templates = await response.json();
+        renderTemplatesList();
+    } catch (e) {
+        console.error('Error loading templates:', e);
+        listEl.innerHTML = '<p class="templates-empty">Failed to load templates. Please try again.</p>';
+    }
+}
+
+// Render templates list
+function renderTemplatesList() {
+    const listEl = document.getElementById('templatesList');
+    if (!listEl) return;
+    
+    if (templates.length === 0) {
+        listEl.innerHTML = '<p class="templates-empty">No templates yet. Create one above!</p>';
+        return;
+    }
+    
+    const typeEmojis = {
+        'build': '🔨', 'commit': '📝', 'decision': '🧠', 'research': '🔬',
+        'message': '💬', 'email': '📧', 'trade': '💹', 'deploy': '🚀',
+        'session': '💻', 'heartbeat': '💓', 'tweet': '🐦', 'calendar': '📅',
+        'browser': '🌐', 'transfer': '💸'
+    };
+    
+    listEl.innerHTML = templates.map(t => {
+        const emoji = typeEmojis[t.type] || '📋';
+        const usageText = t.usageCount === 1 ? '1 use' : `${t.usageCount} uses`;
+        const lastUsed = t.lastUsedAt ? `Last: ${new Date(t.lastUsedAt).toLocaleDateString()}` : 'Never used';
+        
+        return `
+            <div class="template-item" data-id="${t.id}">
+                <div class="template-info">
+                    <div class="template-name">
+                        ${t.name}
+                        <span class="template-type-badge">${emoji} ${t.type}</span>
+                    </div>
+                    <div class="template-description">${escapeHtml(t.description)}</div>
+                    <div class="template-meta">
+                        <span>📊 ${usageText}</span>
+                        <span>⏱️ ${lastUsed}</span>
+                        ${t.shortcut ? `<span class="template-shortcut">${t.shortcut}</span>` : ''}
+                    </div>
+                </div>
+                <div class="template-actions">
+                    <button class="template-use-btn" onclick="useTemplate('${t.id}')" title="Create activity from this template">
+                        ⚡ Use
+                    </button>
+                    <button class="template-delete-btn" onclick="deleteTemplate('${t.id}')" title="Delete template">
+                        🗑️
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Create a new template
+async function createTemplate(event) {
+    event.preventDefault();
+    
+    const name = document.getElementById('templateName').value.trim();
+    const type = document.getElementById('templateType').value;
+    const description = document.getElementById('templateDescription').value.trim();
+    const shortcut = document.getElementById('templateShortcut').value.trim();
+    
+    if (!name || !type || !description) {
+        announce('Please fill in all required fields');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/templates', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name,
+                type,
+                description,
+                shortcut: shortcut || undefined
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            announce(data.error || 'Failed to create template');
+            return;
+        }
+        
+        // Clear form
+        document.getElementById('templateName').value = '';
+        document.getElementById('templateDescription').value = '';
+        document.getElementById('templateShortcut').value = '';
+        
+        // Reload templates
+        await loadTemplates();
+        
+        announce(`Template "${name}" created successfully`);
+        showTemplateToast(`✅ Template "${name}" created!`);
+    } catch (e) {
+        console.error('Error creating template:', e);
+        announce('Failed to create template');
+    }
+}
+
+// Use a template to create an activity
+async function useTemplate(templateId) {
+    const template = templates.find(t => t.id === templateId);
+    if (!template) {
+        announce('Template not found');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/templates/${templateId}/use`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            announce(data.error || 'Failed to use template');
+            return;
+        }
+        
+        // Close modal
+        closeTemplatesModal();
+        
+        // Reload activities
+        await fetchActivities();
+        
+        announce(`Activity logged from template "${template.name}"`);
+        showTemplateToast(`⚡ Activity logged from "${template.name}"!`);
+        
+        // Play sound if enabled
+        if (soundEnabled) {
+            playNotificationSound();
+        }
+    } catch (e) {
+        console.error('Error using template:', e);
+        announce('Failed to create activity from template');
+    }
+}
+
+// Delete a template
+async function deleteTemplate(templateId) {
+    const template = templates.find(t => t.id === templateId);
+    if (!template) return;
+    
+    if (!confirm(`Delete template "${template.name}"?`)) return;
+    
+    try {
+        const response = await fetch(`/api/templates/${templateId}`, {
+            method: 'DELETE'
+        });
+        
+        if (!response.ok) {
+            const data = await response.json();
+            announce(data.error || 'Failed to delete template');
+            return;
+        }
+        
+        await loadTemplates();
+        announce(`Template "${template.name}" deleted`);
+    } catch (e) {
+        console.error('Error deleting template:', e);
+        announce('Failed to delete template');
+    }
+}
+
+// Show template action toast
+function showTemplateToast(message) {
+    let toast = document.querySelector('.template-used-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.className = 'template-used-toast';
+        document.body.appendChild(toast);
+    }
+    
+    toast.textContent = message;
+    toast.classList.add('show');
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+
+// Keyboard shortcut for templates (T key)
+document.addEventListener('keydown', (e) => {
+    // Skip if typing in an input
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+    
+    // Skip if modal is open and it's not Escape
+    const templatesModal = document.getElementById('templatesModal');
+    const isTemplatesOpen = templatesModal && templatesModal.style.display !== 'none';
+    
+    if (e.key === 'Escape' && isTemplatesOpen) {
+        closeTemplatesModal();
+        return;
+    }
+    
+    // T to open templates
+    if (e.key.toLowerCase() === 't' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        // Don't open if another modal is open
+        const anyModalOpen = document.querySelector('.custom-types-modal[style*="flex"], .voice-input-modal[style*="flex"], .compare-modal[style*="flex"]');
+        if (anyModalOpen) return;
+        
+        e.preventDefault();
+        if (isTemplatesOpen) {
+            closeTemplatesModal();
+        } else {
+            openTemplatesModal();
+        }
+        return;
+    }
+    
+    // Template shortcuts (Alt+1 through Alt+9)
+    if (e.altKey && /^[1-9]$/.test(e.key)) {
+        const shortcut = `Alt+${e.key}`;
+        const template = templates.find(t => t.shortcut && t.shortcut.toLowerCase() === shortcut.toLowerCase());
+        if (template) {
+            e.preventDefault();
+            useTemplate(template.id);
+        }
+    }
+});
+
+// Close modal on outside click
+document.addEventListener('click', (e) => {
+    const modal = document.getElementById('templatesModal');
+    if (modal && e.target === modal) {
+        closeTemplatesModal();
+    }
+});
+
+// Add templates to command palette
+if (typeof commandPaletteCommands !== 'undefined') {
+    commandPaletteCommands.push(
+        { name: 'Open Templates', shortcut: 'T', action: () => openTemplatesModal() },
+        { name: 'Close Templates', shortcut: 'Escape', action: () => closeTemplatesModal() }
+    );
+}
+
+// Update help modal if it exists
+document.addEventListener('DOMContentLoaded', () => {
+    const helpContent = document.querySelector('.help-shortcuts');
+    if (helpContent) {
+        const templateShortcut = document.createElement('div');
+        templateShortcut.className = 'shortcut-item';
+        templateShortcut.innerHTML = '<kbd>T</kbd> Open templates';
+        helpContent.appendChild(templateShortcut);
+    }
 });
