@@ -3338,3 +3338,144 @@ createShortcutsModal = function() {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', initScrollToTop);
+
+// ============================================
+// SERVICE WORKER REGISTRATION (PWA Support)
+// ============================================
+
+/**
+ * Register service worker for PWA features:
+ * - Offline support
+ * - Installable app experience  
+ * - Background sync
+ * - Push notifications
+ */
+async function registerServiceWorker() {
+    if (!('serviceWorker' in navigator)) {
+        console.log('[PWA] Service workers not supported');
+        return;
+    }
+    
+    try {
+        const registration = await navigator.serviceWorker.register('/pow/sw.js', {
+            scope: '/pow/'
+        });
+        
+        console.log('[PWA] Service worker registered:', registration.scope);
+        
+        // Check for updates
+        registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            console.log('[PWA] New service worker installing...');
+            
+            newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    // New version available
+                    showUpdateToast();
+                }
+            });
+        });
+        
+        // Handle controller change (new SW activated)
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            console.log('[PWA] Service worker updated, refreshing...');
+        });
+        
+    } catch (error) {
+        console.error('[PWA] Service worker registration failed:', error);
+    }
+}
+
+/**
+ * Show toast when app update is available
+ */
+function showUpdateToast() {
+    const toast = document.createElement('div');
+    toast.className = 'update-toast';
+    toast.innerHTML = `
+        <span>🔄 New version available!</span>
+        <button onclick="location.reload()">Refresh</button>
+        <button onclick="this.parentElement.remove()">×</button>
+    `;
+    document.body.appendChild(toast);
+    
+    // Auto-dismiss after 30 seconds
+    setTimeout(() => toast.remove(), 30000);
+}
+
+/**
+ * Check if app is installed (standalone mode)
+ */
+function isAppInstalled() {
+    return window.matchMedia('(display-mode: standalone)').matches ||
+           window.navigator.standalone === true;
+}
+
+/**
+ * Prompt user to install the PWA
+ */
+let deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Prevent default browser install prompt
+    e.preventDefault();
+    deferredPrompt = e;
+    
+    // Show custom install button if not already installed
+    if (!isAppInstalled()) {
+        showInstallButton();
+    }
+});
+
+function showInstallButton() {
+    // Check if install button already exists
+    if (document.getElementById('pwaInstallBtn')) return;
+    
+    const btn = document.createElement('button');
+    btn.id = 'pwaInstallBtn';
+    btn.className = 'sound-toggle';
+    btn.innerHTML = '📲 Install App';
+    btn.title = 'Install as app for offline access';
+    btn.onclick = promptInstall;
+    
+    // Add to header button group
+    const headerBtns = document.querySelector('header > div[style*="display: flex"]');
+    if (headerBtns) {
+        headerBtns.appendChild(btn);
+    }
+}
+
+async function promptInstall() {
+    if (!deferredPrompt) return;
+    
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    
+    console.log('[PWA] Install prompt outcome:', outcome);
+    
+    if (outcome === 'accepted') {
+        // Hide install button
+        const btn = document.getElementById('pwaInstallBtn');
+        if (btn) btn.remove();
+    }
+    
+    deferredPrompt = null;
+}
+
+// Track installation
+window.addEventListener('appinstalled', () => {
+    console.log('[PWA] App installed successfully!');
+    deferredPrompt = null;
+    
+    // Hide install button
+    const btn = document.getElementById('pwaInstallBtn');
+    if (btn) btn.remove();
+    
+    // Log installation as activity (if we have the API)
+    if (window.cachedActivities) {
+        console.log('[PWA] Dashboard installed as app');
+    }
+});
+
+// Register service worker on page load
+registerServiceWorker();
