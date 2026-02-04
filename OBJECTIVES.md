@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-04 03:05 PST
-**Cycle:** 190
+**Last Updated:** 2026-02-04 03:41 PST
+**Cycle:** 191
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -110,12 +110,30 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Activity undo/restore (soft delete with trash bin) ✅ Cycle 188
 - [x] Activity scheduled deletion (auto-empty trash after X days) ✅ Cycle 189
 - [x] Activity export with filters (export only filtered results) ✅ Cycle 190
-- [ ] Activity bulk delete (delete multiple at once)
+- [x] Activity bulk delete (delete multiple at once) ✅ Cycle 191
 - [ ] Undo button toast (quick undo after delete)
 
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 191 (Activity Bulk Delete)
+- Implemented bulk delete feature for deleting multiple activities at once
+- **New API Endpoint**:
+  - `POST /api/activities/bulk-delete` - Accept array of hashes, soft-delete all
+  - Returns detailed results: deleted, notFound, alreadyDeleted counts
+  - Validation: max 100 hashes, valid hash format required
+- **Dashboard UI**:
+  - 🗑️ Delete button added to bulk bar actions
+  - Confirmation dialog before deletion
+  - Updates trash badge count after deletion
+  - Toast notifications for success/failure
+- **Command Palette**: Added "Delete Selected Activities" command
+- **WebSocket/Webhook Events**: activities_bulk_deleted event with hash list
+- **Theme Support**: All 6 themes (Dark, Light, Ocean, Forest, Sunset, Cyberpunk)
+- **OpenAPI Updated**: BulkDeleteResult schema, new endpoint documented
+- **Stats**: 506 activities, all signed on-chain
+- Commit: e45bc38
 
 ### Cycle 190 (Export with Filters)
 - Updated main export buttons to use filter-aware `exportActivities()` function
@@ -206,36 +224,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - **OpenAPI Updated**: DuplicateCheckResult schema, new endpoint documented
 - **Stats**: 493 activities, all signed on-chain
 - Commit: e2abca4
-
-### Cycle 186 (Activity Templates)
-- Implemented reusable activity templates for quick logging
-- **New API Endpoints**:
-  - `GET /api/templates` - List all templates (sorted by usage)
-  - `POST /api/templates` - Create template with name, type, description, shortcut
-  - `GET /api/templates/:id` - Get single template
-  - `PUT /api/templates/:id` - Update template
-  - `DELETE /api/templates/:id` - Delete template
-  - `POST /api/templates/:id/use` - Create activity from template
-- **Template Features**:
-  - Placeholder support: `{{date}}`, `{{time}}`, `{{datetime}}`
-  - Keyboard shortcuts (Alt+1 through Alt+9)
-  - Usage tracking (count + last used timestamp)
-  - Metadata inheritance (template data passed to activity)
-  - Duplicate name/shortcut validation
-- **Dashboard UI**:
-  - 📝 Templates button in header
-  - Full modal with create form and template list
-  - Quick-use ⚡ buttons on each template
-  - Delete functionality with confirmation
-  - Usage stats displayed (count + last used)
-- **Keyboard Shortcuts**:
-  - `T` - Toggle templates modal
-  - `Alt+1-9` - Use template with assigned shortcut
-  - `Escape` - Close modal
-- **Theme Support**: All 6 themes (Dark, Light, Ocean, Forest, Sunset, Cyberpunk)
-- **Mobile Responsive**: Full-width modal, stacked action buttons
-- **Stats**: 490 activities, all signed on-chain
-- Commit: 2774722
 
 ---
 
