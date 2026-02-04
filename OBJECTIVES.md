@@ -138,8 +138,8 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - **Command Palette**: Added "Cleanup Expired Trash" and "Trash Settings" commands
 - **OpenAPI Updated**: TrashSettings, TrashCleanupResult, TrashSettingsUpdateResult schemas
 - **WebSocket/Webhook Events**: trash_cleaned event
-- **Stats**: 498 activities, all signed on-chain
-- Commit: pending
+- **Stats**: 499 activities, all signed on-chain
+- Commit: 481d12f
 
 ### Cycle 188 (Activity Undo/Restore - Soft Delete)
 - Implemented soft delete with trash bin functionality
