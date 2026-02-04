@@ -40,6 +40,22 @@ import { randomUUID } from 'crypto';
 /** Server port - can be overridden via PORT env var */
 const PORT = process.env.PORT || 3456;
 
+/**
+ * API Authentication Configuration
+ * 
+ * Set API_KEY environment variable to enable authentication.
+ * When enabled:
+ * - Write operations (POST, PATCH, DELETE) always require auth
+ * - Read operations (GET) are public by default
+ * - Set API_AUTH_READ=true to also require auth for reads
+ * 
+ * Authentication methods:
+ * - Authorization: Bearer <api_key>
+ * - X-API-Key: <api_key>
+ */
+const API_KEY = process.env.API_KEY || null;
+const API_AUTH_READ = process.env.API_AUTH_READ === 'true';
+
 /** Base directory for the proof-of-work module (parent of /api) */
 const BASE_DIR = join(import.meta.dir, '..');
 
@@ -437,6 +453,95 @@ function rateLimitResponse(resetIn: number): Response {
 }
 
 // ==============================================
+// API AUTHENTICATION
+// ==============================================
+
+/**
+ * Check if the request has a valid API key.
+ * 
+ * Supports two authentication methods:
+ * 1. Authorization: Bearer <api_key>
+ * 2. X-API-Key: <api_key>
+ * 
+ * @param req - The incoming HTTP request
+ * @returns Object with isValid flag and error message if invalid
+ */
+function checkApiAuth(req: Request): { isValid: boolean; error?: string } {
+  // If no API_KEY is configured, auth is disabled (allow all)
+  if (!API_KEY) {
+    return { isValid: true };
+  }
+  
+  // Check Authorization header (Bearer token)
+  const authHeader = req.headers.get('authorization');
+  if (authHeader) {
+    const parts = authHeader.split(' ');
+    if (parts.length === 2 && parts[0].toLowerCase() === 'bearer') {
+      if (parts[1] === API_KEY) {
+        return { isValid: true };
+      }
+      return { isValid: false, error: 'Invalid API key' };
+    }
+  }
+  
+  // Check X-API-Key header (alternative method)
+  const apiKeyHeader = req.headers.get('x-api-key');
+  if (apiKeyHeader) {
+    if (apiKeyHeader === API_KEY) {
+      return { isValid: true };
+    }
+    return { isValid: false, error: 'Invalid API key' };
+  }
+  
+  return { isValid: false, error: 'API key required. Use Authorization: Bearer <key> or X-API-Key: <key>' };
+}
+
+/**
+ * Check if authentication is required for this request.
+ * 
+ * Rules:
+ * - If API_KEY is not set, no auth required
+ * - Write operations (POST, PATCH, DELETE) always require auth when enabled
+ * - GET requests only require auth if API_AUTH_READ is true
+ * 
+ * @param req - The incoming HTTP request
+ * @returns true if auth check should be performed
+ */
+function requiresAuth(req: Request): boolean {
+  if (!API_KEY) return false;
+  
+  const method = req.method.toUpperCase();
+  
+  // Write operations always require auth when API_KEY is set
+  if (['POST', 'PATCH', 'DELETE', 'PUT'].includes(method)) {
+    return true;
+  }
+  
+  // GET/HEAD only require auth if explicitly configured
+  return API_AUTH_READ;
+}
+
+/**
+ * Generate a 401 Unauthorized response.
+ * 
+ * @param message - Error message to include
+ * @returns HTTP 401 Response with JSON body
+ */
+function unauthorizedResponse(message: string): Response {
+  return new Response(JSON.stringify({
+    error: 'Unauthorized',
+    message,
+    hint: 'Set Authorization: Bearer <api_key> or X-API-Key: <api_key> header'
+  }), {
+    status: 401,
+    headers: {
+      'Content-Type': 'application/json',
+      'WWW-Authenticate': 'Bearer realm="Jarvis PoW API"'
+    }
+  });
+}
+
+// ==============================================
 // ACTIVITY FILE MONITORING
 // ==============================================
 
@@ -669,7 +774,7 @@ const server = Bun.serve({
     const corsHeaders = {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-API-Key',
     };
 
     // Handle preflight OPTIONS requests
@@ -715,6 +820,40 @@ const server = Bun.serve({
       
       // Merge rate limit headers with CORS for API responses
       Object.assign(corsHeaders, rateLimitHeaders);
+      
+      // ==========================================
+      // API AUTHENTICATION CHECK
+      // Skip auth for /api/auth/status endpoint (always public)
+      // ==========================================
+      if (path !== '/api/auth/status' && requiresAuth(req)) {
+        const authResult = checkApiAuth(req);
+        if (!authResult.isValid) {
+          return unauthorizedResponse(authResult.error || 'Unauthorized');
+        }
+      }
+    }
+
+    // ==========================================
+    // API: GET /api/auth/status
+    // Check authentication status and requirements
+    // Always public - lets clients know if auth is needed
+    // ==========================================
+    if (path === '/api/auth/status') {
+      const isAuthenticated = API_KEY ? checkApiAuth(req).isValid : true;
+      return Response.json({
+        authEnabled: !!API_KEY,
+        authRequiredForReads: API_AUTH_READ,
+        authRequiredForWrites: !!API_KEY,
+        authenticated: isAuthenticated,
+        message: API_KEY 
+          ? 'API authentication is enabled. Use Authorization: Bearer <key> or X-API-Key: <key> header.'
+          : 'API authentication is disabled. All endpoints are public.',
+        endpoints: {
+          publicAlways: ['/api/auth/status', '/api/health'],
+          requiresAuthForWrites: ['/api/webhooks'],
+          configurable: ['/api/activities', '/api/stats', '/api/verify/*']
+        }
+      }, { headers: corsHeaders });
     }
 
     // ==========================================
@@ -1360,3 +1499,4 @@ Colosseum Agent Hackathon 2026`;
 
 console.log(`🚀 Proof of Work server running at http://localhost:${PORT}`);
 console.log(`🔌 WebSocket endpoint: ws://localhost:${PORT}/ws`);
+console.log(`🔐 API Auth: ${API_KEY ? 'ENABLED' : 'disabled'}${API_KEY && API_AUTH_READ ? ' (read auth required)' : ''}`);

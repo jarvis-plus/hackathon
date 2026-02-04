@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 20:10 PST
-**Cycle:** 156
+**Last Updated:** 2026-02-03 20:14 PST
+**Cycle:** 157
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -74,7 +74,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Goal tracking (set daily targets) ✅ Cycle 156
 
 ### 🔒 Security & Infrastructure
-- [ ] API authentication (optional API keys)
+- [x] API authentication (optional API keys) ✅ Cycle 157
 - [ ] Activity rate limiting per IP
 - [ ] Backup/restore for activity data
 - [ ] Docker deployment
@@ -82,6 +82,22 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 157 (API Authentication)
+- Implemented optional API authentication for the Proof of Work API
+- **Environment Variables**: `API_KEY` to enable auth, `API_AUTH_READ` to require auth for reads
+- **Auth Methods**: `Authorization: Bearer <key>` or `X-API-Key: <key>` headers
+- **Write Protection**: POST/PATCH/DELETE always require auth when API_KEY is set
+- **Read Access**: GET requests public by default, optionally protected via API_AUTH_READ
+- **Status Endpoint**: `/api/auth/status` always public, shows auth configuration
+- **CORS Updated**: Added `X-API-Key` to allowed headers
+- **Startup Logging**: Shows auth status (enabled/disabled) on server start
+- Added `checkApiAuth()` function for validating API keys
+- Added `requiresAuth()` function to determine if request needs auth
+- Added `unauthorizedResponse()` for 401 responses with WWW-Authenticate header
+- ~100 lines added to server.ts
+- Service restarted, auth shows "disabled" (no API_KEY set)
+- 395 activities, all signed on-chain
 
 ### Cycle 156 (Daily Goal Tracking)
 - Implemented daily goal tracking feature for setting activity targets
@@ -153,20 +169,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - Updated keyboard shortcuts modal with 'l' shortcut
 - Files: dashboard/app.js, dashboard/dashboard.css
 - 382 activities, all signed on-chain
-
-### Cycle 152 (Animated Stat Counters)
-- Added staggered entry animations for stat cards on page load
-- Cards fade in sequentially with 60ms stagger (cascade effect)
-- CSS keyframe `statCardEntry`: translateY + scale bounce animation
-- `counting` class adds subtle scale pulse during value count-up
-- `updated` class adds pop animation when count finishes
-- `animateNumber()` and `animateDecimal()` now accept delay parameter
-- `updateStats()` uses staggered delays on first load (300ms base + 60ms per stat)
-- Entry animation class removed after 1.2s to restore normal hover
-- Respects `prefers-reduced-motion` media query for accessibility
-- ~55 lines CSS, minor JS changes
-- Files: dashboard.css, app.js
-- 380 activities, all signed on-chain
 
 ---
 
