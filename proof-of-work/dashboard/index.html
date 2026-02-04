@@ -260,6 +260,42 @@
             </div>
         </div>
 
+        <!-- Trash Modal -->
+        <div id="trashModal" class="trash-modal" role="dialog" aria-labelledby="trashTitle" aria-modal="true" style="display: none;">
+            <div class="trash-content">
+                <div class="trash-header">
+                    <h2 id="trashTitle">🗑️ Trash Bin</h2>
+                    <button class="modal-close" onclick="closeTrashModal()" aria-label="Close modal">&times;</button>
+                </div>
+                <div class="trash-body">
+                    <div class="trash-intro">
+                        <p>Deleted activities are kept here until permanently removed. Restore them anytime or empty the trash to free up space.</p>
+                    </div>
+                    
+                    <div class="trash-actions">
+                        <button class="trash-empty-btn" id="trash-empty-btn" onclick="emptyTrash()" title="Permanently delete all trashed activities">
+                            <span>🗑️</span> Empty Trash
+                        </button>
+                        <span class="trash-stats" id="trash-stats"></span>
+                    </div>
+                    
+                    <div id="trashList" class="trash-list">
+                        <p class="trash-loading">Loading deleted activities...</p>
+                    </div>
+                    
+                    <div class="trash-tips">
+                        <p><strong>💡 Tips:</strong></p>
+                        <ul>
+                            <li>Click ♻️ to restore a deleted activity</li>
+                            <li>Restored activities return to the main feed</li>
+                            <li>Empty trash permanently removes all deleted activities</li>
+                            <li>On-chain signatures are preserved when restoring</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="proof-banner">
             <div class="proof-banner-icon">🔐</div>
             <div class="proof-banner-text">
@@ -847,6 +883,16 @@
                             aria-pressed="false">
                         <span class="toggle-icon">☑️</span>
                         <span class="toggle-text">Bulk</span>
+                    </button>
+                </div>
+                <div class="trash-container">
+                    <button class="trash-btn" id="trash-btn" onclick="toggleTrashModal()" 
+                            title="View trash bin (Del)" 
+                            aria-label="View deleted activities" 
+                            aria-pressed="false">
+                        <span class="trash-icon">🗑️</span>
+                        <span class="trash-text">Trash</span>
+                        <span class="trash-count" id="trash-count"></span>
                     </button>
                 </div>
                 <div class="type-filters" role="group" aria-label="Filter by activity type">

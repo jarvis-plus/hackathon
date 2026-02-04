@@ -304,6 +304,190 @@
             }
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "Activities"
+        ],
+        "summary": "Delete activity (soft delete)",
+        "description": "Moves an activity to trash. The activity can be restored later using the restore endpoint. To permanently delete, use the empty trash endpoint.",
+        "operationId": "deleteActivity",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "hash",
+            "in": "path",
+            "required": true,
+            "description": "SHA256 hash of the activity",
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activity moved to trash",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Activity already deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Activity not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/activities/trash": {
+      "get": {
+        "tags": [
+          "Activities"
+        ],
+        "summary": "List deleted activities",
+        "description": "Returns all soft-deleted activities, sorted by deletion time (most recent first).",
+        "operationId": "getTrash",
+        "responses": {
+          "200": {
+            "description": "List of deleted activities",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrashList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/activities/trash/empty": {
+      "delete": {
+        "tags": [
+          "Activities"
+        ],
+        "summary": "Empty trash (permanent delete)",
+        "description": "Permanently deletes all activities in trash. This action is irreversible.",
+        "operationId": "emptyTrash",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyHeader": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trash emptied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmptyTrashResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Trash is already empty",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/activities/{hash}/restore": {
+      "patch": {
+        "tags": [
+          "Activities"
+        ],
+        "summary": "Restore deleted activity",
+        "description": "Restores a soft-deleted activity from trash.",
+        "operationId": "restoreActivity",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "hash",
+            "in": "path",
+            "required": true,
+            "description": "SHA256 hash of the activity",
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activity restored",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RestoreResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Activity is not deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Activity not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/activities/{hash}/notes": {
@@ -4024,6 +4208,80 @@
                 "type": "integer"
               }
             }
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "DeleteResult": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "hash": {
+            "type": "string"
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "RestoreResult": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "hash": {
+            "type": "string"
+          },
+          "restoredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "previouslyDeletedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "TrashList": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer"
+          },
+          "activities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Activity"
+            }
+          },
+          "hint": {
+            "type": "string"
+          }
+        }
+      },
+      "EmptyTrashResult": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "removedCount": {
+            "type": "integer"
+          },
+          "remainingCount": {
+            "type": "integer"
           },
           "message": {
             "type": "string"

@@ -25,6 +25,10 @@
  * - DELETE /api/activities/:hash/notes - Remove notes from activity
  * - PATCH /api/activities/:hash/pin - Toggle pin status on activity
  * - GET /api/activities/pinned    - Get all pinned activities
+ * - DELETE /api/activities/:hash  - Soft delete an activity (move to trash)
+ * - PATCH /api/activities/:hash/restore - Restore a deleted activity
+ * - GET /api/activities/trash     - List all deleted activities
+ * - DELETE /api/activities/trash/empty - Permanently delete all trash
  * - GET /api/stats                - Aggregated statistics
  * - GET /api/health               - Health check for monitoring
  * - GET /api/performance          - Response times, memory usage, endpoint stats
@@ -2486,9 +2490,163 @@ const server = Bun.serve({
     // ==========================================
     // API: GET /api/activities
     // Returns all activities as a JSON array
+    // Query params: ?includeDeleted=true (include soft-deleted activities)
     // ==========================================
     if (path === '/api/activities' && req.method === 'GET') {
-      return Response.json(getActivities(), { headers: corsHeaders });
+      const includeDeleted = url.searchParams.get('includeDeleted') === 'true';
+      let activities = getActivities();
+      
+      // Filter out deleted activities by default
+      if (!includeDeleted) {
+        activities = activities.filter((a: any) => !a.deleted);
+      }
+      
+      return Response.json(activities, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: GET /api/activities/trash
+    // Returns all soft-deleted activities
+    // ==========================================
+    if (path === '/api/activities/trash' && req.method === 'GET') {
+      const activities = getActivities();
+      const deleted = activities
+        .filter((a: any) => a.deleted)
+        .sort((a: any, b: any) => {
+          // Sort by deletedAt, most recent first
+          const aTime = new Date(a.deletedAt || 0).getTime();
+          const bTime = new Date(b.deletedAt || 0).getTime();
+          return bTime - aTime;
+        });
+      
+      return Response.json({
+        count: deleted.length,
+        activities: deleted,
+        hint: 'Use PATCH /api/activities/:hash/restore to restore an activity'
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: DELETE /api/activities/:hash
+    // Soft delete an activity (moves to trash)
+    // ==========================================
+    if (path.match(/^\/api\/activities\/[a-f0-9]{64}$/) && req.method === 'DELETE') {
+      const hash = path.split('/')[3];
+      const activities = getActivities();
+      const index = activities.findIndex((a: any) => a.hash === hash);
+      
+      if (index === -1) {
+        return Response.json({ 
+          error: 'Activity not found' 
+        }, { status: 404, headers: corsHeaders });
+      }
+      
+      const activity = activities[index];
+      
+      // Check if already deleted
+      if (activity.deleted) {
+        return Response.json({ 
+          error: 'Activity is already deleted',
+          deletedAt: activity.deletedAt
+        }, { status: 400, headers: corsHeaders });
+      }
+      
+      // Soft delete
+      activity.deleted = true;
+      activity.deletedAt = new Date().toISOString();
+      
+      // Save and broadcast
+      saveActivities(activities);
+      broadcastUpdate('activity_deleted', { hash, deletedAt: activity.deletedAt });
+      broadcastToWebhooks('activity.deleted', { hash, deletedAt: activity.deletedAt });
+      
+      console.log(`🗑️ Activity soft-deleted: ${hash.slice(0, 8)}...`);
+      
+      return Response.json({
+        success: true,
+        hash,
+        deletedAt: activity.deletedAt,
+        message: 'Activity moved to trash. Use PATCH /api/activities/:hash/restore to restore.'
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: PATCH /api/activities/:hash/restore
+    // Restore a soft-deleted activity
+    // ==========================================
+    if (path.match(/^\/api\/activities\/[a-f0-9]{64}\/restore$/) && req.method === 'PATCH') {
+      const hash = path.split('/')[3];
+      const activities = getActivities();
+      const index = activities.findIndex((a: any) => a.hash === hash);
+      
+      if (index === -1) {
+        return Response.json({ 
+          error: 'Activity not found' 
+        }, { status: 404, headers: corsHeaders });
+      }
+      
+      const activity = activities[index];
+      
+      // Check if not deleted
+      if (!activity.deleted) {
+        return Response.json({ 
+          error: 'Activity is not deleted'
+        }, { status: 400, headers: corsHeaders });
+      }
+      
+      // Restore
+      const deletedAt = activity.deletedAt;
+      delete activity.deleted;
+      delete activity.deletedAt;
+      activity.restoredAt = new Date().toISOString();
+      
+      // Save and broadcast
+      saveActivities(activities);
+      broadcastUpdate('activity_restored', { hash, restoredAt: activity.restoredAt });
+      broadcastToWebhooks('activity.restored', { hash, restoredAt: activity.restoredAt });
+      
+      console.log(`♻️ Activity restored: ${hash.slice(0, 8)}...`);
+      
+      return Response.json({
+        success: true,
+        hash,
+        restoredAt: activity.restoredAt,
+        previouslyDeletedAt: deletedAt,
+        message: 'Activity restored from trash'
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: DELETE /api/activities/trash/empty
+    // Permanently delete all trashed activities (irreversible)
+    // ==========================================
+    if (path === '/api/activities/trash/empty' && req.method === 'DELETE') {
+      const activities = getActivities();
+      const beforeCount = activities.length;
+      const deleted = activities.filter((a: any) => a.deleted);
+      const remaining = activities.filter((a: any) => !a.deleted);
+      
+      if (deleted.length === 0) {
+        return Response.json({ 
+          error: 'Trash is already empty'
+        }, { status: 400, headers: corsHeaders });
+      }
+      
+      // Permanently remove deleted activities
+      saveActivities(remaining);
+      broadcastUpdate('trash_emptied', { 
+        removedCount: deleted.length,
+        remainingCount: remaining.length
+      });
+      
+      console.log(`🗑️ Trash emptied: ${deleted.length} activities permanently deleted`);
+      
+      return Response.json({
+        success: true,
+        removedCount: deleted.length,
+        remainingCount: remaining.length,
+        message: `${deleted.length} activities permanently deleted`
+      }, { headers: corsHeaders });
     }
 
     // ==========================================

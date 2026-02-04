@@ -4019,6 +4019,23 @@
   {
     "timestamp": "2026-02-04T09:54:53.144Z",
     "type": "commit",
-    "description": "feat: Activity Duplicate Detection (Cycle 187)"
+    "description": "feat: Activity Duplicate Detection (Cycle 187)",
+    "hash": "9f432ca4a3b9bbc1b7649826c8fdf96b8b0a4dda1c35634b5e5e2570ee9c810c",
+    "signature": "2VfPHBu9Xaf39ZeeyKcZPTh862snZgsfdFve7t2zkEP6gXU3cbxBZaTEwWx1e8wUHrY5NzZwaTxSnCZibSX9hBbf"
+  },
+  {
+    "timestamp": "2026-02-04T09:55:34.853Z",
+    "type": "commit",
+    "description": "docs: Update OBJECTIVES.md for Cycle 187",
+    "hash": "8022b37692c015f14e1aae73b41ade2c9b2ee5cf36d52498254c2ece4350cc4a",
+    "signature": "2QQBPuPznG3kKLjUrK561crZGYoJuAMCL3CSe9T7L6ZFNgE2Zxqj9KhX6vqFKsbrhcTarkob7Ut3qa4yCPfZRSqf"
+  },
+  {
+    "timestamp": "2026-02-04T10:30:42Z",
+    "type": "build",
+    "description": "Cycle 188: Implemented activity undo/restore (soft delete) - Added DELETE /api/activities/:hash for soft delete, PATCH /api/activities/:hash/restore, GET /api/activities/trash, DELETE /api/activities/trash/empty; added trash modal UI with restore buttons, empty trash, keyboard shortcuts (Del), theme support, mobile responsive",
+    "metadata": {},
+    "hash": "7f69d858a07a4f43187c057f3cf6bfeaa3ea06f596fdaf91dd6536a113d76f63",
+    "signature": "3WUCCSHP4Hg9tTz4aprqi2DpSVN6eXzqSHUWzEnA4h6FF7HmKta1ZEazZfQNiJj8uGnh3vJPVa9qTt7qTTMQuC9c"
   }
 ]

@@ -11678,3 +11678,274 @@ document.addEventListener('DOMContentLoaded', () => {
         helpContent.appendChild(templateShortcut);
     }
 });
+
+// ===========================================
+// TRASH BIN FUNCTIONALITY
+// ===========================================
+
+let trashItems = [];
+
+// Toggle trash modal
+function toggleTrashModal() {
+    const modal = document.getElementById('trashModal');
+    if (modal.style.display === 'flex') {
+        closeTrashModal();
+    } else {
+        openTrashModal();
+    }
+}
+
+// Open trash modal
+async function openTrashModal() {
+    const modal = document.getElementById('trashModal');
+    modal.style.display = 'flex';
+    document.getElementById('trash-btn').setAttribute('aria-pressed', 'true');
+    await loadTrashItems();
+    announce('Trash bin opened');
+}
+
+// Close trash modal
+function closeTrashModal() {
+    const modal = document.getElementById('trashModal');
+    modal.style.display = 'none';
+    document.getElementById('trash-btn').setAttribute('aria-pressed', 'false');
+    announce('Trash bin closed');
+}
+
+// Load trash items from API
+async function loadTrashItems() {
+    const container = document.getElementById('trashList');
+    container.innerHTML = '<p class="trash-loading">Loading deleted activities...</p>';
+    
+    try {
+        const response = await fetch('/api/activities/trash');
+        const data = await response.json();
+        trashItems = data.activities || [];
+        
+        // Update count badge
+        updateTrashCount();
+        
+        // Update stats
+        const stats = document.getElementById('trash-stats');
+        stats.textContent = `${trashItems.length} item${trashItems.length !== 1 ? 's' : ''} in trash`;
+        
+        // Update empty button state
+        const emptyBtn = document.getElementById('trash-empty-btn');
+        emptyBtn.disabled = trashItems.length === 0;
+        
+        if (trashItems.length === 0) {
+            container.innerHTML = '<p class="trash-empty-message">🎉 Trash is empty!</p>';
+            return;
+        }
+        
+        // Render trash items
+        container.innerHTML = trashItems.map(item => renderTrashItem(item)).join('');
+    } catch (e) {
+        console.error('Error loading trash:', e);
+        container.innerHTML = '<p class="trash-error">Failed to load trash</p>';
+    }
+}
+
+// Render a single trash item
+function renderTrashItem(item) {
+    const emoji = getTypeEmoji(item.type);
+    const deletedDate = new Date(item.deletedAt).toLocaleString();
+    const description = (item.description || '').slice(0, 100) + ((item.description || '').length > 100 ? '...' : '');
+    
+    return `
+        <div class="trash-item" data-hash="${item.hash}">
+            <div class="trash-item-icon">${emoji}</div>
+            <div class="trash-item-content">
+                <div class="trash-item-type">${item.type}</div>
+                <div class="trash-item-description">${escapeHtml(description)}</div>
+                <div class="trash-item-meta">Deleted: ${deletedDate}</div>
+            </div>
+            <div class="trash-item-actions">
+                <button class="trash-restore-btn" onclick="restoreActivity('${item.hash}')" title="Restore this activity">
+                    ♻️ Restore
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+// Get emoji for activity type
+function getTypeEmoji(type) {
+    const emojiMap = {
+        'commit': '📝',
+        'build': '🔨',
+        'trade': '💹',
+        'message': '💬',
+        'email': '📧',
+        'calendar': '📅',
+        'tweet': '🐦',
+        'decision': '🧠',
+        'heartbeat': '💓',
+        'browser': '🌐',
+        'transfer': '💸',
+        'deploy': '🚀',
+        'session': '🔌',
+        'research': '🔍'
+    };
+    return emojiMap[type] || '⚡';
+}
+
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Restore an activity from trash
+async function restoreActivity(hash) {
+    try {
+        const response = await fetch(`/api/activities/${hash}/restore`, {
+            method: 'PATCH'
+        });
+        
+        if (!response.ok) {
+            const data = await response.json();
+            announce(data.error || 'Failed to restore activity');
+            return;
+        }
+        
+        await loadTrashItems();
+        announce('Activity restored');
+        
+        // Reload main activities list if function exists
+        if (typeof loadActivities === 'function') {
+            loadActivities();
+        }
+    } catch (e) {
+        console.error('Error restoring activity:', e);
+        announce('Failed to restore activity');
+    }
+}
+
+// Delete an activity (move to trash)
+async function deleteActivity(hash) {
+    if (!confirm('Move this activity to trash?')) return;
+    
+    try {
+        const response = await fetch(`/api/activities/${hash}`, {
+            method: 'DELETE'
+        });
+        
+        if (!response.ok) {
+            const data = await response.json();
+            announce(data.error || 'Failed to delete activity');
+            return;
+        }
+        
+        announce('Activity moved to trash');
+        updateTrashCount();
+        
+        // Reload main activities list if function exists
+        if (typeof loadActivities === 'function') {
+            loadActivities();
+        }
+    } catch (e) {
+        console.error('Error deleting activity:', e);
+        announce('Failed to delete activity');
+    }
+}
+
+// Empty all trash
+async function emptyTrash() {
+    if (!confirm('Permanently delete all items in trash? This cannot be undone.')) return;
+    
+    try {
+        const response = await fetch('/api/activities/trash/empty', {
+            method: 'DELETE'
+        });
+        
+        if (!response.ok) {
+            const data = await response.json();
+            announce(data.error || 'Failed to empty trash');
+            return;
+        }
+        
+        const data = await response.json();
+        await loadTrashItems();
+        announce(`${data.removedCount} activities permanently deleted`);
+    } catch (e) {
+        console.error('Error emptying trash:', e);
+        announce('Failed to empty trash');
+    }
+}
+
+// Update trash count badge
+async function updateTrashCount() {
+    try {
+        const response = await fetch('/api/activities/trash');
+        const data = await response.json();
+        const count = data.count || 0;
+        
+        const badge = document.getElementById('trash-count');
+        if (badge) {
+            badge.textContent = count > 0 ? `(${count})` : '';
+            badge.style.display = count > 0 ? 'inline' : 'none';
+        }
+    } catch (e) {
+        console.error('Error updating trash count:', e);
+    }
+}
+
+// Keyboard shortcut for trash (Del key)
+document.addEventListener('keydown', (e) => {
+    // Skip if typing in an input
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+    
+    const trashModal = document.getElementById('trashModal');
+    const isTrashOpen = trashModal && trashModal.style.display !== 'none';
+    
+    if (e.key === 'Escape' && isTrashOpen) {
+        closeTrashModal();
+        return;
+    }
+    
+    // Del or Backspace to open trash (only if no other modal is open)
+    if ((e.key === 'Delete' || e.key === 'Backspace') && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        const anyModalOpen = document.querySelector('.custom-types-modal[style*="flex"], .voice-input-modal[style*="flex"], .compare-modal[style*="flex"], .templates-modal[style*="flex"]');
+        if (anyModalOpen && !isTrashOpen) return;
+        
+        e.preventDefault();
+        if (isTrashOpen) {
+            closeTrashModal();
+        } else {
+            openTrashModal();
+        }
+    }
+});
+
+// Close modal on outside click
+document.addEventListener('click', (e) => {
+    const modal = document.getElementById('trashModal');
+    if (modal && e.target === modal) {
+        closeTrashModal();
+    }
+});
+
+// Add trash to command palette
+if (typeof commandPaletteCommands !== 'undefined') {
+    commandPaletteCommands.push(
+        { name: 'Open Trash', shortcut: 'Del', action: () => openTrashModal() },
+        { name: 'Close Trash', shortcut: 'Escape', action: () => closeTrashModal() },
+        { name: 'Empty Trash', action: () => emptyTrash() }
+    );
+}
+
+// Load trash count on page load
+document.addEventListener('DOMContentLoaded', () => {
+    updateTrashCount();
+    
+    // Add keyboard shortcut to help
+    const helpContent = document.querySelector('.help-shortcuts');
+    if (helpContent) {
+        const trashShortcut = document.createElement('div');
+        trashShortcut.className = 'shortcut-item';
+        trashShortcut.innerHTML = '<kbd>Del</kbd> Open trash';
+        helpContent.appendChild(trashShortcut);
+    }
+});
