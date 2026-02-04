@@ -111,8 +111,8 @@
         <div class="charts-section">
             <h2>📊 Activity Analytics</h2>
             <div class="charts-grid">
-                <div class="chart-card" id="timeline-chart-card">
-                    <h3>Activity Over Time</h3>
+                <div class="chart-card" id="timeline-chart-card" aria-busy="true">
+                    <h3 id="timeline-chart-title">Activity Over Time</h3>
                     <div class="chart-container" style="position: relative;">
                         <div class="chart-loading" id="timeline-loading">
                             <div class="skeleton-chart">
@@ -127,22 +127,22 @@
                             </div>
                             <span class="loading-text">Loading activity data...</span>
                         </div>
-                        <canvas id="timelineChart"></canvas>
+                        <canvas id="timelineChart" aria-labelledby="timeline-chart-title"></canvas>
                     </div>
                 </div>
-                <div class="chart-card" id="breakdown-chart-card">
-                    <h3>Activity Breakdown</h3>
+                <div class="chart-card" id="breakdown-chart-card" aria-busy="true">
+                    <h3 id="breakdown-chart-title">Activity Breakdown</h3>
                     <div class="chart-container small breakdown" style="position: relative;">
                         <div class="chart-loading" id="breakdown-loading">
                             <div class="skeleton-doughnut"></div>
                             <span class="loading-text">Loading breakdown...</span>
                         </div>
-                        <canvas id="breakdownChart"></canvas>
+                        <canvas id="breakdownChart" aria-labelledby="breakdown-chart-title"></canvas>
                     </div>
                 </div>
             </div>
-            <div class="chart-card" style="margin-top: 1.5rem;" id="cumulative-chart-card">
-                <h3>⛓️ Cumulative On-Chain Proofs</h3>
+            <div class="chart-card" style="margin-top: 1.5rem;" id="cumulative-chart-card" aria-busy="true">
+                <h3 id="cumulative-chart-title">⛓️ Cumulative On-Chain Proofs</h3>
                 <div class="chart-container" style="position: relative;">
                     <div class="chart-loading" id="cumulative-loading">
                         <div class="skeleton-chart">
@@ -157,11 +157,11 @@
                         </div>
                         <span class="loading-text">Loading proof data...</span>
                     </div>
-                    <canvas id="cumulativeChart"></canvas>
+                    <canvas id="cumulativeChart" aria-labelledby="cumulative-chart-title"></canvas>
                 </div>
             </div>
-            <div class="chart-card" style="margin-top: 1.5rem;" id="daily-chart-card">
-                <h3>📅 Actions Per Day</h3>
+            <div class="chart-card" style="margin-top: 1.5rem;" id="daily-chart-card" aria-busy="true">
+                <h3 id="daily-chart-title">📅 Actions Per Day</h3>
                 <div class="chart-container" style="height: 250px; position: relative;">
                     <div class="chart-loading" id="daily-loading">
                         <div class="skeleton-chart">
@@ -176,12 +176,12 @@
                         </div>
                         <span class="loading-text">Loading daily stats...</span>
                     </div>
-                    <canvas id="dailyChart"></canvas>
+                    <canvas id="dailyChart" aria-labelledby="daily-chart-title"></canvas>
                 </div>
             </div>
-            <div class="chart-card" style="margin-top: 1.5rem;" id="heatmap-chart-card">
-                <h3>🗓️ Activity Heatmap</h3>
-                <div class="heatmap-container" id="heatmapContainer" style="position: relative;">
+            <div class="chart-card" style="margin-top: 1.5rem;" id="heatmap-chart-card" aria-busy="true">
+                <h3 id="heatmap-chart-title">🗓️ Activity Heatmap</h3>
+                <div class="heatmap-container" id="heatmapContainer" style="position: relative;" role="grid" aria-label="Activity heatmap showing daily activity levels over the past 16 weeks">
                     <div class="chart-loading" id="heatmap-loading">
                         <div class="loading-spinner"></div>
                         <span class="loading-text">Loading heatmap...</span>
@@ -207,6 +207,76 @@
                         <div class="heatmap-cell level-3"></div>
                         <div class="heatmap-cell level-4"></div>
                         <span class="heatmap-legend-label">More</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Activity Insights Panel -->
+            <div class="chart-card insights-panel" style="margin-top: 1.5rem;" id="insights-panel">
+                <h3>🧠 Activity Insights</h3>
+                <div class="insights-grid" id="insightsGrid">
+                    <div class="insight-card" id="insight-peak-hours">
+                        <div class="insight-icon">⏰</div>
+                        <div class="insight-content">
+                            <div class="insight-label">Most Active Hours</div>
+                            <div class="insight-value" id="insightPeakHours">Loading...</div>
+                            <div class="insight-detail" id="insightPeakHoursDetail"></div>
+                        </div>
+                    </div>
+                    <div class="insight-card" id="insight-peak-day">
+                        <div class="insight-icon">📅</div>
+                        <div class="insight-content">
+                            <div class="insight-label">Busiest Day</div>
+                            <div class="insight-value" id="insightPeakDay">Loading...</div>
+                            <div class="insight-detail" id="insightPeakDayDetail"></div>
+                        </div>
+                    </div>
+                    <div class="insight-card" id="insight-avg-daily">
+                        <div class="insight-icon">📈</div>
+                        <div class="insight-content">
+                            <div class="insight-label">Daily Average</div>
+                            <div class="insight-value" id="insightAvgDaily">Loading...</div>
+                            <div class="insight-detail" id="insightAvgDailyDetail"></div>
+                        </div>
+                    </div>
+                    <div class="insight-card" id="insight-top-type">
+                        <div class="insight-icon">🏆</div>
+                        <div class="insight-content">
+                            <div class="insight-label">Top Activity Type</div>
+                            <div class="insight-value" id="insightTopType">Loading...</div>
+                            <div class="insight-detail" id="insightTopTypeDetail"></div>
+                        </div>
+                    </div>
+                    <div class="insight-card" id="insight-productivity">
+                        <div class="insight-icon">⚡</div>
+                        <div class="insight-content">
+                            <div class="insight-label">Productivity Score</div>
+                            <div class="insight-value" id="insightProductivity">Loading...</div>
+                            <div class="insight-progress">
+                                <div class="insight-progress-bar" id="insightProductivityBar"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="insight-card" id="insight-onchain-rate">
+                        <div class="insight-icon">⛓️</div>
+                        <div class="insight-content">
+                            <div class="insight-label">On-Chain Rate</div>
+                            <div class="insight-value" id="insightOnchainRate">Loading...</div>
+                            <div class="insight-detail" id="insightOnchainDetail"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="insights-hourly-chart" id="insightsHourlyChart">
+                    <div class="hourly-title">📊 Activity by Hour (24h Distribution)</div>
+                    <div class="hourly-bars" id="hourlyBars">
+                        <!-- 24 bars generated by JS -->
+                    </div>
+                    <div class="hourly-labels">
+                        <span>12am</span>
+                        <span>6am</span>
+                        <span>12pm</span>
+                        <span>6pm</span>
+                        <span>11pm</span>
                     </div>
                 </div>
             </div>

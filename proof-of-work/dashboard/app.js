@@ -718,8 +718,15 @@ function renderActivities(activities, highlightNew = false) {
         const walletHtml = renderWalletBadge(a.wallet);
         const activityId = getActivityId(a);
         
+        const ariaLabel = `${a.type} activity: ${escapeHtml(a.description.substring(0, 80))}${a.description.length > 80 ? '...' : ''}`;
         return `
-        <div class="activity-item ${a.type}${isNew ? ' new-activity' : ''}" style="animation-delay: ${i * 0.04}s" data-wallet="${a.wallet || ''}" data-activity-id="${activityId}">
+        <div class="activity-item ${a.type}${isNew ? ' new-activity' : ''}" 
+             style="animation-delay: ${i * 0.04}s" 
+             data-wallet="${a.wallet || ''}" 
+             data-activity-id="${activityId}"
+             tabindex="0"
+             role="article"
+             aria-label="${ariaLabel}">
             ${renderShareButton(activityId)}
             <div class="activity-header">
                 <div class="activity-badges">
@@ -1385,10 +1392,33 @@ function getMobileChartOptions() {
 }
 
 function renderCharts(activities) {
-    // Hide all chart loading states
+    // Hide all chart loading states and update ARIA
     const hideLoading = (id) => {
         const el = document.getElementById(id);
-        if (el) el.style.display = 'none';
+        if (el) {
+            el.style.display = 'none';
+            // Set aria-busy=false on parent chart container
+            const chartCard = el.closest('.chart-card');
+            if (chartCard) chartCard.setAttribute('aria-busy', 'false');
+        }
+    };
+    
+    // Add ARIA labels to chart canvases for screen readers
+    const setChartAccessibility = (canvasId, label, description) => {
+        const canvas = document.getElementById(canvasId);
+        if (canvas) {
+            canvas.setAttribute('role', 'img');
+            canvas.setAttribute('aria-label', label);
+            canvas.setAttribute('aria-describedby', `${canvasId}-desc`);
+            // Add hidden description if not exists
+            if (!document.getElementById(`${canvasId}-desc`)) {
+                const desc = document.createElement('span');
+                desc.id = `${canvasId}-desc`;
+                desc.className = 'sr-only';
+                desc.textContent = description;
+                canvas.parentNode.appendChild(desc);
+            }
+        }
     };
     
     // Activity over time (by hour)
@@ -1488,6 +1518,9 @@ function renderCharts(activities) {
         }
     });
     hideLoading('timeline-loading');
+    setChartAccessibility('timelineChart', 
+        `Activity over time chart showing ${activities.length} total activities`,
+        'Line chart displaying agent activity frequency over time by hour');
 
     // Activity breakdown by type
     const typeCounts = {};
@@ -1547,6 +1580,9 @@ function renderCharts(activities) {
         }
     });
     hideLoading('breakdown-loading');
+    setChartAccessibility('breakdownChart',
+        `Activity breakdown: ${breakdownLabels.map((l, i) => `${l}: ${breakdownData[i]}`).join(', ')}`,
+        'Doughnut chart showing distribution of activity types');
 
     // Cumulative on-chain proofs over time
     const onChainActivities = activities
@@ -1638,6 +1674,9 @@ function renderCharts(activities) {
         }
     });
     hideLoading('cumulative-loading');
+    setChartAccessibility('cumulativeChart',
+        `Cumulative on-chain proofs: ${cumulative} total proofs on Solana blockchain`,
+        'Area chart showing cumulative growth of cryptographically signed on-chain proofs over time');
 
     // Daily activity breakdown (stacked bar chart)
     const dailyCounts = {};
@@ -1757,6 +1796,10 @@ function renderCharts(activities) {
         }
     });
     hideLoading('daily-loading');
+    const totalDays = Object.keys(dailyCounts).length;
+    setChartAccessibility('dailyChart',
+        `Daily activity chart showing activity across ${totalDays} days`,
+        'Stacked bar chart showing daily breakdown of activities by type');
 }
 
 // Render GitHub-style activity heatmap
@@ -1765,9 +1808,11 @@ function renderHeatmap(activities) {
     const monthsContainer = document.getElementById('heatmapMonths');
     if (!grid || !monthsContainer) return;
     
-    // Hide loading state
+    // Hide loading state and update ARIA
     const heatmapLoading = document.getElementById('heatmap-loading');
     if (heatmapLoading) heatmapLoading.style.display = 'none';
+    const heatmapCard = document.getElementById('heatmap-chart-card');
+    if (heatmapCard) heatmapCard.setAttribute('aria-busy', 'false');
     
     // Count activities per day
     const dayCounts = {};
@@ -1822,12 +1867,16 @@ function renderHeatmap(activities) {
         cell.className = `heatmap-cell level-${level}${isFuture ? ' future' : ''}`;
         cell.dataset.date = dayKey;
         cell.dataset.count = count;
-        cell.title = `${currentDate.toLocaleDateString('en-US', { 
+        const dateLabel = currentDate.toLocaleDateString('en-US', { 
             weekday: 'short',
             month: 'short', 
             day: 'numeric',
             year: 'numeric'
-        })}: ${count} action${count !== 1 ? 's' : ''}`;
+        });
+        cell.title = `${dateLabel}: ${count} action${count !== 1 ? 's' : ''}`;
+        // Accessibility: make cells focusable and announce content
+        cell.setAttribute('role', 'gridcell');
+        cell.setAttribute('aria-label', `${dateLabel}: ${count} ${count === 1 ? 'activity' : 'activities'}`);
         
         // Tooltip on hover
         cell.addEventListener('mouseenter', showHeatmapTooltip);
@@ -1898,6 +1947,112 @@ function hideHeatmapTooltip() {
     }
 }
 
+// ============================================
+// ACTIVITY INSIGHTS PANEL
+// ============================================
+
+function renderInsights(activities) {
+    if (!activities || activities.length === 0) return;
+    
+    // Calculate hourly distribution
+    const hourlyCount = new Array(24).fill(0);
+    activities.forEach(a => {
+        const hour = new Date(a.timestamp).getHours();
+        hourlyCount[hour]++;
+    });
+    
+    // Find peak hours (top 3)
+    const hourlyWithIndex = hourlyCount.map((count, hour) => ({ hour, count }));
+    hourlyWithIndex.sort((a, b) => b.count - a.count);
+    const peakHours = hourlyWithIndex.slice(0, 3).filter(h => h.count > 0);
+    
+    // Format peak hours
+    const formatHour = h => {
+        if (h === 0) return '12am';
+        if (h === 12) return '12pm';
+        return h < 12 ? `${h}am` : `${h - 12}pm`;
+    };
+    const peakHoursStr = peakHours.map(h => formatHour(h.hour)).join(', ');
+    document.getElementById('insightPeakHours').textContent = peakHoursStr || 'N/A';
+    document.getElementById('insightPeakHoursDetail').textContent = 
+        peakHours.length > 0 ? `${peakHours[0].count} activities at peak` : '';
+    
+    // Calculate day of week distribution
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayCount = new Array(7).fill(0);
+    activities.forEach(a => {
+        const day = new Date(a.timestamp).getDay();
+        dayCount[day]++;
+    });
+    
+    const peakDayIndex = dayCount.indexOf(Math.max(...dayCount));
+    document.getElementById('insightPeakDay').textContent = dayNames[peakDayIndex];
+    document.getElementById('insightPeakDayDetail').textContent = `${dayCount[peakDayIndex]} total activities`;
+    
+    // Calculate daily average
+    const uniqueDays = new Set();
+    activities.forEach(a => {
+        uniqueDays.add(new Date(a.timestamp).toDateString());
+    });
+    const avgDaily = uniqueDays.size > 0 ? (activities.length / uniqueDays.size).toFixed(1) : 0;
+    document.getElementById('insightAvgDaily').textContent = `${avgDaily}/day`;
+    document.getElementById('insightAvgDailyDetail').textContent = `Across ${uniqueDays.size} active days`;
+    
+    // Calculate top activity type
+    const typeCounts = {};
+    activities.forEach(a => {
+        const type = a.type || 'unknown';
+        typeCounts[type] = (typeCounts[type] || 0) + 1;
+    });
+    const topType = Object.entries(typeCounts).sort((a, b) => b[1] - a[1])[0];
+    const typeEmoji = {
+        'build': '🔨', 'commit': '📝', 'trade': '💹', 'message': '💬',
+        'email': '📧', 'tweet': '🐦', 'decision': '🧠', 'heartbeat': '💓',
+        'calendar': '📅', 'browser': '🌐'
+    };
+    const emoji = typeEmoji[topType?.[0]] || '📊';
+    document.getElementById('insightTopType').textContent = topType ? `${emoji} ${topType[0]}` : 'N/A';
+    document.getElementById('insightTopTypeDetail').textContent = 
+        topType ? `${topType[1]} activities (${Math.round(topType[1] / activities.length * 100)}%)` : '';
+    
+    // Calculate productivity score (based on variety and consistency)
+    const typeVariety = Object.keys(typeCounts).length;
+    const dayVariety = uniqueDays.size;
+    const onChainCount = activities.filter(a => a.signature).length;
+    const onChainRate = activities.length > 0 ? onChainCount / activities.length : 0;
+    
+    // Score: variety of types (max 30) + active days (max 30) + on-chain rate (max 40)
+    const varietyScore = Math.min(typeVariety / 8, 1) * 30;
+    const consistencyScore = Math.min(dayVariety / 30, 1) * 30;
+    const onChainScore = onChainRate * 40;
+    const productivityScore = Math.round(varietyScore + consistencyScore + onChainScore);
+    
+    document.getElementById('insightProductivity').textContent = `${productivityScore}/100`;
+    document.getElementById('insightProductivityBar').style.width = `${productivityScore}%`;
+    
+    // On-chain rate
+    const onChainPercent = (onChainRate * 100).toFixed(1);
+    document.getElementById('insightOnchainRate').textContent = `${onChainPercent}%`;
+    document.getElementById('insightOnchainDetail').textContent = 
+        `${onChainCount} of ${activities.length} signed`;
+    
+    // Render hourly distribution bars
+    const maxHourly = Math.max(...hourlyCount, 1);
+    const hourlyBarsContainer = document.getElementById('hourlyBars');
+    hourlyBarsContainer.innerHTML = '';
+    
+    hourlyCount.forEach((count, hour) => {
+        const bar = document.createElement('div');
+        bar.className = 'hourly-bar' + (peakHours[0]?.hour === hour ? ' peak' : '');
+        const heightPercent = (count / maxHourly) * 100;
+        bar.style.height = `${Math.max(heightPercent, 2)}%`;
+        bar.setAttribute('data-tooltip', `${formatHour(hour)}: ${count} activities`);
+        bar.setAttribute('role', 'img');
+        bar.setAttribute('aria-label', `${formatHour(hour)}: ${count} activities`);
+        hourlyBarsContainer.appendChild(bar);
+    });
+}
+
 // Store activities globally for export
 let cachedActivities = [];
 
@@ -1916,6 +2071,7 @@ async function loadActivities() {
         updateStats(activities);
         renderCharts(activities);
         renderHeatmap(activities);
+        renderInsights(activities);
         populateTagFilters(activities);
     } catch (e) {
         try {
@@ -1929,6 +2085,7 @@ async function loadActivities() {
             updateStats(activities);
             renderCharts(activities);
             renderHeatmap(activities);
+            renderInsights(activities);
             populateTagFilters(activities);
         } catch (e2) {
             document.getElementById('feed').innerHTML = `
@@ -2117,6 +2274,11 @@ function connectWebSocket() {
                     // Flash notification + sound for new activities
                     if (isNewActivity) {
                         flashNewActivity(msg.data.newItems.length, msg.data.newItems);
+                        // Announce new activities to screen readers
+                        const count = msg.data.newItems.length;
+                        const firstItem = msg.data.newItems[0];
+                        const desc = firstItem?.description?.substring(0, 50) || firstItem?.type || 'activity';
+                        announceToScreenReader(`${count} new ${count === 1 ? 'activity' : 'activities'}: ${desc}`);
                     }
                 }
             } catch (e) {
@@ -2170,8 +2332,13 @@ function flashNewActivity(count, newItems = []) {
         } else {
             playNotificationSound('new');
         }
+        
+        // Announce new activity to screen readers
+        const activityDesc = firstItem.description ? `: ${firstItem.description.substring(0, 50)}` : '';
+        announceToScreenReader(`New ${firstItem.type} activity${count > 1 ? ` and ${count - 1} more` : ''}${activityDesc}`);
     } else {
         playNotificationSound('new');
+        announceToScreenReader(`${count} new ${count === 1 ? 'activity' : 'activities'}`);
     }
     
     // Flash the activity feed header
@@ -2560,18 +2727,23 @@ function renderGroupedActivitiesFiltered(activities) {
         const onChainCount = dayActivities.filter(a => a.signature || a.proof?.txSignature).length;
         
         html += `
-            <div class="day-group ${isCollapsed ? 'collapsed' : ''}" data-date="${dateKey}">
-                <div class="day-header" onclick="toggleDayGroup('${dateKey}')">
+            <div class="day-group ${isCollapsed ? 'collapsed' : ''}" data-date="${dateKey}" role="region" aria-labelledby="day-label-${dateKey}">
+                <div class="day-header" 
+                     onclick="toggleDayGroup('${dateKey}')"
+                     tabindex="0"
+                     role="button"
+                     aria-expanded="${!isCollapsed}"
+                     aria-controls="day-activities-${dateKey}">
                     <div class="day-header-left">
-                        <span class="day-toggle">${isCollapsed ? '▶' : '▼'}</span>
-                        <span class="day-label">${dayLabel}</span>
+                        <span class="day-toggle" aria-hidden="true">${isCollapsed ? '▶' : '▼'}</span>
+                        <span class="day-label" id="day-label-${dateKey}">${dayLabel}</span>
                     </div>
                     <div class="day-header-right">
                         <span class="day-count">${dayActivities.length} activit${dayActivities.length === 1 ? 'y' : 'ies'}</span>
                         ${onChainCount > 0 ? `<span class="day-onchain">⛓️ ${onChainCount}</span>` : ''}
                     </div>
                 </div>
-                <div class="day-activities">
+                <div class="day-activities" id="day-activities-${dateKey}">
         `;
         
         dayActivities.forEach((a, dayIndex) => {
@@ -2584,7 +2756,10 @@ function renderGroupedActivitiesFiltered(activities) {
             html += `
                 <div class="activity-item ${a.type}" 
                      style="animation-delay: ${Math.min(dayIndex, 5) * 0.04}s" 
-                     data-activity-id="${activityId}">
+                     data-activity-id="${activityId}"
+                     tabindex="0"
+                     role="article"
+                     aria-label="${a.type} activity: ${escapeHtml(a.description.substring(0, 80))}${a.description.length > 80 ? '...' : ''}">
                     ${renderShareButton(activityId)}
                     <div class="activity-header">
                         <div class="activity-badges">
@@ -2872,13 +3047,18 @@ function toggleDayGroup(dateKey) {
     if (!dayGroup) return;
     
     const isCollapsed = collapsedDays.has(dateKey);
+    const dayHeader = dayGroup.querySelector('.day-header');
     
     if (isCollapsed) {
         collapsedDays.delete(dateKey);
         dayGroup.classList.remove('collapsed');
+        if (dayHeader) dayHeader.setAttribute('aria-expanded', 'true');
+        announceToScreenReader('Day group expanded');
     } else {
         collapsedDays.add(dateKey);
         dayGroup.classList.add('collapsed');
+        if (dayHeader) dayHeader.setAttribute('aria-expanded', 'false');
+        announceToScreenReader('Day group collapsed');
     }
     
     saveCollapsedDays();
@@ -3013,18 +3193,18 @@ function renderGroupedActivities(activities, highlightNew = false) {
         const onChainCount = dayActivities.filter(a => a.signature || a.proof?.txSignature).length;
         
         html += `
-            <div class="day-group ${isCollapsed ? 'collapsed' : ''}" data-date="${dateKey}">
-                <div class="day-header" onclick="toggleDayGroup('${dateKey}')">
+            <div class="day-group ${isCollapsed ? 'collapsed' : ''}" data-date="${dateKey}" role="region" aria-labelledby="main-day-label-${dateKey}">
+                <div class="day-header" tabindex="0" role="button" aria-expanded="${!isCollapsed}" aria-controls="main-day-activities-${dateKey}" onclick="toggleDayGroup('${dateKey}')">
                     <div class="day-header-left">
-                        <span class="day-toggle">${isCollapsed ? '▶' : '▼'}</span>
-                        <span class="day-label">${dayLabel}</span>
+                        <span class="day-toggle" aria-hidden="true">${isCollapsed ? '▶' : '▼'}</span>
+                        <span class="day-label" id="main-day-label-${dateKey}">${dayLabel}</span>
                     </div>
                     <div class="day-header-right">
                         <span class="day-count">${dayActivities.length} activit${dayActivities.length === 1 ? 'y' : 'ies'}</span>
                         ${onChainCount > 0 ? `<span class="day-onchain">⛓️ ${onChainCount}</span>` : ''}
                     </div>
                 </div>
-                <div class="day-activities">
+                <div class="day-activities" id="main-day-activities-${dateKey}">
         `;
         
         dayActivities.forEach((a, dayIndex) => {
@@ -3034,12 +3214,13 @@ function renderGroupedActivities(activities, highlightNew = false) {
             const tagsHtml = renderActivityTags(a.tags);
             const walletHtml = renderWalletBadge(a.wallet);
             const activityId = getActivityId(a);
+            const ariaLabel = `${a.type} activity: ${escapeHtml(a.description.substring(0, 80))}${a.description.length > 80 ? "..." : ""}`;
             
             html += `
                 <div class="activity-item ${a.type}${isNew ? ' new-activity' : ''}" 
                      style="animation-delay: ${Math.min(dayIndex, 5) * 0.04}s" 
                      data-wallet="${a.wallet || ''}" 
-                     data-activity-id="${activityId}">
+                     data-activity-id="${activityId}" tabindex="0" role="article" aria-label="${ariaLabel}">
                     ${renderShareButton(activityId)}
                     <div class="activity-header">
                         <div class="activity-badges">
@@ -3615,9 +3796,14 @@ function showCopyToast(message, isError = false) {
     const toast = document.createElement('div');
     toast.className = 'copy-toast';
     toast.textContent = message;
+    // ARIA: announce toast as an alert for screen readers
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'polite');
+    toast.setAttribute('aria-atomic', 'true');
     if (isError) {
         toast.style.background = 'var(--accent-red)';
         toast.style.color = '#fff';
+        toast.setAttribute('aria-live', 'assertive');
     }
     document.body.appendChild(toast);
     
@@ -3631,6 +3817,17 @@ function showCopyToast(message, isError = false) {
         toast.classList.remove('visible');
         setTimeout(() => toast.remove(), 300);
     }, 2500);
+}
+
+/**
+ * Show a toast notification with optional icon
+ * @param {string} message - Message to display
+ * @param {string} icon - Optional emoji icon to prepend
+ */
+function showToast(message, icon = '') {
+    const fullMessage = icon ? `${icon} ${message}` : message;
+    const isError = icon === '❌' || icon === '⚠️';
+    showCopyToast(fullMessage, isError);
 }
 
 /**
@@ -4038,10 +4235,92 @@ function initTabKeyboardNav() {
 }
 
 /**
+ * Initialize keyboard navigation for activity feed
+ * Arrow keys navigate between activities, Enter opens share menu
+ */
+function initActivityKeyboardNav() {
+    const feed = document.getElementById('feed');
+    if (!feed) return;
+    
+    feed.addEventListener('keydown', (e) => {
+        const target = e.target;
+        
+        // Handle activity item navigation
+        if (target.classList.contains('activity-item')) {
+            const items = Array.from(feed.querySelectorAll('.activity-item[tabindex="0"]'));
+            const currentIndex = items.indexOf(target);
+            
+            if (currentIndex === -1) return;
+            
+            let newIndex = currentIndex;
+            
+            switch (e.key) {
+                case 'ArrowDown':
+                case 'j': // vim-style
+                    e.preventDefault();
+                    newIndex = Math.min(currentIndex + 1, items.length - 1);
+                    break;
+                case 'ArrowUp':
+                case 'k': // vim-style
+                    e.preventDefault();
+                    newIndex = Math.max(currentIndex - 1, 0);
+                    break;
+                case 'Enter':
+                case ' ':
+                    // Activate share button or expand details
+                    e.preventDefault();
+                    const shareBtn = target.querySelector('.share-activity-btn');
+                    if (shareBtn) shareBtn.click();
+                    break;
+                default:
+                    return;
+            }
+            
+            if (newIndex !== currentIndex) {
+                items[newIndex].focus();
+                // Scroll into view smoothly
+                items[newIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+        
+        // Handle day header navigation (toggle collapse with Enter/Space)
+        if (target.classList.contains('day-header')) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                target.click();
+            }
+        }
+    });
+}
+
+/**
+ * Make day headers keyboard accessible
+ */
+function initDayHeaderKeyboardNav() {
+    // Use event delegation on feed container
+    const feed = document.getElementById('feed');
+    if (!feed) return;
+    
+    // Make day headers focusable when they're added
+    const observer = new MutationObserver(() => {
+        feed.querySelectorAll('.day-header:not([tabindex])').forEach(header => {
+            header.setAttribute('tabindex', '0');
+            header.setAttribute('role', 'button');
+            const isCollapsed = header.closest('.day-group')?.classList.contains('collapsed');
+            header.setAttribute('aria-expanded', !isCollapsed);
+        });
+    });
+    
+    observer.observe(feed, { childList: true, subtree: true });
+}
+
+/**
  * Initialize all accessibility features
  */
 function initAccessibility() {
     initTabKeyboardNav();
+    initActivityKeyboardNav();
+    initDayHeaderKeyboardNav();
     
     // Announce initial page load
     setTimeout(() => {

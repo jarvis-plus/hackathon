@@ -3141,6 +3141,216 @@
         }
 
 /* ============================================
+   ACTIVITY INSIGHTS PANEL
+   ============================================ */
+
+.insights-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+.insights-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.insight-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+}
+
+.insight-card:hover {
+    background: rgba(0, 0, 0, 0.3);
+    border-color: var(--accent-green);
+    transform: translateY(-2px);
+}
+
+.insight-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.insight-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.insight-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.insight-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--accent-green);
+    line-height: 1.2;
+    margin-bottom: 0.25rem;
+}
+
+.insight-detail {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    line-height: 1.3;
+}
+
+.insight-progress {
+    height: 6px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 0.5rem;
+}
+
+.insight-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-green), var(--accent-blue));
+    border-radius: 3px;
+    transition: width 1s ease;
+}
+
+/* Hourly distribution chart */
+.insights-hourly-chart {
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.hourly-title {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.hourly-bars {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    height: 80px;
+    gap: 2px;
+    padding: 0 4px;
+}
+
+.hourly-bar {
+    flex: 1;
+    min-width: 8px;
+    max-width: 20px;
+    background: linear-gradient(to top, var(--accent-blue), var(--accent-green));
+    border-radius: 3px 3px 0 0;
+    transition: all 0.3s ease;
+    position: relative;
+    cursor: pointer;
+}
+
+.hourly-bar:hover {
+    filter: brightness(1.3);
+    transform: scaleY(1.05);
+    transform-origin: bottom;
+}
+
+.hourly-bar::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 10;
+}
+
+.hourly-bar:hover::before {
+    opacity: 1;
+}
+
+.hourly-bar.peak {
+    background: linear-gradient(to top, #ff6b35, #ffaa00);
+    box-shadow: 0 0 10px rgba(255, 170, 0, 0.4);
+}
+
+.hourly-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    padding: 0 2px;
+}
+
+/* Light theme adjustments */
+[data-theme="light"] .insight-card {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: var(--border);
+}
+
+[data-theme="light"] .insight-card:hover {
+    background: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .insights-hourly-chart {
+    background: rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="light"] .insight-progress {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .insights-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .insight-card {
+        padding: 0.75rem;
+    }
+    
+    .insight-icon {
+        font-size: 1.25rem;
+    }
+    
+    .insight-value {
+        font-size: 1rem;
+    }
+    
+    .hourly-bars {
+        height: 60px;
+    }
+    
+    .hourly-bar {
+        min-width: 6px;
+    }
+}
+
+@media (max-width: 400px) {
+    .insights-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================
    TAG FILTERS AND DISPLAY
    ============================================ */
 
