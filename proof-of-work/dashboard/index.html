@@ -739,6 +739,34 @@
             </div>
         </div>
 
+        <!-- Activity History Modal -->
+        <div id="historyModal" class="history-modal" role="dialog" aria-labelledby="historyTitle" aria-modal="true" style="display: none;">
+            <div class="history-content">
+                <div class="history-header">
+                    <h2 id="historyTitle">📜 Activity History</h2>
+                    <button class="modal-close" onclick="closeHistoryModal()" aria-label="Close modal">&times;</button>
+                </div>
+                <div class="history-body">
+                    <div class="history-activity-info" id="historyActivityInfo">
+                        <div class="history-activity-type" id="historyActivityType">
+                            <span class="history-type-badge">-</span>
+                        </div>
+                        <div class="history-activity-desc" id="historyActivityDesc">Activity description</div>
+                        <div class="history-activity-time" id="historyActivityTime">-</div>
+                    </div>
+                    
+                    <div class="history-stats">
+                        <span class="history-count" id="historyCount">0 changes</span>
+                        <span class="history-created" id="historyCreated">Created: -</span>
+                    </div>
+                    
+                    <div class="history-list" id="historyList">
+                        <div class="history-empty">No changes recorded yet. Changes to notes, status, pin, and location are tracked.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="proof-banner">
             <div class="proof-banner-icon">🔐</div>
             <div class="proof-banner-text">
@@ -2193,6 +2221,11 @@
         <div class="context-menu-item" id="ctxViewOnChain" role="menuitem" tabindex="-1">
             <span class="context-menu-icon">⛓️</span>
             <span class="context-menu-label">View On-Chain</span>
+        </div>
+        <div class="context-menu-item" id="ctxHistory" role="menuitem" tabindex="-1">
+            <span class="context-menu-icon">📜</span>
+            <span class="context-menu-label">View History</span>
+            <span class="context-menu-shortcut">H</span>
         </div>
         <div class="context-menu-item" id="ctxQRCode" role="menuitem" tabindex="-1">
             <span class="context-menu-icon">📱</span>

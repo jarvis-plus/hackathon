@@ -15,7 +15,29 @@
     "hash": "5b6bdf297218ef537051fb92c64e4ba16cc23637a83aadc3a3acdfc100be3427",
     "signature": "4DmaL72ugWyp5mbzv6rL26VxwMq4L78P4zbTELCTDvBssTPkDMHZPkr2KV3PRCh3Zqp29ym8mzPYDo3srihWP85h",
     "restoredAt": "2026-02-04T12:51:52.027Z",
-    "onChain": true
+    "onChain": true,
+    "notes": "Test history tracking - Cycle 223",
+    "notesUpdatedAt": "2026-02-04T21:13:35.907Z",
+    "history": [
+      {
+        "timestamp": "2026-02-04T21:13:35.907Z",
+        "action": "update_notes",
+        "field": "notes",
+        "oldValue": null,
+        "newValue": "Test history tracking - Cycle 223",
+        "actor": "user"
+      },
+      {
+        "timestamp": "2026-02-04T21:13:42.334Z",
+        "action": "pin",
+        "field": "pinned",
+        "oldValue": false,
+        "newValue": true,
+        "actor": "user"
+      }
+    ],
+    "pinned": true,
+    "pinnedAt": "2026-02-04T21:13:42.334Z"
   },
   {
     "timestamp": "2026-02-03T07:29:00Z",
@@ -5534,5 +5556,20 @@
     "description": "Cycle 222: Activity Sorting Options - dropdown to sort by date/type/importance/status, keyboard shortcut O to cycle, command palette integration, localStorage persistence, theme support",
     "hash": "054b31dfe9a5fa9ace4ceac2b3ef36e599c07c5cb571938a1939afecd8c65d37",
     "signature": "44qQp4Si3DoU9WX6q6TNjRSECsymjUqsGSGnkUwPPSARHP3G4xWwGvDWRD2BXxcizisQqnP7pDu34w4wxkGqyzWG"
+  },
+  {
+    "timestamp": "2026-02-04T21:05:47.663Z",
+    "type": "commit",
+    "description": "Cycle 222: Activity Sorting Options",
+    "hash": "3ae9dd987b2c715dddf5aa6174c4467606a48eccd79fae6bce38ba85e316abc1",
+    "signature": "267mSCRtjGkUFk9QC6eNnZrcmpUXhdt8MYzhgQSPwKevnEmUSKzbbrz9pMUBtBVZwtTwBAKDvdz5QoGV75Y6xX7p"
+  },
+  {
+    "timestamp": "2026-02-04T21:13:57.437Z",
+    "type": "build",
+    "description": "Cycle 223: Implemented Activity Version History - API endpoint GET /api/activities/:hash/history, history tracking on all PATCH endpoints (notes, pin, status, location), history modal UI with diff view, keyboard shortcut H, command palette integration, context menu option. ~400 lines total.",
+    "hash": "8293777049ccffa6d06038fec19783e8778175058bda4e4bba496d17a9e39b43",
+    "signature": "2gFvsvnJqR3TxYxd62JdFm5e58iHBZxFCMpg6bMTqHPy3ZEYaeRGcNj6GRSrPY1MCpoBAL9TdpCCZkwbX6C34tvd",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
   }
 ]

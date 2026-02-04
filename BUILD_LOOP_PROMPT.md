@@ -45,6 +45,34 @@ You are executing a build cycle for the Proof of Work dashboard.
 - Prefer small complete improvements over large incomplete ones
 - If stuck, pick a different backlog item
 - Keep OBJECTIVES.md lean - move old cycles to archive
+- **NO DUMP LOOPS** - Be conscious about code quality:
+  - Don't add features that break existing functionality
+  - Run visual check BEFORE committing
+  - If visual check fails, FIX IT before moving on
+  - If you created an error in a previous cycle, fixing it IS your next cycle's work
+
+## Error Recovery (PRIORITY)
+
+**Before picking a new backlog item**, check for existing issues:
+
+1. Run visual check: `PLAYWRIGHT_BROWSERS_PATH=/root/.cache/ms-playwright node visual-check.js`
+2. If it fails (console errors, missing elements), **FIX THOSE FIRST**
+3. Check for loading spinners that never resolve
+4. Check for UI clutter (sections that should be collapsed by default)
+
+**If previous cycle broke something:**
+- Your cycle IS fixing that issue
+- Don't add new features on top of broken code
+- Log the fix as your cycle's activity
+
+## Quality Gates
+
+Before committing, ALL must pass:
+- [ ] API health check (`curl localhost:3457/api/stats`)
+- [ ] Visual check passes (no console errors)
+- [ ] No infinite loading spinners
+- [ ] Page loads in reasonable time (<5s)
+- [ ] New feature actually works (test it!)
 
 ## Archive Rotation
 

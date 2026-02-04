@@ -18,6 +18,7 @@
  * Key Endpoints:
  * - GET /api/activities           - All activities as JSON array
  * - GET /api/activities/:hash     - Single activity by hash
+ * - GET /api/activities/:hash/history - Get version history for an activity
  * - GET /api/activities/:hash/diff - Compare with previous same-type activity
  * - GET /api/og/:hash             - OG image for social sharing (SVG)
  * - GET /share/:hash              - Share page with OG meta tags (redirects to dashboard)
@@ -1948,6 +1949,72 @@ function saveActivities(activities: any[]): void {
 }
 
 // ==============================================
+// VERSION HISTORY TRACKING
+// ==============================================
+
+/**
+ * History Entry Interface
+ * 
+ * Each history entry records a change to an activity:
+ * - timestamp: When the change was made
+ * - action: Type of change (update_notes, update_status, update_location, etc.)
+ * - field: The field that was changed
+ * - oldValue: Previous value (null if field was added)
+ * - newValue: New value (null if field was removed)
+ * - actor: Who made the change (e.g., 'user', 'api', 'system')
+ */
+interface HistoryEntry {
+  timestamp: string;
+  action: string;
+  field: string;
+  oldValue: any;
+  newValue: any;
+  actor: string;
+}
+
+/**
+ * Record a change to an activity's history.
+ * 
+ * Adds a new entry to the activity's `history` array, creating it if it doesn't exist.
+ * History is capped at 100 entries per activity to prevent unbounded growth.
+ * 
+ * @param activity - The activity object to modify
+ * @param field - The field that changed
+ * @param oldValue - Previous value
+ * @param newValue - New value
+ * @param action - Type of action (e.g., 'update_notes', 'toggle_pin')
+ * @param actor - Who made the change (default: 'user')
+ */
+function recordHistory(
+  activity: any, 
+  field: string, 
+  oldValue: any, 
+  newValue: any, 
+  action: string,
+  actor: string = 'user'
+): void {
+  if (!activity.history) {
+    activity.history = [];
+  }
+  
+  const entry: HistoryEntry = {
+    timestamp: new Date().toISOString(),
+    action,
+    field,
+    oldValue,
+    newValue,
+    actor
+  };
+  
+  activity.history.push(entry);
+  
+  // Cap history at 100 entries (remove oldest if exceeded)
+  if (activity.history.length > 100) {
+    activity.history = activity.history.slice(-100);
+  }
+}
+
+// ==============================================
 // STREAK TRACKING
 // ==============================================
 
@@ -3469,6 +3536,39 @@ const server = Bun.serve({
     }
 
     // ==========================================
+    // API: GET /api/activities/:hash/history
+    // Get version history for an activity
+    // Returns array of changes made to the activity over time
+    // ==========================================
+    if (path.match(/^\/api\/activities\/[a-f0-9]{64}\/history$/) && req.method === 'GET') {
+      const hash = path.split('/')[3];
+      const activities = getActivities();
+      const activity = activities.find((a: any) => a.hash === hash);
+      
+      if (!activity) {
+        return Response.json({ 
+          error: 'Activity not found' 
+        }, { status: 404, headers: corsHeaders });
+      }
+      
+      const history = activity.history || [];
+      
+      // Sort by timestamp (newest first)
+      const sortedHistory = [...history].sort((a: any, b: any) => 
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      );
+      
+      return Response.json({
+        hash,
+        activityType: activity.type,
+        activityDescription: activity.description,
+        createdAt: activity.timestamp,
+        historyCount: sortedHistory.length,
+        history: sortedHistory
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
     // API: PATCH /api/activities/:hash/notes
     // Add or update notes on an activity
     // Notes are user-added annotations (not part of the signed content)
@@ -3501,6 +3601,9 @@ const server = Bun.serve({
           }, { status: 404, headers: corsHeaders });
         }
         
+        // Record history before making changes
+        const oldNotes = activities[activityIndex].notes || null;
+        
         // Add or update notes field
         const trimmedNotes = body.notes.trim();
         if (trimmedNotes) {
@@ -3510,6 +3613,17 @@ const server = Bun.serve({
           // Empty notes = remove the field
           delete activities[activityIndex].notes;
           delete activities[activityIndex].notesUpdatedAt;
+        }
+        
+        // Record this change in history
+        if (oldNotes !== (activities[activityIndex].notes || null)) {
+          recordHistory(
+            activities[activityIndex],
+            'notes',
+            oldNotes,
+            activities[activityIndex].notes || null,
+            trimmedNotes ? 'update_notes' : 'remove_notes'
+          );
         }
         
         saveActivities(activities);
@@ -3547,10 +3661,19 @@ const server = Bun.serve({
       }
       
       const hadNotes = !!activities[activityIndex].notes;
+      const oldNotes = activities[activityIndex].notes || null;
       delete activities[activityIndex].notes;
       delete activities[activityIndex].notesUpdatedAt;
       
       if (hadNotes) {
+        // Record this change in history
+        recordHistory(
+          activities[activityIndex],
+          'notes',
+          oldNotes,
+          null,
+          'remove_notes'
+        );
         saveActivities(activities);
         console.log(`📝 Notes removed for activity: ${hash.slice(0, 8)}...`);
       }
@@ -3593,6 +3716,17 @@ const server = Bun.serve({
           delete activities[activityIndex].pinnedAt;
         }
         
+        // Record this change in history
+        if (currentPinned !== newPinned) {
+          recordHistory(
+            activities[activityIndex],
+            'pinned',
+            currentPinned,
+            newPinned,
+            newPinned ? 'pin' : 'unpin'
+          );
+        }
+        
         saveActivities(activities);
         
         console.log(`📌 Activity ${hash.slice(0, 8)}... ${newPinned ? 'pinned' : 'unpinned'}`);
@@ -3613,7 +3747,8 @@ const server = Bun.serve({
           return Response.json({ error: 'Activity not found' }, { status: 404, headers: corsHeaders });
         }
         
-        const newPinned = !activities[activityIndex].pinned;
+        const currentPinned = !!activities[activityIndex].pinned;
+        const newPinned = !currentPinned;
         if (newPinned) {
           activities[activityIndex].pinned = true;
           activities[activityIndex].pinnedAt = new Date().toISOString();
@@ -3621,6 +3756,15 @@ const server = Bun.serve({
           delete activities[activityIndex].pinned;
           delete activities[activityIndex].pinnedAt;
         }
+        
+        // Record this change in history
+        recordHistory(
+          activities[activityIndex],
+          'pinned',
+          currentPinned,
+          newPinned,
+          newPinned ? 'pin' : 'unpin'
+        );
         
         saveActivities(activities);
         
@@ -3669,6 +3813,17 @@ const server = Bun.serve({
         } else {
           activities[activityIndex].status = body.status;
           activities[activityIndex].statusUpdatedAt = new Date().toISOString();
+        }
+        
+        // Record this change in history
+        if (oldStatus !== body.status) {
+          recordHistory(
+            activities[activityIndex],
+            'status',
+            oldStatus,
+            body.status,
+            'update_status'
+          );
         }
         
         saveActivities(activities);
@@ -3814,8 +3969,20 @@ const server = Bun.serve({
           }, { status: 400, headers: corsHeaders });
         }
         
+        // Record old location for history
+        const oldLocation = activities[activityIndex].location ? { ...activities[activityIndex].location } : null;
+        
         location.updatedAt = new Date().toISOString();
         activities[activityIndex].location = location;
+        
+        // Record this change in history
+        recordHistory(
+          activities[activityIndex],
+          'location',
+          oldLocation,
+          location,
+          oldLocation ? 'update_location' : 'add_location'
+        );
         
         saveActivities(activities);
         

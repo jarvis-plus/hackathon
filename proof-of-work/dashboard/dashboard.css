@@ -22346,3 +22346,275 @@ a.activity-location:hover {
         border-bottom: none !important;
     }
 }
+
+/* =============================================================================
+   Activity History Modal - Cycle 223
+   ============================================================================= */
+
+.history-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    animation: fadeIn 0.2s ease forwards;
+}
+
+.history-content {
+    background: linear-gradient(145deg, var(--card-bg), rgba(0, 0, 0, 0.5));
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+    animation: slideUp 0.3s ease;
+}
+
+.history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.history-header h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.history-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* Activity info card */
+.history-activity-info {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.history-activity-type {
+    margin-bottom: 0.5rem;
+}
+
+.history-type-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: rgba(0, 255, 170, 0.15);
+    border: 1px solid rgba(0, 255, 170, 0.3);
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--accent);
+}
+
+.history-activity-desc {
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    line-height: 1.5;
+    margin-bottom: 0.5rem;
+}
+
+.history-activity-time {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* Stats bar */
+.history-stats {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.history-count {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.history-created {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+/* History list */
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.history-empty {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+/* Individual history entry */
+.history-entry {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 1rem;
+    transition: all 0.2s ease;
+}
+
+.history-entry:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 20px rgba(0, 255, 170, 0.1);
+}
+
+.history-entry-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.history-action {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.history-action-icon {
+    font-size: 1.1rem;
+}
+
+.history-action-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    text-transform: capitalize;
+}
+
+.history-entry-time {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* Diff display */
+.history-diff {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.history-diff-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.history-diff-label {
+    flex-shrink: 0;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.history-diff-old .history-diff-label {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.history-diff-new .history-diff-label {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+}
+
+.history-diff-value {
+    flex: 1;
+    color: var(--text-secondary);
+    word-break: break-word;
+    line-height: 1.4;
+}
+
+.history-diff-value.none {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* Action icons by type */
+.history-entry[data-action="update_notes"] .history-action-icon::before { content: "📝"; }
+.history-entry[data-action="remove_notes"] .history-action-icon::before { content: "🗑️"; }
+.history-entry[data-action="pin"] .history-action-icon::before { content: "📌"; }
+.history-entry[data-action="unpin"] .history-action-icon::before { content: "📌"; }
+.history-entry[data-action="update_status"] .history-action-icon::before { content: "📊"; }
+.history-entry[data-action="add_location"] .history-action-icon::before { content: "📍"; }
+.history-entry[data-action="update_location"] .history-action-icon::before { content: "📍"; }
+
+/* Theme variations */
+[data-theme="light"] .history-modal {
+    background: rgba(255, 255, 255, 0.9);
+}
+
+[data-theme="light"] .history-content {
+    background: #ffffff;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .history-entry {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+/* Print styles */
+@media print {
+    .history-modal {
+        display: none !important;
+    }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 480px) {
+    .history-content {
+        width: 95%;
+        max-height: 95vh;
+    }
+    
+    .history-body {
+        padding: 1rem;
+    }
+    
+    .history-stats {
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: center;
+    }
+    
+    .history-entry-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+}

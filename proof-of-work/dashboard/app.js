@@ -8414,6 +8414,7 @@ function createShortcutsModal() {
                     <div class="shortcut-row"><kbd>w</kbd> Configure widgets</div>
                     <div class="shortcut-row"><kbd>n</kbd> Quick note on first activity</div>
                     <div class="shortcut-row"><kbd>e</kbd> Add reaction (on focused activity)</div>
+                    <div class="shortcut-row"><kbd>h</kbd> View history (on focused activity)</div>
                     <div class="shortcut-row"><kbd>y</kbd> Fire confetti 🎉</div>
                     <div class="shortcut-row"><kbd>Shift+y</kbd> Epic confetti cannons 🎆</div>
                     <div class="shortcut-row"><kbd>?</kbd> Show this help</div>
@@ -8733,6 +8734,7 @@ const PALETTE_COMMANDS = [
     { id: 'celebrate', title: 'Celebrate! 🎉', description: 'Fire confetti to celebrate milestones', icon: '🎊', shortcut: 'Y', action: () => { celebrate('normal'); hideCommandPalette(); }, group: 'Actions' },
     { id: 'celebrate-epic', title: 'Epic Celebration! 🎆', description: 'Fire epic confetti cannons from both sides', icon: '🎇', action: () => { celebrate('epic'); hideCommandPalette(); }, group: 'Actions' },
     { id: 'qr-code', title: 'Show QR Code', description: 'Generate QR code for focused activity (for sharing)', icon: '📱', shortcut: 'Q', action: () => { const card = document.querySelector('.activity-card:focus, .activity-card.focused'); if (card?.dataset?.hash) { openQRCodeModal(card.dataset.hash); } hideCommandPalette(); }, group: 'Actions' },
+    { id: 'history', title: 'View History', description: 'View change history for focused activity', icon: '📜', shortcut: 'H', action: () => { const card = document.querySelector('.activity-card:focus, .activity-card.focused'); if (card?.dataset?.hash) { openHistoryModal(card.dataset.hash); } hideCommandPalette(); }, group: 'Actions' },
     
     // Help
     { id: 'shortcuts', title: 'Keyboard Shortcuts', description: 'View all keyboard shortcuts', icon: '⌨️', shortcut: '?', action: () => { showShortcutsModal(); hideCommandPalette(); }, group: 'Help' },
@@ -21424,6 +21426,211 @@ function closeQRCodeModal() {
     qrCodeState.currentActivity = null;
 }
 
+// =============================================================================
+// ACTIVITY HISTORY MODAL - Cycle 223
+// =============================================================================
+
+let historyState = {
+    currentHash: null,
+    currentActivity: null,
+    history: []
+};
+
+/**
+ * Open the history modal for an activity
+ * @param {string} hash - Activity hash
+ */
+async function openHistoryModal(hash) {
+    const modal = document.getElementById('historyModal');
+    if (!modal) return;
+    
+    // Find the activity
+    const activity = cachedActivities.find(a => a.hash === hash);
+    if (!activity) {
+        showToast('Activity not found', 'error');
+        return;
+    }
+    
+    historyState.currentHash = hash;
+    historyState.currentActivity = activity;
+    
+    // Update activity info display
+    updateHistoryActivityInfo(activity);
+    
+    // Show loading state
+    const historyList = document.getElementById('historyList');
+    historyList.innerHTML = '<div class="history-empty">Loading history...</div>';
+    
+    // Show modal
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    
+    // Fetch history from API
+    try {
+        const response = await fetch(`/api/activities/${hash}/history`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch history');
+        }
+        
+        const data = await response.json();
+        historyState.history = data.history || [];
+        
+        // Update stats
+        document.getElementById('historyCount').textContent = 
+            `${historyState.history.length} change${historyState.history.length !== 1 ? 's' : ''}`;
+        document.getElementById('historyCreated').textContent = 
+            `Created: ${new Date(data.createdAt).toLocaleString()}`;
+        
+        // Render history entries
+        renderHistoryList(historyState.history);
+        
+    } catch (error) {
+        console.error('Error fetching history:', error);
+        historyList.innerHTML = '<div class="history-empty">Failed to load history</div>';
+    }
+    
+    // Announce for screen readers
+    announce('History modal opened for activity');
+}
+
+/**
+ * Close the history modal
+ */
+function closeHistoryModal() {
+    const modal = document.getElementById('historyModal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+    historyState.currentHash = null;
+    historyState.currentActivity = null;
+    historyState.history = [];
+}
+
+/**
+ * Update activity info in history modal
+ * @param {Object} activity - Activity object
+ */
+function updateHistoryActivityInfo(activity) {
+    // Type badge
+    const typeDisplay = document.getElementById('historyActivityType');
+    if (typeDisplay) {
+        const typeInfo = getTypeInfo(activity.type);
+        typeDisplay.innerHTML = `<span class="history-type-badge" style="background: ${typeInfo.color}; color: ${getContrastColor(typeInfo.color)}">${typeInfo.emoji} ${activity.type}</span>`;
+    }
+    
+    // Description
+    const descDisplay = document.getElementById('historyActivityDesc');
+    if (descDisplay) {
+        descDisplay.textContent = activity.description || 'No description';
+    }
+    
+    // Time
+    const timeDisplay = document.getElementById('historyActivityTime');
+    if (timeDisplay) {
+        const date = new Date(activity.timestamp);
+        timeDisplay.textContent = date.toLocaleString();
+    }
+}
+
+/**
+ * Render history list in the modal
+ * @param {Array} history - Array of history entries
+ */
+function renderHistoryList(history) {
+    const historyList = document.getElementById('historyList');
+    
+    if (!history || history.length === 0) {
+        historyList.innerHTML = '<div class="history-empty">No changes recorded yet. Changes to notes, status, pin, and location are tracked.</div>';
+        return;
+    }
+    
+    historyList.innerHTML = history.map(entry => {
+        const actionIcons = {
+            'update_notes': '📝',
+            'remove_notes': '🗑️',
+            'pin': '📌',
+            'unpin': '📌',
+            'update_status': '📊',
+            'add_location': '📍',
+            'update_location': '📍',
+            'remove_location': '🗑️'
+        };
+        
+        const actionNames = {
+            'update_notes': 'Updated Notes',
+            'remove_notes': 'Removed Notes',
+            'pin': 'Pinned',
+            'unpin': 'Unpinned',
+            'update_status': 'Changed Status',
+            'add_location': 'Added Location',
+            'update_location': 'Updated Location',
+            'remove_location': 'Removed Location'
+        };
+        
+        const icon = actionIcons[entry.action] || '📋';
+        const actionName = actionNames[entry.action] || entry.action.replace(/_/g, ' ');
+        const time = new Date(entry.timestamp).toLocaleString();
+        
+        return `
+            <div class="history-entry" data-action="${entry.action}">
+                <div class="history-entry-header">
+                    <div class="history-action">
+                        <span class="history-action-icon">${icon}</span>
+                        <span class="history-action-name">${actionName}</span>
+                    </div>
+                    <span class="history-entry-time">${time}</span>
+                </div>
+                <div class="history-diff">
+                    <div class="history-diff-row history-diff-old">
+                        <span class="history-diff-label">Was</span>
+                        <span class="history-diff-value ${entry.oldValue === null ? 'none' : ''}">${formatHistoryValue(entry.oldValue, entry.field)}</span>
+                    </div>
+                    <div class="history-diff-row history-diff-new">
+                        <span class="history-diff-label">Now</span>
+                        <span class="history-diff-value ${entry.newValue === null ? 'none' : ''}">${formatHistoryValue(entry.newValue, entry.field)}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+/**
+ * Format a history value for display
+ * @param {any} value - The value to format
+ * @param {string} field - The field name
+ * @returns {string} - Formatted value
+ */
+function formatHistoryValue(value, field) {
+    if (value === null || value === undefined) {
+        return '(none)';
+    }
+    
+    if (field === 'pinned') {
+        return value ? 'Pinned' : 'Not pinned';
+    }
+    
+    if (field === 'location' && typeof value === 'object') {
+        const parts = [];
+        if (value.placeName) parts.push(value.placeName);
+        if (value.address) parts.push(value.address);
+        if (value.lat && value.lng) parts.push(`(${value.lat.toFixed(4)}, ${value.lng.toFixed(4)})`);
+        return parts.join(' • ') || '(location data)';
+    }
+    
+    if (typeof value === 'object') {
+        return JSON.stringify(value);
+    }
+    
+    // Truncate long strings
+    if (typeof value === 'string' && value.length > 200) {
+        return value.substring(0, 200) + '...';
+    }
+    
+    return String(value);
+}
+
 /**
  * Update activity info in QR code modal
  * @param {Object} activity - Activity object
@@ -21683,3 +21890,77 @@ window.downloadQRCode = downloadQRCode;
 window.shareQRCode = shareQRCode;
 
 console.log('📱 QR Code sharing loaded - Press Q on focused activity or use context menu');
+
+// =============================================================================
+// ACTIVITY HISTORY MODAL INITIALIZATION - Cycle 223
+// =============================================================================
+
+// Handle context menu click for history
+function handleContextMenuHistory() {
+    const hash = contextMenuState.currentHash;
+    if (hash) {
+        hideContextMenu();
+        openHistoryModal(hash);
+    }
+}
+
+// Initialize history context menu item
+(function() {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initHistoryContextMenu);
+    } else {
+        initHistoryContextMenu();
+    }
+})();
+
+function initHistoryContextMenu() {
+    const ctxHistory = document.getElementById('ctxHistory');
+    if (ctxHistory) {
+        ctxHistory.addEventListener('click', handleContextMenuHistory);
+    }
+}
+
+// Add 'H' keyboard shortcut to show history for focused activity
+(function() {
+    document.addEventListener('keydown', function(e) {
+        // Don't trigger in inputs/textareas
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        
+        // H for history
+        if ((e.key === 'h' || e.key === 'H') && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
+            // Check if we have a focused activity
+            const focusedCard = document.querySelector('.activity-card:focus, .activity-card.focused');
+            if (focusedCard) {
+                const hash = focusedCard.dataset.hash;
+                if (hash) {
+                    e.preventDefault();
+                    openHistoryModal(hash);
+                }
+            }
+        }
+    });
+})();
+
+// Close history modal on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const modal = document.getElementById('historyModal');
+        if (modal && modal.style.display === 'flex') {
+            closeHistoryModal();
+        }
+    }
+});
+
+// Close history modal when clicking outside
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('historyModal');
+    if (modal && modal.style.display === 'flex' && e.target === modal) {
+        closeHistoryModal();
+    }
+});
+
+// Export functions globally
+window.openHistoryModal = openHistoryModal;
+window.closeHistoryModal = closeHistoryModal;
+
+console.log('📜 Activity History loaded - Press H on focused activity or use context menu');
