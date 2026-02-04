@@ -224,6 +224,264 @@ window.resetWidgets = resetWidgets;
 window.saveAndCloseWidgets = saveAndCloseWidgets;
 
 // ============================================
+// DRAG-AND-DROP DASHBOARD LAYOUT
+// ============================================
+
+let dashboardDragEnabled = false;
+let dashboardEditMode = false;
+let draggedCard = null;
+let draggedWidgetId = null;
+
+/**
+ * Initialize drag-and-drop on the stats grid
+ * Called after stat cards are rendered
+ */
+function initDashboardDragDrop() {
+    const statsGrid = document.getElementById('stats-grid');
+    if (!statsGrid) return;
+    
+    // Add class to enable drag styles
+    statsGrid.classList.add('drag-enabled');
+    
+    // Make all stat cards draggable
+    const statCards = statsGrid.querySelectorAll('.stat-card');
+    statCards.forEach(card => {
+        card.classList.add('draggable');
+        card.setAttribute('draggable', 'true');
+        
+        // Drag start
+        card.addEventListener('dragstart', handleDashboardDragStart);
+        
+        // Drag end
+        card.addEventListener('dragend', handleDashboardDragEnd);
+        
+        // Drag over (needed for drop to work)
+        card.addEventListener('dragover', handleDashboardDragOver);
+        
+        // Drag enter (visual feedback)
+        card.addEventListener('dragenter', handleDashboardDragEnter);
+        
+        // Drag leave (remove visual feedback)
+        card.addEventListener('dragleave', handleDashboardDragLeave);
+        
+        // Drop
+        card.addEventListener('drop', handleDashboardDrop);
+    });
+    
+    dashboardDragEnabled = true;
+}
+
+/**
+ * Handle drag start on stat card
+ */
+function handleDashboardDragStart(e) {
+    draggedCard = this;
+    draggedWidgetId = getWidgetIdFromCard(this);
+    
+    this.classList.add('dragging');
+    
+    // Set drag data
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', draggedWidgetId);
+    
+    // Create custom drag image (optional)
+    // e.dataTransfer.setDragImage(this, this.offsetWidth / 2, this.offsetHeight / 2);
+    
+    announceToScreenReader(`Dragging ${getWidgetNameById(draggedWidgetId)} widget`);
+}
+
+/**
+ * Handle drag end
+ */
+function handleDashboardDragEnd(e) {
+    this.classList.remove('dragging');
+    
+    // Remove all drag-over states
+    const statsGrid = document.getElementById('stats-grid');
+    if (statsGrid) {
+        statsGrid.querySelectorAll('.stat-card').forEach(card => {
+            card.classList.remove('drag-over');
+        });
+    }
+    
+    draggedCard = null;
+    draggedWidgetId = null;
+}
+
+/**
+ * Handle drag over (enables drop)
+ */
+function handleDashboardDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+}
+
+/**
+ * Handle drag enter (visual feedback)
+ */
+function handleDashboardDragEnter(e) {
+    e.preventDefault();
+    if (this !== draggedCard) {
+        this.classList.add('drag-over');
+    }
+}
+
+/**
+ * Handle drag leave
+ */
+function handleDashboardDragLeave(e) {
+    // Only remove if actually leaving (not entering a child element)
+    if (!this.contains(e.relatedTarget)) {
+        this.classList.remove('drag-over');
+    }
+}
+
+/**
+ * Handle drop on stat card
+ */
+function handleDashboardDrop(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    this.classList.remove('drag-over');
+    
+    if (!draggedCard || this === draggedCard) return;
+    
+    const targetWidgetId = getWidgetIdFromCard(this);
+    if (!targetWidgetId || !draggedWidgetId) return;
+    
+    // Get current config
+    const config = getWidgetConfig();
+    const draggedIndex = config.findIndex(w => w.id === draggedWidgetId);
+    const targetIndex = config.findIndex(w => w.id === targetWidgetId);
+    
+    if (draggedIndex === -1 || targetIndex === -1) return;
+    
+    // Reorder: remove dragged item and insert at target position
+    const [movedWidget] = config.splice(draggedIndex, 1);
+    config.splice(targetIndex, 0, movedWidget);
+    
+    // Save the new order
+    saveWidgetConfig(config);
+    
+    // Re-render stat cards with new order
+    statsInitialized = false;
+    if (window.cachedActivities) {
+        updateStats(window.cachedActivities);
+    }
+    
+    // Re-initialize drag-drop on new elements
+    setTimeout(() => {
+        initDashboardDragDrop();
+    }, 100);
+    
+    // Show success feedback
+    showDragToast(`${movedWidget.name} moved`);
+    announceToScreenReader(`${movedWidget.name} moved to position ${targetIndex + 1}`);
+}
+
+/**
+ * Get widget ID from a stat card element
+ */
+function getWidgetIdFromCard(card) {
+    // Try to match card ID to widget ID
+    const cardId = card.id || '';
+    
+    // Map card IDs to widget IDs
+    const idMap = {
+        'card-total-actions': 'total-actions',
+        'card-onchain': 'onchain',
+        'card-commits': 'commits',
+        'card-builds': 'builds',
+        'card-trades': 'trades',
+        'card-messages': 'messages',
+        'card-tweets': 'tweets',
+        'card-uptime': 'uptime',
+        'card-volume': 'volume',
+        'streak-card': 'streak',
+        'mood-card': 'mood',
+        'sol-position-card': 'sol-position'
+    };
+    
+    if (idMap[cardId]) return idMap[cardId];
+    
+    // Fallback: try to find by position
+    const statsGrid = document.getElementById('stats-grid');
+    if (!statsGrid) return null;
+    
+    const cards = Array.from(statsGrid.querySelectorAll('.stat-card'));
+    const index = cards.indexOf(card);
+    
+    if (index !== -1) {
+        const config = getWidgetConfig();
+        const enabledWidgets = config.filter(w => w.enabled);
+        if (enabledWidgets[index]) {
+            return enabledWidgets[index].id;
+        }
+    }
+    
+    return null;
+}
+
+/**
+ * Get widget name by ID
+ */
+function getWidgetNameById(widgetId) {
+    const config = getWidgetConfig();
+    const widget = config.find(w => w.id === widgetId);
+    return widget ? widget.name : 'Widget';
+}
+
+/**
+ * Show a toast notification for drag actions
+ */
+function showDragToast(message) {
+    // Use existing toast if available, or create simple one
+    if (typeof showToast === 'function') {
+        showToast(`📌 ${message}`, 'success');
+    } else {
+        // Fallback: create a simple toast
+        let toast = document.querySelector('.drag-toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.className = 'drag-toast';
+            document.body.appendChild(toast);
+        }
+        
+        toast.textContent = `📌 ${message}`;
+        toast.classList.add('show');
+        
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 2000);
+    }
+}
+
+/**
+ * Toggle edit mode for dashboard layout
+ * Shows visual indicators that cards can be dragged
+ */
+function toggleDashboardEditMode() {
+    const statsGrid = document.getElementById('stats-grid');
+    if (!statsGrid) return;
+    
+    dashboardEditMode = !dashboardEditMode;
+    statsGrid.classList.toggle('edit-mode', dashboardEditMode);
+    
+    if (dashboardEditMode) {
+        showToast('📐 Edit mode: Drag cards to reorder', 'info');
+        announceToScreenReader('Dashboard edit mode enabled. Drag stat cards to reorder.');
+    } else {
+        showToast('✅ Layout saved', 'success');
+        announceToScreenReader('Dashboard edit mode disabled. Layout saved.');
+    }
+}
+
+// Make drag functions globally available
+window.initDashboardDragDrop = initDashboardDragDrop;
+window.toggleDashboardEditMode = toggleDashboardEditMode;
+
+// ============================================
 // INFINITE SCROLL / LAZY LOADING
 // ============================================
 const ACTIVITIES_PER_PAGE = 50;
@@ -1874,6 +2132,11 @@ function initializeStatCards() {
         statsGrid.querySelectorAll('.stat-card.animate-entry').forEach(card => {
             card.classList.remove('animate-entry');
         });
+        
+        // Initialize drag-and-drop after animations complete
+        if (typeof initDashboardDragDrop === 'function') {
+            initDashboardDragDrop();
+        }
     }, 1200); // Wait for all staggered animations to finish
 }
 
@@ -6766,6 +7029,7 @@ const KEYBOARD_SHORTCUTS = {
     'r': { action: 'resetFilters', description: 'Reset all filters' },
     'e': { action: 'exportJSON', description: 'Export as JSON' },
     'E': { action: 'exportCSV', description: 'Export as CSV' },
+    'd': { action: 'toggleEditMode', description: 'Toggle dashboard edit mode' },
     'l': { action: 'loadMore', description: 'Load more activities' },
     'b': { action: 'toggleBookmarkFilter', description: 'Toggle bookmark filter' },
     'B': { action: 'bookmarkFocused', description: 'Bookmark focused activity' },
@@ -6824,6 +7088,7 @@ function createShortcutsModal() {
                     <div class="shortcut-row"><kbd>z</kbd> Toggle focus mode</div>
                     <div class="shortcut-row"><kbd>c</kbd> Toggle compare mode</div>
                     <div class="shortcut-row"><kbd>x</kbd> Toggle bulk select mode</div>
+                    <div class="shortcut-row"><kbd>d</kbd> Toggle layout edit mode</div>
                     <div class="shortcut-row"><kbd>v</kbd> Voice activity input</div>
                     <div class="shortcut-row"><kbd>w</kbd> Configure widgets</div>
                     <div class="shortcut-row"><kbd>y</kbd> Fire confetti 🎉</div>
@@ -6920,6 +7185,8 @@ function handleShortcutAction(action) {
         celebrate('normal');
     } else if (action === 'celebrateEpic') {
         celebrate('epic');
+    } else if (action === 'toggleEditMode') {
+        toggleDashboardEditMode();
     }
 }
 
@@ -7039,6 +7306,7 @@ const PALETTE_COMMANDS = [
     
     // Settings
     { id: 'widgets', title: 'Customize Widgets', description: 'Configure dashboard stat cards', icon: '🧩', shortcut: 'W', action: () => { openWidgetsModal(); hideCommandPalette(); }, group: 'Settings' },
+    { id: 'edit-layout', title: 'Toggle Layout Edit Mode', description: 'Drag stat cards to reorder on dashboard', icon: '📐', shortcut: 'D', action: () => { toggleDashboardEditMode(); hideCommandPalette(); }, group: 'Settings' },
     { id: 'reminders', title: 'View Reminders', description: 'Manage activity reminders and follow-ups', icon: '⏰', shortcut: 'R', action: () => { openRemindersModal(); hideCommandPalette(); }, group: 'Actions' },
     { id: 'new-reminder', title: 'New Reminder', description: 'Create a new reminder', icon: '➕', action: () => { openReminderFormModal(); hideCommandPalette(); }, group: 'Actions' },
     { id: 'relationships', title: 'View Relationships', description: 'Browse activity links and connections', icon: '🔗', shortcut: 'L', action: () => { openRelationshipsModal(); hideCommandPalette(); }, group: 'Actions' },
