@@ -16,16 +16,19 @@
  * - Rate limiting protects against abuse (100 req/min API, 10 WS connections/min)
  * 
  * Key Endpoints:
- * - GET /api/activities    - All activities as JSON array
- * - GET /api/stats         - Aggregated statistics
- * - GET /api/health        - Health check for monitoring
- * - GET /api/verify/:hash  - Verify a specific activity by hash
- * - GET /api/badge         - Compact summary for sharing
- * - GET /api/feed.rss      - RSS feed of recent activities
- * - GET /metrics           - Prometheus-compatible metrics
- * - GET /api/openapi.json  - OpenAPI 3.0 specification
- * - GET /api/docs          - Swagger UI interactive documentation
- * - WS  /ws                - WebSocket for real-time updates
+ * - GET /api/activities           - All activities as JSON array
+ * - GET /api/activities/:hash     - Single activity by hash
+ * - PATCH /api/activities/:hash/notes - Add/update notes on activity
+ * - DELETE /api/activities/:hash/notes - Remove notes from activity
+ * - GET /api/stats                - Aggregated statistics
+ * - GET /api/health               - Health check for monitoring
+ * - GET /api/verify/:hash         - Verify a specific activity by hash
+ * - GET /api/badge                - Compact summary for sharing
+ * - GET /api/feed.rss             - RSS feed of recent activities
+ * - GET /metrics                  - Prometheus-compatible metrics
+ * - GET /api/openapi.json         - OpenAPI 3.0 specification
+ * - GET /api/docs                 - Swagger UI interactive documentation
+ * - WS  /ws                       - WebSocket for real-time updates
  * 
  * @author Jarvis AI Agent
  * @license MIT
@@ -721,6 +724,19 @@ function getActivities(): any[] {
 }
 
 /**
+ * Save activities to the activity file.
+ * Updates internal state tracking for file watcher.
+ * 
+ * @param activities - Array of activity objects to save
+ */
+function saveActivities(activities: any[]): void {
+  writeFileSync(ACTIVITY_FILE, JSON.stringify(activities, null, 2));
+  lastActivityCount = activities.length;
+  const stats = statSync(ACTIVITY_FILE);
+  lastActivityMtime = stats.mtimeMs;
+}
+
+/**
  * Serve a file from the dashboard directory.
  * Handles content-type detection and caching headers.
  * 
@@ -1142,6 +1158,117 @@ const server = Bun.serve({
     // ==========================================
     if (path === '/api/activities') {
       return Response.json(getActivities(), { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: GET /api/activities/:hash
+    // Get a single activity by hash
+    // ==========================================
+    if (path.match(/^\/api\/activities\/[a-f0-9]{64}$/) && req.method === 'GET') {
+      const hash = path.split('/').pop()!;
+      const activities = getActivities();
+      const activity = activities.find((a: any) => a.hash === hash);
+      
+      if (!activity) {
+        return Response.json({ 
+          error: 'Activity not found' 
+        }, { status: 404, headers: corsHeaders });
+      }
+      
+      return Response.json(activity, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: PATCH /api/activities/:hash/notes
+    // Add or update notes on an activity
+    // Notes are user-added annotations (not part of the signed content)
+    // ==========================================
+    if (path.match(/^\/api\/activities\/[a-f0-9]{64}\/notes$/) && req.method === 'PATCH') {
+      const hash = path.split('/')[3];
+      
+      try {
+        const body = await req.json() as { notes: string };
+        
+        if (typeof body.notes !== 'string') {
+          return Response.json({ 
+            error: 'notes must be a string' 
+          }, { status: 400, headers: corsHeaders });
+        }
+        
+        // Limit notes length to prevent abuse
+        if (body.notes.length > 2000) {
+          return Response.json({ 
+            error: 'notes cannot exceed 2000 characters' 
+          }, { status: 400, headers: corsHeaders });
+        }
+        
+        const activities = getActivities();
+        const activityIndex = activities.findIndex((a: any) => a.hash === hash);
+        
+        if (activityIndex === -1) {
+          return Response.json({ 
+            error: 'Activity not found' 
+          }, { status: 404, headers: corsHeaders });
+        }
+        
+        // Add or update notes field
+        const trimmedNotes = body.notes.trim();
+        if (trimmedNotes) {
+          activities[activityIndex].notes = trimmedNotes;
+          activities[activityIndex].notesUpdatedAt = new Date().toISOString();
+        } else {
+          // Empty notes = remove the field
+          delete activities[activityIndex].notes;
+          delete activities[activityIndex].notesUpdatedAt;
+        }
+        
+        saveActivities(activities);
+        
+        console.log(`📝 Notes ${trimmedNotes ? 'updated' : 'removed'} for activity: ${hash.slice(0, 8)}...`);
+        
+        return Response.json({
+          hash,
+          notes: activities[activityIndex].notes || null,
+          notesUpdatedAt: activities[activityIndex].notesUpdatedAt || null,
+          message: trimmedNotes ? 'Notes updated successfully' : 'Notes removed successfully'
+        }, { headers: corsHeaders });
+        
+      } catch (e) {
+        return Response.json({ 
+          error: 'Invalid JSON body' 
+        }, { status: 400, headers: corsHeaders });
+      }
+    }
+
+    // ==========================================
+    // API: DELETE /api/activities/:hash/notes
+    // Remove notes from an activity
+    // ==========================================
+    if (path.match(/^\/api\/activities\/[a-f0-9]{64}\/notes$/) && req.method === 'DELETE') {
+      const hash = path.split('/')[3];
+      
+      const activities = getActivities();
+      const activityIndex = activities.findIndex((a: any) => a.hash === hash);
+      
+      if (activityIndex === -1) {
+        return Response.json({ 
+          error: 'Activity not found' 
+        }, { status: 404, headers: corsHeaders });
+      }
+      
+      const hadNotes = !!activities[activityIndex].notes;
+      delete activities[activityIndex].notes;
+      delete activities[activityIndex].notesUpdatedAt;
+      
+      if (hadNotes) {
+        saveActivities(activities);
+        console.log(`📝 Notes removed for activity: ${hash.slice(0, 8)}...`);
+      }
+      
+      return Response.json({
+        hash,
+        message: hadNotes ? 'Notes removed successfully' : 'Activity had no notes'
+      }, { headers: corsHeaders });
     }
 
     // ==========================================
@@ -2063,6 +2190,153 @@ Colosseum Agent Hackathon 2026`;
           message: String(e)
         }, { status: 400, headers: corsHeaders });
       }
+    }
+
+    // ==========================================
+    // API: PATCH /api/activities/:hash/notes
+    // Add or update notes on an activity
+    // Allows users to annotate activities after the fact
+    // ==========================================
+    if (path.match(/^\/api\/activities\/[^/]+\/notes$/) && req.method === 'PATCH') {
+      const hash = path.replace('/api/activities/', '').replace('/notes', '');
+      
+      // Validate hash length
+      if (!hash || hash.length < 8) {
+        return Response.json({ 
+          error: 'Invalid hash', 
+          message: 'Provide a valid SHA256 hash or hash prefix (min 8 chars)'
+        }, { status: 400, headers: corsHeaders });
+      }
+      
+      try {
+        const body = await req.json() as { notes?: string };
+        
+        // Validate notes field
+        if (body.notes !== undefined && typeof body.notes !== 'string') {
+          return Response.json({ 
+            error: 'Invalid notes field', 
+            message: 'Notes must be a string'
+          }, { status: 400, headers: corsHeaders });
+        }
+        
+        // Limit notes length (max 1000 chars)
+        if (body.notes && body.notes.length > 1000) {
+          return Response.json({ 
+            error: 'Notes too long', 
+            message: 'Notes must be 1000 characters or less'
+          }, { status: 400, headers: corsHeaders });
+        }
+        
+        const activities = getActivities();
+        
+        // Find activity by exact hash or prefix match
+        const activityIndex = activities.findIndex((a: any) => 
+          a.proof?.hash === hash || 
+          a.proof?.hash?.startsWith(hash) ||
+          a.hash === hash ||
+          a.hash?.startsWith(hash)
+        );
+        
+        if (activityIndex === -1) {
+          return Response.json({ 
+            error: 'Not found', 
+            message: `No activity found with hash starting with: ${hash}`,
+            hint: 'Use /api/activities to see all activities and their hashes'
+          }, { status: 404, headers: corsHeaders });
+        }
+        
+        // Update the notes field
+        const activity = activities[activityIndex];
+        const previousNotes = activity.notes;
+        
+        if (body.notes === undefined || body.notes === '') {
+          // Remove notes if empty or undefined
+          delete activity.notes;
+        } else {
+          activity.notes = body.notes;
+        }
+        
+        // Add notes metadata
+        if (!activity.notesHistory) {
+          activity.notesHistory = [];
+        }
+        activity.notesHistory.push({
+          timestamp: new Date().toISOString(),
+          action: body.notes ? 'updated' : 'removed',
+          previousValue: previousNotes || null
+        });
+        
+        // Keep only last 10 history entries
+        if (activity.notesHistory.length > 10) {
+          activity.notesHistory = activity.notesHistory.slice(-10);
+        }
+        
+        // Save the updated activities
+        writeFileSync(ACTIVITY_FILE, JSON.stringify(activities, null, 2));
+        
+        // Update internal state
+        const stats = statSync(ACTIVITY_FILE);
+        lastActivityMtime = stats.mtimeMs;
+        
+        // Broadcast update to WebSocket clients
+        broadcastUpdate('activity_updated', {
+          hash: activity.hash || activity.proof?.hash,
+          notes: activity.notes,
+          activityIndex
+        });
+        
+        console.log(`📝 Notes ${body.notes ? 'updated' : 'removed'} for activity ${hash.slice(0, 12)}...`);
+        
+        return Response.json({
+          success: true,
+          hash: activity.hash || activity.proof?.hash,
+          notes: activity.notes || null,
+          message: body.notes ? 'Notes updated successfully' : 'Notes removed successfully'
+        }, { headers: corsHeaders });
+        
+      } catch (e) {
+        return Response.json({ 
+          error: 'Invalid JSON body',
+          message: 'Request body must be valid JSON with optional "notes" field'
+        }, { status: 400, headers: corsHeaders });
+      }
+    }
+
+    // ==========================================
+    // API: GET /api/activities/:hash/notes
+    // Get notes for a specific activity
+    // ==========================================
+    if (path.match(/^\/api\/activities\/[^/]+\/notes$/) && req.method === 'GET') {
+      const hash = path.replace('/api/activities/', '').replace('/notes', '');
+      
+      if (!hash || hash.length < 8) {
+        return Response.json({ 
+          error: 'Invalid hash', 
+          message: 'Provide a valid SHA256 hash or hash prefix (min 8 chars)'
+        }, { status: 400, headers: corsHeaders });
+      }
+      
+      const activities = getActivities();
+      
+      const activity = activities.find((a: any) => 
+        a.proof?.hash === hash || 
+        a.proof?.hash?.startsWith(hash) ||
+        a.hash === hash ||
+        a.hash?.startsWith(hash)
+      );
+      
+      if (!activity) {
+        return Response.json({ 
+          error: 'Not found', 
+          message: `No activity found with hash starting with: ${hash}`
+        }, { status: 404, headers: corsHeaders });
+      }
+      
+      return Response.json({
+        hash: activity.hash || activity.proof?.hash,
+        notes: activity.notes || null,
+        notesHistory: activity.notesHistory || []
+      }, { headers: corsHeaders });
     }
 
     // ==========================================

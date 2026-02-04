@@ -76,6 +76,170 @@
         }
       }
     },
+    "/api/activities/{hash}": {
+      "get": {
+        "tags": ["Activities"],
+        "summary": "Get activity by hash",
+        "description": "Returns a single activity by its SHA256 hash.",
+        "operationId": "getActivityByHash",
+        "parameters": [
+          {
+            "name": "hash",
+            "in": "path",
+            "required": true,
+            "description": "SHA256 hash of the activity (64 hex characters)",
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activity found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Activity"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Activity not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/activities/{hash}/notes": {
+      "patch": {
+        "tags": ["Activities"],
+        "summary": "Add or update notes",
+        "description": "Add or update notes on an activity. Notes are user annotations that are not part of the cryptographically signed content.",
+        "operationId": "updateActivityNotes",
+        "security": [{"bearerAuth": []}, {"apiKeyHeader": []}],
+        "parameters": [
+          {
+            "name": "hash",
+            "in": "path",
+            "required": true,
+            "description": "SHA256 hash of the activity",
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["notes"],
+                "properties": {
+                  "notes": {
+                    "type": "string",
+                    "description": "Notes/comments to add (max 2000 chars). Empty string removes notes.",
+                    "maxLength": 2000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Notes updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "hash": {"type": "string"},
+                    "notes": {"type": "string", "nullable": true},
+                    "notesUpdatedAt": {"type": "string", "format": "date-time", "nullable": true},
+                    "message": {"type": "string"}
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Activity not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Activities"],
+        "summary": "Remove notes",
+        "description": "Remove notes from an activity.",
+        "operationId": "deleteActivityNotes",
+        "security": [{"bearerAuth": []}, {"apiKeyHeader": []}],
+        "parameters": [
+          {
+            "name": "hash",
+            "in": "path",
+            "required": true,
+            "description": "SHA256 hash of the activity",
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notes removed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "hash": {"type": "string"},
+                    "message": {"type": "string"}
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Activity not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/stats": {
       "get": {
         "tags": ["Stats"],
@@ -755,6 +919,16 @@
               "hash": {"type": "string"},
               "txSignature": {"type": "string"}
             }
+          },
+          "notes": {
+            "type": "string",
+            "description": "User-added notes/comments (not part of signed content)",
+            "maxLength": 2000
+          },
+          "notesUpdatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when notes were last updated"
           }
         }
       },

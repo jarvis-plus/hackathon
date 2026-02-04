@@ -862,11 +862,13 @@ function renderActivities(activities, highlightNew = false) {
         const activityId = getActivityId(a);
         
         const ariaLabel = `${a.type} activity: ${escapeHtml(a.description.substring(0, 80))}${a.description.length > 80 ? '...' : ''}`;
+        const notesHtml = renderActivityNotes(a, hash);
         return `
         <div class="activity-item ${a.type}${isNew ? ' new-activity' : ''}" 
              style="animation-delay: ${i * 0.04}s" 
              data-wallet="${a.wallet || ''}" 
              data-activity-id="${activityId}"
+             data-hash="${hash || ''}"
              tabindex="0"
              role="article"
              aria-label="${ariaLabel}">
@@ -881,6 +883,7 @@ function renderActivities(activities, highlightNew = false) {
             </div>
             <div class="activity-desc">${escapeHtml(a.description)}</div>
             ${tagsHtml}
+            ${notesHtml}
             ${hashDisplay ? `<div class="activity-hash">${hashDisplay}</div>` : ''}
         </div>
     `}).join('');
@@ -3706,6 +3709,181 @@ function renderActivityWallet(activity) {
             data-wallet="${escapeHtml(wallet)}">
         💳 ${escapeHtml(name)}
     </span>`;
+}
+
+/**
+ * Render activity notes section with view/edit functionality
+ * @param {Object} activity - The activity object
+ * @param {string} hash - The activity hash for API calls
+ * @returns {string} HTML string for the notes section
+ */
+function renderActivityNotes(activity, hash) {
+    if (!hash) return ''; // Can't edit without a hash
+    
+    const hasNotes = activity.notes && activity.notes.trim();
+    const notesContent = hasNotes ? escapeHtml(activity.notes) : '';
+    const shortHash = hash.slice(0, 16);
+    
+    return `
+        <div class="activity-notes-section" data-hash="${hash}">
+            ${hasNotes ? `
+                <div class="activity-notes-display" id="notes-display-${shortHash}">
+                    <div class="activity-notes-header">
+                        <span class="activity-notes-icon">📝</span>
+                        <span class="activity-notes-label">Note</span>
+                        <button class="notes-edit-btn" onclick="toggleNotesEdit('${hash}')" title="Edit note" aria-label="Edit note">
+                            ✏️
+                        </button>
+                    </div>
+                    <div class="activity-notes-content">${notesContent}</div>
+                </div>
+            ` : `
+                <button class="notes-add-btn" id="notes-add-${shortHash}" onclick="toggleNotesEdit('${hash}')" title="Add a note">
+                    📝 Add note
+                </button>
+            `}
+            <div class="activity-notes-edit" id="notes-edit-${shortHash}" style="display: none;">
+                <textarea 
+                    class="notes-textarea" 
+                    id="notes-textarea-${shortHash}"
+                    placeholder="Add a note to this activity..."
+                    maxlength="1000"
+                    rows="2"
+                >${notesContent}</textarea>
+                <div class="notes-edit-actions">
+                    <span class="notes-char-count" id="notes-count-${shortHash}">${notesContent.length}/1000</span>
+                    <button class="notes-cancel-btn" onclick="cancelNotesEdit('${hash}')">Cancel</button>
+                    <button class="notes-save-btn" onclick="saveActivityNotes('${hash}')">Save</button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Toggle notes edit mode for an activity
+ * @param {string} hash - The activity hash
+ */
+function toggleNotesEdit(hash) {
+    const shortHash = hash.slice(0, 16);
+    const editSection = document.getElementById(`notes-edit-${shortHash}`);
+    const displaySection = document.getElementById(`notes-display-${shortHash}`);
+    const addBtn = document.getElementById(`notes-add-${shortHash}`);
+    const textarea = document.getElementById(`notes-textarea-${shortHash}`);
+    
+    if (editSection) {
+        const isHidden = editSection.style.display === 'none';
+        editSection.style.display = isHidden ? 'block' : 'none';
+        
+        if (displaySection) displaySection.style.display = isHidden ? 'none' : 'block';
+        if (addBtn) addBtn.style.display = isHidden ? 'none' : 'inline-flex';
+        
+        if (isHidden && textarea) {
+            textarea.focus();
+            // Update character count
+            updateNotesCharCount(hash);
+            textarea.addEventListener('input', () => updateNotesCharCount(hash));
+        }
+    }
+}
+
+/**
+ * Cancel notes edit mode
+ * @param {string} hash - The activity hash
+ */
+function cancelNotesEdit(hash) {
+    const shortHash = hash.slice(0, 16);
+    const editSection = document.getElementById(`notes-edit-${shortHash}`);
+    const displaySection = document.getElementById(`notes-display-${shortHash}`);
+    const addBtn = document.getElementById(`notes-add-${shortHash}`);
+    const textarea = document.getElementById(`notes-textarea-${shortHash}`);
+    
+    if (editSection) editSection.style.display = 'none';
+    if (displaySection) displaySection.style.display = 'block';
+    if (addBtn) addBtn.style.display = 'inline-flex';
+    
+    // Reset textarea to original value
+    if (textarea) {
+        const activityItem = textarea.closest('.activity-item');
+        if (activityItem) {
+            const notesContent = activityItem.querySelector('.activity-notes-content');
+            textarea.value = notesContent ? notesContent.textContent : '';
+        }
+    }
+}
+
+/**
+ * Update character count for notes textarea
+ * @param {string} hash - The activity hash
+ */
+function updateNotesCharCount(hash) {
+    const shortHash = hash.slice(0, 16);
+    const textarea = document.getElementById(`notes-textarea-${shortHash}`);
+    const countEl = document.getElementById(`notes-count-${shortHash}`);
+    
+    if (textarea && countEl) {
+        const length = textarea.value.length;
+        countEl.textContent = `${length}/1000`;
+        countEl.classList.toggle('near-limit', length > 900);
+        countEl.classList.toggle('at-limit', length >= 1000);
+    }
+}
+
+/**
+ * Save activity notes via API
+ * @param {string} hash - The activity hash
+ */
+async function saveActivityNotes(hash) {
+    const shortHash = hash.slice(0, 16);
+    const textarea = document.getElementById(`notes-textarea-${shortHash}`);
+    const saveBtn = document.querySelector(`#notes-edit-${shortHash} .notes-save-btn`);
+    
+    if (!textarea) return;
+    
+    const notes = textarea.value.trim();
+    
+    // Disable button while saving
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+    }
+    
+    try {
+        const response = await fetch(`/api/activities/${hash}/notes`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ notes })
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to save notes');
+        }
+        
+        // Update the local activity data
+        const activityItem = textarea.closest('.activity-item');
+        if (activityItem) {
+            // Refresh the notes section
+            const notesSection = activityItem.querySelector('.activity-notes-section');
+            if (notesSection) {
+                // Create a mock activity with the new notes
+                const mockActivity = { notes: notes || null };
+                notesSection.outerHTML = renderActivityNotes(mockActivity, hash);
+            }
+        }
+        
+        // Show success feedback
+        announceToScreenReader(`Note ${notes ? 'saved' : 'removed'} successfully`);
+        
+    } catch (error) {
+        console.error('Failed to save notes:', error);
+        alert(`Failed to save notes: ${error.message}`);
+    } finally {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save';
+        }
+    }
 }
 
 function renderActivityTags(tags) {
