@@ -25,6 +25,7 @@
  * - GET /api/activities/pinned    - Get all pinned activities
  * - GET /api/stats                - Aggregated statistics
  * - GET /api/health               - Health check for monitoring
+ * - GET /api/performance          - Response times, memory usage, endpoint stats
  * - GET /api/verify/:hash         - Verify a specific activity by hash
  * - GET /api/badge                - Compact summary for sharing
  * - GET /api/feed.rss             - RSS feed of recent activities
@@ -629,6 +630,199 @@ setInterval(() => {
   }
 }, 5 * 60 * 1000);
 
+// ==============================================
+// PERFORMANCE TRACKING
+// ==============================================
+
+/**
+ * Performance Metrics Tracking
+ * 
+ * Tracks response times and request counts for each endpoint.
+ * Used to provide insights into API performance and identify bottlenecks.
+ * 
+ * Data structure:
+ * - Keyed by endpoint pattern (e.g., '/api/activities', '/api/stats')
+ * - Each endpoint tracks: count, total time, min, max, recent times
+ * - Recent times are a sliding window of the last 100 requests
+ */
+interface EndpointMetrics {
+  count: number;
+  totalTimeMs: number;
+  minTimeMs: number;
+  maxTimeMs: number;
+  recentTimes: number[]; // Last 100 response times in ms
+  errors: number;
+  lastErrorTime?: number;
+}
+
+/** Server start time for uptime calculation */
+const SERVER_START_TIME = Date.now();
+
+/** Performance stats keyed by endpoint pattern */
+const performanceStats = new Map<string, EndpointMetrics>();
+
+/** Max recent times to keep per endpoint (sliding window) */
+const MAX_RECENT_TIMES = 100;
+
+/**
+ * Normalize endpoint path to a pattern for aggregation.
+ * Replaces specific hashes/IDs with placeholders.
+ */
+function normalizeEndpointPath(path: string): string {
+  // Replace 64-char hex hashes with :hash placeholder
+  let normalized = path.replace(/\/[a-f0-9]{64}/g, '/:hash');
+  // Replace UUID-like patterns
+  normalized = normalized.replace(/\/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/gi, '/:id');
+  // Replace numeric IDs
+  normalized = normalized.replace(/\/\d+(?=\/|$)/g, '/:id');
+  return normalized;
+}
+
+/**
+ * Record a completed request's performance metrics.
+ */
+function recordRequestMetrics(path: string, responseTimeMs: number, isError: boolean = false): void {
+  const normalizedPath = normalizeEndpointPath(path);
+  
+  let metrics = performanceStats.get(normalizedPath);
+  if (!metrics) {
+    metrics = {
+      count: 0,
+      totalTimeMs: 0,
+      minTimeMs: Infinity,
+      maxTimeMs: 0,
+      recentTimes: [],
+      errors: 0
+    };
+    performanceStats.set(normalizedPath, metrics);
+  }
+  
+  metrics.count++;
+  metrics.totalTimeMs += responseTimeMs;
+  metrics.minTimeMs = Math.min(metrics.minTimeMs, responseTimeMs);
+  metrics.maxTimeMs = Math.max(metrics.maxTimeMs, responseTimeMs);
+  
+  // Add to sliding window
+  metrics.recentTimes.push(responseTimeMs);
+  if (metrics.recentTimes.length > MAX_RECENT_TIMES) {
+    metrics.recentTimes.shift();
+  }
+  
+  if (isError) {
+    metrics.errors++;
+    metrics.lastErrorTime = Date.now();
+  }
+}
+
+/**
+ * Get current memory usage stats.
+ */
+function getMemoryStats(): { heapUsed: number; heapTotal: number; rss: number; external: number } {
+  // Bun's memory usage (fallback values if not available)
+  if (typeof process !== 'undefined' && process.memoryUsage) {
+    const mem = process.memoryUsage();
+    return {
+      heapUsed: Math.round(mem.heapUsed / 1024 / 1024), // MB
+      heapTotal: Math.round(mem.heapTotal / 1024 / 1024), // MB
+      rss: Math.round(mem.rss / 1024 / 1024), // MB
+      external: Math.round((mem.external || 0) / 1024 / 1024) // MB
+    };
+  }
+  return { heapUsed: 0, heapTotal: 0, rss: 0, external: 0 };
+}
+
+/**
+ * Calculate percentile from sorted array.
+ */
+function calculatePercentile(sortedArray: number[], percentile: number): number {
+  if (sortedArray.length === 0) return 0;
+  const index = Math.ceil((percentile / 100) * sortedArray.length) - 1;
+  return sortedArray[Math.max(0, index)];
+}
+
+/**
+ * Get aggregated performance stats.
+ */
+function getPerformanceStats() {
+  const memory = getMemoryStats();
+  const uptimeSeconds = Math.floor((Date.now() - SERVER_START_TIME) / 1000);
+  
+  // Aggregate endpoint stats
+  const endpoints: Record<string, {
+    count: number;
+    avgTimeMs: number;
+    minTimeMs: number;
+    maxTimeMs: number;
+    p50Ms: number;
+    p95Ms: number;
+    p99Ms: number;
+    errorsCount: number;
+    errorRate: number;
+  }> = {};
+  
+  let totalRequests = 0;
+  let totalErrors = 0;
+  let totalResponseTime = 0;
+  
+  for (const [endpoint, metrics] of performanceStats.entries()) {
+    const sorted = [...metrics.recentTimes].sort((a, b) => a - b);
+    
+    endpoints[endpoint] = {
+      count: metrics.count,
+      avgTimeMs: metrics.count > 0 ? Math.round(metrics.totalTimeMs / metrics.count * 100) / 100 : 0,
+      minTimeMs: metrics.minTimeMs === Infinity ? 0 : Math.round(metrics.minTimeMs * 100) / 100,
+      maxTimeMs: Math.round(metrics.maxTimeMs * 100) / 100,
+      p50Ms: Math.round(calculatePercentile(sorted, 50) * 100) / 100,
+      p95Ms: Math.round(calculatePercentile(sorted, 95) * 100) / 100,
+      p99Ms: Math.round(calculatePercentile(sorted, 99) * 100) / 100,
+      errorsCount: metrics.errors,
+      errorRate: metrics.count > 0 ? Math.round((metrics.errors / metrics.count) * 10000) / 100 : 0
+    };
+    
+    totalRequests += metrics.count;
+    totalErrors += metrics.errors;
+    totalResponseTime += metrics.totalTimeMs;
+  }
+  
+  return {
+    uptime: {
+      seconds: uptimeSeconds,
+      formatted: formatUptime(uptimeSeconds)
+    },
+    memory,
+    requests: {
+      total: totalRequests,
+      errors: totalErrors,
+      avgResponseTimeMs: totalRequests > 0 ? Math.round(totalResponseTime / totalRequests * 100) / 100 : 0,
+      requestsPerMinute: uptimeSeconds > 0 ? Math.round((totalRequests / uptimeSeconds) * 60 * 100) / 100 : 0
+    },
+    endpoints,
+    connections: {
+      websocketClients: wsClients.size,
+      activeWebhooks: getWebhooks().filter(w => w.active).length
+    },
+    timestamp: new Date().toISOString()
+  };
+}
+
+/**
+ * Format uptime seconds to human-readable string.
+ */
+function formatUptime(seconds: number): string {
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  
+  const parts: string[] = [];
+  if (days > 0) parts.push(`${days}d`);
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0) parts.push(`${minutes}m`);
+  if (secs > 0 || parts.length === 0) parts.push(`${secs}s`);
+  
+  return parts.join(' ');
+}
+
 /**
  * Extract the client's IP address from the request.
  * 
@@ -1171,9 +1365,20 @@ const server = Bun.serve({
    * Main request handler - routes all HTTP requests
    */
   async fetch(req, server) {
+    const requestStartTime = performance.now();
     const url = new URL(req.url);
     const path = url.pathname;
     const clientIP = getClientIP(req, server);
+    
+    // Helper to wrap response with timing tracking
+    const trackResponse = (response: Response, isError: boolean = false): Response => {
+      const responseTimeMs = performance.now() - requestStartTime;
+      // Only track API endpoints for performance stats
+      if (path.startsWith('/api/') || path === '/metrics') {
+        recordRequestMetrics(path, responseTimeMs, isError);
+      }
+      return response;
+    };
 
     // CORS headers - allow cross-origin requests for API
     const corsHeaders = {
@@ -1857,10 +2062,57 @@ const server = Bun.serve({
         responseTime: `${Date.now() - startTime}ms`,
       };
       
-      return Response.json(health, { 
+      return trackResponse(Response.json(health, { 
         status: isHealthy ? 200 : 503,
         headers: corsHeaders 
-      });
+      }));
+    }
+
+    // ==========================================
+    // API: GET /api/performance
+    // Performance dashboard with response times and memory usage
+    // Useful for monitoring API health and identifying bottlenecks
+    // ==========================================
+    if (path === '/api/performance') {
+      const stats = getPerformanceStats();
+      
+      // Sort endpoints by request count (most active first)
+      const sortedEndpoints = Object.entries(stats.endpoints)
+        .sort((a, b) => b[1].count - a[1].count)
+        .reduce((acc, [key, value]) => {
+          acc[key] = value;
+          return acc;
+        }, {} as typeof stats.endpoints);
+      
+      const response = {
+        ...stats,
+        endpoints: sortedEndpoints,
+        summary: {
+          totalEndpoints: Object.keys(stats.endpoints).length,
+          healthStatus: stats.memory.heapUsed < 500 && stats.requests.avgResponseTimeMs < 500 ? 'healthy' : 'warning',
+          recommendations: [] as string[]
+        }
+      };
+      
+      // Add recommendations based on metrics
+      if (stats.memory.heapUsed > 300) {
+        response.summary.recommendations.push('Memory usage is elevated - consider restarting if it continues to grow');
+      }
+      if (stats.requests.avgResponseTimeMs > 200) {
+        response.summary.recommendations.push('Average response time is high - check for slow queries or external calls');
+      }
+      if (stats.requests.errors > 100) {
+        response.summary.recommendations.push('Error count is high - review error logs for patterns');
+      }
+      
+      // Find slowest endpoint
+      const slowest = Object.entries(stats.endpoints)
+        .sort((a, b) => b[1].avgTimeMs - a[1].avgTimeMs)[0];
+      if (slowest && slowest[1].avgTimeMs > 100) {
+        response.summary.recommendations.push(`Slowest endpoint: ${slowest[0]} (${slowest[1].avgTimeMs}ms avg)`);
+      }
+      
+      return trackResponse(Response.json(response, { headers: corsHeaders }));
     }
 
     // ==========================================

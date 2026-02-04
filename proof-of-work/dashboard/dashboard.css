@@ -91,6 +91,119 @@
         [data-theme="light"] .stat-icon.icon-mood { color: #8800cc; }
         [data-theme="light"] .stat-icon.icon-sol { color: #7c3aed; }
 
+        /* Ocean theme - Deep blue tones */
+        [data-theme="ocean"] {
+            --bg-primary: #0a1628;
+            --bg-secondary: #0f1f3d;
+            --bg-card: linear-gradient(135deg, #142440, #1a3050);
+            --accent-green: #00e5b2;
+            --accent-blue: #00bfff;
+            --accent-purple: #7b68ee;
+            --accent-yellow: #ffd700;
+            --accent-red: #ff6b6b;
+            --text-primary: #e6f0ff;
+            --text-secondary: #8eb8e6;
+            --text-muted: #4a6a8a;
+            --border: #2a4a6a;
+        }
+        
+        [data-theme="ocean"] .proof-banner {
+            background: linear-gradient(90deg, #0f1f3d, #142440);
+        }
+        
+        [data-theme="ocean"] .stat-value.chain {
+            background: linear-gradient(135deg, #00bfff, #00e5b2, #7b68ee);
+            background-size: 200% 200%;
+            filter: drop-shadow(0 0 12px rgba(0, 191, 255, 0.4));
+        }
+
+        /* Forest theme - Natural green tones */
+        [data-theme="forest"] {
+            --bg-primary: #0d1a0f;
+            --bg-secondary: #142817;
+            --bg-card: linear-gradient(135deg, #1a3320, #203a25);
+            --accent-green: #66ff99;
+            --accent-blue: #7fdbda;
+            --accent-purple: #c9a0dc;
+            --accent-yellow: #f0e68c;
+            --accent-red: #ff8080;
+            --text-primary: #e6f5e6;
+            --text-secondary: #a3c9a3;
+            --text-muted: #5a7a5a;
+            --border: #2d4a2d;
+        }
+        
+        [data-theme="forest"] .proof-banner {
+            background: linear-gradient(90deg, #142817, #1a3320);
+        }
+        
+        [data-theme="forest"] .stat-value.chain {
+            background: linear-gradient(135deg, #66ff99, #7fdbda, #c9a0dc);
+            background-size: 200% 200%;
+            filter: drop-shadow(0 0 12px rgba(102, 255, 153, 0.4));
+        }
+
+        /* Sunset theme - Warm orange/red tones */
+        [data-theme="sunset"] {
+            --bg-primary: #1a0f0a;
+            --bg-secondary: #2d1810;
+            --bg-card: linear-gradient(135deg, #3d2015, #4a2a1a);
+            --accent-green: #98fb98;
+            --accent-blue: #87ceeb;
+            --accent-purple: #dda0dd;
+            --accent-yellow: #ffa500;
+            --accent-red: #ff4444;
+            --text-primary: #fff0e6;
+            --text-secondary: #d4a574;
+            --text-muted: #8a6040;
+            --border: #5a3a2a;
+        }
+        
+        [data-theme="sunset"] .proof-banner {
+            background: linear-gradient(90deg, #2d1810, #3d2015);
+        }
+        
+        [data-theme="sunset"] .stat-value.chain {
+            background: linear-gradient(135deg, #ff4444, #ffa500, #dda0dd);
+            background-size: 200% 200%;
+            filter: drop-shadow(0 0 12px rgba(255, 165, 0, 0.4));
+        }
+
+        /* Cyberpunk theme - Neon purple/magenta */
+        [data-theme="cyberpunk"] {
+            --bg-primary: #0a0515;
+            --bg-secondary: #150a25;
+            --bg-card: linear-gradient(135deg, #1a0f30, #250f40);
+            --accent-green: #39ff14;
+            --accent-blue: #00ffff;
+            --accent-purple: #ff00ff;
+            --accent-yellow: #ffff00;
+            --accent-red: #ff1493;
+            --text-primary: #f0e6ff;
+            --text-secondary: #b39ddb;
+            --text-muted: #6a5a8a;
+            --border: #4a2a6a;
+        }
+        
+        [data-theme="cyberpunk"] .proof-banner {
+            background: linear-gradient(90deg, #150a25, #1a0f30);
+        }
+        
+        [data-theme="cyberpunk"] .stat-value.chain {
+            background: linear-gradient(135deg, #ff00ff, #00ffff, #39ff14);
+            background-size: 200% 200%;
+            filter: drop-shadow(0 0 15px rgba(255, 0, 255, 0.5));
+        }
+        
+        [data-theme="cyberpunk"] h1 {
+            text-shadow: 0 0 10px rgba(255, 0, 255, 0.5), 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+        
+        [data-theme="cyberpunk"] .activity-item,
+        [data-theme="cyberpunk"] .stat-card {
+            box-shadow: 0 0 10px rgba(255, 0, 255, 0.1), inset 0 0 20px rgba(0, 255, 255, 0.05);
+        }
+
         body {
             font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace;
             background: var(--bg-primary);
@@ -1946,6 +2059,66 @@
 
         .sound-toggle.muted {
             opacity: 0.5;
+        }
+
+        /* Theme Selector Dropdown */
+        .theme-selector-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .theme-dropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% + 5px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.5rem 0;
+            min-width: 140px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            animation: dropdownFade 0.2s ease-out;
+        }
+        
+        .theme-dropdown.open {
+            display: block;
+        }
+        
+        @keyframes dropdownFade {
+            from { opacity: 0; transform: translateX(-50%) translateY(-5px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        
+        .theme-option {
+            display: block;
+            width: 100%;
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 0.85rem;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        
+        .theme-option:hover {
+            background: var(--border);
+            color: var(--text-primary);
+        }
+        
+        .theme-option.active {
+            color: var(--accent-green);
+            background: rgba(0, 255, 170, 0.1);
+        }
+        
+        .theme-option:focus {
+            outline: none;
+            background: var(--border);
         }
 
         /* Social Links */
@@ -6894,5 +7067,241 @@ input[aria-invalid="true"],
     
     .compare-btn {
         right: 72px;
+    }
+}
+
+/* ============================================
+   PERFORMANCE DASHBOARD
+   ============================================ */
+
+.performance-content {
+    padding: 1.5rem;
+}
+
+.performance-content h3 {
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+/* Summary cards grid */
+.performance-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.perf-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.perf-card:hover {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 12px rgba(0, 170, 255, 0.15);
+}
+
+.perf-label {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+}
+
+.perf-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+    transition: all 0.3s ease;
+}
+
+.perf-value.perf-updated {
+    animation: perfPulse 0.5s ease;
+}
+
+@keyframes perfPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); color: var(--accent-green); }
+}
+
+.perf-value.good { color: var(--accent-green); }
+.perf-value.warning { color: var(--accent-yellow); }
+.perf-value.bad { color: #ff6b6b; }
+
+/* Section styling */
+.perf-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.perf-section h4 {
+    margin: 0 0 1rem 0;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+
+.perf-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.perf-section-header h4 {
+    margin: 0;
+}
+
+.perf-refresh-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.4rem 0.75rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s ease;
+}
+
+.perf-refresh-btn:hover {
+    background: var(--bg-primary);
+    border-color: var(--accent-blue);
+    color: var(--accent-blue);
+}
+
+/* Endpoint metrics table */
+.perf-table-wrapper {
+    overflow-x: auto;
+    margin: -0.25rem;
+    padding: 0.25rem;
+}
+
+.perf-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.perf-table th,
+.perf-table td {
+    padding: 0.75rem 0.5rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+.perf-table th {
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: var(--bg-primary);
+}
+
+.perf-table tbody tr:hover {
+    background: rgba(0, 170, 255, 0.05);
+}
+
+.perf-table td:first-child {
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 0.8rem;
+}
+
+.perf-endpoint {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.perf-time.good { color: var(--accent-green); font-weight: 600; }
+.perf-time.ok { color: var(--accent-yellow); }
+.perf-time.slow { color: #ff6b6b; font-weight: 600; }
+
+.perf-errors {
+    color: #ff6b6b;
+    font-weight: 600;
+}
+
+.perf-loading,
+.perf-empty,
+.perf-error {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 2rem !important;
+}
+
+.perf-error {
+    color: #ff6b6b;
+}
+
+/* Recommendations */
+.perf-recommendations {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.perf-recommendations li {
+    padding: 0.75rem 1rem;
+    background: rgba(255, 170, 0, 0.1);
+    border-left: 3px solid var(--accent-yellow);
+    border-radius: 0 6px 6px 0;
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.perf-recommendations li:last-child {
+    margin-bottom: 0;
+}
+
+/* Light theme adjustments */
+[data-theme="light"] .perf-card {
+    background: rgba(255, 255, 255, 0.8);
+}
+
+[data-theme="light"] .perf-table th {
+    background: rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="light"] .perf-table tbody tr:hover {
+    background: rgba(0, 170, 255, 0.08);
+}
+
+[data-theme="light"] .perf-recommendations li {
+    background: rgba(255, 170, 0, 0.15);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 640px) {
+    .performance-summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .perf-value {
+        font-size: 1.2rem;
+    }
+    
+    .perf-table {
+        font-size: 0.75rem;
+    }
+    
+    .perf-table th,
+    .perf-table td {
+        padding: 0.5rem 0.25rem;
+    }
+    
+    .perf-endpoint {
+        max-width: 100px;
     }
 }

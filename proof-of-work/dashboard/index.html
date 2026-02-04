@@ -39,9 +39,19 @@
                 <button class="sound-toggle" id="soundToggle" onclick="toggleSound()" title="Toggle notification sounds" aria-pressed="true" aria-label="Sound notifications: On">
                     🔔 Sounds On
                 </button>
-                <button class="sound-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle dark/light mode" aria-pressed="true" aria-label="Dark mode: On">
-                    🌙 Dark
-                </button>
+                <div class="theme-selector-wrapper" style="position: relative;">
+                    <button class="sound-toggle" id="themeToggle" onclick="toggleThemeDropdown()" title="Select color theme" aria-expanded="false" aria-haspopup="listbox" aria-label="Current theme: Dark">
+                        🎨 Theme
+                    </button>
+                    <div id="themeDropdown" class="theme-dropdown" role="listbox" aria-label="Color themes">
+                        <button class="theme-option" data-theme="dark" role="option" onclick="setTheme('dark')">🌙 Dark</button>
+                        <button class="theme-option" data-theme="light" role="option" onclick="setTheme('light')">☀️ Light</button>
+                        <button class="theme-option" data-theme="ocean" role="option" onclick="setTheme('ocean')">🌊 Ocean</button>
+                        <button class="theme-option" data-theme="forest" role="option" onclick="setTheme('forest')">🌲 Forest</button>
+                        <button class="theme-option" data-theme="sunset" role="option" onclick="setTheme('sunset')">🌅 Sunset</button>
+                        <button class="theme-option" data-theme="cyberpunk" role="option" onclick="setTheme('cyberpunk')">🔮 Cyberpunk</button>
+                    </div>
+                </div>
                 <button class="sound-toggle muted" id="notificationToggle" onclick="toggleNotifications()" title="Browser notifications - click to enable" aria-pressed="false" aria-label="Browser notifications: Off">
                     🔕 Notifs Off
                 </button>
@@ -503,6 +513,9 @@
                     <button class="feed-tab" data-tab="verify" onclick="switchTab('verify')" role="tab" aria-selected="false" aria-controls="verify-feed" id="tab-verify">
                         🔍 Verify
                     </button>
+                    <button class="feed-tab" data-tab="performance" onclick="switchTab('performance')" role="tab" aria-selected="false" aria-controls="performance-feed" id="tab-performance">
+                        ⚡ Performance
+                    </button>
                 </div>
                 <div class="export-buttons">
                     <button class="export-btn" onclick="exportJSON()" title="Download as JSON">
@@ -777,6 +790,78 @@
                             Click any hash to verify:
                         </p>
                         <div id="recent-hashes" class="recent-hashes"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="performance-feed" data-view="performance" style="display:none;" role="tabpanel" aria-labelledby="tab-performance">
+                <div class="performance-content">
+                    <h3>⚡ API Performance Dashboard</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                        Real-time monitoring of API response times, memory usage, and endpoint health.
+                    </p>
+                    
+                    <div class="performance-summary" id="perfSummary">
+                        <div class="perf-card">
+                            <span class="perf-label">Uptime</span>
+                            <span class="perf-value" id="perfUptime">--</span>
+                        </div>
+                        <div class="perf-card">
+                            <span class="perf-label">Memory (Heap)</span>
+                            <span class="perf-value" id="perfMemory">-- MB</span>
+                        </div>
+                        <div class="perf-card">
+                            <span class="perf-label">Avg Response</span>
+                            <span class="perf-value" id="perfAvgResponse">-- ms</span>
+                        </div>
+                        <div class="perf-card">
+                            <span class="perf-label">Requests/min</span>
+                            <span class="perf-value" id="perfReqPerMin">--</span>
+                        </div>
+                        <div class="perf-card">
+                            <span class="perf-label">Total Requests</span>
+                            <span class="perf-value" id="perfTotalReq">--</span>
+                        </div>
+                        <div class="perf-card">
+                            <span class="perf-label">Error Rate</span>
+                            <span class="perf-value" id="perfErrorRate">--%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="perf-section">
+                        <div class="perf-section-header">
+                            <h4>📊 Endpoint Metrics</h4>
+                            <button onclick="refreshPerformance()" class="perf-refresh-btn" title="Refresh metrics">🔄 Refresh</button>
+                        </div>
+                        <div class="perf-table-wrapper">
+                            <table class="perf-table" id="perfEndpoints">
+                                <thead>
+                                    <tr>
+                                        <th>Endpoint</th>
+                                        <th>Requests</th>
+                                        <th>Avg (ms)</th>
+                                        <th>P50 (ms)</th>
+                                        <th>P95 (ms)</th>
+                                        <th>Errors</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="perfEndpointsBody">
+                                    <tr><td colspan="6" class="perf-loading">Loading metrics...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="perf-section" id="perfRecommendations" style="display: none;">
+                        <h4>💡 Recommendations</h4>
+                        <ul id="perfRecommendationsList" class="perf-recommendations"></ul>
+                    </div>
+                    
+                    <div class="perf-section">
+                        <h4>🔗 API Endpoint</h4>
+                        <code class="api-endpoint">GET /api/performance</code>
+                        <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem;">
+                            Returns detailed performance metrics for all endpoints.
+                        </p>
                     </div>
                 </div>
             </div>

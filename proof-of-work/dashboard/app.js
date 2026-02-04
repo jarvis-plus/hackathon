@@ -254,34 +254,85 @@ function toggleSound() {
 }
 
 // ============================================
-// THEME TOGGLE (Dark/Light Mode)
+// MULTI-THEME SUPPORT (Dark, Light, Ocean, Forest, Sunset, Cyberpunk)
 // ============================================
+const AVAILABLE_THEMES = ['dark', 'light', 'ocean', 'forest', 'sunset', 'cyberpunk'];
+const THEME_EMOJIS = {
+    dark: '🌙',
+    light: '☀️',
+    ocean: '🌊',
+    forest: '🌲',
+    sunset: '🌅',
+    cyberpunk: '🔮'
+};
+
 function getPreferredTheme() {
     const stored = localStorage.getItem('jarvis-pow-theme');
-    if (stored) return stored;
+    if (stored && AVAILABLE_THEMES.includes(stored)) return stored;
     return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
 }
 
 function setTheme(theme) {
+    if (!AVAILABLE_THEMES.includes(theme)) theme = 'dark';
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('jarvis-pow-theme', theme);
     updateThemeButton(theme);
+    updateThemeDropdownSelection(theme);
+    closeThemeDropdown();
 }
 
 function updateThemeButton(theme) {
     const btn = document.getElementById('themeToggle');
     if (btn) {
-        btn.textContent = theme === 'dark' ? '🌙 Dark' : '☀️ Light';
-        btn.setAttribute('aria-pressed', theme === 'dark');
-        btn.setAttribute('aria-label', `Dark mode: ${theme === 'dark' ? 'On' : 'Off'}`);
+        const emoji = THEME_EMOJIS[theme] || '🎨';
+        btn.textContent = `${emoji} ${theme.charAt(0).toUpperCase() + theme.slice(1)}`;
+        btn.setAttribute('aria-label', `Current theme: ${theme}`);
     }
 }
 
+function updateThemeDropdownSelection(theme) {
+    const dropdown = document.getElementById('themeDropdown');
+    if (!dropdown) return;
+    dropdown.querySelectorAll('.theme-option').forEach(opt => {
+        const isActive = opt.dataset.theme === theme;
+        opt.classList.toggle('active', isActive);
+        opt.setAttribute('aria-selected', isActive);
+    });
+}
+
+function toggleThemeDropdown() {
+    const dropdown = document.getElementById('themeDropdown');
+    const btn = document.getElementById('themeToggle');
+    if (dropdown) {
+        const isOpen = dropdown.classList.toggle('open');
+        btn?.setAttribute('aria-expanded', isOpen);
+    }
+}
+
+function closeThemeDropdown() {
+    const dropdown = document.getElementById('themeDropdown');
+    const btn = document.getElementById('themeToggle');
+    if (dropdown) {
+        dropdown.classList.remove('open');
+        btn?.setAttribute('aria-expanded', 'false');
+    }
+}
+
+// Legacy toggle function for keyboard shortcut (cycles through themes)
 function toggleTheme() {
     const current = document.documentElement.getAttribute('data-theme') || 'dark';
-    const next = current === 'dark' ? 'light' : 'dark';
-    setTheme(next);
+    const currentIndex = AVAILABLE_THEMES.indexOf(current);
+    const nextIndex = (currentIndex + 1) % AVAILABLE_THEMES.length;
+    setTheme(AVAILABLE_THEMES[nextIndex]);
 }
+
+// Close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+    const wrapper = e.target.closest('.theme-selector-wrapper');
+    if (!wrapper) {
+        closeThemeDropdown();
+    }
+});
 
 // Initialize theme on page load
 (function initTheme() {
@@ -307,7 +358,8 @@ function switchTab(tabName) {
         tweets: document.getElementById('tweets-feed'),
         decisions: document.getElementById('decisions-feed'),
         meta: document.getElementById('meta-story'),
-        verify: document.getElementById('verify-feed')
+        verify: document.getElementById('verify-feed'),
+        performance: document.getElementById('performance-feed')
     };
     
     // Hide all with transition
@@ -340,6 +392,11 @@ function switchTab(tabName) {
     // Render tweets when switching to tweets tab
     if (tabName === 'tweets' && window.cachedActivities) {
         renderTweets(window.cachedActivities);
+    }
+    
+    // Initialize performance dashboard when switching to performance tab
+    if (tabName === 'performance') {
+        initPerformanceDashboard();
     }
 }
 
@@ -5876,3 +5933,141 @@ if (document.readyState === 'loading') {
 } else {
     initAccessibility();
 }
+
+// ============================================
+// PERFORMANCE DASHBOARD
+// ============================================
+
+let performanceData = null;
+let performanceRefreshInterval = null;
+
+/**
+ * Initialize performance dashboard when tab is selected
+ */
+function initPerformanceDashboard() {
+    refreshPerformance();
+    
+    // Auto-refresh every 30 seconds while on the performance tab
+    if (!performanceRefreshInterval) {
+        performanceRefreshInterval = setInterval(() => {
+            const activeTab = document.querySelector('.feed-tab.active');
+            if (activeTab?.dataset.tab === 'performance') {
+                refreshPerformance(true); // Silent refresh (no loading state)
+            }
+        }, 30000);
+    }
+}
+
+/**
+ * Fetch and display performance metrics
+ * @param {boolean} silent - If true, don't show loading state
+ */
+async function refreshPerformance(silent = false) {
+    const tbody = document.getElementById('perfEndpointsBody');
+    
+    if (!silent && tbody) {
+        tbody.innerHTML = '<tr><td colspan="6" class="perf-loading">Loading metrics...</td></tr>';
+    }
+    
+    try {
+        const response = await fetch('/api/performance');
+        if (!response.ok) throw new Error('Failed to load performance data');
+        
+        performanceData = await response.json();
+        renderPerformanceData(performanceData);
+    } catch (error) {
+        console.error('[Performance] Failed to load:', error);
+        if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="6" class="perf-error">Failed to load metrics: ${escapeHtml(error.message)}</td></tr>`;
+        }
+    }
+}
+
+/**
+ * Render performance data to the dashboard
+ * @param {object} data - Performance data from API
+ */
+function renderPerformanceData(data) {
+    // Update summary cards
+    updatePerfCard('perfUptime', data.uptime.formatted);
+    updatePerfCard('perfMemory', `${data.memory.heapUsed} MB`);
+    updatePerfCard('perfAvgResponse', `${data.requests.avgResponseTimeMs} ms`);
+    updatePerfCard('perfReqPerMin', data.requests.requestsPerMinute.toFixed(1));
+    updatePerfCard('perfTotalReq', data.requests.total.toLocaleString());
+    
+    const errorRate = data.requests.total > 0 
+        ? ((data.requests.errors / data.requests.total) * 100).toFixed(2)
+        : '0';
+    updatePerfCard('perfErrorRate', `${errorRate}%`);
+    
+    // Color-code error rate
+    const errorEl = document.getElementById('perfErrorRate');
+    if (errorEl) {
+        errorEl.classList.remove('good', 'warning', 'bad');
+        if (parseFloat(errorRate) === 0) {
+            errorEl.classList.add('good');
+        } else if (parseFloat(errorRate) < 5) {
+            errorEl.classList.add('warning');
+        } else {
+            errorEl.classList.add('bad');
+        }
+    }
+    
+    // Render endpoint table
+    const tbody = document.getElementById('perfEndpointsBody');
+    if (tbody) {
+        const endpoints = Object.entries(data.endpoints);
+        
+        if (endpoints.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="perf-empty">No endpoint data yet. Make some API requests!</td></tr>';
+        } else {
+            tbody.innerHTML = endpoints.map(([endpoint, metrics]) => {
+                const avgClass = metrics.avgTimeMs < 50 ? 'good' : metrics.avgTimeMs < 200 ? 'ok' : 'slow';
+                const p95Class = metrics.p95Ms < 100 ? 'good' : metrics.p95Ms < 500 ? 'ok' : 'slow';
+                
+                return `
+                    <tr>
+                        <td class="perf-endpoint" title="${escapeHtml(endpoint)}">${escapeHtml(endpoint)}</td>
+                        <td>${metrics.count.toLocaleString()}</td>
+                        <td class="perf-time ${avgClass}">${metrics.avgTimeMs}</td>
+                        <td>${metrics.p50Ms}</td>
+                        <td class="perf-time ${p95Class}">${metrics.p95Ms}</td>
+                        <td class="${metrics.errorsCount > 0 ? 'perf-errors' : ''}">${metrics.errorsCount}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+    }
+    
+    // Render recommendations
+    const recsSection = document.getElementById('perfRecommendations');
+    const recsList = document.getElementById('perfRecommendationsList');
+    
+    if (recsSection && recsList) {
+        if (data.summary.recommendations.length > 0) {
+            recsSection.style.display = 'block';
+            recsList.innerHTML = data.summary.recommendations
+                .map(rec => `<li>${escapeHtml(rec)}</li>`)
+                .join('');
+        } else {
+            recsSection.style.display = 'none';
+        }
+    }
+}
+
+/**
+ * Update a performance card value with animation
+ */
+function updatePerfCard(id, value) {
+    const el = document.getElementById(id);
+    if (el) {
+        const oldValue = el.textContent;
+        if (oldValue !== value) {
+            el.textContent = value;
+            el.classList.add('perf-updated');
+            setTimeout(() => el.classList.remove('perf-updated'), 500);
+        }
+    }
+}
+
+// (Performance tab switching is handled in the main switchTab function above)
