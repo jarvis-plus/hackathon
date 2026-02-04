@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 18:40 PST
-**Cycle:** 143
+**Last Updated:** 2026-02-03 18:38 PST
+**Cycle:** 144
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -27,7 +27,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Add health check endpoint (/api/health) ✅ Cycle 113
 - [x] Rate limiting on API endpoints ✅ Cycle 117
 - [x] Activity deep links (share specific activity via URL hash) ✅ Cycle 143
-- [ ] Browser notifications for new activities (with permission)
+- [x] Browser notifications for new activities (with permission) ✅ Cycle 144
 
 ### 🎨 Design (see docs/DESIGN-INSPIRATION.md)
 - [x] Dark/light mode toggle ✅ Cycle 116
@@ -62,6 +62,22 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 144 (Browser Notifications)
+- Added browser notification support for new activities
+- 🔕 Toggle button in header (next to sounds and theme toggles)
+- One-click permission request with user-friendly toast feedback
+- Notifications only show when page is not visible (background tab)
+- Single activity: shows type emoji, title, and description snippet
+- Multiple activities: shows summary "⚡ N new activities"
+- Click notification to focus window and scroll to activity
+- Notifications auto-close after 8 seconds
+- Silent notifications (audio already handled by sound system)
+- Permission state and preference stored in localStorage
+- ~180 lines of JavaScript for notification handling
+- Reuses existing .sound-toggle CSS for button styling
+- Files: app.js, index.html
+- 348 activities, all signed on-chain
 
 ### Cycle 143 (Activity Deep Links)
 - Added shareable URL links for individual activities
@@ -121,20 +137,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - Search includes wallet in query matching
 - Infrastructure ready for adding more wallets in WALLET_CONFIG
 - 339 activities, all signed on-chain
-
-### Cycle 139 (Activity Categories/Tags System)
-- Added optional `tags` field to Activity interface in types.ts
-- Added TAG_PRESETS constant with common tag categories (hackathon, infra, trading, etc.)
-- Updated createActivity() to accept optional tags parameter
-- Added tag filter UI section in dashboard with dynamic buttons populated from activity tags
-- Tags display on activity cards as colored badges with click-to-filter
-- Search now includes tags in query matching
-- Tag-specific color styling (hackathon=red, infra=blue, trading=coral, etc.)
-- Full mobile responsiveness for tag filters and tag badges
-- Reset filters now clears tag selection too
-- Fixed duplicate filter functions, updated renderActivities to trigger tag filtering
-- Files: types.ts, app.js (~80 lines added/fixed), dashboard.css (~120 lines), index.html
-- 335 activities, all signed on-chain
 
 ---
 

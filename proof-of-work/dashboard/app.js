@@ -2831,6 +2831,238 @@ function addKeyboardHint() {
 document.addEventListener('DOMContentLoaded', addKeyboardHint);
 
 // ============================================
+// BROWSER NOTIFICATIONS
+// ============================================
+
+let notificationsEnabled = false;
+let notificationPermission = 'default';
+
+/**
+ * Check if browser supports notifications
+ */
+function supportsNotifications() {
+    return 'Notification' in window;
+}
+
+/**
+ * Get stored notification preference
+ */
+function getNotificationPreference() {
+    return localStorage.getItem('jarvis-pow-notifications') === 'enabled';
+}
+
+/**
+ * Store notification preference
+ */
+function setNotificationPreference(enabled) {
+    localStorage.setItem('jarvis-pow-notifications', enabled ? 'enabled' : 'disabled');
+    notificationsEnabled = enabled;
+    updateNotificationButton();
+}
+
+/**
+ * Request notification permission from user
+ */
+async function requestNotificationPermission() {
+    if (!supportsNotifications()) {
+        console.log('Browser does not support notifications');
+        return false;
+    }
+    
+    notificationPermission = Notification.permission;
+    
+    if (notificationPermission === 'granted') {
+        return true;
+    }
+    
+    if (notificationPermission === 'denied') {
+        showCopyToast('Notifications blocked. Enable in browser settings.', true);
+        return false;
+    }
+    
+    // Request permission
+    const permission = await Notification.requestPermission();
+    notificationPermission = permission;
+    
+    if (permission === 'granted') {
+        setNotificationPreference(true);
+        showCopyToast('🔔 Notifications enabled!');
+        return true;
+    } else {
+        showCopyToast('Notification permission denied', true);
+        return false;
+    }
+}
+
+/**
+ * Toggle notifications on/off
+ */
+async function toggleNotifications() {
+    if (!supportsNotifications()) {
+        showCopyToast('Your browser doesn\'t support notifications', true);
+        return;
+    }
+    
+    if (notificationsEnabled) {
+        // Disable
+        setNotificationPreference(false);
+        showCopyToast('🔕 Notifications disabled');
+    } else {
+        // Enable - may need to request permission
+        const granted = await requestNotificationPermission();
+        if (granted) {
+            setNotificationPreference(true);
+        }
+    }
+}
+
+/**
+ * Update the notification toggle button state
+ */
+function updateNotificationButton() {
+    const btn = document.getElementById('notificationToggle');
+    if (!btn) return;
+    
+    if (notificationsEnabled && notificationPermission === 'granted') {
+        btn.textContent = '🔔 Notifs On';
+        btn.classList.remove('muted');
+        btn.title = 'Browser notifications enabled - click to disable';
+    } else {
+        btn.textContent = '🔕 Notifs Off';
+        btn.classList.add('muted');
+        btn.title = 'Browser notifications disabled - click to enable';
+    }
+}
+
+/**
+ * Show a browser notification for new activity
+ */
+function showActivityNotification(activity) {
+    if (!notificationsEnabled || notificationPermission !== 'granted') {
+        return;
+    }
+    
+    // Don't show notifications if page is visible
+    if (document.visibilityState === 'visible') {
+        return;
+    }
+    
+    // Activity type emoji mapping
+    const typeEmoji = {
+        'build': '🔧',
+        'commit': '📝',
+        'trade': '💱',
+        'transfer': '💸',
+        'decision': '🧠',
+        'tweet': '🐦',
+        'message': '💬',
+        'email': '📧',
+        'browser': '🌐',
+        'calendar': '📅',
+        'session': '🔌',
+        'heartbeat': '💓',
+        'deploy': '🚀'
+    };
+    
+    const emoji = typeEmoji[activity.type] || '⚡';
+    const title = `${emoji} New ${activity.type} activity`;
+    const body = activity.description?.slice(0, 100) || 'New activity logged';
+    const activityId = getActivityId(activity);
+    
+    try {
+        const notification = new Notification(title, {
+            body: body,
+            icon: '/favicon.ico',
+            badge: '/favicon.ico',
+            tag: `jarvis-activity-${activityId}`, // Prevents duplicate notifications
+            renotify: false,
+            silent: true // We already have audio
+        });
+        
+        // Click notification to focus window and scroll to activity
+        notification.onclick = () => {
+            window.focus();
+            scrollToActivity(activityId);
+            notification.close();
+        };
+        
+        // Auto-close after 8 seconds
+        setTimeout(() => notification.close(), 8000);
+        
+    } catch (e) {
+        console.error('Failed to show notification:', e);
+    }
+}
+
+/**
+ * Show notifications for multiple new activities
+ */
+function showNewActivitiesNotifications(newItems) {
+    if (!newItems || newItems.length === 0) return;
+    
+    if (newItems.length === 1) {
+        // Single activity - show detailed notification
+        showActivityNotification(newItems[0]);
+    } else {
+        // Multiple activities - show summary notification
+        if (!notificationsEnabled || notificationPermission !== 'granted') return;
+        if (document.visibilityState === 'visible') return;
+        
+        try {
+            const notification = new Notification(`⚡ ${newItems.length} new activities`, {
+                body: `${newItems.map(a => a.type).join(', ')}`,
+                icon: '/favicon.ico',
+                tag: 'jarvis-activity-batch',
+                silent: true
+            });
+            
+            notification.onclick = () => {
+                window.focus();
+                notification.close();
+            };
+            
+            setTimeout(() => notification.close(), 8000);
+        } catch (e) {
+            console.error('Failed to show batch notification:', e);
+        }
+    }
+}
+
+/**
+ * Initialize notifications system
+ */
+function initNotifications() {
+    if (!supportsNotifications()) {
+        // Hide notification button if not supported
+        const btn = document.getElementById('notificationToggle');
+        if (btn) btn.style.display = 'none';
+        return;
+    }
+    
+    // Check current permission
+    notificationPermission = Notification.permission;
+    
+    // Check stored preference
+    notificationsEnabled = getNotificationPreference() && notificationPermission === 'granted';
+    
+    // Update button state
+    updateNotificationButton();
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', initNotifications);
+
+// Hook into flashNewActivity to also show browser notification
+const originalFlashNewActivity = flashNewActivity;
+flashNewActivity = function(count, newItems = []) {
+    // Call original function (plays sound, flashes header)
+    originalFlashNewActivity(count, newItems);
+    
+    // Also show browser notification
+    showNewActivitiesNotifications(newItems);
+};
+
+// ============================================
 // ACTIVITY DEEP LINKS
 // ============================================
 
