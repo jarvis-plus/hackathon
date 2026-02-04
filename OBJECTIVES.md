@@ -112,6 +112,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Activity export with filters (export only filtered results) ✅ Cycle 190
 - [x] Activity bulk delete (delete multiple at once) ✅ Cycle 191
 - [x] Undo button toast (quick undo after delete) ✅ Cycle 192
+- [x] Auto theme mode (follow OS dark/light preference) ✅ Cycle 192
 - [ ] Activity status indicator (pending/completed/failed states)
 - [ ] Batch restore from trash (restore multiple at once)
 - [ ] Activity quick actions menu (right-click context menu)
@@ -122,24 +123,22 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
 
-### Cycle 192 (Undo Button Toast)
-- Implemented undo toast for delete operations (single and bulk)
-- **New Function `showUndoToast()`**:
-  - Displays toast with message, Undo button, close button
-  - Progress bar countdown (5-6 seconds)
-  - Clicking Undo restores all deleted activities via `/api/activities/:hash/restore`
-  - Updates local cache and re-renders activity list
-- **Integration Points**:
-  - `deleteActivity()` - shows undo toast after single delete
-  - `bulkDelete()` - shows undo toast with all deleted hashes
-- **Accessibility**:
-  - ARIA alerts for screen readers
-  - Keyboard support (Escape to dismiss)
-  - Auto-focus on Undo button
-- **Theme Support**: All 6 themes (Dark, Light, Ocean, Forest, Sunset, Cyberpunk)
-- **Mobile Responsive**: Full-width toast on small screens
-- **Stats**: 509 activities, all signed on-chain
-- Commit: 5c0a30d
+### Cycle 192 (Undo Toast + Auto Theme Mode)
+- Verified undo toast for delete operations was already fully implemented
+- **New: Auto Theme Mode** - follows OS dark/light preference
+  - Added 'auto' to AVAILABLE_THEMES list
+  - New `getSystemTheme()` and `getEffectiveTheme()` functions
+  - Theme dropdown now includes "🔄 Auto (System)" at top
+  - Command palette includes auto theme option
+  - `systemPrefersDark.addEventListener('change')` for real-time updates
+  - When system preference changes, theme updates automatically
+- **Undo Toast Features** (pre-existing):
+  - `showUndoToast()` displays toast with Undo button and progress bar
+  - Works for both single delete and bulk delete operations
+  - Restores via `/api/activities/:hash/restore`
+- **Theme Support**: All 7 themes (Auto, Dark, Light, Ocean, Forest, Sunset, Cyberpunk)
+- **Stats**: 513 activities, all signed on-chain
+- Commit: 0a21a98
 
 ### Cycle 191 (Activity Bulk Delete)
 - Implemented bulk delete feature for deleting multiple activities at once
