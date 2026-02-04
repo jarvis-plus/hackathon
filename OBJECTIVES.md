@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-04 01:20 PST
-**Cycle:** 186
+**Last Updated:** 2026-02-04 01:55 PST
+**Cycle:** 187
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -106,10 +106,36 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Activity calendar view (month-view with daily details) ✅ Cycle 184
 - [x] Bulk activity operations (multi-select for batch actions) ✅ Cycle 185
 - [x] Activity templates (reusable presets for quick logging) ✅ Cycle 186
+- [x] Activity duplicate detection (warn before logging similar activities) ✅ Cycle 187
 
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 187 (Activity Duplicate Detection)
+- Implemented warning system for potential duplicate activities
+- **New API Endpoint**:
+  - `GET /api/activities/check-duplicate?type=X&description=Y&timeWindowMinutes=30`
+  - Returns { hasDuplicate, duplicates[], mostSimilar, message }
+- **Similarity Algorithm**:
+  - Jaccard similarity on word tokens (ignores words < 3 chars)
+  - 60% threshold to flag as potential duplicate
+  - Same-type activities only
+  - Configurable time window (default 30 minutes)
+- **Dashboard Integration**:
+  - Voice input modal checks before submitting
+  - Warning modal shows similar activity preview
+  - Displays: type emoji, description snippet, similarity %, time ago
+  - "Submit Anyway" or "Cancel" options
+- **UI/UX**:
+  - Keyboard support (Enter to submit, Escape to cancel)
+  - Cancel button focused by default (safer option)
+  - Screen reader announcements
+- **Theme Support**: All 6 themes (Dark, Light, Ocean, Forest, Sunset, Cyberpunk)
+- **Mobile Responsive**: Full-width modal, column buttons
+- **OpenAPI Updated**: DuplicateCheckResult schema, new endpoint documented
+- **Stats**: 493 activities, all signed on-chain
+- Commit: e2abca4
 
 ### Cycle 186 (Activity Templates)
 - Implemented reusable activity templates for quick logging
@@ -217,39 +243,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - **OpenAPI Updated**: Added POST /api/activities endpoint
 - **Stats**: 479 activities, all signed on-chain
 - Commit: 5a544a1
-
-### Cycle 182 (Activity Importance Scoring)
-- Implemented auto-prioritization system for activities
-- **Scoring Algorithm (5 Factors, 100 points max)**:
-  - Type Weight (0-30): Activity types ranked by importance
-    - deploy/decision: 30, build: 28, commit/trade: 25
-    - email: 20, calendar: 18, research: 15
-    - message/tweet: 10, heartbeat: 5
-  - Keyword Boost (0-25): Important keywords detected
-    - critical/urgent/emergency: +15
-    - milestone/deployed/shipped: +12
-    - fix/bug/security: +10
-    - feature/implement: +8
-  - Metadata Richness (0-15): Detail level of activity
-  - On-Chain Bonus (0-15): Cryptographic verification
-  - Time Pattern (0-15): Work hours + weekend dedication
-- **5 Importance Levels**:
-  - 🔴 Critical (80-100)
-  - 🟠 High (60-79)
-  - 🟡 Medium (40-59)
-  - 🟢 Low (20-39)
-  - ⚪ Minimal (0-19)
-- **New API Endpoints**:
-  - `GET /api/activities/importance` - Bulk scores with stats & filtering
-  - `GET /api/activities/:hash/importance` - Single activity score
-- **Dashboard UI**:
-  - Importance badges displayed on each activity card
-  - Shows emoji + score (e.g., "🟠 65")
-  - Tooltip shows "Importance: 65/100 (high)"
-- **Theme Support**: All 6 themes (cyberpunk gets neon glow effects)
-- **OpenAPI Updated**: ImportanceScore schema, 2 new endpoints
-- **Stats**: 473 activities, avg score 55, 4 critical, 116 high, 345 medium
-- Commit: da54199
 
 ---
 
