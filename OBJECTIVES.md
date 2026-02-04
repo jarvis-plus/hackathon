@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-04 10:54 PST
-**Cycle:** 213
+**Last Updated:** 2026-02-04 11:25 PST
+**Cycle:** 214
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -134,7 +134,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Activity Minimap Sidebar (visual scroll navigation overview) ✅ Cycle 211
 - [x] Activity Quick Reactions (emoji reactions with picker and persistence) ✅ Cycle 212
 - [x] Activity Focus Timer (productivity stopwatch with pomodoro milestones) ✅ Cycle 213
-- [ ] Activity Collections (group activities into named folders/collections)
+- [x] Activity Collections (group activities into named folders/collections) ✅ Cycle 214
 - [ ] Activity Quick Notes (inline note editing without modal)
 - [ ] Print-friendly view (optimized CSS for printing activity reports)
 - [ ] Activity Location Tagging (optional location metadata)
@@ -143,6 +143,32 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 214 (Activity Collections)
+- Implemented activity collections system for organizing into named folders
+- **Collection Management**:
+  - Create/rename/delete collections
+  - Custom color picker (10 presets + custom)
+  - Custom emoji icons (16 presets or custom input)
+  - Activity count per collection
+- **Activity Organization**:
+  - Add/remove activities from collections
+  - Quick create collection from activity
+  - Collection badges on activity cards
+  - Click badge to filter by collection
+- **UI Features**:
+  - Collections modal (C keyboard shortcut)
+  - Context menu: "Add to Collection" with submenu
+  - Collection filter indicator in header
+  - Clear filter option
+- **Integration**:
+  - Works with existing filter system
+  - Command palette: Manage Collections, Create New, Clear Filter
+  - LocalStorage persistence
+- **Theme Support**: All 7 themes with matching colors
+- **Accessibility**: ARIA labels, keyboard navigation
+- **Stats**: 579 activities, all signed on-chain
+- Commit: c3edfb2
 
 ### Cycle 213 (Activity Focus Timer)
 - Implemented productivity stopwatch with pomodoro-style milestones
@@ -238,30 +264,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - **Theme Support**: All 7 themes with custom gradient ranks
 - **Stats**: 566 activities, all signed on-chain
 - Commit: 9edb080
-
-### Cycle 209 (Activity AI Summary)
-- Implemented local keyword-based AI summary generation for activities
-- **Entity Extraction**:
-  - Files: .ts, .js, .css, .html, .json, .md, etc.
-  - Functions: Component, Handler, Listener, Manager, etc.
-  - APIs: /api/ paths, HTTP methods
-  - Numbers: values with units (SOL, USDC, %, ms, MB, etc.)
-  - Versions, URLs, commits
-- **Template-Based Summaries**:
-  - Type-specific templates (commit, build, trade, message, etc.)
-  - Extracts key action (add, fix, implement, deploy)
-  - Includes cycle numbers for builds
-- **UI Features**:
-  - Toggle button (🤖 AI On/Off) in header
-  - Entity badges (📄 files, ⚡ components, 🔌 APIs, 💰 values)
-  - Gradient purple background for summary boxes
-  - Smooth fade-in animation
-- **Keyboard Shortcut**: A to toggle AI summaries
-- **Command Palette**: "Toggle AI Summaries" command added
-- **Persistence**: Mode saved in localStorage
-- **Theme Support**: Full support for all 7 themes
-- **Stats**: 564 activities, all signed on-chain
-- Commit: 82c74c4
 
 ---
 

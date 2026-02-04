@@ -6176,108 +6176,311 @@ async function cycleStatus(hash, newStatus) {
 }
 
 /**
- * Render activity notes section with view/edit functionality
+ * Track pending note saves to prevent duplicate API calls
+ */
+const pendingNoteSaves = new Map();
+
+/**
+ * Track original note values to detect changes
+ */
+const originalNoteValues = new Map();
+
+/**
+ * Render quick inline notes section for an activity
+ * No modal or toggle - always visible inline input with auto-save
  * @param {Object} activity - The activity object
  * @param {string} hash - The activity hash for API calls
- * @returns {string} HTML string for the notes section
+ * @returns {string} HTML string for the quick notes section
  */
 function renderActivityNotes(activity, hash) {
     if (!hash) return ''; // Can't edit without a hash
     
     const hasNotes = activity.notes && activity.notes.trim();
-    const notesContent = hasNotes ? escapeHtml(activity.notes) : '';
+    const notesContent = hasNotes ? activity.notes : '';
+    const escapedNotes = escapeHtml(notesContent);
     const shortHash = hash.slice(0, 16);
     
+    // Store original value for change detection
+    originalNoteValues.set(hash, notesContent);
+    
     return `
-        <div class="activity-notes-section" data-hash="${hash}">
-            ${hasNotes ? `
-                <div class="activity-notes-display" id="notes-display-${shortHash}">
-                    <div class="activity-notes-header">
-                        <span class="activity-notes-icon">📝</span>
-                        <span class="activity-notes-label">Note</span>
-                        <button class="notes-edit-btn" onclick="toggleNotesEdit('${hash}')" title="Edit note" aria-label="Edit note">
-                            ✏️
-                        </button>
-                    </div>
-                    <div class="activity-notes-content">${notesContent}</div>
+        <div class="quick-notes-section" data-hash="${hash}" data-original="${escapedNotes}">
+            <div class="quick-notes-wrapper ${hasNotes ? 'has-content' : ''}">
+                <span class="quick-notes-icon" title="Quick note">📝</span>
+                <div class="quick-notes-input-container">
+                    <textarea 
+                        class="quick-notes-input" 
+                        id="quick-note-${shortHash}"
+                        placeholder="Add a quick note..."
+                        maxlength="1000"
+                        rows="1"
+                        onfocus="expandQuickNote('${hash}')"
+                        onblur="collapseAndSaveQuickNote('${hash}')"
+                        onkeydown="handleQuickNoteKeydown(event, '${hash}')"
+                        oninput="handleQuickNoteInput('${hash}')"
+                        aria-label="Quick note for this activity"
+                    >${escapedNotes}</textarea>
+                    <div class="quick-notes-status" id="quick-note-status-${shortHash}" aria-live="polite"></div>
                 </div>
-            ` : `
-                <button class="notes-add-btn" id="notes-add-${shortHash}" onclick="toggleNotesEdit('${hash}')" title="Add a note">
-                    📝 Add note
-                </button>
-            `}
-            <div class="activity-notes-edit" id="notes-edit-${shortHash}" style="display: none;">
-                <textarea 
-                    class="notes-textarea" 
-                    id="notes-textarea-${shortHash}"
-                    placeholder="Add a note to this activity..."
-                    maxlength="1000"
-                    rows="2"
-                >${notesContent}</textarea>
-                <div class="notes-edit-actions">
-                    <span class="notes-char-count" id="notes-count-${shortHash}">${notesContent.length}/1000</span>
-                    <button class="notes-cancel-btn" onclick="cancelNotesEdit('${hash}')">Cancel</button>
-                    <button class="notes-save-btn" onclick="saveActivityNotes('${hash}')">Save</button>
-                </div>
+                <span class="quick-notes-hint" id="quick-note-hint-${shortHash}">
+                    <kbd>Enter</kbd> to save • <kbd>Shift+Enter</kbd> for newline • <kbd>Esc</kbd> to cancel
+                </span>
             </div>
         </div>
     `;
 }
 
 /**
- * Toggle notes edit mode for an activity
+ * Expand the quick note textarea on focus
+ * @param {string} hash - The activity hash
+ */
+function expandQuickNote(hash) {
+    const shortHash = hash.slice(0, 16);
+    const textarea = document.getElementById(`quick-note-${shortHash}`);
+    const hint = document.getElementById(`quick-note-hint-${shortHash}`);
+    const section = textarea?.closest('.quick-notes-section');
+    
+    if (textarea) {
+        textarea.classList.add('expanded');
+        // Auto-grow to fit content
+        autoGrowQuickNote(textarea);
+    }
+    if (hint) {
+        hint.classList.add('visible');
+    }
+    if (section) {
+        section.classList.add('focused');
+    }
+    
+    // Store current value as baseline for change detection
+    if (textarea) {
+        originalNoteValues.set(hash, textarea.value);
+    }
+}
+
+/**
+ * Collapse the quick note and save if changed
+ * @param {string} hash - The activity hash
+ */
+function collapseAndSaveQuickNote(hash) {
+    const shortHash = hash.slice(0, 16);
+    const textarea = document.getElementById(`quick-note-${shortHash}`);
+    const hint = document.getElementById(`quick-note-hint-${shortHash}`);
+    const section = textarea?.closest('.quick-notes-section');
+    
+    if (textarea) {
+        // Check if value changed
+        const original = originalNoteValues.get(hash) || '';
+        const current = textarea.value;
+        
+        if (current !== original) {
+            saveQuickNote(hash);
+        }
+        
+        // Collapse if empty
+        if (!textarea.value.trim()) {
+            textarea.classList.remove('expanded');
+            textarea.style.height = '';
+            textarea.rows = 1;
+        }
+    }
+    if (hint) {
+        hint.classList.remove('visible');
+    }
+    if (section) {
+        section.classList.remove('focused');
+    }
+}
+
+/**
+ * Handle input in quick note textarea
+ * @param {string} hash - The activity hash
+ */
+function handleQuickNoteInput(hash) {
+    const shortHash = hash.slice(0, 16);
+    const textarea = document.getElementById(`quick-note-${shortHash}`);
+    const wrapper = textarea?.closest('.quick-notes-wrapper');
+    
+    if (textarea && wrapper) {
+        // Update has-content class
+        if (textarea.value.trim()) {
+            wrapper.classList.add('has-content');
+        } else {
+            wrapper.classList.remove('has-content');
+        }
+        
+        // Auto-grow
+        autoGrowQuickNote(textarea);
+    }
+}
+
+/**
+ * Auto-grow textarea to fit content
+ * @param {HTMLTextAreaElement} textarea - The textarea element
+ */
+function autoGrowQuickNote(textarea) {
+    if (!textarea) return;
+    
+    // Reset height to recalculate
+    textarea.style.height = 'auto';
+    
+    // Set to scroll height, max 150px
+    const maxHeight = 150;
+    const newHeight = Math.min(textarea.scrollHeight, maxHeight);
+    textarea.style.height = newHeight + 'px';
+    
+    // Show scrollbar if content exceeds max height
+    textarea.style.overflowY = textarea.scrollHeight > maxHeight ? 'auto' : 'hidden';
+}
+
+/**
+ * Handle keydown events in quick note
+ * @param {KeyboardEvent} event - The keyboard event
+ * @param {string} hash - The activity hash
+ */
+function handleQuickNoteKeydown(event, hash) {
+    const shortHash = hash.slice(0, 16);
+    const textarea = document.getElementById(`quick-note-${shortHash}`);
+    
+    if (event.key === 'Enter' && !event.shiftKey) {
+        // Enter without shift saves and blurs
+        event.preventDefault();
+        saveQuickNote(hash);
+        textarea?.blur();
+    } else if (event.key === 'Escape') {
+        // Escape cancels changes and blurs
+        event.preventDefault();
+        const original = originalNoteValues.get(hash) || '';
+        if (textarea) {
+            textarea.value = original;
+            handleQuickNoteInput(hash);
+        }
+        textarea?.blur();
+    }
+}
+
+/**
+ * Save quick note via API with debounce and status indicator
+ * @param {string} hash - The activity hash
+ */
+async function saveQuickNote(hash) {
+    const shortHash = hash.slice(0, 16);
+    const textarea = document.getElementById(`quick-note-${shortHash}`);
+    const statusEl = document.getElementById(`quick-note-status-${shortHash}`);
+    const wrapper = textarea?.closest('.quick-notes-wrapper');
+    
+    if (!textarea) return;
+    
+    const notes = textarea.value.trim();
+    const original = originalNoteValues.get(hash) || '';
+    
+    // Don't save if unchanged
+    if (notes === original) return;
+    
+    // Cancel any pending save for this hash
+    if (pendingNoteSaves.has(hash)) {
+        clearTimeout(pendingNoteSaves.get(hash));
+    }
+    
+    // Show saving status
+    if (statusEl) {
+        statusEl.textContent = 'Saving...';
+        statusEl.className = 'quick-notes-status saving';
+    }
+    if (wrapper) {
+        wrapper.classList.add('saving');
+    }
+    
+    // Debounce the actual save
+    const saveTimeout = setTimeout(async () => {
+        try {
+            const response = await fetch(`/api/activities/${hash}/notes`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ notes: notes || null })
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Failed to save');
+            }
+            
+            // Update original value
+            originalNoteValues.set(hash, notes);
+            
+            // Show saved status briefly
+            if (statusEl) {
+                statusEl.textContent = '✓ Saved';
+                statusEl.className = 'quick-notes-status saved';
+                setTimeout(() => {
+                    statusEl.textContent = '';
+                    statusEl.className = 'quick-notes-status';
+                }, 2000);
+            }
+            if (wrapper) {
+                wrapper.classList.remove('saving');
+                wrapper.classList.add('saved');
+                setTimeout(() => wrapper.classList.remove('saved'), 2000);
+            }
+            
+            // Announce to screen reader
+            announceToScreenReader(`Note ${notes ? 'saved' : 'removed'}`);
+            
+        } catch (error) {
+            console.error('Failed to save quick note:', error);
+            
+            // Show error status
+            if (statusEl) {
+                statusEl.textContent = '✗ Error';
+                statusEl.className = 'quick-notes-status error';
+                setTimeout(() => {
+                    statusEl.textContent = '';
+                    statusEl.className = 'quick-notes-status';
+                }, 3000);
+            }
+            if (wrapper) {
+                wrapper.classList.remove('saving');
+                wrapper.classList.add('error');
+                setTimeout(() => wrapper.classList.remove('error'), 3000);
+            }
+        } finally {
+            pendingNoteSaves.delete(hash);
+        }
+    }, 300); // 300ms debounce
+    
+    pendingNoteSaves.set(hash, saveTimeout);
+}
+
+/**
+ * Legacy toggle function - now just focuses the inline input
+ * Kept for backward compatibility with context menu
  * @param {string} hash - The activity hash
  */
 function toggleNotesEdit(hash) {
     const shortHash = hash.slice(0, 16);
-    const editSection = document.getElementById(`notes-edit-${shortHash}`);
-    const displaySection = document.getElementById(`notes-display-${shortHash}`);
-    const addBtn = document.getElementById(`notes-add-${shortHash}`);
-    const textarea = document.getElementById(`notes-textarea-${shortHash}`);
-    
-    if (editSection) {
-        const isHidden = editSection.style.display === 'none';
-        editSection.style.display = isHidden ? 'block' : 'none';
-        
-        if (displaySection) displaySection.style.display = isHidden ? 'none' : 'block';
-        if (addBtn) addBtn.style.display = isHidden ? 'none' : 'inline-flex';
-        
-        if (isHidden && textarea) {
-            textarea.focus();
-            // Update character count
-            updateNotesCharCount(hash);
-            textarea.addEventListener('input', () => updateNotesCharCount(hash));
-        }
+    const textarea = document.getElementById(`quick-note-${shortHash}`);
+    if (textarea) {
+        textarea.focus();
     }
 }
 
 /**
- * Cancel notes edit mode
+ * Legacy cancel function - now just blurs and reverts
  * @param {string} hash - The activity hash
  */
 function cancelNotesEdit(hash) {
     const shortHash = hash.slice(0, 16);
-    const editSection = document.getElementById(`notes-edit-${shortHash}`);
-    const displaySection = document.getElementById(`notes-display-${shortHash}`);
-    const addBtn = document.getElementById(`notes-add-${shortHash}`);
-    const textarea = document.getElementById(`notes-textarea-${shortHash}`);
-    
-    if (editSection) editSection.style.display = 'none';
-    if (displaySection) displaySection.style.display = 'block';
-    if (addBtn) addBtn.style.display = 'inline-flex';
-    
-    // Reset textarea to original value
+    const textarea = document.getElementById(`quick-note-${shortHash}`);
     if (textarea) {
-        const activityItem = textarea.closest('.activity-item');
-        if (activityItem) {
-            const notesContent = activityItem.querySelector('.activity-notes-content');
-            textarea.value = notesContent ? notesContent.textContent : '';
-        }
+        const original = originalNoteValues.get(hash) || '';
+        textarea.value = original;
+        handleQuickNoteInput(hash);
+        textarea.blur();
     }
 }
 
 /**
- * Update character count for notes textarea
+ * Update character count for notes textarea (legacy - kept for compatibility)
  * @param {string} hash - The activity hash
  */
 function updateNotesCharCount(hash) {
@@ -8000,6 +8203,7 @@ const KEYBOARD_SHORTCUTS = {
     's': { action: 'cycleSentiment', description: 'Cycle sentiment filter (all → positive → neutral → negative)' },
     'a': { action: 'toggleAISummaries', description: 'Toggle AI-generated summaries' },
     'g': { action: 'toggleSuggestions', description: 'Toggle smart suggestions dropdown' },
+    'n': { action: 'focusQuickNote', description: 'Focus quick note on first visible activity' },
     '?': { action: 'showShortcuts', description: 'Show keyboard shortcuts' },
 };
 
@@ -8058,6 +8262,7 @@ function createShortcutsModal() {
                     <div class="shortcut-row"><kbd>d</kbd> Toggle layout edit mode</div>
                     <div class="shortcut-row"><kbd>v</kbd> Voice activity input</div>
                     <div class="shortcut-row"><kbd>w</kbd> Configure widgets</div>
+                    <div class="shortcut-row"><kbd>n</kbd> Quick note on first activity</div>
                     <div class="shortcut-row"><kbd>e</kbd> Add reaction (on focused activity)</div>
                     <div class="shortcut-row"><kbd>y</kbd> Fire confetti 🎉</div>
                     <div class="shortcut-row"><kbd>Shift+y</kbd> Epic confetti cannons 🎆</div>
@@ -8163,6 +8368,35 @@ function handleShortcutAction(action) {
         toggleAISummaries();
     } else if (action === 'toggleSuggestions') {
         toggleSuggestionsDropdown();
+    } else if (action === 'focusQuickNote') {
+        focusFirstQuickNote();
+    }
+}
+
+/**
+ * Focus the quick note input of the first visible activity
+ */
+function focusFirstQuickNote() {
+    // Find the first visible activity's quick note input
+    const activityFeed = document.getElementById('activity-list');
+    if (!activityFeed) {
+        announceToScreenReader('No activity feed found');
+        return;
+    }
+    
+    const firstActivity = activityFeed.querySelector('.activity-item:not(.pinned-section-header)');
+    if (!firstActivity) {
+        announceToScreenReader('No activities visible');
+        return;
+    }
+    
+    const quickNoteInput = firstActivity.querySelector('.quick-notes-input');
+    if (quickNoteInput) {
+        quickNoteInput.focus();
+        quickNoteInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        announceToScreenReader('Quick note focused');
+    } else {
+        announceToScreenReader('No quick note input found');
     }
 }
 
@@ -8317,6 +8551,7 @@ const PALETTE_COMMANDS = [
     { id: 'load-more', title: 'Load More Activities', description: 'Load additional activities', icon: '⬇️', action: () => loadMoreActivities(), group: 'Actions' },
     { id: 'scroll-top', title: 'Scroll to Top', description: 'Jump to top of page', icon: '⬆️', shortcut: 'T', action: () => { window.scrollTo({ top: 0, behavior: 'smooth' }); hideCommandPalette(); }, group: 'Actions' },
     { id: 'refresh', title: 'Refresh Data', description: 'Reload activity data', icon: '🔃', action: () => { fetchActivities(); hideCommandPalette(); }, group: 'Actions' },
+    { id: 'quick-note', title: 'Quick Note', description: 'Focus quick note on first visible activity', icon: '📝', shortcut: 'N', action: () => { focusFirstQuickNote(); hideCommandPalette(); }, group: 'Actions' },
     { id: 'celebrate', title: 'Celebrate! 🎉', description: 'Fire confetti to celebrate milestones', icon: '🎊', shortcut: 'Y', action: () => { celebrate('normal'); hideCommandPalette(); }, group: 'Actions' },
     { id: 'celebrate-epic', title: 'Epic Celebration! 🎆', description: 'Fire epic confetti cannons from both sides', icon: '🎇', action: () => { celebrate('epic'); hideCommandPalette(); }, group: 'Actions' },
     
