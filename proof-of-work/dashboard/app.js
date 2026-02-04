@@ -2172,6 +2172,8 @@ function renderInsights(activities) {
     });
     const avgDailyNum = uniqueDays.size > 0 ? (activities.length / uniqueDays.size) : 0;
     const avgDailyEl = document.getElementById('insightAvgDaily');
+    avgDailyEl.classList.add('updated');
+    setTimeout(() => avgDailyEl.classList.remove('updated'), 600);
     animateDecimal(avgDailyEl, avgDailyNum, 800, '', '/day', 1);
     const avgDailyDetail = document.getElementById('insightAvgDailyDetail');
     avgDailyDetail.innerHTML = 'Across <span id="avgActiveDays">0</span> active days';
@@ -2213,8 +2215,10 @@ function renderInsights(activities) {
     const onChainScore = onChainRate * 40;
     const productivityScore = Math.round(varietyScore + consistencyScore + onChainScore);
     
-    // Animate productivity score count-up
+    // Animate productivity score count-up with glow effect
     const productivityEl = document.getElementById('insightProductivity');
+    productivityEl.classList.add('updated');
+    setTimeout(() => productivityEl.classList.remove('updated'), 600);
     animateNumber(productivityEl, productivityScore, 800, '', '/100');
     
     // Animate progress bar from 0 (CSS transition handles the animation)
@@ -2224,9 +2228,11 @@ function renderInsights(activities) {
         progressBar.style.width = `${productivityScore}%`;
     }, 50);
     
-    // On-chain rate with animated percentage
+    // On-chain rate with animated percentage and glow
     const onChainPercent = (onChainRate * 100);
     const onChainEl = document.getElementById('insightOnchainRate');
+    onChainEl.classList.add('updated');
+    setTimeout(() => onChainEl.classList.remove('updated'), 600);
     animateDecimal(onChainEl, onChainPercent, 800, '', '%', 1);
     const onChainDetail = document.getElementById('insightOnchainDetail');
     onChainDetail.innerHTML = '<span id="onChainSigned">0</span> of <span id="onChainTotal">0</span> signed';

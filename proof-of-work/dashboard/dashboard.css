@@ -3269,6 +3269,26 @@
     color: var(--accent-green);
     line-height: 1.2;
     margin-bottom: 0.25rem;
+    transition: text-shadow 0.3s ease;
+}
+
+.insight-value.updated {
+    animation: insightGlow 0.6s ease-out;
+}
+
+@keyframes insightGlow {
+    0% { 
+        text-shadow: 0 0 10px var(--accent-green);
+        transform: scale(1);
+    }
+    50% { 
+        text-shadow: 0 0 20px var(--accent-green), 0 0 30px var(--accent-green);
+        transform: scale(1.05);
+    }
+    100% { 
+        text-shadow: none;
+        transform: scale(1);
+    }
 }
 
 .insight-detail {
