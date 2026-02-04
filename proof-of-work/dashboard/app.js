@@ -619,7 +619,8 @@ function switchTab(tabName) {
         meta: document.getElementById('meta-story'),
         verify: document.getElementById('verify-feed'),
         performance: document.getElementById('performance-feed'),
-        heatmap: document.getElementById('heatmap-feed')
+        heatmap: document.getElementById('heatmap-feed'),
+        wordcloud: document.getElementById('wordcloud-feed')
     };
     
     // Hide all with transition
@@ -662,6 +663,11 @@ function switchTab(tabName) {
     // Initialize heatmap when switching to heatmap tab
     if (tabName === 'heatmap' && window.cachedActivities) {
         renderHeatmap(window.cachedActivities);
+    }
+    
+    // Initialize word cloud when switching to wordcloud tab
+    if (tabName === 'wordcloud' && window.cachedActivities) {
+        renderWordCloud(window.cachedActivities);
     }
 }
 
@@ -6704,6 +6710,7 @@ const KEYBOARD_SHORTCUTS = {
     '5': { action: () => switchTab('meta'), description: 'Meta Story tab' },
     '6': { action: () => switchTab('verify'), description: 'Verify tab' },
     '7': { action: () => switchTab('heatmap'), description: 'Heatmap tab' },
+    '8': { action: () => switchTab('wordcloud'), description: 'Word Cloud tab' },
     'r': { action: 'resetFilters', description: 'Reset all filters' },
     'e': { action: 'exportJSON', description: 'Export as JSON' },
     'E': { action: 'exportCSV', description: 'Export as CSV' },
@@ -6962,6 +6969,7 @@ const PALETTE_COMMANDS = [
     { id: 'tab-meta', title: 'Meta Story', description: 'View project narrative', icon: '📖', shortcut: '5', action: () => switchTab('meta'), group: 'Navigation' },
     { id: 'tab-verify', title: 'Verify', description: 'Verify activity proofs', icon: '🔐', shortcut: '6', action: () => switchTab('verify'), group: 'Navigation' },
     { id: 'tab-heatmap', title: 'Activity Heatmap', description: 'GitHub-style contribution calendar', icon: '📅', shortcut: '7', action: () => switchTab('heatmap'), group: 'Navigation' },
+    { id: 'tab-wordcloud', title: 'Word Cloud', description: 'Visualize common terms in activities', icon: '☁️', shortcut: '8', action: () => switchTab('wordcloud'), group: 'Navigation' },
     
     // Search & Filter
     { id: 'search', title: 'Search Activities', description: 'Focus the search input', icon: '🔍', shortcut: '/', action: () => focusSearchInput(), group: 'Search & Filter' },
@@ -15483,3 +15491,295 @@ function changeHeatmapYear(delta) {
 window.renderHeatmap = renderHeatmap;
 window.changeHeatmapYear = changeHeatmapYear;
 window.filterToDate = filterToDate;
+
+// ============================================
+// WORD CLOUD VISUALIZATION
+// ============================================
+
+/**
+ * Stop words to exclude from word cloud
+ */
+const stopWords = new Set([
+    'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+    'of', 'with', 'by', 'from', 'up', 'about', 'into', 'through', 'during',
+    'before', 'after', 'above', 'below', 'between', 'under', 'again',
+    'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why',
+    'how', 'all', 'each', 'few', 'more', 'most', 'other', 'some', 'such',
+    'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very',
+    'can', 'will', 'just', 'should', 'now', 'is', 'are', 'was', 'were',
+    'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 'does',
+    'did', 'doing', 'would', 'could', 'might', 'must', 'shall', 'this',
+    'that', 'these', 'those', 'am', 'it', 'its', 'as', 'if', 'we', 'i',
+    'my', 'me', 'you', 'your', 'he', 'she', 'they', 'them', 'what',
+    'which', 'who', 'whom', 'also', 'any', 'both', 'etc', 'via', 'vs',
+    'cycle', 'added', 'add', 'new', 'using', 'used', 'use', 'get', 'set'
+]);
+
+/**
+ * Extract words from activity descriptions
+ */
+function extractWords(activities, typeFilter = 'all') {
+    const wordCounts = {};
+    
+    activities.forEach(activity => {
+        // Apply type filter
+        if (typeFilter !== 'all' && activity.type !== typeFilter) return;
+        
+        const text = activity.description || '';
+        // Extract words (letters, numbers, hyphens only)
+        const words = text.toLowerCase()
+            .replace(/[^\w\s-]/g, ' ')
+            .split(/\s+/)
+            .filter(word => {
+                return word.length > 2 && 
+                       !stopWords.has(word) && 
+                       !/^\d+$/.test(word); // Exclude pure numbers
+            });
+        
+        words.forEach(word => {
+            wordCounts[word] = (wordCounts[word] || 0) + 1;
+        });
+    });
+    
+    // Convert to array and sort by count
+    return Object.entries(wordCounts)
+        .map(([word, count]) => ({ word, count }))
+        .sort((a, b) => b.count - a.count);
+}
+
+/**
+ * Render the word cloud using D3
+ */
+function renderWordCloud(activities) {
+    const container = document.getElementById('wordcloudContainer');
+    const svg = document.getElementById('wordcloudSvg');
+    const loading = document.getElementById('wordcloud-loading');
+    
+    if (!container || !svg) return;
+    
+    // Show loading
+    if (loading) loading.style.display = 'flex';
+    
+    // Get filter value
+    const typeFilter = document.getElementById('wordcloudType')?.value || 'all';
+    
+    // Extract words
+    const wordData = extractWords(activities, typeFilter);
+    
+    // Take top 100 words for the cloud
+    const topWords = wordData.slice(0, 100);
+    
+    // Update stats
+    const totalWords = wordData.reduce((sum, w) => sum + w.count, 0);
+    const totalEl = document.getElementById('wordcloudTotal');
+    const uniqueEl = document.getElementById('wordcloudUnique');
+    const topWordEl = document.getElementById('wordcloudTopWord');
+    
+    if (totalEl) totalEl.textContent = totalWords.toLocaleString();
+    if (uniqueEl) uniqueEl.textContent = wordData.length.toLocaleString();
+    if (topWordEl && topWords[0]) topWordEl.textContent = topWords[0].word;
+    
+    // Render top 10 list
+    renderWordCloudList(topWords.slice(0, 10));
+    
+    // Clear existing SVG content
+    svg.innerHTML = '';
+    
+    if (topWords.length === 0) {
+        if (loading) loading.style.display = 'none';
+        svg.innerHTML = '<text x="50%" y="50%" text-anchor="middle" fill="var(--text-secondary)">No words to display</text>';
+        return;
+    }
+    
+    // Get dimensions
+    const width = container.clientWidth || 600;
+    const height = 400;
+    
+    svg.setAttribute('width', width);
+    svg.setAttribute('height', height);
+    
+    // Calculate font sizes (scale based on frequency)
+    const maxCount = topWords[0].count;
+    const minCount = topWords[topWords.length - 1].count;
+    const fontScale = (count) => {
+        const normalized = (count - minCount) / (maxCount - minCount || 1);
+        return Math.floor(14 + normalized * 40); // 14px to 54px
+    };
+    
+    // Get theme-aware colors
+    const colors = getWordCloudColors();
+    
+    // Simple spiral layout algorithm
+    const words = [];
+    const centerX = width / 2;
+    const centerY = height / 2;
+    
+    topWords.forEach((item, index) => {
+        const fontSize = fontScale(item.count);
+        const color = colors[index % colors.length];
+        
+        // Spiral placement
+        const angle = index * 0.5;
+        const radius = 8 * Math.sqrt(index);
+        const x = centerX + radius * Math.cos(angle);
+        const y = centerY + radius * Math.sin(angle);
+        
+        words.push({
+            text: item.word,
+            count: item.count,
+            fontSize,
+            color,
+            x: Math.max(fontSize, Math.min(width - fontSize * 3, x)),
+            y: Math.max(fontSize, Math.min(height - fontSize, y)),
+            rotation: (Math.random() > 0.7) ? (Math.random() > 0.5 ? 90 : -90) : 0
+        });
+    });
+    
+    // Create D3 selection
+    const svgSelection = d3.select(svg);
+    
+    // Add words with animation
+    svgSelection.selectAll('text')
+        .data(words)
+        .enter()
+        .append('text')
+        .attr('class', 'wordcloud-word')
+        .attr('x', d => d.x)
+        .attr('y', d => d.y)
+        .attr('font-size', 0)
+        .attr('fill', d => d.color)
+        .attr('text-anchor', 'middle')
+        .attr('transform', d => `rotate(${d.rotation}, ${d.x}, ${d.y})`)
+        .attr('cursor', 'pointer')
+        .text(d => d.text)
+        .on('click', function(event, d) {
+            // Filter activities by clicking on a word
+            const searchInput = document.getElementById('activitySearch');
+            if (searchInput) {
+                searchInput.value = d.text;
+                applyFilters();
+                switchTab('timeline');
+            }
+        })
+        .on('mouseenter', function(event, d) {
+            d3.select(this)
+                .transition()
+                .duration(200)
+                .attr('font-size', d.fontSize * 1.2);
+            
+            // Show tooltip
+            showWordCloudTooltip(event, d);
+        })
+        .on('mouseleave', function(event, d) {
+            d3.select(this)
+                .transition()
+                .duration(200)
+                .attr('font-size', d.fontSize);
+            
+            hideWordCloudTooltip();
+        })
+        .transition()
+        .duration(500)
+        .delay((d, i) => i * 20)
+        .attr('font-size', d => d.fontSize);
+    
+    // Hide loading
+    if (loading) loading.style.display = 'none';
+}
+
+/**
+ * Get theme-aware colors for the word cloud
+ */
+function getWordCloudColors() {
+    const theme = document.documentElement.getAttribute('data-theme') || 'dark';
+    
+    const colorSchemes = {
+        dark: ['#00ffaa', '#14f195', '#9945ff', '#00d4ff', '#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3'],
+        light: ['#059669', '#0891b2', '#7c3aed', '#dc2626', '#ea580c', '#0284c7', '#4f46e5', '#be185d'],
+        ocean: ['#00b4d8', '#0077b6', '#48cae4', '#90e0ef', '#023e8a', '#03045e', '#00a8e8', '#007ea7'],
+        forest: ['#2d6a4f', '#40916c', '#52b788', '#74c69d', '#95d5b2', '#1b4332', '#081c15', '#b7e4c7'],
+        sunset: ['#ff6b35', '#f7931e', '#ffb347', '#ff7f50', '#ff6347', '#ffa07a', '#e25822', '#ff4500'],
+        cyberpunk: ['#ff00ff', '#00ffff', '#ff1493', '#9400d3', '#7b68ee', '#da70d6', '#ff69b4', '#ba55d3']
+    };
+    
+    return colorSchemes[theme] || colorSchemes.dark;
+}
+
+/**
+ * Render the top words list
+ */
+function renderWordCloudList(topWords) {
+    const container = document.getElementById('wordcloudTopList');
+    if (!container) return;
+    
+    if (topWords.length === 0) {
+        container.innerHTML = '<p class="empty-state">No words found.</p>';
+        return;
+    }
+    
+    const maxCount = topWords[0].count;
+    const colors = getWordCloudColors();
+    
+    container.innerHTML = topWords.map((item, index) => {
+        const percentage = Math.round((item.count / maxCount) * 100);
+        const color = colors[index % colors.length];
+        return `
+            <div class="wordcloud-list-item" onclick="filterByWord('${item.word}')">
+                <span class="wordcloud-rank">${index + 1}</span>
+                <span class="wordcloud-word-text" style="color: ${color}">${item.word}</span>
+                <span class="wordcloud-count">${item.count}</span>
+                <div class="wordcloud-bar" style="width: ${percentage}%; background: ${color}"></div>
+            </div>
+        `;
+    }).join('');
+}
+
+/**
+ * Filter activities by word
+ */
+function filterByWord(word) {
+    const searchInput = document.getElementById('activitySearch');
+    if (searchInput) {
+        searchInput.value = word;
+        applyFilters();
+        switchTab('timeline');
+    }
+}
+
+let wordcloudTooltip = null;
+
+/**
+ * Show tooltip for word
+ */
+function showWordCloudTooltip(event, data) {
+    if (!wordcloudTooltip) {
+        wordcloudTooltip = document.createElement('div');
+        wordcloudTooltip.className = 'wordcloud-tooltip';
+        document.body.appendChild(wordcloudTooltip);
+    }
+    
+    wordcloudTooltip.innerHTML = `
+        <strong>${data.text}</strong><br>
+        <span>Appears ${data.count} time${data.count !== 1 ? 's' : ''}</span>
+    `;
+    wordcloudTooltip.style.display = 'block';
+    
+    const x = event.pageX + 10;
+    const y = event.pageY - 30;
+    
+    wordcloudTooltip.style.left = `${x}px`;
+    wordcloudTooltip.style.top = `${y}px`;
+}
+
+/**
+ * Hide word cloud tooltip
+ */
+function hideWordCloudTooltip() {
+    if (wordcloudTooltip) {
+        wordcloudTooltip.style.display = 'none';
+    }
+}
+
+// Expose word cloud functions globally
+window.renderWordCloud = renderWordCloud;
+window.filterByWord = filterByWord;

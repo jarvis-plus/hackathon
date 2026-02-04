@@ -1180,6 +1180,9 @@
                     <button class="feed-tab" data-tab="heatmap" onclick="switchTab('heatmap')" role="tab" aria-selected="false" aria-controls="heatmap-feed" id="tab-heatmap">
                         📅 Heatmap
                     </button>
+                    <button class="feed-tab" data-tab="wordcloud" onclick="switchTab('wordcloud')" role="tab" aria-selected="false" aria-controls="wordcloud-feed" id="tab-wordcloud">
+                        ☁️ Word Cloud
+                    </button>
                 </div>
                 <div class="export-buttons" id="export-buttons-main">
                     <button class="export-btn" id="export-json-btn" onclick="exportActivities('json')" title="Download as JSON (respects filters)">
@@ -1681,6 +1684,50 @@
                     <div class="heatmap-section">
                         <h4>🔥 Hottest Days</h4>
                         <div class="hottest-days-list" id="hottestDaysList">
+                            <p class="empty-state">Loading...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Word Cloud Tab -->
+            <div id="wordcloud-feed" data-view="wordcloud" style="display:none;" role="tabpanel" aria-labelledby="tab-wordcloud">
+                <div class="wordcloud-content">
+                    <h3>☁️ Activity Word Cloud</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                        Visualize the most common terms in activity descriptions. Larger words appear more frequently.
+                    </p>
+                    
+                    <div class="wordcloud-controls">
+                        <div class="wordcloud-filter">
+                            <label for="wordcloudType">Filter by Type:</label>
+                            <select id="wordcloudType" onchange="renderWordCloud(window.cachedActivities)">
+                                <option value="all">All Types</option>
+                                <option value="build">Build</option>
+                                <option value="commit">Commit</option>
+                                <option value="decision">Decision</option>
+                                <option value="tweet">Tweet</option>
+                                <option value="email">Email</option>
+                            </select>
+                        </div>
+                        <div class="wordcloud-stats" id="wordcloudStats">
+                            <span class="wordcloud-stat"><strong id="wordcloudTotal">0</strong> words analyzed</span>
+                            <span class="wordcloud-stat"><strong id="wordcloudUnique">0</strong> unique terms</span>
+                            <span class="wordcloud-stat"><strong id="wordcloudTopWord">--</strong> top word</span>
+                        </div>
+                    </div>
+                    
+                    <div class="wordcloud-container" id="wordcloudContainer" role="img" aria-label="Word cloud visualization showing most common terms in activities">
+                        <div class="chart-loading" id="wordcloud-loading">
+                            <div class="loading-spinner"></div>
+                            <span class="loading-text">Generating word cloud...</span>
+                        </div>
+                        <svg id="wordcloudSvg" width="100%" height="400"></svg>
+                    </div>
+                    
+                    <div class="wordcloud-legend">
+                        <h4>📊 Top 10 Words</h4>
+                        <div class="wordcloud-top-list" id="wordcloudTopList">
                             <p class="empty-state">Loading...</p>
                         </div>
                     </div>
