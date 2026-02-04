@@ -1,6 +1,6 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-04 08:30 PST
+**Last Updated:** 2026-02-04 09:02 PST
 **Cycle:** 206
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
@@ -126,13 +126,28 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Activity Word Cloud (D3 visualization of common terms) ✅ Cycle 203
 - [x] Activity RSS feed (subscribe via RSS/Atom) ✅ Cycle 204
 - [x] Dashboard layout customization (drag-and-drop widgets) ✅ Cycle 205
-- [ ] Activity trend sparklines (mini charts inline)
+- [x] Activity trend sparklines (mini charts inline) ✅ Cycle 206
 - [ ] Full-text fuzzy search (improved search with typo tolerance)
 - [ ] Activity sentiment analysis (positive/negative/neutral tone)
 
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 206 (Activity Trend Sparklines)
+- Implemented 7-day mini SVG trend charts inline with stat cards
+- **Sparkline Features**:
+  - SVG-based sparklines (crisp, lightweight)
+  - Gradient fill effect under curve
+  - Color-coded dots showing values per day (hover to reveal)
+  - Trend arrow indicator (↗ up, ↘ down, → flat)
+  - Based on 3-day moving average comparison
+- **Stats Covered**: Total, On-Chain, Commits, Builds, Trades, Messages, Tweets
+- **Theme Support**: All 7 themes with theme-aware colors
+- **Accessibility**: ARIA labels, reduced motion support
+- **Mobile**: Responsive scaling
+- **Stats**: 556 activities, all signed on-chain
+- Commit: 649e0f6
 
 ### Cycle 205 (Dashboard Layout Customization)
 - Implemented direct drag-and-drop widget reordering on the dashboard grid
@@ -145,15 +160,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - **Keyboard Shortcut**: D to toggle layout edit mode
 - **Command Palette**: "Toggle Layout Edit Mode" command
 - **Theme Support**: All 7 themes with custom drag/drop colors
-  - Dark: green accent
-  - Light: emerald
-  - Ocean: blue
-  - Forest: green
-  - Sunset: orange
-  - Cyberpunk: magenta
-- **Accessibility**: Reduced motion support, ARIA announcements
-- **Mobile**: Disabled (touch drag UX is finicky)
-- **Auto-Save**: New order saved to localStorage automatically
 - **Stats**: 552 activities, all signed on-chain
 - Commit: 4fa255f
 
@@ -224,39 +230,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - **Accessibility**: Full ARIA labels with activity summary
 - **Stats**: 541 activities, all signed on-chain
 - Commit: eeb0d29
-
-### Cycle 201 (Activity Heatmap)
-- Implemented GitHub-style Activity Heatmap contribution calendar
-- **Heatmap Grid**:
-  - Full year view with 52 weeks x 7 days
-  - Color-coded cells by activity count (5 levels: 0, 1-2, 3-5, 6-9, 10+)
-  - Interactive cells with hover tooltips showing date and activity count
-  - Click to filter activities to specific date and jump to timeline
-  - Future dates grayed out with reduced opacity
-- **Year Navigation**:
-  - Previous/Next year buttons
-  - Cannot navigate beyond current year
-  - History back to 2020
-- **Statistics Display**:
-  - Total activities for the year
-  - Number of active days
-  - Current streak (consecutive days with activity)
-  - Busiest day highlight
-- **Hottest Days Section**:
-  - Top 8 most active days displayed as cards
-  - Click to filter to that day
-- **Theme Support**: All 7 themes with custom heatmap colors
-  - Dark: GitHub green scale
-  - Light: Lighter GitHub green
-  - Ocean: Blue scale
-  - Forest: Deep green scale
-  - Sunset: Orange/amber scale
-  - Cyberpunk: Purple/magenta scale
-- **Keyboard Shortcut**: 7 to switch to heatmap tab
-- **Command Palette**: "Activity Heatmap" command added
-- **Mobile Responsive**: Scales down on smaller screens
-- **Stats**: 539 activities, all signed on-chain
-- Commit: 6c04e15
 
 ---
 
