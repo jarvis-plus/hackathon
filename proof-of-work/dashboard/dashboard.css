@@ -3137,3 +3137,114 @@
         font-size: 0.6rem;
     }
 }
+
+/* ============================================
+   MULTI-WALLET SUPPORT STYLES
+   ============================================ */
+
+/* Wallet filters section (similar to tag filters) */
+.wallet-filters {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+}
+
+.wallet-filters-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+.wallet-filter-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.wallet-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.6rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.wallet-filter:hover {
+    color: var(--text-primary);
+    border-color: #9b59b6;
+    background: rgba(155, 89, 182, 0.1);
+}
+
+.wallet-filter.active {
+    color: #fff;
+    background: linear-gradient(135deg, #9b59b6, #7c3aed);
+    border-color: transparent;
+}
+
+.wallet-filter .wallet-icon {
+    font-size: 0.7rem;
+}
+
+.wallet-filter .wallet-count {
+    font-size: 0.65rem;
+    padding: 0.1rem 0.35rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+}
+
+.wallet-filter.active .wallet-count {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Wallet badge on activity cards */
+.activity-wallet {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: #9b59b6;
+    background: rgba(155, 89, 182, 0.1);
+    border: 1px solid rgba(155, 89, 182, 0.3);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    margin-left: 0.25rem;
+}
+
+.activity-wallet:hover {
+    background: rgba(155, 89, 182, 0.2);
+    border-color: #9b59b6;
+}
+
+/* Mobile adjustments for wallet features */
+@media (max-width: 600px) {
+    .wallet-filters {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .wallet-filter {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+    }
+    
+    .activity-wallet {
+        font-size: 0.6rem;
+        padding: 0.1rem 0.4rem;
+    }
+}

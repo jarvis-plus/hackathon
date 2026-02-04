@@ -2622,7 +2622,9 @@
   {
     "timestamp": "2026-02-04T02:24:54.607Z",
     "type": "commit",
-    "description": "feat(dashboard): add activity categories/tags system"
+    "description": "feat(dashboard): add activity categories/tags system",
+    "hash": "ce8c90fcbc9b048363b07789dd83325c374dac4cf45ce1ed105c80351e44727a",
+    "signature": "4y1QZnqQ8bU9ZaQYkafgp1r8zkLBX8CEx8yQqpjiQmxXLUfuYMHRoyGum97sk8jwSjRR6aXBNwGrhB49tFvnwdRc"
   },
   {
     "timestamp": "2026-02-04T02:25:15.905Z",
@@ -2644,6 +2646,40 @@
   {
     "timestamp": "2026-02-04T02:25:54.894Z",
     "type": "commit",
-    "description": "docs: update OBJECTIVES.md for cycle 139"
+    "description": "docs: update OBJECTIVES.md for cycle 139",
+    "hash": "ac1b0be7c836d4b6838fb655ee78d49ed657a1e1cfebf3a56a274fca839acfa2",
+    "signature": "4QtxGFewgRVEECaUHVZZxcEv7fcvaYJYVMMVtzyxi7JP9SYLiEuCGF81SRWQfbDNmZDwAnpn6R73cKogeF21nMjH"
+  },
+  {
+    "timestamp": "2026-02-04T02:25:58.621Z",
+    "type": "commit",
+    "description": "feat(dashboard): fix and complete activity tags feature (cycle 139)",
+    "hash": "9b082b844b0abbed6a12eca622721b668ee9ae8fcc4aaf8d30722b51fd146bd0",
+    "signature": "4b8ZmqUq28ZbsvqQxcckwpPy8FczMxZyARph1Ht1cKsymrwtdey1gE9PnzQeMSiNy3x4GCmfcHtYab8aboPrxd5i"
+  },
+  {
+    "timestamp": "2026-02-04T02:30:22.888Z",
+    "type": "build",
+    "description": "Cycle 140: Implemented multi-wallet support - CLI wallet selection (--wallet flag, --list-wallets), wallet address stored in activities, dashboard wallet badges with Solscan links, wallet filter UI (auto-hidden when single wallet). Infrastructure for supporting multiple signing wallets in future.",
+    "hash": "9609d4ef2646ce4bbc6e54b243a7aecaf20b88708b72fa3f0d08620f39f133a1",
+    "signature": "2Tj4Sh9SumAgaPZ2aM3jmLv6fMFvwjiBcKmKg6dyscctcET2JhjjLxorwqCa96Sxk6kS1hCnfASEVNwDCxVDhmh1",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
+  },
+  {
+    "timestamp": "2026-02-04T02:30:24.695Z",
+    "type": "build",
+    "description": "Cycle 140: Multi-wallet support - Added wallet field to Activity interface, wallet filter UI with dynamic buttons, wallet badge on activity cards (click to filter), wallet stats in API, updated sign-activity.ts to attach wallet address. Supports future multi-agent setups.",
+    "metadata": {
+      "cycle": 140,
+      "filesChanged": 6,
+      "linesAdded": 180
+    },
+    "tags": [
+      "hackathon",
+      "infra"
+    ],
+    "hash": "dcc61f50af35090ee082fe59031b641061227bcceb0d35d57090adebc0d30a89",
+    "signature": "2EQyUKgh4fgLCcJajxYFrmRGfmkkDMj2t1nFody5eh1TADwA2YrzNdFQRUEuC4PJt51FpxXaM9jKZx5Yc6nPQ6oM",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
   }
 ]

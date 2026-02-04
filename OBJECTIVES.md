@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 18:25 PST
-**Cycle:** 139
+**Last Updated:** 2026-02-03 18:31 PST
+**Cycle:** 140
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -45,7 +45,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Email activity tracking (log emails sent) ✅ Cycle 132
 - [x] Browser activity tracking (log web research) ✅ Cycle 134
 - [x] Calendar event tracking ✅ Cycle 135
-- [ ] Multi-wallet support
+- [x] Multi-wallet support ✅ Cycle 140
 - [x] Activity search/filter on dashboard ✅ Cycle 131
 - [x] Activity categories/tags ✅ Cycle 139
 
@@ -58,6 +58,21 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 140 (Multi-Wallet Support)
+- Added wallet field to Activity interface in types.ts
+- Updated sign-activity.ts with multi-wallet support:
+  - WALLET_CONFIG map for named wallets with paths and addresses
+  - --wallet flag for selecting wallet by name or path
+  - --list-wallets flag to show configured wallets
+  - Wallet address now stored in activity when signing
+- Added wallet helper functions to dashboard (shortWallet, getWalletName, getWalletColor)
+- Added renderWalletBadge() for activity cards showing wallet with Solscan link
+- Wallet filter UI in dashboard (auto-hidden when single wallet)
+- Added CSS for wallet badges and filter buttons with dynamic colors
+- Search includes wallet in query matching
+- Infrastructure ready for adding more wallets in WALLET_CONFIG
+- 339 activities, all signed on-chain
 
 ### Cycle 139 (Activity Categories/Tags System)
 - Added optional `tags` field to Activity interface in types.ts
@@ -106,17 +121,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - Updated project structure section to reflect actual file layout
 - ~120 lines of documentation added to README
 - 325 activities, all signed on-chain
-
-### Cycle 135 (Calendar Event Tracking)
-- Created collectors/calendar-tracker.ts that polls Google Calendar via gog CLI
-- Tracks events from jarvis@avo.so and souren@avo.so accounts
-- Logs event title, time, attendees, organizer, meeting links
-- Added CalendarMetadata and CalendarState to types.ts with full typing
-- Added 'calendar' to ActivityType union
-- Added Calendar filter button to dashboard (#9b59b6 purple)
-- Updated both typeColors maps in app.js
-- Integrated into cron-runner.sh (step 6)
-- 323 activities, all signed on-chain
 
 ---
 

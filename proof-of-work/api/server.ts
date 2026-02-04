@@ -499,10 +499,16 @@ const server = Bun.serve({
     // ==========================================
     if (path === '/api/stats') {
       const activities = getActivities();
+      const DEFAULT_WALLET = 'AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX';
       const stats = {
         total: activities.length,
         byType: activities.reduce((acc: Record<string, number>, a: any) => {
           acc[a.type] = (acc[a.type] || 0) + 1;
+          return acc;
+        }, {}),
+        byWallet: activities.reduce((acc: Record<string, number>, a: any) => {
+          const wallet = a.wallet || (a.signature ? DEFAULT_WALLET : 'unsigned');
+          acc[wallet] = (acc[wallet] || 0) + 1;
           return acc;
         }, {}),
         firstActivity: activities[0]?.timestamp || null,

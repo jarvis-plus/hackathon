@@ -586,6 +586,73 @@ function getProofBadge(activity) {
     return '<span class="proof-badge pending">⏳ Pending</span>';
 }
 
+// ============================================
+// MULTI-WALLET SUPPORT
+// ============================================
+
+/**
+ * Known wallets for display purposes
+ * Maps wallet addresses to friendly names
+ */
+const KNOWN_WALLETS = {
+    'AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX': { name: 'Jarvis', color: '#00aaff' },
+    // Add more wallets here as needed
+};
+
+/**
+ * Get short wallet address (first 4 + last 4 chars)
+ */
+function shortWallet(address) {
+    if (!address || address.length <= 12) return address || '';
+    return `${address.slice(0, 4)}...${address.slice(-4)}`;
+}
+
+/**
+ * Get wallet display name
+ */
+function getWalletName(address) {
+    if (!address) return '';
+    const known = KNOWN_WALLETS[address];
+    return known ? known.name : shortWallet(address);
+}
+
+/**
+ * Get wallet color
+ */
+function getWalletColor(address) {
+    if (!address) return '#888';
+    const known = KNOWN_WALLETS[address];
+    return known ? known.color : '#888';
+}
+
+/**
+ * Render wallet badge for activity cards
+ */
+function renderWalletBadge(walletAddress) {
+    if (!walletAddress) return '';
+    
+    const name = getWalletName(walletAddress);
+    const color = getWalletColor(walletAddress);
+    const shortAddr = shortWallet(walletAddress);
+    
+    return `<a class="wallet-badge" href="https://solscan.io/account/${walletAddress}" target="_blank" 
+               title="${walletAddress}" style="--wallet-color: ${color};">
+        <span class="wallet-icon">💼</span>
+        <span class="wallet-name">${name}</span>
+    </a>`;
+}
+
+/**
+ * Get unique wallets from activities
+ */
+function getUniqueWallets(activities) {
+    const wallets = new Set();
+    activities.forEach(a => {
+        if (a.wallet) wallets.add(a.wallet);
+    });
+    return Array.from(wallets);
+}
+
 function formatTime(timestamp) {
     const date = new Date(timestamp);
     const now = new Date();
@@ -642,13 +709,15 @@ function renderActivities(activities, highlightNew = false) {
         const hashDisplay = hash ? `SHA256: ${hash.slice(0, 12)}...${hash.slice(-6)}` : '';
         const isNew = shouldHighlight && i < newCount;
         const tagsHtml = renderActivityTags(a.tags);
+        const walletHtml = renderWalletBadge(a.wallet);
         
         return `
-        <div class="activity-item ${a.type}${isNew ? ' new-activity' : ''}" style="animation-delay: ${i * 0.04}s">
+        <div class="activity-item ${a.type}${isNew ? ' new-activity' : ''}" style="animation-delay: ${i * 0.04}s" data-wallet="${a.wallet || ''}">
             <div class="activity-header">
                 <div class="activity-badges">
                     <span class="activity-type">${a.type}</span>
                     ${getProofBadge(a)}
+                    ${walletHtml}
                 </div>
                 <div class="activity-time">${formatTime(a.timestamp)}</div>
             </div>
@@ -2144,9 +2213,27 @@ setInterval(() => {
 // ============================================
 let currentTypeFilter = 'all';
 let currentSearchQuery = '';
-let currentTagFilter = 'all';
 let currentTagFilter = null; // null means "all tags"
+let currentWalletFilter = null; // null means "all wallets"
 let availableTags = new Set();
+
+// Known wallets configuration (matches types.ts)
+const KNOWN_WALLETS = {
+    'AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX': 'Jarvis',
+    // Add additional wallets here
+};
+const DEFAULT_WALLET = 'AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX';
+
+// Get display name for wallet
+function getWalletName(address) {
+    return KNOWN_WALLETS[address] || (address.slice(0, 4) + '...' + address.slice(-4));
+}
+
+// Get short wallet address
+function shortWallet(address) {
+    if (!address || address.length <= 12) return address || 'Unknown';
+    return address.slice(0, 4) + '...' + address.slice(-4);
+}
 
 function setTypeFilter(type) {
     currentTypeFilter = type;
@@ -2219,6 +2306,73 @@ function populateTagFilters(activities) {
     container.innerHTML = html;
 }
 
+// ============================================
+// WALLET FILTER FUNCTIONS
+// ============================================
+
+function setWalletFilter(wallet) {
+    // Toggle off if clicking same wallet, or 'all' clears filter
+    if (wallet === 'all' || currentWalletFilter === wallet) {
+        currentWalletFilter = null;
+    } else {
+        currentWalletFilter = wallet;
+    }
+    
+    // Update active state on wallet buttons
+    document.querySelectorAll('.wallet-filter').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.wallet === currentWalletFilter);
+    });
+    
+    applyFilters();
+}
+
+// Extract all unique wallets from activities and populate filter buttons
+function populateWalletFilters(activities) {
+    const walletCounts = {};
+    
+    activities.forEach(a => {
+        // Use wallet field if present, otherwise default to Jarvis wallet if signed
+        const wallet = a.wallet || (a.signature ? DEFAULT_WALLET : null);
+        if (wallet) {
+            walletCounts[wallet] = (walletCounts[wallet] || 0) + 1;
+        }
+    });
+    
+    const container = document.getElementById('walletFilterButtons');
+    const walletFiltersDiv = document.getElementById('walletFilters');
+    
+    if (!container || !walletFiltersDiv) return;
+    
+    // Hide if only one or no wallets (no need to filter)
+    const walletAddresses = Object.keys(walletCounts);
+    if (walletAddresses.length <= 1) {
+        walletFiltersDiv.style.display = 'none';
+        return;
+    }
+    
+    walletFiltersDiv.style.display = 'flex';
+    
+    // Sort wallets by count (most used first)
+    const sortedWallets = Object.entries(walletCounts)
+        .sort((a, b) => b[1] - a[1]);
+    
+    // Build buttons - each wallet as a clickable filter
+    const html = sortedWallets.map(([wallet, count]) => {
+        const isActive = currentWalletFilter === wallet;
+        const name = getWalletName(wallet);
+        return `<button class="wallet-filter${isActive ? ' active' : ''}" 
+                data-wallet="${escapeHtml(wallet)}" 
+                onclick="setWalletFilter('${escapeHtml(wallet)}')"
+                title="${wallet}">
+            <span class="wallet-icon">💳</span>
+            ${escapeHtml(name)}
+            <span class="wallet-count">${count}</span>
+        </button>`;
+    }).join('');
+    
+    container.innerHTML = html;
+}
+
 function clearSearch() {
     const input = document.getElementById('activitySearch');
     if (input) {
@@ -2259,6 +2413,14 @@ function renderFilteredActivities(activities) {
         );
     }
     
+    // Apply wallet filter
+    if (currentWalletFilter) {
+        filtered = filtered.filter(a => {
+            const wallet = a.wallet || (a.signature ? DEFAULT_WALLET : null);
+            return wallet === currentWalletFilter;
+        });
+    }
+    
     // Apply search filter
     if (currentSearchQuery) {
         filtered = filtered.filter(a => {
@@ -2267,22 +2429,25 @@ function renderFilteredActivities(activities) {
             const hash = (a.hash || '').toLowerCase();
             const metadata = JSON.stringify(a.metadata || {}).toLowerCase();
             const tags = (a.tags || []).join(' ').toLowerCase();
+            const wallet = (a.wallet || '').toLowerCase();
             return desc.includes(currentSearchQuery) || 
                    type.includes(currentSearchQuery) ||
                    hash.includes(currentSearchQuery) ||
                    metadata.includes(currentSearchQuery) ||
-                   tags.includes(currentSearchQuery);
+                   tags.includes(currentSearchQuery) ||
+                   wallet.includes(currentSearchQuery);
         });
     }
     
     // Update filter stats
     const statsEl = document.getElementById('filterStats');
     if (statsEl) {
-        const isFiltered = currentTypeFilter !== 'all' || currentSearchQuery || currentTagFilter;
+        const isFiltered = currentTypeFilter !== 'all' || currentSearchQuery || currentTagFilter || currentWalletFilter;
         if (isFiltered) {
             const filterParts = [];
             if (currentTypeFilter !== 'all') filterParts.push(`type: ${currentTypeFilter}`);
             if (currentTagFilter) filterParts.push(`tag: ${currentTagFilter}`);
+            if (currentWalletFilter) filterParts.push(`wallet: ${getWalletName(currentWalletFilter)}`);
             if (currentSearchQuery) filterParts.push(`search: "${currentSearchQuery}"`);
             statsEl.innerHTML = `Showing <span class="count">${filtered.length}</span> of ${activities.length} activities`;
             statsEl.classList.add('visible');
@@ -2294,13 +2459,13 @@ function renderFilteredActivities(activities) {
     // Render the filtered activities
     const feed = document.getElementById('feed');
     if (!filtered.length) {
-        const hasFilters = currentTypeFilter !== 'all' || currentSearchQuery || currentTagFilter;
+        const hasFilters = currentTypeFilter !== 'all' || currentSearchQuery || currentTagFilter || currentWalletFilter;
         feed.innerHTML = `
             <div class="empty-state">
                 <div class="empty-state-icon">${hasFilters ? '🔍' : '🤖'}</div>
                 <h4>${hasFilters ? 'No Matching Activities' : 'Agent Warming Up'}</h4>
                 <p>${hasFilters 
-                    ? `No activities match your current filters. Try adjusting your search, type, or tag filters.`
+                    ? `No activities match your current filters. Try adjusting your search, type, wallet, or tag filters.`
                     : 'Activities will appear here as the agent works — commits, builds, trades, and more.'
                 }</p>
                 ${hasFilters ? `
@@ -2319,6 +2484,7 @@ function renderFilteredActivities(activities) {
         const hash = a.hash || a.proof?.hash;
         const hashDisplay = hash ? `SHA256: ${hash.slice(0, 12)}...${hash.slice(-6)}` : '';
         const tagsHtml = renderActivityTags(a.tags);
+        const walletHtml = renderActivityWallet(a);
         
         return `
         <div class="activity-item ${a.type}" style="animation-delay: ${Math.min(i, 10) * 0.04}s">
@@ -2326,6 +2492,7 @@ function renderFilteredActivities(activities) {
                 <div class="activity-badges">
                     <span class="activity-type">${a.type}</span>
                     ${getProofBadge(a)}
+                    ${walletHtml}
                 </div>
                 <div class="activity-time">${formatTime(a.timestamp)}</div>
             </div>
@@ -2334,6 +2501,27 @@ function renderFilteredActivities(activities) {
             ${hashDisplay ? `<div class="activity-hash">${hashDisplay}</div>` : ''}
         </div>
     `}).join('');
+}
+
+function renderActivityWallet(activity) {
+    // Get wallet from activity or infer from signature
+    const wallet = activity.wallet || (activity.signature ? DEFAULT_WALLET : null);
+    if (!wallet) return '';
+    
+    const name = getWalletName(wallet);
+    const short = shortWallet(wallet);
+    
+    // Only show wallet badge if there are multiple wallets in the system
+    // For single-wallet systems, the badge is redundant
+    const walletFilterDiv = document.getElementById('walletFilters');
+    if (!walletFilterDiv || walletFilterDiv.style.display === 'none') return '';
+    
+    return `<span class="activity-wallet" 
+            title="${wallet}" 
+            onclick="event.stopPropagation(); setWalletFilter('${escapeHtml(wallet)}')"
+            data-wallet="${escapeHtml(wallet)}">
+        💳 ${escapeHtml(name)}
+    </span>`;
 }
 
 function renderActivityTags(tags) {
@@ -2348,6 +2536,7 @@ function resetFilters() {
     currentTypeFilter = 'all';
     currentSearchQuery = '';
     currentTagFilter = null;
+    currentWalletFilter = null;
     
     // Reset UI
     document.querySelectorAll('.type-filter').forEach(btn => {
@@ -2355,6 +2544,10 @@ function resetFilters() {
     });
     
     document.querySelectorAll('.tag-filter').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    document.querySelectorAll('.wallet-filter').forEach(btn => {
         btn.classList.remove('active');
     });
     
@@ -2373,11 +2566,12 @@ renderActivities = function(activities, highlightNew = false) {
     // Cache activities for filtering
     window.cachedActivities = activities;
     
-    // Update tag filter buttons when activities change
+    // Update filter buttons when activities change
     populateTagFilters(activities);
+    populateWalletFilters(activities);
     
     // If filters are active, use filtered rendering
-    if (currentTypeFilter !== 'all' || currentSearchQuery || currentTagFilter) {
+    if (currentTypeFilter !== 'all' || currentSearchQuery || currentTagFilter || currentWalletFilter) {
         renderFilteredActivities(activities);
     } else {
         // Use original rendering

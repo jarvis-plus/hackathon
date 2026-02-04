@@ -185,11 +185,47 @@ export interface Activity {
   /** Optional tags for categorization (e.g., 'hackathon', 'trading', 'infra') */
   tags?: string[];
   
+  /** Wallet address that signed this activity */
+  wallet?: string;
+  
   /** On-chain signature (added by sign-activity.ts) */
   signature?: string;
   
   /** Content hash for verification */
   hash?: string;
+}
+
+// ============================================================================
+// WALLET CONFIGURATION
+// ============================================================================
+
+/**
+ * Known wallet addresses for multi-wallet support
+ * Maps wallet address to a human-readable name
+ */
+export const KNOWN_WALLETS: Record<string, string> = {
+  'AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX': 'Jarvis',
+  // Add additional wallets here as needed
+};
+
+/**
+ * Default wallet address (Jarvis main wallet)
+ */
+export const DEFAULT_WALLET = 'AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX';
+
+/**
+ * Get display name for a wallet address
+ */
+export function getWalletName(address: string): string {
+  return KNOWN_WALLETS[address] || address.slice(0, 8) + '...';
+}
+
+/**
+ * Get short wallet address (first 4 + last 4 chars)
+ */
+export function shortWallet(address: string): string {
+  if (address.length <= 12) return address;
+  return `${address.slice(0, 4)}...${address.slice(-4)}`;
 }
 
 // ============================================================================
