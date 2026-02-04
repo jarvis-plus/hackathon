@@ -3023,6 +3023,101 @@ const server = Bun.serve({
     }
 
     // ==========================================
+    // API: POST /api/activities/bulk-restore
+    // Restore multiple activities from trash at once
+    // ==========================================
+    if (path === '/api/activities/bulk-restore' && req.method === 'POST') {
+      try {
+        const body = await req.json() as {
+          hashes: string[];
+        };
+
+        // Validate hashes array
+        if (!Array.isArray(body.hashes) || body.hashes.length === 0) {
+          return Response.json({
+            error: 'hashes must be a non-empty array of activity hashes'
+          }, { status: 400, headers: corsHeaders });
+        }
+
+        // Limit to 100 at a time to prevent abuse
+        if (body.hashes.length > 100) {
+          return Response.json({
+            error: 'Cannot restore more than 100 activities at once'
+          }, { status: 400, headers: corsHeaders });
+        }
+
+        // Validate each hash format
+        const hashRegex = /^[a-f0-9]{64}$/;
+        const invalidHashes = body.hashes.filter(h => !hashRegex.test(h));
+        if (invalidHashes.length > 0) {
+          return Response.json({
+            error: `Invalid hash format: ${invalidHashes.slice(0, 3).join(', ')}${invalidHashes.length > 3 ? '...' : ''}`
+          }, { status: 400, headers: corsHeaders });
+        }
+
+        const activities = getActivities();
+        const now = new Date().toISOString();
+        const results: { restored: string[]; notFound: string[]; notDeleted: string[] } = {
+          restored: [],
+          notFound: [],
+          notDeleted: [],
+        };
+
+        for (const hash of body.hashes) {
+          const activity = activities.find((a: any) => a.hash === hash);
+          
+          if (!activity) {
+            results.notFound.push(hash);
+            continue;
+          }
+
+          if (!activity.deleted) {
+            results.notDeleted.push(hash);
+            continue;
+          }
+
+          // Restore the activity
+          delete activity.deleted;
+          delete activity.deletedAt;
+          activity.restoredAt = now;
+          results.restored.push(hash);
+        }
+
+        // Save if any were restored
+        if (results.restored.length > 0) {
+          saveActivities(activities);
+          
+          // Broadcast bulk restore event
+          broadcastUpdate('activities_bulk_restored', {
+            hashes: results.restored,
+            restoredAt: now,
+            count: results.restored.length,
+          });
+          broadcastToWebhooks('activities.bulk_restored', {
+            hashes: results.restored,
+            restoredAt: now,
+            count: results.restored.length,
+          });
+          
+          console.log(`♻️ Bulk restored ${results.restored.length} activities`);
+        }
+
+        return Response.json({
+          success: true,
+          restored: results.restored.length,
+          notFound: results.notFound.length,
+          notDeleted: results.notDeleted.length,
+          details: results,
+          message: `${results.restored.length} activities restored from trash`,
+        }, { headers: corsHeaders });
+      } catch (e) {
+        return Response.json({
+          error: 'Invalid JSON body'
+        }, { status: 400, headers: corsHeaders });
+      }
+    }
+
+    // ==========================================
     // API: POST /api/activities
     // Create a new activity (via voice input or manual entry)
     // Activities are created unsigned; signing happens separately

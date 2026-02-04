@@ -323,6 +323,22 @@
                         </div>
                     </div>
                     
+                    <!-- Bulk Selection Controls -->
+                    <div class="trash-selection-bar" id="trash-selection-bar" style="display: none;">
+                        <div class="selection-controls">
+                            <label class="select-all-control">
+                                <input type="checkbox" id="trash-select-all" onchange="toggleTrashSelectAll(this.checked)" aria-label="Select all trash items">
+                                <span class="select-all-label">Select All</span>
+                            </label>
+                            <span class="selection-count" id="trash-selection-count">0 selected</span>
+                        </div>
+                        <div class="selection-actions">
+                            <button class="bulk-restore-btn" id="bulk-restore-btn" onclick="bulkRestoreFromTrash()" disabled title="Restore selected activities">
+                                ♻️ Restore Selected
+                            </button>
+                        </div>
+                    </div>
+                    
                     <div id="trashList" class="trash-list">
                         <p class="trash-loading">Loading deleted activities...</p>
                     </div>
@@ -330,7 +346,8 @@
                     <div class="trash-tips">
                         <p><strong>💡 Tips:</strong></p>
                         <ul>
-                            <li>Click ♻️ to restore a deleted activity</li>
+                            <li>Use checkboxes to select multiple items for bulk restore</li>
+                            <li>Click ♻️ to restore a single deleted activity</li>
                             <li>Restored activities return to the main feed</li>
                             <li>Empty trash permanently removes all deleted activities</li>
                             <li>On-chain signatures are preserved when restoring</li>

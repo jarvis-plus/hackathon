@@ -535,6 +535,69 @@
         }
       }
     },
+    "/api/activities/bulk-restore": {
+      "post": {
+        "tags": [
+          "Activities"
+        ],
+        "summary": "Bulk restore activities",
+        "description": "Restores multiple activities from trash at once. Limited to 100 activities per request.",
+        "operationId": "bulkRestoreActivities",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyHeader": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["hashes"],
+                "properties": {
+                  "hashes": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    },
+                    "description": "Array of activity hashes to restore",
+                    "minItems": 1,
+                    "maxItems": 100
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Bulk restore completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkRestoreResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (empty array, too many hashes, invalid hash format)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/settings/trash": {
       "get": {
         "tags": [
@@ -4698,6 +4761,56 @@
                   "type": "string"
                 },
                 "description": "List of hashes already in trash"
+              }
+            }
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "BulkRestoreResult": {
+        "type": "object",
+        "description": "Result of bulk restore operation",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "restored": {
+            "type": "integer",
+            "description": "Number of activities successfully restored from trash"
+          },
+          "notFound": {
+            "type": "integer",
+            "description": "Number of hashes that did not match any activity"
+          },
+          "notDeleted": {
+            "type": "integer",
+            "description": "Number of activities that were not in trash"
+          },
+          "details": {
+            "type": "object",
+            "properties": {
+              "restored": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "List of successfully restored hashes"
+              },
+              "notFound": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "List of hashes that were not found"
+              },
+              "notDeleted": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "List of hashes that were not in trash"
               }
             }
           },

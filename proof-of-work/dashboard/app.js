@@ -12227,6 +12227,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // ===========================================
 
 let trashItems = [];
+let selectedTrashItems = new Set();
 
 // Toggle trash modal
 function toggleTrashModal() {
@@ -12258,7 +12259,12 @@ function closeTrashModal() {
 // Load trash items from API
 async function loadTrashItems() {
     const container = document.getElementById('trashList');
+    const selectionBar = document.getElementById('trash-selection-bar');
     container.innerHTML = '<p class="trash-loading">Loading deleted activities...</p>';
+    
+    // Reset selection state
+    selectedTrashItems.clear();
+    updateTrashSelectionUI();
     
     try {
         const response = await fetch('/api/activities/trash');
@@ -12276,6 +12282,11 @@ async function loadTrashItems() {
         const emptyBtn = document.getElementById('trash-empty-btn');
         emptyBtn.disabled = trashItems.length === 0;
         
+        // Show/hide selection bar based on item count
+        if (selectionBar) {
+            selectionBar.style.display = trashItems.length > 0 ? 'flex' : 'none';
+        }
+        
         if (trashItems.length === 0) {
             container.innerHTML = '<p class="trash-empty-message">🎉 Trash is empty!</p>';
             return;
@@ -12286,6 +12297,7 @@ async function loadTrashItems() {
     } catch (e) {
         console.error('Error loading trash:', e);
         container.innerHTML = '<p class="trash-error">Failed to load trash</p>';
+        if (selectionBar) selectionBar.style.display = 'none';
     }
 }
 
@@ -12294,9 +12306,17 @@ function renderTrashItem(item) {
     const emoji = getTypeEmoji(item.type);
     const deletedDate = new Date(item.deletedAt).toLocaleString();
     const description = (item.description || '').slice(0, 100) + ((item.description || '').length > 100 ? '...' : '');
+    const isSelected = selectedTrashItems.has(item.hash);
     
     return `
-        <div class="trash-item" data-hash="${item.hash}">
+        <div class="trash-item${isSelected ? ' selected' : ''}" data-hash="${item.hash}">
+            <div class="trash-item-checkbox">
+                <input type="checkbox" 
+                       ${isSelected ? 'checked' : ''} 
+                       onchange="toggleTrashItemSelect('${item.hash}')" 
+                       aria-label="Select ${item.type} activity for bulk restore"
+                       title="Select for bulk restore">
+            </div>
             <div class="trash-item-icon">${emoji}</div>
             <div class="trash-item-content">
                 <div class="trash-item-type">${item.type}</div>
@@ -12363,6 +12383,127 @@ async function restoreActivity(hash) {
     } catch (e) {
         console.error('Error restoring activity:', e);
         announce('Failed to restore activity');
+    }
+}
+
+// Toggle selection of a single trash item
+function toggleTrashItemSelect(hash) {
+    if (selectedTrashItems.has(hash)) {
+        selectedTrashItems.delete(hash);
+    } else {
+        selectedTrashItems.add(hash);
+    }
+    
+    // Update visual state of the item
+    const item = document.querySelector(`.trash-item[data-hash="${hash}"]`);
+    if (item) {
+        item.classList.toggle('selected', selectedTrashItems.has(hash));
+    }
+    
+    updateTrashSelectionUI();
+}
+
+// Toggle select all trash items
+function toggleTrashSelectAll(checked) {
+    if (checked) {
+        // Select all
+        trashItems.forEach(item => selectedTrashItems.add(item.hash));
+    } else {
+        // Deselect all
+        selectedTrashItems.clear();
+    }
+    
+    // Update all checkboxes visually
+    document.querySelectorAll('.trash-item').forEach(el => {
+        const hash = el.dataset.hash;
+        const checkbox = el.querySelector('input[type="checkbox"]');
+        if (checkbox) {
+            checkbox.checked = selectedTrashItems.has(hash);
+        }
+        el.classList.toggle('selected', selectedTrashItems.has(hash));
+    });
+    
+    updateTrashSelectionUI();
+}
+
+// Update the selection UI (count, button state, select-all checkbox)
+function updateTrashSelectionUI() {
+    const countEl = document.getElementById('trash-selection-count');
+    const restoreBtn = document.getElementById('bulk-restore-btn');
+    const selectAllCheckbox = document.getElementById('trash-select-all');
+    
+    const count = selectedTrashItems.size;
+    
+    if (countEl) {
+        countEl.textContent = `${count} selected`;
+    }
+    
+    if (restoreBtn) {
+        restoreBtn.disabled = count === 0;
+        restoreBtn.textContent = count > 0 ? `♻️ Restore Selected (${count})` : '♻️ Restore Selected';
+    }
+    
+    if (selectAllCheckbox) {
+        // Update indeterminate state
+        if (count === 0) {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = false;
+        } else if (count === trashItems.length) {
+            selectAllCheckbox.checked = true;
+            selectAllCheckbox.indeterminate = false;
+        } else {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = true;
+        }
+    }
+}
+
+// Bulk restore selected items from trash
+async function bulkRestoreFromTrash() {
+    const count = selectedTrashItems.size;
+    if (count === 0) {
+        announce('No items selected');
+        return;
+    }
+    
+    if (!confirm(`Restore ${count} selected ${count === 1 ? 'activity' : 'activities'}?`)) {
+        return;
+    }
+    
+    const hashes = Array.from(selectedTrashItems);
+    
+    try {
+        const response = await fetch('/api/activities/bulk-restore', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ hashes })
+        });
+        
+        if (!response.ok) {
+            const data = await response.json();
+            announce(data.error || 'Failed to restore activities');
+            return;
+        }
+        
+        const data = await response.json();
+        
+        // Clear selection and reload
+        selectedTrashItems.clear();
+        await loadTrashItems();
+        
+        // Announce result
+        const msg = data.restored > 0 
+            ? `${data.restored} ${data.restored === 1 ? 'activity' : 'activities'} restored`
+            : 'No activities were restored';
+        announce(msg);
+        
+        // Reload main activities list if function exists
+        if (typeof loadActivities === 'function') {
+            loadActivities();
+        }
+    } catch (e) {
+        console.error('Error bulk restoring:', e);
+        announce('Failed to restore activities');
     }
 }
 
@@ -12635,6 +12776,7 @@ if (typeof commandPaletteCommands !== 'undefined') {
         { name: 'Open Trash', shortcut: 'Del', action: () => openTrashModal() },
         { name: 'Close Trash', shortcut: 'Escape', action: () => closeTrashModal() },
         { name: 'Empty Trash', action: () => emptyTrash() },
+        { name: 'Restore Selected from Trash', action: () => bulkRestoreFromTrash() },
         { name: 'Cleanup Expired Trash', action: () => cleanupExpiredTrash() },
         { name: 'Trash Settings', action: () => { openTrashModal(); setTimeout(toggleTrashSettings, 100); } }
     );
