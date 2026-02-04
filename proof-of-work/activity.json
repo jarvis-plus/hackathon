@@ -3727,6 +3727,17 @@
   {
     "timestamp": "2026-02-04T05:36:14.732Z",
     "type": "commit",
-    "description": "chore: sign cycle 178 activities"
+    "description": "chore: sign cycle 178 activities",
+    "hash": "7fea2ab3c60a399ea945096390d6d98aa6d86b5d14fd412c0cd9a2437b78693e",
+    "signature": "4gmfPWsdY64ucdKQjv9mV97TsUfkU8fKa9ZnonoGR1RSLZP77YQPjjvr2Q2MtqkL8bu3vHVH5UJDU6GsbTr8c6nP",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
+  },
+  {
+    "timestamp": "2026-02-04T05:36:22.259Z",
+    "type": "commit",
+    "description": "Cycle 178: Activity Comparison Mode - Select 2 activities to compare",
+    "hash": "cf18499a90812f17eaca32c29b4d0dae29bc97959ea06d85cc8f708800f08105",
+    "signature": "5i9b5aAkX7wFLgitxRY1MDwuNJBTi8aC5MM2BWCix6QcG2XkuP9gG22MaQfSetNzdeMtxyCCG4TozD2g6B81G2rE",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
   }
 ]
