@@ -441,6 +441,47 @@ function calculateImportanceScore(activity: any): ImportanceScore {
 }
 
 /**
+ * Calculate text similarity using Jaccard coefficient on word sets.
+ * Returns a value between 0 (completely different) and 1 (identical).
+ * 
+ * Algorithm:
+ * 1. Tokenize both strings into words
+ * 2. Calculate intersection and union of word sets
+ * 3. Return |intersection| / |union|
+ * 
+ * @param text1 - First text string
+ * @param text2 - Second text string
+ * @returns Similarity score between 0 and 1
+ */
+function calculateSimilarity(text1: string, text2: string): number {
+  // Tokenize: split on non-word chars, filter empty, lowercase
+  const tokenize = (s: string): Set<string> => {
+    return new Set(
+      s.toLowerCase()
+        .split(/\W+/)
+        .filter(word => word.length > 2) // Ignore very short words
+    );
+  };
+
+  const set1 = tokenize(text1);
+  const set2 = tokenize(text2);
+
+  // Handle empty sets
+  if (set1.size === 0 && set2.size === 0) return 1;
+  if (set1.size === 0 || set2.size === 0) return 0;
+
+  // Calculate Jaccard similarity: |A ∩ B| / |A ∪ B|
+  let intersection = 0;
+  for (const word of set1) {
+    if (set2.has(word)) intersection++;
+  }
+
+  const union = set1.size + set2.size - intersection;
+  
+  return union > 0 ? intersection / union : 0;
+}
+
+/**
  * Get importance distribution stats across all activities.
  */
 function getImportanceDistribution(activities: any[]): Record<string, number> {
@@ -2377,6 +2418,68 @@ const server = Bun.serve({
           }
         },
         hint: 'Rate limits are per-IP using a sliding window. Different endpoints have different limits.'
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: GET /api/activities/check-duplicate
+    // Check if a similar activity was logged recently
+    // Used to warn users before logging potential duplicates
+    // ==========================================
+    if (path === '/api/activities/check-duplicate' && req.method === 'GET') {
+      const type = url.searchParams.get('type');
+      const description = url.searchParams.get('description');
+      const timeWindowMinutes = parseInt(url.searchParams.get('timeWindowMinutes') || '30');
+
+      if (!type || !description) {
+        return Response.json({
+          error: 'type and description are required query parameters'
+        }, { status: 400, headers: corsHeaders });
+      }
+
+      const activities = getActivities();
+      const cutoffTime = new Date(Date.now() - timeWindowMinutes * 60 * 1000);
+      
+      // Find similar activities within the time window
+      const recentSimilar = activities.filter((a: any) => {
+        // Must be within time window
+        const activityTime = new Date(a.timestamp);
+        if (activityTime < cutoffTime) return false;
+        
+        // Must be same type
+        if (a.type !== type) return false;
+        
+        // Check description similarity
+        const similarity = calculateSimilarity(
+          description.toLowerCase(),
+          (a.description || '').toLowerCase()
+        );
+        
+        return similarity > 0.6; // 60% similarity threshold
+      }).map((a: any) => ({
+        hash: a.hash,
+        timestamp: a.timestamp,
+        type: a.type,
+        description: a.description,
+        similarity: calculateSimilarity(
+          description.toLowerCase(),
+          (a.description || '').toLowerCase()
+        )
+      }));
+
+      const hasDuplicate = recentSimilar.length > 0;
+      const mostSimilar = recentSimilar.length > 0 
+        ? recentSimilar.reduce((a: any, b: any) => a.similarity > b.similarity ? a : b)
+        : null;
+
+      return Response.json({
+        hasDuplicate,
+        duplicates: recentSimilar,
+        mostSimilar,
+        timeWindowMinutes,
+        message: hasDuplicate 
+          ? `Found ${recentSimilar.length} similar activit${recentSimilar.length === 1 ? 'y' : 'ies'} in the last ${timeWindowMinutes} minutes`
+          : 'No duplicates found'
       }, { headers: corsHeaders });
     }
 

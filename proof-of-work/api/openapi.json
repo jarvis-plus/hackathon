@@ -172,6 +172,96 @@
         ]
       }
     },
+    "/api/activities/check-duplicate": {
+      "get": {
+        "tags": [
+          "Activities"
+        ],
+        "summary": "Check for duplicate activities",
+        "description": "Check if a similar activity was logged recently. Uses Jaccard similarity on word tokens with a 60% threshold. Useful for preventing accidental double-logging.",
+        "operationId": "checkDuplicate",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": true,
+            "description": "Activity type to check",
+            "schema": {
+              "type": "string",
+              "example": "commit"
+            }
+          },
+          {
+            "name": "description",
+            "in": "query",
+            "required": true,
+            "description": "Activity description to compare",
+            "schema": {
+              "type": "string",
+              "example": "Implemented duplicate detection"
+            }
+          },
+          {
+            "name": "timeWindowMinutes",
+            "in": "query",
+            "required": false,
+            "description": "Time window to search for duplicates (default: 30)",
+            "schema": {
+              "type": "integer",
+              "default": 30,
+              "minimum": 1,
+              "maximum": 1440
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Duplicate check result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DuplicateCheckResult"
+                },
+                "example": {
+                  "hasDuplicate": true,
+                  "duplicates": [
+                    {
+                      "hash": "abc123...",
+                      "timestamp": "2026-02-04T01:30:00Z",
+                      "type": "commit",
+                      "description": "Implemented duplicate detection feature",
+                      "similarity": 0.85
+                    }
+                  ],
+                  "mostSimilar": {
+                    "hash": "abc123...",
+                    "timestamp": "2026-02-04T01:30:00Z",
+                    "type": "commit",
+                    "description": "Implemented duplicate detection feature",
+                    "similarity": 0.85
+                  },
+                  "timeWindowMinutes": 30,
+                  "message": "Found 1 similar activity in the last 30 minutes"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        }
+      }
+    },
     "/api/activities/{hash}": {
       "get": {
         "tags": [
@@ -2816,6 +2906,85 @@
                 "description": "Field names that are unchanged"
               }
             }
+          }
+        }
+      },
+      "DuplicateCheckResult": {
+        "type": "object",
+        "description": "Result of a duplicate activity check",
+        "required": [
+          "hasDuplicate",
+          "duplicates",
+          "timeWindowMinutes",
+          "message"
+        ],
+        "properties": {
+          "hasDuplicate": {
+            "type": "boolean",
+            "description": "Whether a potential duplicate was found"
+          },
+          "duplicates": {
+            "type": "array",
+            "description": "List of similar activities found",
+            "items": {
+              "type": "object",
+              "properties": {
+                "hash": {
+                  "type": "string",
+                  "description": "SHA256 hash of the activity"
+                },
+                "timestamp": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When the activity was logged"
+                },
+                "type": {
+                  "type": "string",
+                  "description": "Activity type"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Activity description"
+                },
+                "similarity": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Similarity score (0-1)"
+                }
+              }
+            }
+          },
+          "mostSimilar": {
+            "type": "object",
+            "nullable": true,
+            "description": "The most similar activity found, or null if none",
+            "properties": {
+              "hash": {
+                "type": "string"
+              },
+              "timestamp": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "type": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "similarity": {
+                "type": "number"
+              }
+            }
+          },
+          "timeWindowMinutes": {
+            "type": "integer",
+            "description": "Time window searched for duplicates"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable result message"
           }
         }
       },

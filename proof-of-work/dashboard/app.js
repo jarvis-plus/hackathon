@@ -10403,9 +10403,120 @@ function updateSubmitButton() {
 }
 
 /**
+ * Check for duplicate activities before logging
+ * Returns { hasDuplicate, mostSimilar, duplicates } or null on error
+ */
+async function checkForDuplicates(type, description) {
+    try {
+        const params = new URLSearchParams({
+            type: type,
+            description: description,
+            timeWindowMinutes: '30'
+        });
+        
+        const response = await fetch(`/api/activities/check-duplicate?${params}`);
+        if (!response.ok) return null;
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Duplicate check failed:', error);
+        return null;
+    }
+}
+
+/**
+ * Show duplicate warning dialog and return user's choice
+ * Returns true if user wants to submit anyway, false to cancel
+ */
+async function showDuplicateWarning(duplicateInfo) {
+    return new Promise((resolve) => {
+        const modal = document.createElement('div');
+        modal.className = 'duplicate-warning-modal';
+        modal.setAttribute('role', 'alertdialog');
+        modal.setAttribute('aria-modal', 'true');
+        modal.setAttribute('aria-labelledby', 'duplicate-warning-title');
+        
+        const similarity = Math.round((duplicateInfo.mostSimilar?.similarity || 0) * 100);
+        const timeDiff = duplicateInfo.mostSimilar?.timestamp 
+            ? getRelativeTime(new Date(duplicateInfo.mostSimilar.timestamp))
+            : 'recently';
+        
+        modal.innerHTML = `
+            <div class="duplicate-warning-content">
+                <div class="duplicate-warning-header">
+                    <span class="warning-icon">⚠️</span>
+                    <h3 id="duplicate-warning-title">Potential Duplicate Detected</h3>
+                </div>
+                <div class="duplicate-warning-body">
+                    <p>A similar activity was logged <strong>${timeDiff}</strong>:</p>
+                    <div class="duplicate-preview">
+                        <span class="duplicate-type">${getActivityEmoji(duplicateInfo.mostSimilar?.type)} ${duplicateInfo.mostSimilar?.type}</span>
+                        <p class="duplicate-description">"${(duplicateInfo.mostSimilar?.description || '').slice(0, 100)}${(duplicateInfo.mostSimilar?.description?.length || 0) > 100 ? '...' : ''}"</p>
+                        <span class="duplicate-similarity">${similarity}% similar</span>
+                    </div>
+                    <p class="duplicate-question">Do you still want to log this activity?</p>
+                </div>
+                <div class="duplicate-warning-actions">
+                    <button class="duplicate-cancel-btn" onclick="this.closest('.duplicate-warning-modal').dataset.result='cancel'">
+                        ❌ Cancel
+                    </button>
+                    <button class="duplicate-submit-btn" onclick="this.closest('.duplicate-warning-modal').dataset.result='submit'">
+                        ✅ Submit Anyway
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Focus the cancel button by default (safer option)
+        modal.querySelector('.duplicate-cancel-btn').focus();
+        
+        // Handle clicks
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal || modal.dataset.result) {
+                const result = modal.dataset.result === 'submit';
+                modal.remove();
+                resolve(result);
+            }
+        });
+        
+        // Handle keyboard
+        modal.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                modal.remove();
+                resolve(false);
+            } else if (e.key === 'Enter' && document.activeElement?.classList.contains('duplicate-submit-btn')) {
+                modal.remove();
+                resolve(true);
+            }
+        });
+    });
+}
+
+/**
+ * Get relative time string (e.g., "5 minutes ago")
+ */
+function getRelativeTime(date) {
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 1) return 'just now';
+    if (diffMins === 1) return '1 minute ago';
+    if (diffMins < 60) return `${diffMins} minutes ago`;
+    
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours === 1) return '1 hour ago';
+    if (diffHours < 24) return `${diffHours} hours ago`;
+    
+    return date.toLocaleString();
+}
+
+/**
  * Submit the voice-logged activity
  */
-async function submitVoiceActivity() {
+async function submitVoiceActivity(skipDuplicateCheck = false) {
     const typeSelect = document.getElementById('voiceActivityType');
     const descriptionEl = document.getElementById('voiceDescription');
     const submitBtn = document.getElementById('voiceSubmitBtn');
@@ -10418,6 +10529,35 @@ async function submitVoiceActivity() {
     if (!description) {
         announceToScreenReader('Please enter a description for the activity');
         return;
+    }
+
+    // Check for duplicates first (unless skipped)
+    if (!skipDuplicateCheck) {
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.querySelector('.btn-text').textContent = 'Checking...';
+        }
+        
+        const duplicateInfo = await checkForDuplicates(type, description);
+        
+        if (duplicateInfo?.hasDuplicate) {
+            // Re-enable button
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.querySelector('.btn-text').textContent = 'Log Activity';
+            }
+            
+            // Show warning and get user's choice
+            const shouldSubmit = await showDuplicateWarning(duplicateInfo);
+            
+            if (!shouldSubmit) {
+                announceToScreenReader('Activity logging cancelled due to duplicate');
+                return;
+            }
+            
+            // User chose to submit anyway - recurse with skip flag
+            return submitVoiceActivity(true);
+        }
     }
 
     // Disable button while submitting
