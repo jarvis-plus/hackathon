@@ -6917,6 +6917,154 @@ function showCopyToast(message, isError = false) {
 }
 
 /**
+ * Show an undo toast with action button for delete operations
+ * @param {string} message - Message to display
+ * @param {Object} options - Options for undo action
+ * @param {string[]} options.hashes - Array of activity hashes that were deleted
+ * @param {Function} options.onUndo - Callback when undo is clicked
+ * @param {number} options.timeout - Auto-dismiss timeout in ms (default 5000)
+ */
+let undoToastTimeout = null;
+function showUndoToast(message, options = {}) {
+    const { hashes = [], onUndo = null, timeout = 5000 } = options;
+    
+    // Remove any existing undo toast
+    const existing = document.querySelector('.undo-toast');
+    if (existing) {
+        existing.remove();
+        if (undoToastTimeout) clearTimeout(undoToastTimeout);
+    }
+    
+    const toast = document.createElement('div');
+    toast.className = 'copy-toast undo-toast';
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'polite');
+    toast.setAttribute('aria-atomic', 'true');
+    
+    // Create toast content
+    const messageSpan = document.createElement('span');
+    messageSpan.className = 'toast-message';
+    messageSpan.textContent = `🗑️ ${message}`;
+    
+    const undoBtn = document.createElement('button');
+    undoBtn.className = 'undo-btn';
+    undoBtn.textContent = 'Undo';
+    undoBtn.setAttribute('aria-label', 'Undo delete action');
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'toast-close';
+    closeBtn.innerHTML = '×';
+    closeBtn.setAttribute('aria-label', 'Dismiss notification');
+    
+    // Progress bar for visual countdown
+    const progress = document.createElement('div');
+    progress.className = 'toast-progress';
+    progress.style.animationDuration = `${timeout}ms`;
+    
+    toast.appendChild(messageSpan);
+    toast.appendChild(undoBtn);
+    toast.appendChild(closeBtn);
+    toast.appendChild(progress);
+    
+    document.body.appendChild(toast);
+    
+    // Helper to dismiss toast
+    const dismissToast = () => {
+        if (undoToastTimeout) clearTimeout(undoToastTimeout);
+        toast.classList.remove('visible');
+        setTimeout(() => toast.remove(), 300);
+    };
+    
+    // Undo button click handler
+    undoBtn.addEventListener('click', async () => {
+        dismissToast();
+        
+        if (hashes.length === 0) {
+            announceToScreenReader('Nothing to undo');
+            return;
+        }
+        
+        try {
+            let restored = 0;
+            let failed = 0;
+            
+            // Restore each deleted activity
+            for (const hash of hashes) {
+                try {
+                    const response = await fetch(`/api/activities/${hash}/restore`, {
+                        method: 'PATCH'
+                    });
+                    if (response.ok) {
+                        restored++;
+                    } else {
+                        failed++;
+                    }
+                } catch (e) {
+                    failed++;
+                }
+            }
+            
+            // Update local cache
+            const activities = window.cachedActivities || allActivities || [];
+            hashes.forEach(hash => {
+                const activity = activities.find(a => (a.hash || a.proof?.hash) === hash);
+                if (activity) {
+                    activity.deleted = false;
+                    delete activity.deletedAt;
+                    activity.restoredAt = new Date().toISOString();
+                }
+            });
+            
+            // Re-render to show restored activities
+            if (typeof applyFilters === 'function') {
+                applyFilters();
+            }
+            
+            // Update trash badge
+            if (typeof updateTrashBadge === 'function') {
+                updateTrashBadge();
+            }
+            
+            // Feedback
+            const msg = restored === 1 
+                ? 'Activity restored' 
+                : `${restored} activit${restored === 1 ? 'y' : 'ies'} restored`;
+            showCopyToast(`♻️ ${msg}`, false);
+            announceToScreenReader(msg);
+            
+            // Callback if provided
+            if (onUndo) onUndo({ restored, failed });
+            
+        } catch (err) {
+            console.error('Undo failed:', err);
+            showCopyToast('❌ Undo failed', true);
+            announceToScreenReader('Failed to undo delete');
+        }
+    });
+    
+    // Close button click handler
+    closeBtn.addEventListener('click', dismissToast);
+    
+    // Keyboard support - Escape to dismiss, Enter on undo button
+    toast.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            dismissToast();
+        }
+    });
+    
+    // Trigger animation
+    requestAnimationFrame(() => {
+        toast.classList.add('visible');
+        undoBtn.focus(); // Focus undo button for keyboard access
+    });
+    
+    // Auto-dismiss after timeout
+    undoToastTimeout = setTimeout(() => {
+        dismissToast();
+    }, timeout);
+}
+
+/**
  * Show a toast notification with optional icon
  * @param {string} message - Message to display
  * @param {string} icon - Optional emoji icon to prepend
@@ -11450,26 +11598,24 @@ async function bulkDelete() {
         // Update trash count badge
         updateTrashBadge();
         
-        // Feedback
+        // Feedback message
         let message = `${result.deleted} activit${result.deleted === 1 ? 'y' : 'ies'} moved to trash`;
         if (result.notFound > 0) message += ` (${result.notFound} not found)`;
         if (result.alreadyDeleted > 0) message += ` (${result.alreadyDeleted} already deleted)`;
         
-        announceToScreenReader(message);
         console.log('🗑️ Bulk delete result:', result);
         
-        // Show toast notification if available
-        if (typeof showToast === 'function') {
-            showToast(message, 'success');
-        }
+        // Show undo toast for quick restore
+        showUndoToast(message, {
+            hashes: deletedHashes,
+            timeout: 6000 // Slightly longer for bulk operations
+        });
         
     } catch (err) {
         console.error('Bulk delete failed:', err);
         announceToScreenReader(`Failed to delete activities: ${err.message}`);
         
-        if (typeof showToast === 'function') {
-            showToast(`Delete failed: ${err.message}`, 'error');
-        }
+        showCopyToast(`❌ Delete failed: ${err.message}`, true);
     }
 }
 
@@ -12008,13 +12154,27 @@ async function deleteActivity(hash) {
             return;
         }
         
-        announce('Activity moved to trash');
+        // Update local cache
+        const activities = window.cachedActivities || allActivities || [];
+        const activity = activities.find(a => (a.hash || a.proof?.hash) === hash);
+        if (activity) {
+            activity.deleted = true;
+            activity.deletedAt = new Date().toISOString();
+        }
+        
+        // Re-render to hide deleted activity
+        if (typeof applyFilters === 'function') {
+            applyFilters();
+        }
+        
         updateTrashCount();
         
-        // Reload main activities list if function exists
-        if (typeof loadActivities === 'function') {
-            loadActivities();
-        }
+        // Show undo toast instead of simple announcement
+        showUndoToast('Activity moved to trash', {
+            hashes: [hash],
+            timeout: 5000
+        });
+        
     } catch (e) {
         console.error('Error deleting activity:', e);
         announce('Failed to delete activity');

@@ -5944,6 +5944,113 @@
 .copy-toast.visible {
     transform: translateX(-50%) translateY(0);
     opacity: 1;
+    pointer-events: auto;
+}
+
+/* Undo Toast - extends copy-toast with action button */
+.undo-toast {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1rem 0.75rem 1.25rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.undo-toast .toast-message {
+    flex: 1;
+    font-size: 0.9rem;
+}
+
+.undo-toast .toast-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: var(--accent-green);
+    border-radius: 0 0 0 8px;
+    animation: undoProgress 5s linear forwards;
+}
+
+@keyframes undoProgress {
+    from { width: 100%; }
+    to { width: 0%; }
+}
+
+.undo-toast .undo-btn {
+    background: var(--accent-green);
+    color: #000;
+    border: none;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.undo-toast .undo-btn:hover {
+    background: var(--accent-blue);
+    transform: scale(1.05);
+}
+
+.undo-toast .undo-btn:focus {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 2px;
+}
+
+.undo-toast .toast-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    line-height: 1;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.undo-toast .toast-close:hover {
+    opacity: 1;
+}
+
+/* Light mode undo toast */
+[data-theme="light"] .undo-toast {
+    background: #fff;
+    border-color: #ddd;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .undo-toast .undo-btn {
+    color: #fff;
+    background: var(--accent-green);
+}
+
+/* Theme support for undo toast */
+[data-theme="ocean"] .undo-toast .toast-progress { background: var(--accent-blue); }
+[data-theme="forest"] .undo-toast .toast-progress { background: var(--accent-green); }
+[data-theme="sunset"] .undo-toast .toast-progress { background: var(--accent-orange); }
+[data-theme="cyberpunk"] .undo-toast .toast-progress { background: var(--accent-pink); }
+
+/* Mobile responsive undo toast */
+@media (max-width: 480px) {
+    .undo-toast {
+        left: 1rem;
+        right: 1rem;
+        transform: translateX(0) translateY(100px);
+        width: auto;
+    }
+    
+    .undo-toast.visible {
+        transform: translateX(0) translateY(0);
+    }
+    
+    .undo-toast .toast-message {
+        font-size: 0.85rem;
+    }
 }
 
 /* Light mode */
