@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-04 04:14 PST
-**Cycle:** 192
+**Last Updated:** 2026-02-04 04:24 PST
+**Cycle:** 193
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -113,7 +113,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Activity bulk delete (delete multiple at once) ✅ Cycle 191
 - [x] Undo button toast (quick undo after delete) ✅ Cycle 192
 - [x] Auto theme mode (follow OS dark/light preference) ✅ Cycle 192
-- [ ] Activity status indicator (pending/completed/failed states)
+- [x] Activity status indicator (pending/completed/failed states) ✅ Cycle 193
 - [ ] Batch restore from trash (restore multiple at once)
 - [ ] Activity quick actions menu (right-click context menu)
 - [ ] Dashboard widgets (customizable stat cards)
@@ -122,6 +122,25 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 193 (Activity Status Indicator)
+- Implemented activity status tracking (pending/completed/failed)
+- **New API Endpoints**:
+  - `PATCH /api/activities/:hash/status` - Update activity status
+  - `GET /api/activities/status?status=X` - Filter activities by status
+  - Status counts returned: pending, completed, failed totals
+- **Activity Fields Added**: `status`, `statusUpdatedAt`
+- **Dashboard UI**:
+  - Status badges (⏳ Pending, ❌ Failed) next to pinned/bookmarked badges
+  - Status cycling button on hover (✅→❌→⏳→✅)
+  - Status filter section with All/Completed/Pending/Failed buttons
+  - Visual styling: yellow border for pending, red border for failed
+- **WebSocket/Webhook Events**: activity_status_changed event
+- **OpenAPI Updated**: StatusUpdateResult schema, new endpoints documented
+- **Export Integration**: Status filter included in export filter indicator
+- **Theme Support**: All 7 themes (Auto, Dark, Light, Ocean, Forest, Sunset, Cyberpunk)
+- **Stats**: 516 activities, all signed on-chain
+- Commit: 8282e5b
 
 ### Cycle 192 (Undo Toast + Auto Theme Mode)
 - Verified undo toast for delete operations was already fully implemented
@@ -200,28 +219,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - **WebSocket/Webhook Events**: trash_cleaned event
 - **Stats**: 499 activities, all signed on-chain
 - Commit: 481d12f
-
-### Cycle 188 (Activity Undo/Restore - Soft Delete)
-- Implemented soft delete with trash bin functionality
-- **New API Endpoints**:
-  - `DELETE /api/activities/:hash` - Soft delete (move to trash)
-  - `PATCH /api/activities/:hash/restore` - Restore from trash
-  - `GET /api/activities/trash` - List deleted activities (sorted by deletedAt)
-  - `DELETE /api/activities/trash/empty` - Permanently delete all trash
-- **Activity Fields Added**: `deleted`, `deletedAt`, `restoredAt`
-- **GET /api/activities Updated**: Excludes deleted by default, add `?includeDeleted=true`
-- **Dashboard UI**:
-  - 🗑️ Trash button in filter section with count badge
-  - Full trash modal with restore buttons per item
-  - Empty trash button with confirmation dialog
-  - Del/Backspace keyboard shortcut to open trash
-  - Command palette commands added
-- **Theme Support**: All 6 themes (Dark, Light, Ocean, Forest, Sunset, Cyberpunk)
-- **Mobile Responsive**: Full-width modal, stacked buttons
-- **OpenAPI Updated**: DeleteResult, RestoreResult, TrashList, EmptyTrashResult schemas
-- **WebSocket/Webhook Events**: activity_deleted, activity_restored, trash_emptied
-- **Stats**: 496 activities, all signed on-chain
-- Commit: 73ed5da
 
 ---
 
