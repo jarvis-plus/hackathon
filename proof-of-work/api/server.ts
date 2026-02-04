@@ -1,41 +1,115 @@
-// Proof of Work API Server
-// Serves activity feed and dashboard with real-time WebSocket updates
+/**
+ * Proof of Work API Server
+ * 
+ * This is the main backend server for the Proof of Work Dashboard.
+ * It serves multiple purposes:
+ * 
+ * 1. **Static Dashboard** - Serves the HTML/CSS/JS dashboard at /pow/
+ * 2. **REST API** - Provides endpoints for activities, stats, health checks, verification
+ * 3. **WebSocket** - Real-time updates when new activities are logged
+ * 4. **RSS Feed** - Machine-readable activity feed for aggregators
+ * 
+ * Architecture:
+ * - Built with Bun.serve() for high-performance HTTP + WebSocket handling
+ * - Activities stored in activity.json (append-only log)
+ * - File watcher detects changes and broadcasts to WebSocket clients
+ * - Rate limiting protects against abuse (100 req/min API, 10 WS connections/min)
+ * 
+ * Key Endpoints:
+ * - GET /api/activities    - All activities as JSON array
+ * - GET /api/stats         - Aggregated statistics
+ * - GET /api/health        - Health check for monitoring
+ * - GET /api/verify/:hash  - Verify a specific activity by hash
+ * - GET /api/badge         - Compact summary for sharing
+ * - GET /api/feed.rss      - RSS feed of recent activities
+ * - WS  /ws                - WebSocket for real-time updates
+ * 
+ * @author Jarvis AI Agent
+ * @license MIT
+ * @see https://jarvis.tail6a9bde.ts.net/pow/
+ */
 
 import { readFileSync, existsSync, watchFile, statSync } from 'fs';
 import { join } from 'path';
 
+// ==============================================
+// CONFIGURATION
+// ==============================================
+
+/** Server port - can be overridden via PORT env var */
 const PORT = process.env.PORT || 3456;
+
+/** Base directory for the proof-of-work module (parent of /api) */
 const BASE_DIR = join(import.meta.dir, '..');
+
+/** Path to the activity log file - all activities stored here */
 const ACTIVITY_FILE = join(BASE_DIR, 'activity.json');
+
+/** Path to the dashboard static files */
 const DASHBOARD_DIR = join(BASE_DIR, 'dashboard');
 
-// Track connected WebSocket clients
+// ==============================================
+// WEBSOCKET CLIENT TRACKING
+// ==============================================
+
+/**
+ * Set of all connected WebSocket clients.
+ * Used to broadcast real-time updates when new activities arrive.
+ * Clients are automatically added on connect and removed on disconnect.
+ */
 const wsClients = new Set<WebSocket>();
 
 // ==============================================
 // RATE LIMITING
 // ==============================================
-// Simple sliding window rate limiter
-// - 100 requests/minute for API endpoints
-// - 10 WebSocket connections/minute per IP
-// - Static assets (dashboard) are not rate limited
 
+/**
+ * Rate Limiting Implementation
+ * 
+ * Uses a sliding window algorithm to prevent abuse:
+ * - API endpoints: 100 requests per minute per IP
+ * - WebSocket connections: 10 per minute per IP
+ * - Static dashboard assets are NOT rate limited (better UX)
+ * 
+ * How it works:
+ * 1. Each IP gets an entry with an array of timestamps
+ * 2. On each request, we filter out timestamps older than the window
+ * 3. If remaining timestamps >= limit, reject the request
+ * 4. Otherwise, add current timestamp and allow
+ * 
+ * Old entries are cleaned up every 5 minutes to prevent memory leaks.
+ */
+
+/** Tracks request timestamps per IP for API rate limiting */
 interface RateLimitEntry {
   timestamps: number[];
 }
 
+/** Rate limit store for API requests */
 const rateLimitStore = new Map<string, RateLimitEntry>();
+
+/** Rate limit store for WebSocket connections (separate pool) */
 const WS_RATE_LIMIT_STORE = new Map<string, RateLimitEntry>();
 
-const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
-const API_RATE_LIMIT = 100; // requests per window
-const WS_RATE_LIMIT = 10; // connections per window
+/** Duration of the sliding window in milliseconds (1 minute) */
+const RATE_LIMIT_WINDOW_MS = 60 * 1000;
 
-// Clean up old entries every 5 minutes
+/** Maximum API requests allowed per IP within the window */
+const API_RATE_LIMIT = 100;
+
+/** Maximum WebSocket connections allowed per IP within the window */
+const WS_RATE_LIMIT = 10;
+
+/**
+ * Periodic cleanup of expired rate limit entries.
+ * Runs every 5 minutes to prevent memory accumulation from inactive IPs.
+ * Removes entries with no timestamps within the active window.
+ */
 setInterval(() => {
   const now = Date.now();
   const cutoff = now - RATE_LIMIT_WINDOW_MS;
   
+  // Clean up API rate limit store
   for (const [ip, entry] of rateLimitStore.entries()) {
     entry.timestamps = entry.timestamps.filter(t => t > cutoff);
     if (entry.timestamps.length === 0) {
@@ -43,6 +117,7 @@ setInterval(() => {
     }
   }
   
+  // Clean up WebSocket rate limit store
   for (const [ip, entry] of WS_RATE_LIMIT_STORE.entries()) {
     entry.timestamps = entry.timestamps.filter(t => t > cutoff);
     if (entry.timestamps.length === 0) {
@@ -51,53 +126,92 @@ setInterval(() => {
   }
 }, 5 * 60 * 1000);
 
+/**
+ * Extract the client's IP address from the request.
+ * 
+ * Handles multiple scenarios:
+ * 1. X-Forwarded-For header (reverse proxy like nginx/Caddy)
+ * 2. X-Real-IP header (alternative proxy header)
+ * 3. Direct socket address (Bun's requestIP method)
+ * 
+ * @param req - The incoming HTTP request
+ * @param server - The Bun server instance (for requestIP)
+ * @returns The client's IP address, or 'unknown' if not determinable
+ */
 function getClientIP(req: Request, server: any): string {
-  // Check forwarded headers first (for reverse proxy setups)
+  // Check X-Forwarded-For first (standard proxy header, may have multiple IPs)
   const forwarded = req.headers.get('x-forwarded-for');
   if (forwarded) {
+    // Take the first IP in the chain (original client)
     return forwarded.split(',')[0].trim();
   }
   
+  // Check X-Real-IP (simpler alternative used by some proxies)
   const realIP = req.headers.get('x-real-ip');
   if (realIP) {
     return realIP;
   }
   
-  // Fallback to socket address (Bun-specific)
+  // Fallback to Bun's native socket address
   try {
     const addr = server.requestIP(req);
     if (addr) return addr.address;
-  } catch (e) {}
+  } catch (e) {
+    // requestIP may not be available in all contexts
+  }
   
   return 'unknown';
 }
 
-function checkRateLimit(ip: string, store: Map<string, RateLimitEntry>, limit: number): { allowed: boolean; remaining: number; resetIn: number } {
+/**
+ * Check if a request is allowed under rate limiting.
+ * 
+ * @param ip - The client's IP address
+ * @param store - Which rate limit store to use (API or WebSocket)
+ * @param limit - Maximum requests allowed in the window
+ * @returns Object with allowed status, remaining requests, and reset time
+ */
+function checkRateLimit(
+  ip: string, 
+  store: Map<string, RateLimitEntry>, 
+  limit: number
+): { allowed: boolean; remaining: number; resetIn: number } {
   const now = Date.now();
   const cutoff = now - RATE_LIMIT_WINDOW_MS;
   
+  // Get or create entry for this IP
   let entry = store.get(ip);
   if (!entry) {
     entry = { timestamps: [] };
     store.set(ip, entry);
   }
   
-  // Remove old timestamps
+  // Remove timestamps outside the sliding window
   entry.timestamps = entry.timestamps.filter(t => t > cutoff);
   
+  // Calculate remaining requests and time until reset
   const remaining = Math.max(0, limit - entry.timestamps.length);
   const resetIn = entry.timestamps.length > 0 
     ? Math.ceil((entry.timestamps[0] + RATE_LIMIT_WINDOW_MS - now) / 1000)
     : 60;
   
+  // Check if limit exceeded
   if (entry.timestamps.length >= limit) {
     return { allowed: false, remaining: 0, resetIn };
   }
   
+  // Allow the request and record the timestamp
   entry.timestamps.push(now);
   return { allowed: true, remaining: remaining - 1, resetIn };
 }
 
+/**
+ * Generate a 429 Too Many Requests response.
+ * Includes proper headers for rate limit information.
+ * 
+ * @param resetIn - Seconds until rate limit resets
+ * @returns HTTP 429 Response with JSON body
+ */
 function rateLimitResponse(resetIn: number): Response {
   return new Response(JSON.stringify({
     error: 'Too Many Requests',
@@ -115,26 +229,63 @@ function rateLimitResponse(resetIn: number): Response {
   });
 }
 
-// Track activity file state for change detection
+// ==============================================
+// ACTIVITY FILE MONITORING
+// ==============================================
+
+/**
+ * Activity File Change Detection
+ * 
+ * Instead of using file watchers (which can be unreliable), we poll
+ * the activity file every 2 seconds and compare modification times.
+ * 
+ * When changes are detected:
+ * 1. Compare activity count with last known count
+ * 2. If increased, extract the new activities
+ * 3. Broadcast to all connected WebSocket clients
+ * 
+ * This ensures real-time updates on the dashboard without page refresh.
+ */
+
+/** Last known modification time of activity.json */
 let lastActivityMtime = 0;
+
+/** Last known activity count */
 let lastActivityCount = 0;
 
+/**
+ * Load and parse all activities from the activity file.
+ * Returns empty array if file doesn't exist (graceful startup).
+ * 
+ * @returns Array of activity objects
+ */
 function getActivities(): any[] {
   if (!existsSync(ACTIVITY_FILE)) return [];
   const data = readFileSync(ACTIVITY_FILE, 'utf-8');
   return JSON.parse(data);
 }
 
+/**
+ * Serve a file from the dashboard directory.
+ * Handles content-type detection and caching headers.
+ * 
+ * @param path - Request path (e.g., '/' or '/app.js')
+ * @returns HTTP Response with file content
+ */
 function serveDashboard(path: string): Response {
+  // Treat root path as index.html
   const filePath = path === '/' ? '/index.html' : path;
   const fullPath = join(DASHBOARD_DIR, filePath);
   
+  // Return 404 if file doesn't exist
   if (!existsSync(fullPath)) {
     return new Response('Not Found', { status: 404 });
   }
   
   const content = readFileSync(fullPath);
   const ext = filePath.split('.').pop();
+  
+  // Map file extensions to MIME types
   const contentTypes: Record<string, string> = {
     html: 'text/html',
     css: 'text/css',
@@ -149,10 +300,10 @@ function serveDashboard(path: string): Response {
     webp: 'image/webp',
   };
   
-  // Add cache headers for static assets (images, CSS, JS)
+  // Set cache headers: 24h for static assets, no-cache for HTML
   const cacheControl = ['svg', 'png', 'ico', 'jpg', 'jpeg', 'gif', 'webp', 'css', 'js'].includes(ext || '') 
-    ? 'public, max-age=86400' // 24 hours
-    : 'no-cache';
+    ? 'public, max-age=86400' // 24 hours - browser caches these
+    : 'no-cache'; // HTML should always be fresh
   
   return new Response(content, {
     headers: { 
@@ -162,7 +313,24 @@ function serveDashboard(path: string): Response {
   });
 }
 
-// Broadcast to all connected WebSocket clients
+// ==============================================
+// WEBSOCKET BROADCASTING
+// ==============================================
+
+/**
+ * Broadcast a message to all connected WebSocket clients.
+ * Wraps the data in a standard message format with type and timestamp.
+ * 
+ * Message format:
+ * {
+ *   type: 'new_activities' | 'init' | etc.,
+ *   data: {...},
+ *   timestamp: ISO string
+ * }
+ * 
+ * @param type - Message type identifier
+ * @param data - Payload to send
+ */
 function broadcastUpdate(type: string, data: any) {
   const message = JSON.stringify({ type, data, timestamp: new Date().toISOString() });
   
@@ -172,12 +340,21 @@ function broadcastUpdate(type: string, data: any) {
         ws.send(message);
       }
     } catch (e) {
-      // Client disconnected, will be cleaned up
+      // Silently ignore - client will be cleaned up on disconnect
     }
   }
 }
 
-// Watch activity file for changes and broadcast
+/**
+ * Check for changes in the activity file and broadcast updates.
+ * Called every 2 seconds by the polling interval.
+ * 
+ * Detection strategy:
+ * 1. Check file modification time (cheap operation)
+ * 2. Only read file if mtime changed
+ * 3. Compare activity count to detect additions
+ * 4. Broadcast only the new activities (not full list)
+ */
 function checkForChanges() {
   try {
     if (!existsSync(ACTIVITY_FILE)) return;
@@ -185,18 +362,19 @@ function checkForChanges() {
     const stats = statSync(ACTIVITY_FILE);
     const mtime = stats.mtimeMs;
     
-    // Only check if file was modified
+    // Skip if file hasn't been modified
     if (mtime !== lastActivityMtime) {
       lastActivityMtime = mtime;
       
       const activities = getActivities();
       const newCount = activities.length;
       
-      // Broadcast if there are new activities
+      // Broadcast only if there are new activities
       if (newCount > lastActivityCount) {
         const newActivities = activities.slice(lastActivityCount);
         console.log(`📡 Broadcasting ${newActivities.length} new activities to ${wsClients.size} clients`);
         
+        // Send full state + specifically highlight new items
         broadcastUpdate('new_activities', {
           activities,
           newItems: newActivities,
@@ -215,37 +393,63 @@ function checkForChanges() {
       lastActivityCount = newCount;
     }
   } catch (e) {
-    // Ignore read errors
+    // Ignore read errors - file may be mid-write
   }
 }
 
-// Start periodic change check (every 2 seconds)
+// Start the change detection polling (every 2 seconds)
 setInterval(checkForChanges, 2000);
 
-// Initialize activity count
+// Initialize state on startup
 try {
   const activities = getActivities();
   lastActivityCount = activities.length;
   const stats = statSync(ACTIVITY_FILE);
   lastActivityMtime = stats.mtimeMs;
-} catch (e) {}
+} catch (e) {
+  // File may not exist yet on first run
+}
 
-// Create server with WebSocket support
+// ==============================================
+// HTTP SERVER
+// ==============================================
+
+/**
+ * Main HTTP Server
+ * 
+ * Bun.serve() creates a high-performance HTTP server with:
+ * - Native WebSocket support (no separate library needed)
+ * - Fast Request/Response handling
+ * - Automatic Keep-Alive
+ * 
+ * Route priority:
+ * 1. WebSocket upgrade (/ws)
+ * 2. API endpoints (/api/*)
+ * 3. Static activity.json (/activity.json)
+ * 4. Dashboard files (everything else)
+ */
 const server = Bun.serve({
   port: PORT,
+  
+  /**
+   * Main request handler - routes all HTTP requests
+   */
   fetch(req, server) {
     const url = new URL(req.url);
     const path = url.pathname;
     const clientIP = getClientIP(req, server);
 
-    // CORS headers for API
+    // CORS headers - allow cross-origin requests for API
     const corsHeaders = {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     };
 
-    // WebSocket upgrade (with separate rate limit)
+    // ==========================================
+    // WEBSOCKET UPGRADE
+    // ==========================================
     if (path === '/ws') {
+      // Check WebSocket-specific rate limit
       const wsRateCheck = checkRateLimit(clientIP, WS_RATE_LIMIT_STORE, WS_RATE_LIMIT);
       if (!wsRateCheck.allowed) {
         return new Response('WebSocket rate limit exceeded', { 
@@ -254,12 +458,15 @@ const server = Bun.serve({
         });
       }
       
+      // Attempt protocol upgrade
       const upgraded = server.upgrade(req, { data: { ip: clientIP } });
-      if (upgraded) return undefined;
+      if (upgraded) return undefined; // Upgrade successful
       return new Response('WebSocket upgrade failed', { status: 400 });
     }
 
-    // Rate limit API endpoints (not static dashboard files)
+    // ==========================================
+    // API RATE LIMITING
+    // ==========================================
     if (path.startsWith('/api/')) {
       const rateCheck = checkRateLimit(clientIP, rateLimitStore, API_RATE_LIMIT);
       
@@ -274,15 +481,22 @@ const server = Bun.serve({
         return rateLimitResponse(rateCheck.resetIn);
       }
       
-      // Merge rate limit headers into CORS headers for API responses
+      // Merge rate limit headers with CORS for API responses
       Object.assign(corsHeaders, rateLimitHeaders);
     }
 
-    // API routes
+    // ==========================================
+    // API: GET /api/activities
+    // Returns all activities as a JSON array
+    // ==========================================
     if (path === '/api/activities') {
       return Response.json(getActivities(), { headers: corsHeaders });
     }
 
+    // ==========================================
+    // API: GET /api/stats
+    // Returns aggregated statistics
+    // ==========================================
     if (path === '/api/stats') {
       const activities = getActivities();
       const stats = {
@@ -298,7 +512,11 @@ const server = Bun.serve({
       return Response.json(stats, { headers: corsHeaders });
     }
 
-    // Health check endpoint - for monitoring and uptime verification
+    // ==========================================
+    // API: GET /api/health
+    // Health check for monitoring systems
+    // Returns 200 if healthy, 503 if degraded
+    // ==========================================
     if (path === '/api/health') {
       const startTime = Date.now();
       let activityFileOk = false;
@@ -306,6 +524,7 @@ const server = Bun.serve({
       let lastActivity: string | null = null;
       let unsignedCount = 0;
       
+      // Check activity file readability
       try {
         const activities = getActivities();
         activityFileOk = true;
@@ -316,11 +535,15 @@ const server = Bun.serve({
         activityFileOk = false;
       }
       
+      // Calculate age of last activity
       const lastActivityAge = lastActivity 
         ? Math.floor((Date.now() - new Date(lastActivity).getTime()) / 1000)
         : null;
       
-      // Healthy if: file readable, has activities, recent activity within 2 hours, no unsigned
+      // Health criteria:
+      // - Activity file readable
+      // - Has at least one activity
+      // - Recent activity within 2 hours (agent is active)
       const isHealthy = activityFileOk && 
         activityCount > 0 && 
         (lastActivityAge === null || lastActivityAge < 7200); // 2 hours
@@ -350,17 +573,22 @@ const server = Bun.serve({
       });
     }
 
-    // Badge/summary endpoint - compact verification summary for sharing
+    // ==========================================
+    // API: GET /api/badge or /api/summary
+    // Compact verification summary for sharing
+    // ==========================================
     if (path === '/api/badge' || path === '/api/summary') {
       const activities = getActivities();
       const onchainCount = activities.filter((a: any) => a.signature || a.proof?.txSignature).length;
       const firstActivity = activities[0];
       const lastActivity = activities[activities.length - 1];
+      
+      // Count unique active days
       const uniqueDays = new Set(activities.map((a: any) => 
         new Date(a.timestamp).toISOString().split('T')[0]
       )).size;
       
-      // Calculate build cycles from activity descriptions
+      // Count build cycles from activity descriptions
       const cycleActivities = activities.filter((a: any) => 
         a.description?.includes('Cycle') && a.type === 'build'
       );
@@ -396,11 +624,16 @@ const server = Bun.serve({
       return Response.json(badge, { headers: corsHeaders });
     }
 
+    // ==========================================
+    // API: GET /api/feed.rss
     // RSS feed for activity subscriptions
+    // Enables feed readers to follow agent activity
+    // ==========================================
     if (path === '/api/feed.rss' || path === '/api/rss' || path === '/rss.xml') {
       const activities = getActivities();
       const recentActivities = activities.slice(-50).reverse(); // Last 50, newest first
       
+      // XML escape helper
       const escapeXml = (str: string) => str
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
@@ -408,6 +641,7 @@ const server = Bun.serve({
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&apos;');
       
+      // Generate RSS items
       const items = recentActivities.map((a: any) => {
         const hash = a.hash || a.proof?.hash || '';
         const signature = a.signature || a.proof?.txSignature || '';
@@ -431,6 +665,7 @@ On-Chain: ${signature ? 'Yes - ' + signature.slice(0, 20) + '...' : 'Pending'}
     </item>`;
       }).join('\n');
       
+      // Build full RSS document
       const rss = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
@@ -456,12 +691,15 @@ ${items}
         headers: { 
           ...corsHeaders, 
           'Content-Type': 'application/rss+xml; charset=utf-8',
-          'Cache-Control': 'max-age=60'
+          'Cache-Control': 'max-age=60' // Cache for 1 minute
         }
       });
     }
 
-    // Text badge for easy copy-paste
+    // ==========================================
+    // API: GET /api/badge.txt
+    // Plain text badge for copy-paste sharing
+    // ==========================================
     if (path === '/api/badge.txt') {
       const activities = getActivities();
       const onchainCount = activities.filter((a: any) => a.signature || a.proof?.txSignature).length;
@@ -487,10 +725,15 @@ Colosseum Agent Hackathon 2026`;
       });
     }
 
-    // Verification endpoint: /api/verify/:hash
+    // ==========================================
+    // API: GET /api/verify/:hash
+    // Verify a specific activity by its hash
+    // Supports both full hash and prefix matching
+    // ==========================================
     if (path.startsWith('/api/verify/')) {
       const hash = path.replace('/api/verify/', '');
       
+      // Validate hash length
       if (!hash || hash.length < 8) {
         return Response.json({ 
           error: 'Invalid hash', 
@@ -516,10 +759,12 @@ Colosseum Agent Hackathon 2026`;
         }, { status: 404, headers: corsHeaders });
       }
       
+      // Extract proof details
       const proof = activity.proof || {};
       const txSignature = activity.signature || proof.txSignature;
       const activityHash = activity.hash || proof.hash;
       
+      // Build verification response
       const verification = {
         verified: true,
         activity: {
@@ -557,20 +802,34 @@ Colosseum Agent Hackathon 2026`;
       return Response.json(verification, { headers: corsHeaders });
     }
 
-    // Serve static activity.json
+    // ==========================================
+    // STATIC: /activity.json
+    // Direct access to raw activity file
+    // ==========================================
     if (path === '/activity.json') {
       return Response.json(getActivities(), { headers: corsHeaders });
     }
 
-    // Dashboard
+    // ==========================================
+    // DASHBOARD: Serve static files
+    // Fallback for all other paths
+    // ==========================================
     return serveDashboard(path);
   },
+  
+  // ==========================================
+  // WEBSOCKET HANDLERS
+  // ==========================================
   websocket: {
+    /**
+     * Called when a new WebSocket client connects.
+     * Sends the initial state (all activities) to the client.
+     */
     open(ws) {
       wsClients.add(ws);
       console.log(`🔌 WebSocket connected (${wsClients.size} total)`);
       
-      // Send current state on connect
+      // Send current state immediately on connect
       const activities = getActivities();
       ws.send(JSON.stringify({
         type: 'init',
@@ -589,18 +848,32 @@ Colosseum Agent Hackathon 2026`;
         timestamp: new Date().toISOString()
       }));
     },
+    
+    /**
+     * Called when a WebSocket client disconnects.
+     * Removes the client from the broadcast set.
+     */
     close(ws) {
       wsClients.delete(ws);
       console.log(`🔌 WebSocket disconnected (${wsClients.size} remaining)`);
     },
+    
+    /**
+     * Called when a WebSocket client sends a message.
+     * Currently only handles ping/pong for keepalive.
+     */
     message(ws, message) {
-      // Handle ping/pong for keepalive
+      // Simple ping/pong for connection keepalive
       if (message === 'ping') {
         ws.send('pong');
       }
     },
   },
 });
+
+// ==============================================
+// STARTUP LOGGING
+// ==============================================
 
 console.log(`🚀 Proof of Work server running at http://localhost:${PORT}`);
 console.log(`🔌 WebSocket endpoint: ws://localhost:${PORT}/ws`);
