@@ -6537,6 +6537,8 @@ const KEYBOARD_SHORTCUTS = {
     'B': { action: 'bookmarkFocused', description: 'Bookmark focused activity' },
     'z': { action: 'toggleFocusMode', description: 'Toggle focus mode' },
     'w': { action: 'openWidgets', description: 'Open widgets configuration' },
+    'y': { action: 'celebrate', description: 'Fire confetti celebration' },
+    'Y': { action: 'celebrateEpic', description: 'Fire epic confetti cannons' },
     '?': { action: 'showShortcuts', description: 'Show keyboard shortcuts' },
 };
 
@@ -6590,6 +6592,8 @@ function createShortcutsModal() {
                     <div class="shortcut-row"><kbd>x</kbd> Toggle bulk select mode</div>
                     <div class="shortcut-row"><kbd>v</kbd> Voice activity input</div>
                     <div class="shortcut-row"><kbd>w</kbd> Configure widgets</div>
+                    <div class="shortcut-row"><kbd>y</kbd> Fire confetti 🎉</div>
+                    <div class="shortcut-row"><kbd>Shift+y</kbd> Epic confetti cannons 🎆</div>
                     <div class="shortcut-row"><kbd>?</kbd> Show this help</div>
                 </div>
             </div>
@@ -6678,6 +6682,10 @@ function handleShortcutAction(action) {
         }
     } else if (action === 'openWidgets') {
         openWidgetsModal();
+    } else if (action === 'celebrate') {
+        celebrate('normal');
+    } else if (action === 'celebrateEpic') {
+        celebrate('epic');
     }
 }
 
@@ -6813,6 +6821,8 @@ const PALETTE_COMMANDS = [
     { id: 'load-more', title: 'Load More Activities', description: 'Load additional activities', icon: '⬇️', action: () => loadMoreActivities(), group: 'Actions' },
     { id: 'scroll-top', title: 'Scroll to Top', description: 'Jump to top of page', icon: '⬆️', shortcut: 'T', action: () => { window.scrollTo({ top: 0, behavior: 'smooth' }); hideCommandPalette(); }, group: 'Actions' },
     { id: 'refresh', title: 'Refresh Data', description: 'Reload activity data', icon: '🔃', action: () => { fetchActivities(); hideCommandPalette(); }, group: 'Actions' },
+    { id: 'celebrate', title: 'Celebrate! 🎉', description: 'Fire confetti to celebrate milestones', icon: '🎊', shortcut: 'Y', action: () => { celebrate('normal'); hideCommandPalette(); }, group: 'Actions' },
+    { id: 'celebrate-epic', title: 'Epic Celebration! 🎆', description: 'Fire epic confetti cannons from both sides', icon: '🎇', action: () => { celebrate('epic'); hideCommandPalette(); }, group: 'Actions' },
     
     // Help
     { id: 'shortcuts', title: 'Keyboard Shortcuts', description: 'View all keyboard shortcuts', icon: '⌨️', shortcut: '?', action: () => { showShortcutsModal(); hideCommandPalette(); }, group: 'Help' },
@@ -14668,4 +14678,330 @@ document.addEventListener('DOMContentLoaded', () => {
 // Refresh graph when relationships change
 function refreshRelationshipGraph() {
     initRelationshipGraph();
+}
+
+// ============================================
+// CONFETTI CELEBRATION SYSTEM
+// ============================================
+
+/**
+ * Canvas-based confetti animation for milestone celebrations
+ * Triggers on major achievements, activity milestones, and special events
+ */
+
+let confettiCanvas = null;
+let confettiCtx = null;
+let confettiParticles = [];
+let confettiAnimationId = null;
+let celebrationSound = null;
+
+// Confetti configuration
+const CONFETTI_CONFIG = {
+    particleCount: 150,
+    spread: 70,
+    startVelocity: 55,
+    decay: 0.92,
+    gravity: 1.2,
+    ticks: 200,
+    colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffa500', '#ff69b4', '#00fa9a', '#ffd700'],
+    shapes: ['square', 'circle']
+};
+
+/**
+ * Initialize confetti canvas overlay
+ */
+function initConfettiCanvas() {
+    if (confettiCanvas) return;
+    
+    confettiCanvas = document.createElement('canvas');
+    confettiCanvas.id = 'confetti-canvas';
+    confettiCanvas.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 9999;
+    `;
+    document.body.appendChild(confettiCanvas);
+    confettiCtx = confettiCanvas.getContext('2d');
+    
+    // Handle resize
+    function resizeCanvas() {
+        confettiCanvas.width = window.innerWidth;
+        confettiCanvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+}
+
+/**
+ * Create a confetti particle
+ */
+function createParticle(x, y, config = {}) {
+    const angle = config.angle || (Math.random() * Math.PI * 2);
+    const velocity = config.velocity || (CONFETTI_CONFIG.startVelocity * (0.5 + Math.random() * 0.5));
+    
+    return {
+        x: x,
+        y: y,
+        vx: Math.cos(angle) * velocity * (Math.random() * 0.5 + 0.5),
+        vy: Math.sin(angle) * velocity * (Math.random() * 0.5 + 0.5) - velocity * 0.5,
+        color: config.color || CONFETTI_CONFIG.colors[Math.floor(Math.random() * CONFETTI_CONFIG.colors.length)],
+        shape: config.shape || CONFETTI_CONFIG.shapes[Math.floor(Math.random() * CONFETTI_CONFIG.shapes.length)],
+        size: config.size || (5 + Math.random() * 10),
+        rotation: Math.random() * Math.PI * 2,
+        rotationSpeed: (Math.random() - 0.5) * 0.2,
+        life: CONFETTI_CONFIG.ticks,
+        decay: CONFETTI_CONFIG.decay,
+        gravity: CONFETTI_CONFIG.gravity
+    };
+}
+
+/**
+ * Update and draw confetti particles
+ */
+function updateConfetti() {
+    if (!confettiCtx || confettiParticles.length === 0) {
+        if (confettiAnimationId) {
+            cancelAnimationFrame(confettiAnimationId);
+            confettiAnimationId = null;
+        }
+        return;
+    }
+    
+    confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+    
+    confettiParticles = confettiParticles.filter(p => {
+        // Update physics
+        p.vy += p.gravity * 0.1;
+        p.vx *= p.decay;
+        p.vy *= p.decay;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rotation += p.rotationSpeed;
+        p.life--;
+        
+        // Draw particle
+        const alpha = Math.max(0, p.life / CONFETTI_CONFIG.ticks);
+        confettiCtx.save();
+        confettiCtx.translate(p.x, p.y);
+        confettiCtx.rotate(p.rotation);
+        confettiCtx.globalAlpha = alpha;
+        confettiCtx.fillStyle = p.color;
+        
+        if (p.shape === 'circle') {
+            confettiCtx.beginPath();
+            confettiCtx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
+            confettiCtx.fill();
+        } else {
+            confettiCtx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+        }
+        
+        confettiCtx.restore();
+        
+        // Keep particle if still alive and on screen
+        return p.life > 0 && p.y < confettiCanvas.height + 100;
+    });
+    
+    confettiAnimationId = requestAnimationFrame(updateConfetti);
+}
+
+/**
+ * Fire confetti from a specific point
+ * @param {number} x - X coordinate (defaults to center)
+ * @param {number} y - Y coordinate (defaults to top)
+ * @param {object} options - Optional configuration
+ */
+function fireConfetti(x = null, y = null, options = {}) {
+    initConfettiCanvas();
+    
+    const centerX = x ?? confettiCanvas.width / 2;
+    const centerY = y ?? confettiCanvas.height * 0.3;
+    const count = options.particleCount || CONFETTI_CONFIG.particleCount;
+    
+    for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i / count) + (Math.random() - 0.5) * (CONFETTI_CONFIG.spread / 180 * Math.PI);
+        confettiParticles.push(createParticle(centerX, centerY, { angle, ...options }));
+    }
+    
+    if (!confettiAnimationId) {
+        updateConfetti();
+    }
+    
+    // Play celebration sound if sounds are enabled
+    if (soundEnabled && !options.silent) {
+        playCelebrationSound(options.intensity || 'normal');
+    }
+}
+
+/**
+ * Fire confetti cannons from both sides
+ */
+function fireConfettiCannons() {
+    initConfettiCanvas();
+    
+    // Left cannon
+    for (let i = 0; i < 75; i++) {
+        const angle = -Math.PI / 4 + (Math.random() - 0.5) * 0.5;
+        confettiParticles.push(createParticle(0, confettiCanvas.height * 0.6, { angle, velocity: 70 }));
+    }
+    
+    // Right cannon
+    for (let i = 0; i < 75; i++) {
+        const angle = Math.PI + Math.PI / 4 + (Math.random() - 0.5) * 0.5;
+        confettiParticles.push(createParticle(confettiCanvas.width, confettiCanvas.height * 0.6, { angle, velocity: 70 }));
+    }
+    
+    if (!confettiAnimationId) {
+        updateConfetti();
+    }
+    
+    if (soundEnabled) {
+        playCelebrationSound('epic');
+    }
+}
+
+/**
+ * Celebration sound effects
+ */
+function playCelebrationSound(intensity = 'normal') {
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        if (intensity === 'epic') {
+            // Fanfare-like sound
+            playNote(audioCtx, 523.25, 0, 0.15); // C5
+            playNote(audioCtx, 659.25, 0.1, 0.15); // E5
+            playNote(audioCtx, 783.99, 0.2, 0.15); // G5
+            playNote(audioCtx, 1046.50, 0.3, 0.3); // C6
+        } else {
+            // Simple celebration chime
+            playNote(audioCtx, 587.33, 0, 0.1); // D5
+            playNote(audioCtx, 880, 0.08, 0.15); // A5
+        }
+    } catch (e) {
+        console.warn('Could not play celebration sound:', e);
+    }
+}
+
+function playNote(audioCtx, frequency, startTime, duration) {
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    
+    oscillator.frequency.value = frequency;
+    oscillator.type = 'sine';
+    
+    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime + startTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + startTime + duration);
+    
+    oscillator.start(audioCtx.currentTime + startTime);
+    oscillator.stop(audioCtx.currentTime + startTime + duration);
+}
+
+/**
+ * Celebration triggers for various milestones
+ */
+const MILESTONE_THRESHOLDS = [100, 200, 300, 500, 750, 1000, 1500, 2000];
+let celebratedMilestones = JSON.parse(localStorage.getItem('pow_celebrated_milestones') || '[]');
+
+/**
+ * Check if a milestone should trigger celebration
+ * @param {number} activityCount - Current activity count
+ */
+function checkMilestoneCelebration(activityCount) {
+    for (const threshold of MILESTONE_THRESHOLDS) {
+        if (activityCount >= threshold && !celebratedMilestones.includes(threshold)) {
+            celebratedMilestones.push(threshold);
+            localStorage.setItem('pow_celebrated_milestones', JSON.stringify(celebratedMilestones));
+            triggerMilestoneCelebration(threshold, activityCount);
+            break; // Only celebrate one at a time
+        }
+    }
+}
+
+/**
+ * Trigger a full milestone celebration
+ */
+function triggerMilestoneCelebration(milestone, total) {
+    // Show milestone toast
+    showMilestoneToast(milestone, total);
+    
+    // Fire confetti based on milestone size
+    if (milestone >= 1000) {
+        fireConfettiCannons();
+        setTimeout(() => fireConfetti(null, null, { particleCount: 200 }), 500);
+    } else if (milestone >= 500) {
+        fireConfettiCannons();
+    } else {
+        fireConfetti(null, null, { particleCount: Math.min(milestone, 200) });
+    }
+    
+    announceToScreenReader(`Congratulations! You've reached ${milestone} activities!`);
+}
+
+/**
+ * Show milestone toast notification
+ */
+function showMilestoneToast(milestone, total) {
+    const toast = document.createElement('div');
+    toast.className = 'milestone-toast';
+    toast.innerHTML = `
+        <div class="milestone-toast-content">
+            <div class="milestone-toast-emoji">🎉</div>
+            <div class="milestone-toast-text">
+                <div class="milestone-toast-title">Milestone Reached!</div>
+                <div class="milestone-toast-subtitle">${milestone} Activities Complete</div>
+            </div>
+            <button class="milestone-toast-close" onclick="this.parentElement.parentElement.remove()">×</button>
+        </div>
+    `;
+    document.body.appendChild(toast);
+    
+    // Animate in
+    requestAnimationFrame(() => {
+        toast.classList.add('show');
+    });
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 5000);
+}
+
+/**
+ * Manual celebration trigger (for testing or special events)
+ */
+function celebrate(type = 'normal') {
+    if (type === 'epic' || type === 'big') {
+        fireConfettiCannons();
+    } else {
+        fireConfetti();
+    }
+}
+
+// Expose celebrate function globally for console access
+window.celebrate = celebrate;
+
+// Check for milestone celebration when activities load
+const originalRenderActivities = typeof renderActivities === 'function' ? renderActivities : null;
+if (originalRenderActivities) {
+    // Hook into activity rendering to check milestones
+    const checkMilestoneHook = function() {
+        const totalEl = document.getElementById('total-actions-value') || document.querySelector('[data-stat="total"]');
+        if (totalEl) {
+            const total = parseInt(totalEl.textContent) || 0;
+            checkMilestoneCelebration(total);
+        }
+    };
+    
+    // Check on initial load
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(checkMilestoneHook, 2000);
+    });
 }

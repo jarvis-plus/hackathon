@@ -16557,3 +16557,179 @@ body.tour-active {
         gap: 1rem;
     }
 }
+
+/* ============================================
+   CONFETTI & MILESTONE CELEBRATIONS
+   ============================================ */
+
+/* Confetti canvas (handled by JS) */
+#confetti-canvas {
+    pointer-events: none;
+}
+
+/* Milestone Toast Notification */
+.milestone-toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-120%);
+    z-index: 10000;
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.milestone-toast.show {
+    transform: translateX(-50%) translateY(0);
+}
+
+.milestone-toast-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, var(--accent) 0%, #00cc88 100%);
+    border-radius: 1rem;
+    box-shadow: 
+        0 4px 20px rgba(0, 255, 170, 0.4),
+        0 0 40px rgba(0, 255, 170, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    animation: milestone-pulse 2s ease-in-out infinite;
+}
+
+@keyframes milestone-pulse {
+    0%, 100% {
+        box-shadow: 
+            0 4px 20px rgba(0, 255, 170, 0.4),
+            0 0 40px rgba(0, 255, 170, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+    50% {
+        box-shadow: 
+            0 4px 30px rgba(0, 255, 170, 0.6),
+            0 0 60px rgba(0, 255, 170, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+}
+
+.milestone-toast-emoji {
+    font-size: 2.5rem;
+    animation: milestone-bounce 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes milestone-bounce {
+    0% { transform: scale(1) rotate(-5deg); }
+    100% { transform: scale(1.1) rotate(5deg); }
+}
+
+.milestone-toast-text {
+    color: #0a0a0a;
+}
+
+.milestone-toast-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.milestone-toast-subtitle {
+    font-size: 0.9rem;
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+.milestone-toast-close {
+    background: rgba(0, 0, 0, 0.2);
+    border: none;
+    color: #0a0a0a;
+    font-size: 1.5rem;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+    margin-left: 0.5rem;
+}
+
+.milestone-toast-close:hover {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+/* Theme variations for milestone toast */
+[data-theme="light"] .milestone-toast-content {
+    background: linear-gradient(135deg, #00cc88 0%, #00aa66 100%);
+}
+
+[data-theme="ocean"] .milestone-toast-content {
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+}
+
+[data-theme="forest"] .milestone-toast-content {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+}
+
+[data-theme="sunset"] .milestone-toast-content {
+    background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);
+}
+
+[data-theme="cyberpunk"] .milestone-toast-content {
+    background: linear-gradient(135deg, #f0f 0%, #0ff 100%);
+    box-shadow: 
+        0 4px 20px rgba(255, 0, 255, 0.4),
+        0 0 40px rgba(0, 255, 255, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Celebration button (optional trigger) */
+.celebrate-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 80px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    z-index: 100;
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: none; /* Hidden by default, shown with keyboard shortcut */
+}
+
+.celebrate-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6);
+}
+
+.celebrate-btn.visible {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .milestone-toast {
+        width: calc(100% - 2rem);
+        max-width: 400px;
+    }
+    
+    .milestone-toast-content {
+        padding: 0.875rem 1rem;
+    }
+    
+    .milestone-toast-emoji {
+        font-size: 2rem;
+    }
+    
+    .milestone-toast-title {
+        font-size: 1rem;
+    }
+    
+    .milestone-toast-subtitle {
+        font-size: 0.8rem;
+    }
+}
