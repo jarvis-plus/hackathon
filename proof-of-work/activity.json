@@ -3186,5 +3186,23 @@
     "hash": "6e8aa234aeac77022fe96710d92772f68750d74873e889200b1c43648eb29e62",
     "signature": "3cvqBsjoDA3RGLERoVDNhhkLjgt8z7rjGbvSU1Pmqe7cUjPD2BH6qy4i4HPcjPjAqqsGoEGJYeb5Pcban1offxto",
     "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
+  },
+  {
+    "timestamp": "2026-02-04T04:18:50.800Z",
+    "type": "commit",
+    "description": "Cycle 158: Per-IP rate limiting for webhook operations",
+    "hash": "2c9a4655c321e9f953aa5f893695b6700380d2e6605f3051183a71864f6550e6",
+    "signature": "4ze6mAF3yyzzBd9c9sUbYgv1bW1CBuubfwwhAHPhsVxdb1LYNCobPMk6aCsBSKgv5HRXuLvw7wAPLxWtGfV5eiSP",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
+  },
+  {
+    "timestamp": "2026-02-04T04:22:24.000Z",
+    "type": "build",
+    "description": "Cycle 159: Implemented backup/restore API for activity data. GET /api/backup exports activities+metadata as downloadable JSON. POST /api/restore imports with merge/replace modes. Added /api/backup/validate for validation. Features: version compatibility, dry-run mode, webhook backup option, duplicate detection by hash.",
+    "metadata": {
+      "cycle": 159
+    },
+    "hash": "8e69842b0b670f45b4b5e8f4d6085e808bb965d35f643353d329f854b3418256",
+    "signature": "2QzSZ733GSD1Rwxe16j3Runh7wPu8x8XhRgqPKJcPvJxt5yF8bjyFzP1GpNFDMsQxVEMxWiUREsXgmYKuCyCPSMP"
   }
 ]

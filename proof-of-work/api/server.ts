@@ -603,6 +603,85 @@ function unauthorizedResponse(message: string): Response {
 }
 
 // ==============================================
+// BACKUP VALIDATION
+// ==============================================
+
+/**
+ * Validate a backup file structure and contents.
+ * 
+ * Checks:
+ * - Required fields (version, format, activities)
+ * - Activity structure (timestamp, type, description required)
+ * - Version compatibility
+ * 
+ * @param backup - The backup object to validate
+ * @returns Object with valid flag, errors array, and warnings array
+ */
+function validateBackup(backup: any): { valid: boolean; errors: string[]; warnings: string[] } {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  
+  // Check required fields
+  if (!backup || typeof backup !== 'object') {
+    errors.push('Backup must be a valid JSON object');
+    return { valid: false, errors, warnings };
+  }
+  
+  if (!backup.version) {
+    errors.push('Missing required field: version');
+  } else if (!backup.version.match(/^\d+\.\d+\.\d+$/)) {
+    warnings.push(`Unusual version format: ${backup.version}`);
+  }
+  
+  if (backup.format && backup.format !== 'jarvis-pow-backup') {
+    warnings.push(`Unknown backup format: ${backup.format}. Expected: jarvis-pow-backup`);
+  }
+  
+  if (!backup.activities) {
+    errors.push('Missing required field: activities');
+  } else if (!Array.isArray(backup.activities)) {
+    errors.push('Field "activities" must be an array');
+  } else {
+    // Validate each activity
+    let invalidCount = 0;
+    for (let i = 0; i < backup.activities.length; i++) {
+      const a = backup.activities[i];
+      if (!a.timestamp) {
+        invalidCount++;
+        if (invalidCount <= 3) errors.push(`Activity ${i}: missing timestamp`);
+      }
+      if (!a.type) {
+        invalidCount++;
+        if (invalidCount <= 3) errors.push(`Activity ${i}: missing type`);
+      }
+      if (!a.description) {
+        invalidCount++;
+        if (invalidCount <= 3) errors.push(`Activity ${i}: missing description`);
+      }
+    }
+    if (invalidCount > 3) {
+      errors.push(`... and ${invalidCount - 3} more validation errors`);
+    }
+  }
+  
+  // Check version compatibility
+  if (backup.version && backup.version.startsWith('2.')) {
+    warnings.push('Backup is from a newer version. Some fields may not be recognized.');
+  }
+  
+  // Webhooks validation (if present)
+  if (backup.webhooks && !Array.isArray(backup.webhooks)) {
+    errors.push('Field "webhooks" must be an array');
+  }
+  
+  return {
+    valid: errors.length === 0,
+    errors,
+    warnings
+  };
+}
+
+// ==============================================
 // ACTIVITY FILE MONITORING
 // ==============================================
 
@@ -1548,6 +1627,221 @@ Colosseum Agent Hackathon 2026`;
           message: 'Test webhook delivery failed. Check your endpoint.',
           url: webhook.url
         }, { status: 502, headers: corsHeaders });
+      }
+    }
+
+    // ==========================================
+    // API: GET /api/backup
+    // Export all data as a downloadable backup file
+    // Includes activities, metadata, and optional webhooks
+    // ==========================================
+    if (path === '/api/backup' && req.method === 'GET') {
+      const includeWebhooks = url.searchParams.get('webhooks') === 'true';
+      
+      const activities = getActivities();
+      const webhooks = includeWebhooks ? getWebhooks().map(w => ({
+        ...w,
+        secret: undefined // Never include secrets in backups
+      })) : undefined;
+      
+      const backup = {
+        version: '1.0.0',
+        format: 'jarvis-pow-backup',
+        createdAt: new Date().toISOString(),
+        server: {
+          version: '1.0.0',
+          wallet: 'AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX',
+          dashboardUrl: 'https://jarvis.tail6a9bde.ts.net/pow/'
+        },
+        stats: {
+          totalActivities: activities.length,
+          onChainActivities: activities.filter((a: any) => a.signature || a.proof?.txSignature).length,
+          firstActivity: activities[0]?.timestamp || null,
+          lastActivity: activities[activities.length - 1]?.timestamp || null,
+          activityTypes: activities.reduce((acc: Record<string, number>, a: any) => {
+            acc[a.type] = (acc[a.type] || 0) + 1;
+            return acc;
+          }, {})
+        },
+        activities,
+        ...(includeWebhooks && { webhooks })
+      };
+      
+      // Generate filename with timestamp
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      const filename = `jarvis-pow-backup-${timestamp}.json`;
+      
+      return new Response(JSON.stringify(backup, null, 2), {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+          'Content-Disposition': `attachment; filename="${filename}"`,
+          'X-Backup-Version': '1.0.0',
+          'X-Activity-Count': String(activities.length)
+        }
+      });
+    }
+
+    // ==========================================
+    // POST /api/backup/validate
+    // Validate a backup file without importing
+    // ==========================================
+    if (path === '/api/backup/validate' && req.method === 'POST') {
+      try {
+        const body = await req.json() as any;
+        
+        const validation = validateBackup(body);
+        
+        return Response.json({
+          valid: validation.valid,
+          errors: validation.errors,
+          warnings: validation.warnings,
+          summary: validation.valid ? {
+            version: body.version,
+            createdAt: body.createdAt,
+            activityCount: body.activities?.length || 0,
+            hasWebhooks: !!body.webhooks,
+            webhookCount: body.webhooks?.length || 0
+          } : null
+        }, { 
+          status: validation.valid ? 200 : 400,
+          headers: corsHeaders 
+        });
+        
+      } catch (e) {
+        return Response.json({
+          valid: false,
+          errors: ['Invalid JSON format'],
+          warnings: []
+        }, { status: 400, headers: corsHeaders });
+      }
+    }
+
+    // ==========================================
+    // API: POST /api/restore
+    // Restore activities from a backup file
+    // Requires authentication when enabled
+    // ==========================================
+    if (path === '/api/restore' && req.method === 'POST') {
+      const mode = url.searchParams.get('mode') || 'merge'; // 'merge' or 'replace'
+      const dryRun = url.searchParams.get('dry_run') === 'true';
+      const includeWebhooks = url.searchParams.get('webhooks') === 'true';
+      
+      try {
+        const body = await req.json() as any;
+        
+        // Validate backup format
+        const validation = validateBackup(body);
+        if (!validation.valid) {
+          return Response.json({
+            success: false,
+            error: 'Invalid backup format',
+            details: validation.errors
+          }, { status: 400, headers: corsHeaders });
+        }
+        
+        const backupActivities = body.activities || [];
+        const currentActivities = getActivities();
+        
+        let resultActivities: any[];
+        let added = 0;
+        let skipped = 0;
+        let replaced = 0;
+        
+        if (mode === 'replace') {
+          // Replace mode: complete overwrite
+          resultActivities = backupActivities;
+          replaced = currentActivities.length;
+          added = backupActivities.length;
+        } else {
+          // Merge mode: add only new activities (by hash)
+          const existingHashes = new Set(
+            currentActivities.map((a: any) => a.hash || a.proof?.hash).filter(Boolean)
+          );
+          
+          resultActivities = [...currentActivities];
+          
+          for (const activity of backupActivities) {
+            const hash = activity.hash || activity.proof?.hash;
+            if (hash && existingHashes.has(hash)) {
+              skipped++;
+            } else {
+              resultActivities.push(activity);
+              added++;
+            }
+          }
+          
+          // Sort by timestamp
+          resultActivities.sort((a: any, b: any) => 
+            new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+          );
+        }
+        
+        // Handle webhooks if requested
+        let webhooksAdded = 0;
+        let webhooksSkipped = 0;
+        
+        if (includeWebhooks && body.webhooks) {
+          const currentWebhooks = getWebhooks();
+          const existingUrls = new Set(currentWebhooks.map(w => w.url));
+          
+          const newWebhooks = body.webhooks.filter((w: any) => !existingUrls.has(w.url));
+          webhooksAdded = newWebhooks.length;
+          webhooksSkipped = body.webhooks.length - newWebhooks.length;
+          
+          if (!dryRun && newWebhooks.length > 0) {
+            // Reset failure counts and ensure active
+            const sanitizedWebhooks = newWebhooks.map((w: any) => ({
+              ...w,
+              id: randomUUID(), // New IDs for restored webhooks
+              failureCount: 0,
+              active: true,
+              lastDelivery: undefined
+            }));
+            saveWebhooks([...currentWebhooks, ...sanitizedWebhooks]);
+          }
+        }
+        
+        // Write activities if not dry run
+        if (!dryRun) {
+          writeFileSync(ACTIVITY_FILE, JSON.stringify(resultActivities, null, 2));
+          
+          // Update internal state
+          lastActivityCount = resultActivities.length;
+          const stats = statSync(ACTIVITY_FILE);
+          lastActivityMtime = stats.mtimeMs;
+          
+          console.log(`📥 Restore complete: ${added} added, ${skipped} skipped, mode=${mode}`);
+        }
+        
+        return Response.json({
+          success: true,
+          dryRun,
+          mode,
+          activities: {
+            before: currentActivities.length,
+            after: resultActivities.length,
+            added,
+            skipped,
+            ...(mode === 'replace' && { replaced })
+          },
+          ...(includeWebhooks && {
+            webhooks: {
+              added: webhooksAdded,
+              skipped: webhooksSkipped
+            }
+          }),
+          message: dryRun 
+            ? `Dry run: would ${mode === 'replace' ? 'replace' : 'add'} ${added} activities`
+            : `Restored ${added} activities (${skipped} duplicates skipped)`
+        }, { headers: corsHeaders });
+        
+      } catch (e) {
+        return Response.json({
+          success: false,
+          error: 'Failed to parse backup file',
+          message: String(e)
+        }, { status: 400, headers: corsHeaders });
       }
     }
 
