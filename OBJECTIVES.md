@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 21:20 PST
-**Cycle:** 172
+**Last Updated:** 2026-02-03 21:16 PST
+**Cycle:** 173
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -92,10 +92,30 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Activity timeline slider (zoom in/out on time ranges) ✅ Cycle 170
 - [x] Social sharing cards (OG images for activities) ✅ Cycle 171
 - [x] Activity streak tracking (consecutive days, milestones) ✅ Cycle 172
+- [x] Activity bookmarking/favorites (localStorage-based) ✅ Cycle 173
 
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 173 (Activity Bookmarking/Favorites)
+- Implemented client-side bookmarking system using localStorage
+- **Features**:
+  - Star icon (⭐/☆) on each activity card to toggle bookmark
+  - Bookmark filter button in filter section with count badge
+  - "Show Bookmarked Only" toggle to filter down to favorites
+  - Keyboard shortcuts: `b` to toggle filter, `B` to bookmark focused activity
+  - Both keyboard shortcuts modals updated with new shortcuts
+- **Implementation**:
+  - ~115 lines CSS for `.bookmark-btn`, `.bookmarked-badge`, `.bookmark-filter-btn`
+  - ~175 lines JS with functions: `getBookmarks()`, `saveBookmarks()`, `isBookmarked()`, `toggleBookmark()`, `renderBookmarkButton()`, `updateBookmarkCount()`, `toggleBookmarkFilter()`
+  - ~8 lines HTML for bookmark filter button
+- **Design Choices**:
+  - Client-side localStorage vs server-side to preserve privacy and simplicity
+  - Star icon distinct from pin (📌) which is server-side
+  - Hover/focus states with gold color for visual feedback
+  - Dark/light theme support
+- 443 activities, all signed on-chain
 
 ### Cycle 172 (Activity Streak Tracking)
 - Implemented gamification through consecutive day tracking
@@ -191,26 +211,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
   - Health status and recommendations
 - ~180 lines added to CSS, ~50 to HTML, ~50 to JS
 - 432 activities, all signed on-chain
-
-### Cycle 168 (Activity Diff View)
-- Implemented activity comparison feature to view changes between same-type activities
-- **New Endpoint**: `GET /api/activities/:hash/diff`
-- **Response Includes**:
-  - Current and previous activity details (same type)
-  - Time delta with human-readable display (e.g., "2h 15m", "3d 4h")
-  - Description similarity percentage (LCS-based word matching)
-  - Metadata diff (added/removed/changed fields)
-- **Dashboard UI**:
-  - Compare button (⚖️) on activity cards (shows on hover)
-  - Modal with side-by-side activity comparison
-  - Color-coded similarity indicator (green/yellow/red)
-  - Metadata changes visualization with +/- styling
-  - Keyboard accessible (Escape to close)
-  - Light/dark theme support
-  - Mobile responsive (stacked layout on small screens)
-- **OpenAPI Updated**: Added ActivityDiff schema with full documentation
-- **Files Modified**: server.ts (~160 lines), openapi.json (~70 lines), app.js (~200 lines), dashboard.css (~350 lines)
-- 430 activities, all signed on-chain
 
 ---
 
