@@ -75,6 +75,9 @@
                 <button class="sound-toggle muted" id="notificationToggle" onclick="toggleNotifications()" title="Browser notifications - click to enable" aria-pressed="false" aria-label="Browser notifications: Off">
                     🔕 Notifs Off
                 </button>
+                <button class="sound-toggle" id="focusModeToggle" onclick="toggleFocusMode()" title="Focus mode - distraction-free view (Z)" aria-pressed="false" aria-label="Toggle focus mode">
+                    🎯 Focus
+                </button>
             </div>
         </header>
 
@@ -507,6 +510,55 @@
                             <span>Yesterday</span>
                             <span>Today</span>
                         </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Achievement Badges -->
+            <div class="chart-card achievements-panel" style="margin-top: 1.5rem;" id="achievements-panel" aria-busy="true">
+                <div class="achievements-header">
+                    <h3>🏅 Achievement Badges</h3>
+                    <div class="achievements-summary" id="achievementsSummary">
+                        <div class="achievements-rank">
+                            <span class="rank-emoji" id="rankEmoji">🌱</span>
+                            <span class="rank-name" id="rankName">Beginner</span>
+                        </div>
+                        <div class="achievements-stats">
+                            <span class="achievements-earned" id="achievementsEarned">0</span>
+                            <span class="achievements-divider">/</span>
+                            <span class="achievements-total" id="achievementsTotal">0</span>
+                            <span class="achievements-label">badges</span>
+                        </div>
+                        <div class="achievements-points">
+                            <span class="points-value" id="achievementsPoints">0</span>
+                            <span class="points-label">pts</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="achievements-progress-bar">
+                    <div class="achievements-progress-fill" id="achievementsProgressFill" style="width: 0%"></div>
+                </div>
+                
+                <div class="achievements-next" id="achievementsNext">
+                    <div class="next-title">🎯 Next to Unlock</div>
+                    <div class="next-badges" id="nextBadges">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+                
+                <div class="achievements-categories" id="achievementsCategories">
+                    <button class="achievement-category-btn active" data-category="all" onclick="filterAchievements('all')">All</button>
+                    <button class="achievement-category-btn" data-category="activity" onclick="filterAchievements('activity')">📊 Activity</button>
+                    <button class="achievement-category-btn" data-category="streak" onclick="filterAchievements('streak')">🔥 Streak</button>
+                    <button class="achievement-category-btn" data-category="onchain" onclick="filterAchievements('onchain')">⛓️ On-Chain</button>
+                    <button class="achievement-category-btn" data-category="diversity" onclick="filterAchievements('diversity')">🎨 Diversity</button>
+                    <button class="achievement-category-btn" data-category="special" onclick="filterAchievements('special')">✨ Special</button>
+                </div>
+                
+                <div class="achievements-grid" id="achievementsGrid">
+                    <div class="chart-loading" id="achievements-loading">
+                        <div class="loading-spinner"></div>
+                        <span class="loading-text">Loading achievements...</span>
                     </div>
                 </div>
             </div>

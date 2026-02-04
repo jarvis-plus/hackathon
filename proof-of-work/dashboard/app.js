@@ -2200,6 +2200,130 @@ function hideHeatmapTooltip() {
 }
 
 // ============================================
+// ACHIEVEMENT BADGES
+// ============================================
+
+let achievementsData = null;
+let achievementsFilter = 'all';
+
+/**
+ * Load and render achievement badges from the API
+ * Fetches earned status, progress, and tier information
+ */
+async function loadAchievements() {
+    try {
+        const res = await fetch(basePath + '/api/achievements');
+        if (!res.ok) throw new Error('Failed to load achievements');
+        achievementsData = await res.json();
+        renderAchievements();
+    } catch (e) {
+        console.error('Error loading achievements:', e);
+        const loading = document.getElementById('achievements-loading');
+        if (loading) {
+            loading.innerHTML = '<span class="loading-text">Unable to load achievements</span>';
+        }
+    }
+}
+
+/**
+ * Render achievement badges based on loaded data and current filter
+ */
+function renderAchievements() {
+    if (!achievementsData) return;
+    
+    // Hide loading state
+    const loading = document.getElementById('achievements-loading');
+    if (loading) loading.style.display = 'none';
+    const panel = document.getElementById('achievements-panel');
+    if (panel) panel.setAttribute('aria-busy', 'false');
+    
+    const { summary, nextToUnlock, byCategory, allBadges } = achievementsData;
+    
+    // Update summary
+    document.getElementById('rankEmoji').textContent = summary.rankEmoji;
+    document.getElementById('rankName').textContent = summary.rank;
+    document.getElementById('achievementsEarned').textContent = summary.earnedBadges;
+    document.getElementById('achievementsTotal').textContent = summary.totalBadges;
+    document.getElementById('achievementsPoints').textContent = summary.totalPoints;
+    document.getElementById('achievementsProgressFill').style.width = summary.completionPercent + '%';
+    
+    // Render next to unlock
+    const nextContainer = document.getElementById('nextBadges');
+    if (nextToUnlock && nextToUnlock.length > 0) {
+        nextContainer.innerHTML = nextToUnlock.map(badge => `
+            <div class="next-badge">
+                <div class="next-badge-emoji">${badge.emoji}</div>
+                <div class="next-badge-info">
+                    <div class="next-badge-name">${badge.name}</div>
+                    <div class="next-badge-progress">
+                        <div class="next-badge-bar">
+                            <div class="next-badge-bar-fill" style="width: ${badge.progress}%"></div>
+                        </div>
+                        <span class="next-badge-percent">${badge.progress}%</span>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    } else {
+        nextContainer.innerHTML = '<div class="next-badge"><span>All badges unlocked! 🎉</span></div>';
+    }
+    
+    // Render badges grid based on filter
+    const grid = document.getElementById('achievementsGrid');
+    let badges = allBadges;
+    
+    if (achievementsFilter !== 'all') {
+        badges = byCategory[achievementsFilter] || [];
+    }
+    
+    // Sort: earned first, then by progress descending
+    badges = [...badges].sort((a, b) => {
+        if (a.earned !== b.earned) return b.earned ? 1 : -1;
+        return b.progress - a.progress;
+    });
+    
+    if (badges.length === 0) {
+        grid.innerHTML = '<div class="empty-state"><p>No badges in this category</p></div>';
+        return;
+    }
+    
+    grid.innerHTML = badges.map(badge => `
+        <div class="achievement-badge ${badge.earned ? 'earned' : ''}" data-badge-id="${badge.id}">
+            ${badge.earned ? '<div class="badge-earned-check">✓</div>' : ''}
+            <div class="badge-emoji">${badge.emoji}</div>
+            <div class="badge-content">
+                <div class="badge-header">
+                    <span class="badge-name">${badge.name}</span>
+                    ${badge.tier ? `<span class="badge-tier ${badge.tier}">${badge.tier}</span>` : ''}
+                </div>
+                <div class="badge-description">${badge.description}</div>
+                <div class="badge-progress">
+                    <div class="badge-progress-bar">
+                        <div class="badge-progress-fill" style="width: ${badge.progress}%"></div>
+                    </div>
+                    <span class="badge-progress-text">${badge.earned ? '✓' : badge.progress + '%'}</span>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+/**
+ * Filter achievements by category
+ * @param {string} category - Category to filter by ('all', 'activity', 'streak', 'onchain', 'diversity', 'special')
+ */
+function filterAchievements(category) {
+    achievementsFilter = category;
+    
+    // Update active button
+    document.querySelectorAll('.achievement-category-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.category === category);
+    });
+    
+    renderAchievements();
+}
+
+// ============================================
 // ACTIVITY VELOCITY CHART
 // ============================================
 
@@ -3054,6 +3178,7 @@ async function loadActivities() {
         renderGoalTracker(activities);
         populateTagFilters(activities);
         initTimelineSlider(activities);
+        loadAchievements();
     } catch (e) {
         try {
             const res = await fetch(basePath + '/activity.json');
@@ -5378,6 +5503,7 @@ const KEYBOARD_SHORTCUTS = {
     'l': { action: 'loadMore', description: 'Load more activities' },
     'b': { action: 'toggleBookmarkFilter', description: 'Toggle bookmark filter' },
     'B': { action: 'bookmarkFocused', description: 'Bookmark focused activity' },
+    'z': { action: 'toggleFocusMode', description: 'Toggle focus mode' },
     '?': { action: 'showShortcuts', description: 'Show keyboard shortcuts' },
 };
 
@@ -5425,7 +5551,8 @@ function createShortcutsModal() {
                     <div class="shortcut-row"><kbd>Shift+b</kbd> Bookmark focused activity</div>
                 </div>
                 <div class="shortcut-section">
-                    <h4>Help</h4>
+                    <h4>View</h4>
+                    <div class="shortcut-row"><kbd>z</kbd> Toggle focus mode</div>
                     <div class="shortcut-row"><kbd>?</kbd> Show this help</div>
                 </div>
             </div>
@@ -5476,7 +5603,9 @@ function handleShortcutAction(action) {
     } else if (action === 'focusSearch') {
         focusSearchInput();
     } else if (action === 'clearFocus') {
-        if (shortcutsModalOpen) {
+        if (focusModeActive) {
+            hideFocusMode();
+        } else if (shortcutsModalOpen) {
             hideShortcutsModal();
         } else {
             const searchInput = document.getElementById('activitySearch');
@@ -5485,6 +5614,8 @@ function handleShortcutAction(action) {
                 clearSearch();
             }
         }
+    } else if (action === 'toggleFocusMode') {
+        toggleFocusMode();
     } else if (action === 'resetFilters') {
         resetFilters();
     } else if (action === 'showShortcuts') {
@@ -6676,7 +6807,8 @@ createShortcutsModal = function() {
                     <div class="shortcut-row"><kbd>Shift+b</kbd> Bookmark focused activity</div>
                 </div>
                 <div class="shortcut-section">
-                    <h4>Help</h4>
+                    <h4>View</h4>
+                    <div class="shortcut-row"><kbd>z</kbd> Toggle focus mode</div>
                     <div class="shortcut-row"><kbd>?</kbd> Show this help</div>
                 </div>
             </div>
@@ -7138,3 +7270,488 @@ function updatePerfCard(id, value) {
 }
 
 // (Performance tab switching is handled in the main switchTab function above)
+
+// ============================================
+// FOCUS MODE (Zen Mode) - Distraction-free view
+// ============================================
+
+let focusModeActive = false;
+
+/**
+ * Create the Focus Mode overlay HTML
+ */
+function createFocusModeOverlay() {
+    if (document.getElementById('focus-mode-overlay')) return;
+    
+    const overlay = document.createElement('div');
+    overlay.id = 'focus-mode-overlay';
+    overlay.className = 'focus-mode-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', 'Focus mode - distraction-free view');
+    
+    overlay.innerHTML = `
+        <div class="focus-mode-header">
+            <div class="focus-mode-title">
+                <span class="focus-icon">🎯</span>
+                <h2>Focus Mode</h2>
+            </div>
+            <button class="focus-mode-close" onclick="toggleFocusMode()" title="Exit focus mode (Z)" aria-label="Close focus mode">×</button>
+        </div>
+        <div class="focus-mode-stats" id="focusModeStats">
+            <!-- Stats populated by JS -->
+        </div>
+        <div class="focus-activities">
+            <div class="focus-activities-header">
+                <span class="focus-activities-title">
+                    <span class="focus-live-dot"></span>
+                    Latest Activities
+                </span>
+            </div>
+            <div class="focus-activity-list" id="focusActivityList">
+                <!-- Activities populated by JS -->
+            </div>
+        </div>
+        <div class="focus-mode-footer">
+            Press <kbd>Z</kbd> or <kbd>Esc</kbd> to exit focus mode
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
+}
+
+/**
+ * Toggle Focus Mode on/off
+ */
+function toggleFocusMode() {
+    focusModeActive = !focusModeActive;
+    
+    if (focusModeActive) {
+        showFocusMode();
+    } else {
+        hideFocusMode();
+    }
+}
+
+/**
+ * Show Focus Mode overlay
+ */
+function showFocusMode() {
+    createFocusModeOverlay();
+    
+    const overlay = document.getElementById('focus-mode-overlay');
+    overlay.classList.add('visible');
+    document.body.style.overflow = 'hidden';
+    focusModeActive = true;
+    
+    // Populate with current data
+    updateFocusModeContent();
+    
+    // Focus the close button for keyboard nav
+    const closeBtn = overlay.querySelector('.focus-mode-close');
+    if (closeBtn) {
+        setTimeout(() => closeBtn.focus(), 50);
+    }
+    
+    announceToScreenReader('Focus mode activated. Showing key stats and latest activities.');
+}
+
+/**
+ * Hide Focus Mode overlay
+ */
+function hideFocusMode() {
+    const overlay = document.getElementById('focus-mode-overlay');
+    if (overlay) {
+        overlay.classList.remove('visible');
+    }
+    document.body.style.overflow = '';
+    focusModeActive = false;
+    announceToScreenReader('Focus mode closed.');
+}
+
+/**
+ * Update Focus Mode content with current data
+ */
+function updateFocusModeContent() {
+    const activities = window.cachedActivities || [];
+    
+    // Update stats
+    const statsContainer = document.getElementById('focusModeStats');
+    if (statsContainer) {
+        const totalActivities = activities.length;
+        const onChainCount = activities.filter(a => a.signature).length;
+        const onChainPercent = totalActivities > 0 ? Math.round((onChainCount / totalActivities) * 100) : 0;
+        
+        // Calculate streak (simplified - count consecutive days with activity)
+        const streakInfo = calculateFocusStreak(activities);
+        
+        statsContainer.innerHTML = `
+            <div class="focus-stat-card">
+                <span class="focus-stat-icon">📊</span>
+                <div class="focus-stat-value">${totalActivities}</div>
+                <div class="focus-stat-label">Total Activities</div>
+            </div>
+            <div class="focus-stat-card">
+                <span class="focus-stat-icon">⛓️</span>
+                <div class="focus-stat-value onchain">${onChainPercent}%</div>
+                <div class="focus-stat-label">On-Chain Verified</div>
+            </div>
+            <div class="focus-stat-card">
+                <span class="focus-stat-icon">🔥</span>
+                <div class="focus-stat-value streak">${streakInfo.current}</div>
+                <div class="focus-stat-label">Day Streak</div>
+            </div>
+        `;
+    }
+    
+    // Update activities list (show latest 5)
+    const activityList = document.getElementById('focusActivityList');
+    if (activityList) {
+        const latest5 = activities.slice(0, 5);
+        
+        if (latest5.length === 0) {
+            activityList.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 2rem;">No activities yet</div>';
+            return;
+        }
+        
+        activityList.innerHTML = latest5.map(activity => {
+            const emoji = getActivityEmoji(activity.type);
+            const timestamp = new Date(activity.timestamp);
+            const timeAgo = formatTimeAgo(timestamp);
+            const isOnChain = !!activity.signature;
+            
+            return `
+                <div class="focus-activity-item">
+                    <div class="focus-activity-emoji">${emoji}</div>
+                    <div class="focus-activity-content">
+                        <div class="focus-activity-desc">${escapeHtml(activity.description || activity.content || 'No description')}</div>
+                        <div class="focus-activity-meta">
+                            <span class="focus-activity-type">${activity.type}</span>
+                            <span>${timeAgo}</span>
+                            ${isOnChain ? '<span class="focus-activity-onchain">⛓️ On-chain</span>' : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+}
+
+/**
+ * Calculate streak for focus mode
+ */
+function calculateFocusStreak(activities) {
+    if (!activities || activities.length === 0) {
+        return { current: 0, longest: 0 };
+    }
+    
+    // Get unique days with activities
+    const days = new Set();
+    activities.forEach(a => {
+        const date = new Date(a.timestamp).toISOString().split('T')[0];
+        days.add(date);
+    });
+    
+    const sortedDays = Array.from(days).sort().reverse();
+    
+    // Count consecutive days from today/yesterday
+    let currentStreak = 0;
+    const today = new Date().toISOString().split('T')[0];
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    
+    // Start counting if today or yesterday has activity
+    if (sortedDays.includes(today) || sortedDays.includes(yesterday)) {
+        let checkDate = new Date(sortedDays[0]);
+        
+        for (let i = 0; i < sortedDays.length; i++) {
+            const expected = new Date(checkDate);
+            expected.setDate(expected.getDate() - i);
+            const expectedStr = expected.toISOString().split('T')[0];
+            
+            if (sortedDays[i] === expectedStr) {
+                currentStreak++;
+            } else {
+                break;
+            }
+        }
+    }
+    
+    return { current: currentStreak, longest: currentStreak };
+}
+
+/**
+ * Get emoji for activity type
+ */
+function getActivityEmoji(type) {
+    const emojis = {
+        'commit': '📝',
+        'build': '🔨',
+        'trade': '💰',
+        'message': '💬',
+        'email': '📧',
+        'calendar': '📅',
+        'tweet': '🐦',
+        'decision': '🧠',
+        'heartbeat': '💓',
+        'browser': '🌐',
+        'milestone': '🏆',
+        'default': '⚡'
+    };
+    return emojis[type?.toLowerCase()] || emojis.default;
+}
+
+/**
+ * Format time ago helper
+ */
+function formatTimeAgo(date) {
+    const now = new Date();
+    const diffMs = now - date;
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHr = Math.floor(diffMin / 60);
+    const diffDay = Math.floor(diffHr / 24);
+    
+    if (diffSec < 60) return 'Just now';
+    if (diffMin < 60) return `${diffMin}m ago`;
+    if (diffHr < 24) return `${diffHr}h ago`;
+    if (diffDay < 7) return `${diffDay}d ago`;
+    return date.toLocaleDateString();
+}
+
+/**
+ * Escape HTML helper
+ */
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// ======== MINI ACTIVITY PREVIEW ON HOVER ========
+// Shows a quick peek tooltip when hovering over activity cards
+
+let activityPreviewEl = null;
+let activityPreviewTimeout = null;
+let currentPreviewActivity = null;
+
+/**
+ * Initialize the activity preview system
+ */
+function initActivityPreview() {
+    // Create the preview element if it doesn't exist
+    if (!activityPreviewEl) {
+        activityPreviewEl = document.createElement('div');
+        activityPreviewEl.className = 'activity-preview';
+        activityPreviewEl.setAttribute('role', 'tooltip');
+        activityPreviewEl.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(activityPreviewEl);
+    }
+    
+    // Attach hover listeners to activity feed
+    const feed = document.querySelector('.activity-feed');
+    if (feed) {
+        feed.addEventListener('mouseenter', handleActivityHover, true);
+        feed.addEventListener('mouseleave', handleActivityLeave, true);
+        feed.addEventListener('mousemove', handleActivityMove, true);
+    }
+}
+
+/**
+ * Handle mouse entering an activity item
+ */
+function handleActivityHover(e) {
+    const item = e.target.closest('.activity-item');
+    if (!item) return;
+    
+    // Clear any existing timeout
+    if (activityPreviewTimeout) {
+        clearTimeout(activityPreviewTimeout);
+    }
+    
+    // Delay showing preview (200ms debounce for smooth UX)
+    activityPreviewTimeout = setTimeout(() => {
+        showActivityPreview(item, e);
+    }, 200);
+}
+
+/**
+ * Handle mouse leaving an activity item
+ */
+function handleActivityLeave(e) {
+    const item = e.target.closest('.activity-item');
+    const relatedTarget = e.relatedTarget;
+    
+    // Check if we're leaving the activity item
+    if (item && (!relatedTarget || !item.contains(relatedTarget))) {
+        hideActivityPreview();
+    }
+    
+    // Clear pending timeout
+    if (activityPreviewTimeout) {
+        clearTimeout(activityPreviewTimeout);
+        activityPreviewTimeout = null;
+    }
+}
+
+/**
+ * Handle mouse movement for preview positioning
+ */
+function handleActivityMove(e) {
+    const item = e.target.closest('.activity-item');
+    if (!item || !activityPreviewEl.classList.contains('visible')) return;
+    
+    // Update position to follow cursor (with offset)
+    positionPreview(e.clientX, e.clientY);
+}
+
+/**
+ * Show the activity preview for an item
+ */
+function showActivityPreview(item, event) {
+    const hash = item.dataset.hash;
+    if (!hash || !allActivities) return;
+    
+    // Find the activity data
+    const activity = allActivities.find(a => (a.hash || a.proof?.hash) === hash);
+    if (!activity) return;
+    
+    currentPreviewActivity = activity;
+    
+    // Render the preview content
+    activityPreviewEl.innerHTML = renderPreviewContent(activity);
+    activityPreviewEl.setAttribute('aria-hidden', 'false');
+    
+    // Position and show
+    positionPreview(event.clientX, event.clientY);
+    activityPreviewEl.classList.add('visible');
+}
+
+/**
+ * Hide the activity preview
+ */
+function hideActivityPreview() {
+    if (activityPreviewEl) {
+        activityPreviewEl.classList.remove('visible');
+        activityPreviewEl.setAttribute('aria-hidden', 'true');
+    }
+    currentPreviewActivity = null;
+}
+
+/**
+ * Position the preview tooltip near the cursor
+ */
+function positionPreview(x, y) {
+    if (!activityPreviewEl) return;
+    
+    const padding = 16;
+    const previewRect = activityPreviewEl.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    // Calculate position (prefer below and to the right of cursor)
+    let left = x + padding;
+    let top = y + padding;
+    
+    // Flip horizontally if going off-screen
+    if (left + previewRect.width > viewportWidth - padding) {
+        left = x - previewRect.width - padding;
+    }
+    
+    // Flip vertically if going off-screen
+    const flipVertical = top + previewRect.height > viewportHeight - padding;
+    if (flipVertical) {
+        top = y - previewRect.height - padding;
+        activityPreviewEl.classList.add('flip-arrow');
+    } else {
+        activityPreviewEl.classList.remove('flip-arrow');
+    }
+    
+    // Ensure minimum bounds
+    left = Math.max(padding, left);
+    top = Math.max(padding, top);
+    
+    activityPreviewEl.style.left = `${left}px`;
+    activityPreviewEl.style.top = `${top}px`;
+}
+
+/**
+ * Render the preview content HTML
+ */
+function renderPreviewContent(activity) {
+    const hash = activity.hash || activity.proof?.hash || '';
+    const type = activity.type || 'activity';
+    const emoji = getActivityEmoji(type);
+    const timestamp = new Date(activity.timestamp);
+    const timeAgo = formatTimeAgo(timestamp);
+    const formattedTime = timestamp.toLocaleString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+    });
+    
+    const isOnChain = !!(activity.signature || activity.proof?.signature);
+    const wallet = activity.wallet;
+    const tags = activity.tags || [];
+    const isPinned = !!activity.pinned;
+    const hasNotes = !!activity.notes;
+    
+    // Tags HTML
+    const tagsHtml = tags.length > 0 
+        ? `<div class="preview-tags">${tags.slice(0, 5).map(t => `<span class="preview-tag">${escapeHtml(t)}</span>`).join('')}</div>`
+        : '';
+    
+    // Meta items
+    const metaItems = [];
+    
+    if (isOnChain) {
+        metaItems.push(`<span class="preview-meta-item onchain">⛓️ On-chain verified</span>`);
+    } else {
+        metaItems.push(`<span class="preview-meta-item pending">⏳ Pending signature</span>`);
+    }
+    
+    if (wallet) {
+        const shortWallet = wallet.slice(0, 4) + '...' + wallet.slice(-4);
+        metaItems.push(`<span class="preview-meta-item">👛 ${shortWallet}</span>`);
+    }
+    
+    if (isPinned) {
+        metaItems.push(`<span class="preview-meta-item">📌 Pinned</span>`);
+    }
+    
+    if (hasNotes) {
+        metaItems.push(`<span class="preview-meta-item">📝 Has notes</span>`);
+    }
+    
+    // Hash display
+    const hashDisplay = hash ? `<span class="preview-meta-item">🔗 ${hash.slice(0, 8)}...${hash.slice(-4)}</span>` : '';
+    
+    return `
+        <div class="preview-header">
+            <div class="preview-emoji">${emoji}</div>
+            <div class="preview-title-group">
+                <div class="preview-type type-${type}">${type}</div>
+                <div class="preview-time" title="${formattedTime}">${timeAgo}</div>
+            </div>
+        </div>
+        <div class="preview-desc">${escapeHtml(activity.description || '')}</div>
+        ${tagsHtml}
+        <div class="preview-meta">
+            ${metaItems.join('')}
+            ${hashDisplay}
+        </div>
+        <div class="preview-footer">
+            <span>💡 Click for full details</span>
+            <kbd>Enter</kbd>
+        </div>
+    `;
+}
+
+// Initialize activity preview when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initActivityPreview);
+} else {
+    // DOM already loaded, init now
+    setTimeout(initActivityPreview, 100);
+}

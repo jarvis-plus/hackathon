@@ -3618,5 +3618,32 @@
     "hash": "8fb91204778e72c9e63629a945073177c4231fa5d362b748fb7438c3bc383ac0",
     "signature": "Uo6FFcVgocangbmdNSSFQUEsZ9WCc86oKSyQAE3CUEsiimBH7UccfcUdApZ8SfYMaMdqcss67VGgKnYWUvVWCuG",
     "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
+  },
+  {
+    "timestamp": "2026-02-04T05:24:54.031Z",
+    "type": "commit",
+    "description": "sign: cycle 174 activities",
+    "hash": "039cce98f8644fae5eb539356fe70350e9040a56ea56e16765883b328f18dc01",
+    "signature": "yCCeCEH8k3vDTrvRKM36FgZfbv39SJ7S5y43KXNjbD1zr62SrGvc8cVPZEFnErJZjJ7QWRRQmgyHMRfJjEDccSa",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
+  },
+  {
+    "timestamp": "2026-02-04T05:27:46.268Z",
+    "type": "build",
+    "description": "Cycle 174: Implemented Focus Mode (Zen Mode) - distraction-free view with key stats and latest 5 activities. Added 'Z' keyboard shortcut, Focus button in header, CSS overlay styling. Features: total activities count, on-chain percentage with gradient, streak counter, latest 5 activities with type emoji and time ago display.",
+    "metadata": {
+      "cycle": 174
+    },
+    "hash": "605a77f2e6437ea76a836293eb31ca79e213007ec122b819ad6bbdbb3351d5b4",
+    "signature": "2Xw96nYeu8isRafSuTR7d7mcFwFC1MGYCUjWwZKV3Qd6bmvQjS3iZzT4EZu93ZUQsUc28HBQeK1JXvbwS5WY4QMw",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
+  },
+  {
+    "timestamp": "2026-02-04T05:28:02.898Z",
+    "type": "Cycle 175: Implemented mini activity preview on hover - floating tooltip shows type emoji, description, timestamp, on-chain status, wallet, tags, pinned/notes status when hovering over activity cards. ~180 lines CSS + ~190 lines JS. Touch devices excluded (tap to open instead).",
+    "description": "build",
+    "hash": "824a4d7af1ef146d329136aaa85299944575c22aab0a58420f9fe8271e0fef6b",
+    "signature": "33DwCRSV16puDaSy3wjEksyLnjawRUzfaedHKt5xAHwRhDT8g8Dvpd3CeveDRHRGyAj23rXYbCTtj8p94cQNu625",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
   }
 ]

@@ -492,6 +492,26 @@
         }
       }
     },
+    "/api/achievements": {
+      "get": {
+        "tags": ["Stats"],
+        "summary": "Get achievement badges",
+        "description": "Returns all achievement badges with earned status, progress, and points. Badges are organized by category (activity, streak, onchain, diversity, special) with tier levels (bronze, silver, gold, platinum, diamond).",
+        "operationId": "getAchievements",
+        "responses": {
+          "200": {
+            "description": "Achievement badges with summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Achievements"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/health": {
       "get": {
         "tags": ["System"],
@@ -1735,6 +1755,128 @@
           "daysUntilNextMilestone": {
             "type": "integer",
             "description": "Days remaining to reach the next milestone"
+          }
+        }
+      },
+      "AchievementBadge": {
+        "type": "object",
+        "description": "An achievement badge with earned status and progress",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique badge identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the badge"
+          },
+          "description": {
+            "type": "string",
+            "description": "How to earn this badge"
+          },
+          "emoji": {
+            "type": "string",
+            "description": "Visual emoji representation"
+          },
+          "earned": {
+            "type": "boolean",
+            "description": "Whether the badge has been earned"
+          },
+          "earnedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the badge was earned (if applicable)"
+          },
+          "progress": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Progress toward earning the badge (0-100)"
+          },
+          "category": {
+            "type": "string",
+            "enum": ["activity", "streak", "onchain", "diversity", "special"],
+            "description": "Badge category for grouping"
+          },
+          "tier": {
+            "type": "string",
+            "enum": ["bronze", "silver", "gold", "platinum", "diamond"],
+            "description": "Badge tier level affecting point value"
+          }
+        }
+      },
+      "Achievements": {
+        "type": "object",
+        "description": "Complete achievements response with badges and summary",
+        "properties": {
+          "summary": {
+            "type": "object",
+            "properties": {
+              "totalBadges": {
+                "type": "integer",
+                "description": "Total number of available badges"
+              },
+              "earnedBadges": {
+                "type": "integer",
+                "description": "Number of badges earned"
+              },
+              "totalPoints": {
+                "type": "integer",
+                "description": "Total achievement points"
+              },
+              "rank": {
+                "type": "string",
+                "description": "Current rank based on points (Beginner, Bronze Agent, Silver Agent, Gold Agent, Platinum Agent, Diamond Agent)"
+              },
+              "rankEmoji": {
+                "type": "string",
+                "description": "Emoji for current rank"
+              },
+              "completionPercent": {
+                "type": "integer",
+                "description": "Percentage of badges earned (0-100)"
+              }
+            }
+          },
+          "nextToUnlock": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AchievementBadge"
+            },
+            "description": "Top 3 badges closest to being unlocked"
+          },
+          "byCategory": {
+            "type": "object",
+            "description": "Badges organized by category",
+            "properties": {
+              "activity": {
+                "type": "array",
+                "items": {"$ref": "#/components/schemas/AchievementBadge"}
+              },
+              "streak": {
+                "type": "array",
+                "items": {"$ref": "#/components/schemas/AchievementBadge"}
+              },
+              "onchain": {
+                "type": "array",
+                "items": {"$ref": "#/components/schemas/AchievementBadge"}
+              },
+              "diversity": {
+                "type": "array",
+                "items": {"$ref": "#/components/schemas/AchievementBadge"}
+              },
+              "special": {
+                "type": "array",
+                "items": {"$ref": "#/components/schemas/AchievementBadge"}
+              }
+            }
+          },
+          "allBadges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AchievementBadge"
+            },
+            "description": "All badges in a flat array"
           }
         }
       },

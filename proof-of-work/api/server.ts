@@ -1342,6 +1342,242 @@ function getNextMilestone(currentStreak: number): number {
 }
 
 /**
+ * Achievement Badge Interface
+ * 
+ * Each badge represents a milestone achievement:
+ * - id: Unique identifier for the badge
+ * - name: Display name
+ * - description: How to earn it
+ * - emoji: Visual representation
+ * - earned: Whether the user has earned it
+ * - earnedAt: When it was earned (if applicable)
+ * - progress: Current progress toward the badge (0-100)
+ * - category: Badge category for grouping
+ */
+interface AchievementBadge {
+  id: string;
+  name: string;
+  description: string;
+  emoji: string;
+  earned: boolean;
+  earnedAt?: string;
+  progress: number;
+  category: 'activity' | 'streak' | 'onchain' | 'diversity' | 'special';
+  tier?: 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond';
+}
+
+/**
+ * Calculate achievement badges from activity data.
+ * Badges are earned based on activity counts, streaks, diversity, and special conditions.
+ * 
+ * @param activities - Array of activity objects
+ * @param streaks - Calculated streak data
+ * @returns Array of achievement badges with earned status
+ */
+function calculateAchievements(activities: any[], streaks: ActivityStreak): AchievementBadge[] {
+  const badges: AchievementBadge[] = [];
+  
+  // Count on-chain proofs
+  const onChainCount = activities.filter(a => a.signature || a.proof?.txSignature).length;
+  
+  // Count activity types
+  const activityTypes = new Set(activities.map(a => a.type).filter(Boolean));
+  const typeCount = activityTypes.size;
+  
+  // Time-based analysis
+  const hourCounts: number[] = new Array(24).fill(0);
+  for (const activity of activities) {
+    if (activity.timestamp) {
+      const hour = new Date(activity.timestamp).getHours();
+      hourCounts[hour]++;
+    }
+  }
+  const earlyBirdCount = hourCounts.slice(5, 9).reduce((a, b) => a + b, 0); // 5am-9am
+  const nightOwlCount = hourCounts.slice(22, 24).reduce((a, b) => a + b, 0) + 
+                        hourCounts.slice(0, 4).reduce((a, b) => a + b, 0); // 10pm-4am
+  
+  // First activity timestamp
+  const firstActivity = activities.length > 0 ? activities[0].timestamp : null;
+  
+  // ============================================
+  // ACTIVITY COUNT BADGES
+  // ============================================
+  const activityMilestones = [
+    { count: 1, id: 'first_step', name: 'First Step', emoji: '👣', tier: 'bronze' as const },
+    { count: 10, id: 'getting_started', name: 'Getting Started', emoji: '🌱', tier: 'bronze' as const },
+    { count: 50, id: 'half_century', name: 'Half Century', emoji: '🎯', tier: 'silver' as const },
+    { count: 100, id: 'centurion', name: 'Centurion', emoji: '💯', tier: 'silver' as const },
+    { count: 250, id: 'prolific', name: 'Prolific', emoji: '📚', tier: 'gold' as const },
+    { count: 500, id: 'powerhouse', name: 'Powerhouse', emoji: '⚡', tier: 'gold' as const },
+    { count: 1000, id: 'legendary', name: 'Legendary', emoji: '🏆', tier: 'platinum' as const },
+    { count: 5000, id: 'mythical', name: 'Mythical', emoji: '🐉', tier: 'diamond' as const },
+  ];
+  
+  for (const milestone of activityMilestones) {
+    const earned = activities.length >= milestone.count;
+    badges.push({
+      id: milestone.id,
+      name: milestone.name,
+      description: `Log ${milestone.count} activities`,
+      emoji: milestone.emoji,
+      earned,
+      earnedAt: earned ? firstActivity : undefined,
+      progress: Math.min(100, Math.round((activities.length / milestone.count) * 100)),
+      category: 'activity',
+      tier: milestone.tier
+    });
+  }
+  
+  // ============================================
+  // STREAK BADGES
+  // ============================================
+  const streakMilestones = [
+    { days: 3, id: 'streak_starter', name: 'Streak Starter', emoji: '🔥', tier: 'bronze' as const },
+    { days: 7, id: 'week_warrior', name: 'Week Warrior', emoji: '📅', tier: 'bronze' as const },
+    { days: 14, id: 'fortnight_focus', name: 'Fortnight Focus', emoji: '🎯', tier: 'silver' as const },
+    { days: 30, id: 'monthly_master', name: 'Monthly Master', emoji: '🌙', tier: 'silver' as const },
+    { days: 60, id: 'two_month_titan', name: 'Two Month Titan', emoji: '💪', tier: 'gold' as const },
+    { days: 90, id: 'quarter_champion', name: 'Quarter Champion', emoji: '🏅', tier: 'gold' as const },
+    { days: 180, id: 'half_year_hero', name: 'Half Year Hero', emoji: '⭐', tier: 'platinum' as const },
+    { days: 365, id: 'year_legend', name: 'Year Legend', emoji: '👑', tier: 'diamond' as const },
+  ];
+  
+  for (const milestone of streakMilestones) {
+    const earned = streaks.longestStreak >= milestone.days;
+    badges.push({
+      id: milestone.id,
+      name: milestone.name,
+      description: `Achieve a ${milestone.days}-day activity streak`,
+      emoji: milestone.emoji,
+      earned,
+      progress: Math.min(100, Math.round((streaks.longestStreak / milestone.days) * 100)),
+      category: 'streak',
+      tier: milestone.tier
+    });
+  }
+  
+  // ============================================
+  // ON-CHAIN PROOF BADGES
+  // ============================================
+  const onChainMilestones = [
+    { count: 1, id: 'first_proof', name: 'First Proof', emoji: '⛓️', tier: 'bronze' as const },
+    { count: 10, id: 'chain_starter', name: 'Chain Starter', emoji: '🔗', tier: 'bronze' as const },
+    { count: 50, id: 'proof_collector', name: 'Proof Collector', emoji: '📜', tier: 'silver' as const },
+    { count: 100, id: 'century_chain', name: 'Century Chain', emoji: '💎', tier: 'silver' as const },
+    { count: 250, id: 'blockchain_builder', name: 'Blockchain Builder', emoji: '🏗️', tier: 'gold' as const },
+    { count: 500, id: 'crypto_champion', name: 'Crypto Champion', emoji: '🪙', tier: 'gold' as const },
+    { count: 1000, id: 'solana_sage', name: 'Solana Sage', emoji: '☀️', tier: 'platinum' as const },
+  ];
+  
+  for (const milestone of onChainMilestones) {
+    const earned = onChainCount >= milestone.count;
+    badges.push({
+      id: milestone.id,
+      name: milestone.name,
+      description: `Sign ${milestone.count} activities on-chain`,
+      emoji: milestone.emoji,
+      earned,
+      progress: Math.min(100, Math.round((onChainCount / milestone.count) * 100)),
+      category: 'onchain',
+      tier: milestone.tier
+    });
+  }
+  
+  // ============================================
+  // DIVERSITY BADGES
+  // ============================================
+  const diversityMilestones = [
+    { count: 3, id: 'versatile', name: 'Versatile', emoji: '🎨', tier: 'bronze' as const },
+    { count: 5, id: 'multi_talented', name: 'Multi-Talented', emoji: '🌈', tier: 'silver' as const },
+    { count: 8, id: 'renaissance_agent', name: 'Renaissance Agent', emoji: '🎭', tier: 'gold' as const },
+  ];
+  
+  for (const milestone of diversityMilestones) {
+    const earned = typeCount >= milestone.count;
+    badges.push({
+      id: milestone.id,
+      name: milestone.name,
+      description: `Use ${milestone.count} different activity types`,
+      emoji: milestone.emoji,
+      earned,
+      progress: Math.min(100, Math.round((typeCount / milestone.count) * 100)),
+      category: 'diversity',
+      tier: milestone.tier
+    });
+  }
+  
+  // ============================================
+  // SPECIAL BADGES
+  // ============================================
+  
+  // Early Bird (5am-9am activities)
+  const earlyBirdEarned = earlyBirdCount >= 10;
+  badges.push({
+    id: 'early_bird',
+    name: 'Early Bird',
+    description: 'Log 10+ activities between 5am-9am',
+    emoji: '🌅',
+    earned: earlyBirdEarned,
+    progress: Math.min(100, Math.round((earlyBirdCount / 10) * 100)),
+    category: 'special',
+    tier: 'silver'
+  });
+  
+  // Night Owl (10pm-4am activities)
+  const nightOwlEarned = nightOwlCount >= 10;
+  badges.push({
+    id: 'night_owl',
+    name: 'Night Owl',
+    description: 'Log 10+ activities between 10pm-4am',
+    emoji: '🦉',
+    earned: nightOwlEarned,
+    progress: Math.min(100, Math.round((nightOwlCount / 10) * 100)),
+    category: 'special',
+    tier: 'silver'
+  });
+  
+  // Perfectionist (100% on-chain rate with 50+ activities)
+  const perfectEarned = activities.length >= 50 && onChainCount === activities.length;
+  badges.push({
+    id: 'perfectionist',
+    name: 'Perfectionist',
+    description: 'Sign 100% of 50+ activities on-chain',
+    emoji: '✨',
+    earned: perfectEarned,
+    progress: activities.length >= 50 
+      ? Math.round((onChainCount / activities.length) * 100)
+      : Math.round((activities.length / 50) * 100),
+    category: 'special',
+    tier: 'platinum'
+  });
+  
+  // Weekend Warrior (activities on 4 consecutive weekends)
+  const weekendDates = new Set<string>();
+  for (const activity of activities) {
+    if (activity.timestamp) {
+      const date = new Date(activity.timestamp);
+      const day = date.getDay();
+      if (day === 0 || day === 6) { // Saturday or Sunday
+        weekendDates.add(date.toISOString().split('T')[0]);
+      }
+    }
+  }
+  const weekendEarned = weekendDates.size >= 8; // At least 8 weekend days (4 weekends)
+  badges.push({
+    id: 'weekend_warrior',
+    name: 'Weekend Warrior',
+    description: 'Be active on 8+ weekend days',
+    emoji: '🎉',
+    earned: weekendEarned,
+    progress: Math.min(100, Math.round((weekendDates.size / 8) * 100)),
+    category: 'special',
+    tier: 'gold'
+  });
+  
+  return badges;
+}
+
+/**
  * Serve a file from the dashboard directory.
  * Handles content-type detection and caching headers.
  * 
@@ -2512,6 +2748,73 @@ const server = Bun.serve({
         message,
         nextMilestone: getNextMilestone(streaks.currentStreak),
         daysUntilNextMilestone: getNextMilestone(streaks.currentStreak) - streaks.currentStreak
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: GET /api/achievements
+    // Achievement badges with earned status and progress
+    // Returns all badges organized by category with unlock info
+    // ==========================================
+    if (path === '/api/achievements') {
+      const activities = getActivities();
+      const streaks = calculateStreaks(activities);
+      const badges = calculateAchievements(activities, streaks);
+      
+      // Organize by category
+      const byCategory: Record<string, AchievementBadge[]> = {
+        activity: [],
+        streak: [],
+        onchain: [],
+        diversity: [],
+        special: []
+      };
+      
+      for (const badge of badges) {
+        byCategory[badge.category].push(badge);
+      }
+      
+      // Calculate summary stats
+      const earned = badges.filter(b => b.earned);
+      const totalPoints = badges.reduce((sum, b) => {
+        if (!b.earned) return sum;
+        const tierPoints: Record<string, number> = {
+          bronze: 10,
+          silver: 25,
+          gold: 50,
+          platinum: 100,
+          diamond: 250
+        };
+        return sum + (tierPoints[b.tier || 'bronze'] || 10);
+      }, 0);
+      
+      // Determine overall rank based on points
+      let rank = 'Beginner';
+      let rankEmoji = '🌱';
+      if (totalPoints >= 1000) { rank = 'Diamond Agent'; rankEmoji = '💎'; }
+      else if (totalPoints >= 500) { rank = 'Platinum Agent'; rankEmoji = '🏆'; }
+      else if (totalPoints >= 250) { rank = 'Gold Agent'; rankEmoji = '🥇'; }
+      else if (totalPoints >= 100) { rank = 'Silver Agent'; rankEmoji = '🥈'; }
+      else if (totalPoints >= 25) { rank = 'Bronze Agent'; rankEmoji = '🥉'; }
+      
+      // Find next badge to unlock (highest progress not yet earned)
+      const nextBadges = badges
+        .filter(b => !b.earned && b.progress > 0)
+        .sort((a, b) => b.progress - a.progress)
+        .slice(0, 3);
+      
+      return Response.json({
+        summary: {
+          totalBadges: badges.length,
+          earnedBadges: earned.length,
+          totalPoints,
+          rank,
+          rankEmoji,
+          completionPercent: Math.round((earned.length / badges.length) * 100)
+        },
+        nextToUnlock: nextBadges,
+        byCategory,
+        allBadges: badges
       }, { headers: corsHeaders });
     }
 
