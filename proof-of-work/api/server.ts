@@ -25,6 +25,9 @@
  * - DELETE /api/activities/:hash/notes - Remove notes from activity
  * - PATCH /api/activities/:hash/pin - Toggle pin status on activity
  * - PATCH /api/activities/:hash/status - Update status (pending/completed/failed)
+ * - PATCH /api/activities/:hash/location - Add/update location (lat, lng, placeName, address)
+ * - DELETE /api/activities/:hash/location - Remove location from activity
+ * - GET /api/activities/locations - Get all activities with location data
  * - GET /api/activities/pinned    - Get all pinned activities
  * - GET /api/activities/status    - Get activities filtered by status
  * - DELETE /api/activities/:hash  - Soft delete an activity (move to trash)
@@ -3744,6 +3747,168 @@ const server = Bun.serve({
         count: filtered.length,
         counts,
         activities: filtered
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: PATCH /api/activities/:hash/location
+    // Add or update location metadata on an activity
+    // Location data: { lat, lng, placeName, address }
+    // ==========================================
+    if (path.match(/^\/api\/activities\/[a-f0-9]{64}\/location$/) && req.method === 'PATCH') {
+      const hash = path.split('/')[3];
+      
+      try {
+        const body = await req.json() as { 
+          lat?: number; 
+          lng?: number; 
+          placeName?: string; 
+          address?: string;
+        };
+        
+        const activities = getActivities();
+        const activityIndex = activities.findIndex((a: any) => a.hash === hash);
+        
+        if (activityIndex === -1) {
+          return Response.json({ 
+            error: 'Activity not found' 
+          }, { status: 404, headers: corsHeaders });
+        }
+        
+        // Validate coordinates if provided
+        if (body.lat !== undefined || body.lng !== undefined) {
+          if (typeof body.lat !== 'number' || typeof body.lng !== 'number') {
+            return Response.json({ 
+              error: 'Both lat and lng must be numbers when providing coordinates' 
+            }, { status: 400, headers: corsHeaders });
+          }
+          if (body.lat < -90 || body.lat > 90) {
+            return Response.json({ 
+              error: 'Latitude must be between -90 and 90' 
+            }, { status: 400, headers: corsHeaders });
+          }
+          if (body.lng < -180 || body.lng > 180) {
+            return Response.json({ 
+              error: 'Longitude must be between -180 and 180' 
+            }, { status: 400, headers: corsHeaders });
+          }
+        }
+        
+        // Build location object
+        const location: any = {};
+        if (body.lat !== undefined && body.lng !== undefined) {
+          location.lat = body.lat;
+          location.lng = body.lng;
+        }
+        if (body.placeName) {
+          location.placeName = body.placeName.trim().substring(0, 200);
+        }
+        if (body.address) {
+          location.address = body.address.trim().substring(0, 500);
+        }
+        
+        // Must have at least coordinates or place name
+        if (Object.keys(location).length === 0) {
+          return Response.json({ 
+            error: 'Must provide at least coordinates (lat/lng) or placeName' 
+          }, { status: 400, headers: corsHeaders });
+        }
+        
+        location.updatedAt = new Date().toISOString();
+        activities[activityIndex].location = location;
+        
+        saveActivities(activities);
+        
+        // Broadcast update
+        broadcastUpdate('activity_location_changed', {
+          hash,
+          location
+        });
+        
+        // Broadcast to webhooks
+        broadcastToWebhooks('activity.location_changed', {
+          hash,
+          location,
+          activity: activities[activityIndex]
+        });
+        
+        console.log(`📍 Activity ${hash.slice(0, 8)}... location set: ${location.placeName || `${location.lat}, ${location.lng}`}`);
+        
+        return Response.json({
+          hash,
+          location,
+          message: 'Location added to activity'
+        }, { headers: corsHeaders });
+        
+      } catch (e) {
+        return Response.json({ 
+          error: 'Invalid request body. Expected: { lat?: number, lng?: number, placeName?: string, address?: string }' 
+        }, { status: 400, headers: corsHeaders });
+      }
+    }
+
+    // ==========================================
+    // API: DELETE /api/activities/:hash/location
+    // Remove location from an activity
+    // ==========================================
+    if (path.match(/^\/api\/activities\/[a-f0-9]{64}\/location$/) && req.method === 'DELETE') {
+      const hash = path.split('/')[3];
+      
+      const activities = getActivities();
+      const activityIndex = activities.findIndex((a: any) => a.hash === hash);
+      
+      if (activityIndex === -1) {
+        return Response.json({ 
+          error: 'Activity not found' 
+        }, { status: 404, headers: corsHeaders });
+      }
+      
+      if (!activities[activityIndex].location) {
+        return Response.json({ 
+          error: 'Activity has no location' 
+        }, { status: 404, headers: corsHeaders });
+      }
+      
+      delete activities[activityIndex].location;
+      saveActivities(activities);
+      
+      // Broadcast update
+      broadcastUpdate('activity_location_removed', { hash });
+      
+      // Broadcast to webhooks
+      broadcastToWebhooks('activity.location_removed', {
+        hash,
+        activity: activities[activityIndex]
+      });
+      
+      console.log(`📍 Activity ${hash.slice(0, 8)}... location removed`);
+      
+      return Response.json({
+        hash,
+        message: 'Location removed from activity'
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: GET /api/activities/locations
+    // Get all activities with location data
+    // ==========================================
+    if (path === '/api/activities/locations' && req.method === 'GET') {
+      const activities = getActivities();
+      const withLocation = activities
+        .filter((a: any) => a.location && !a.deleted)
+        .map((a: any) => ({
+          hash: a.hash,
+          type: a.type,
+          description: a.description,
+          timestamp: a.timestamp,
+          location: a.location
+        }))
+        .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      
+      return Response.json({
+        count: withLocation.length,
+        activities: withLocation
       }, { headers: corsHeaders });
     }
 

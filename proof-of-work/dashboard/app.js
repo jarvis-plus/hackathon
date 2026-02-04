@@ -1564,6 +1564,7 @@ function renderActivities(activities, highlightNew = false) {
             </div>
             <div class="activity-desc">${escapeHtml(a.description)}</div>
             ${typeof renderAISummary === 'function' ? renderAISummary(a) : ''}
+            ${typeof renderActivityLocation === 'function' ? renderActivityLocation(a) : ''}
             ${tagsHtml}
             ${notesHtml}
             ${attachmentsHtml}
@@ -15121,6 +15122,12 @@ function handleContextMenuAction(actionId) {
                 openLinkActivityModal(targetHash);
             }
             break;
+            
+        case 'ctxLocation':
+            if (typeof openLocationModal === 'function') {
+                openLocationModal(targetHash);
+            }
+            break;
     }
     
     hideContextMenu();
@@ -16055,14 +16062,27 @@ function jumpToActivity(hash) {
     }
 }
 
-// Add keyboard shortcut for relationships (L key)
+// Add keyboard shortcut for relationships (L key) and location (Shift+L)
 document.addEventListener('keydown', (e) => {
     // Skip if typing in an input
     if (e.target.matches('input, textarea, select')) return;
     
     if (e.key.toLowerCase() === 'l' && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault();
-        openRelationshipsModal();
+        
+        if (e.shiftKey) {
+            // Shift+L: Set location on focused activity
+            const focused = document.querySelector('.activity-item:focus, .activity-item:hover');
+            const hash = focused?.dataset?.hash;
+            if (hash && typeof openLocationModal === 'function') {
+                openLocationModal(hash);
+            } else {
+                showToast('Focus on an activity first to set location', 'info');
+            }
+        } else {
+            // L: Open relationships modal
+            openRelationshipsModal();
+        }
     }
 });
 
@@ -19747,3 +19767,352 @@ if (typeof window.commandPaletteCommands !== 'undefined') {
 
 // Expose globally
 window.printDashboard = printDashboard;
+
+// ==============================================
+// ACTIVITY LOCATION TAGGING
+// ==============================================
+
+/**
+ * Render location badge for an activity
+ * Shows location icon with place name or coordinates
+ */
+function renderActivityLocation(activity) {
+    if (!activity.location) return '';
+    
+    const loc = activity.location;
+    let displayText = loc.placeName || '';
+    
+    // If no place name but has coordinates, show coordinates
+    if (!displayText && loc.lat !== undefined && loc.lng !== undefined) {
+        displayText = `${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}`;
+    }
+    
+    if (!displayText) return '';
+    
+    // Create Google Maps link if we have coordinates
+    const mapLink = (loc.lat !== undefined && loc.lng !== undefined)
+        ? `https://www.google.com/maps?q=${loc.lat},${loc.lng}`
+        : (loc.address ? `https://www.google.com/maps/search/${encodeURIComponent(loc.address)}` : '');
+    
+    const tooltip = [
+        loc.placeName,
+        loc.address,
+        (loc.lat !== undefined && loc.lng !== undefined) ? `📍 ${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}` : ''
+    ].filter(Boolean).join('\n');
+    
+    const innerContent = `<span class="location-icon">📍</span><span class="location-text">${escapeHtml(displayText)}</span>`;
+    
+    if (mapLink) {
+        return `<a class="activity-location" href="${mapLink}" target="_blank" rel="noopener" title="${escapeHtml(tooltip)}" onclick="event.stopPropagation()">${innerContent}</a>`;
+    }
+    return `<span class="activity-location" title="${escapeHtml(tooltip)}">${innerContent}</span>`;
+}
+
+/**
+ * Open location modal for adding/editing activity location
+ */
+function openLocationModal(hash) {
+    // Find activity
+    const activity = window.allActivities?.find(a => a.hash === hash);
+    if (!activity) {
+        showToast('Activity not found', 'error');
+        return;
+    }
+    
+    const existing = activity.location || {};
+    
+    // Create modal if it doesn't exist
+    let modal = document.getElementById('locationModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'locationModal';
+        modal.className = 'location-modal';
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-labelledby', 'locationModalTitle');
+        modal.setAttribute('aria-modal', 'true');
+        modal.innerHTML = `
+            <div class="location-modal-content">
+                <div class="location-modal-header">
+                    <h2 id="locationModalTitle">📍 Set Location</h2>
+                    <button class="modal-close" onclick="closeLocationModal()" aria-label="Close modal">&times;</button>
+                </div>
+                <form id="locationForm" class="location-form" onsubmit="handleLocationSubmit(event)">
+                    <input type="hidden" id="locationActivityHash" value="">
+                    
+                    <div class="form-group">
+                        <label for="locationPlaceName">Place Name</label>
+                        <input type="text" id="locationPlaceName" maxlength="200" placeholder="e.g., Coffee Shop, Office, Home" autocomplete="off">
+                        <small class="form-hint">A friendly name for this location</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="locationAddress">Address (optional)</label>
+                        <input type="text" id="locationAddress" maxlength="500" placeholder="e.g., 123 Main St, San Francisco, CA" autocomplete="street-address">
+                    </div>
+                    
+                    <div class="form-row coordinates-row">
+                        <div class="form-group">
+                            <label for="locationLat">Latitude</label>
+                            <input type="number" id="locationLat" step="any" min="-90" max="90" placeholder="37.7749">
+                        </div>
+                        <div class="form-group">
+                            <label for="locationLng">Longitude</label>
+                            <input type="number" id="locationLng" step="any" min="-180" max="180" placeholder="-122.4194">
+                        </div>
+                        <button type="button" class="location-detect-btn" onclick="detectLocation()" title="Use current location">
+                            🎯 Detect
+                        </button>
+                    </div>
+                    
+                    <div class="location-preview" id="locationPreview" style="display: none;">
+                        <div class="location-preview-map" id="locationPreviewMap"></div>
+                        <small class="form-hint">Map preview (approximate)</small>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="location-remove-btn" id="locationRemoveBtn" onclick="removeActivityLocation()" style="display: none;">
+                            🗑️ Remove Location
+                        </button>
+                        <div class="form-actions-right">
+                            <button type="button" class="location-cancel-btn" onclick="closeLocationModal()">Cancel</button>
+                            <button type="submit" class="location-save-btn">💾 Save Location</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        // Close on backdrop click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeLocationModal();
+        });
+        
+        // Close on Escape
+        modal.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeLocationModal();
+        });
+        
+        // Preview on coordinate change
+        document.getElementById('locationLat').addEventListener('input', updateLocationPreview);
+        document.getElementById('locationLng').addEventListener('input', updateLocationPreview);
+    }
+    
+    // Populate form
+    document.getElementById('locationActivityHash').value = hash;
+    document.getElementById('locationPlaceName').value = existing.placeName || '';
+    document.getElementById('locationAddress').value = existing.address || '';
+    document.getElementById('locationLat').value = existing.lat !== undefined ? existing.lat : '';
+    document.getElementById('locationLng').value = existing.lng !== undefined ? existing.lng : '';
+    
+    // Show remove button if location exists
+    const removeBtn = document.getElementById('locationRemoveBtn');
+    removeBtn.style.display = activity.location ? 'block' : 'none';
+    
+    // Update preview
+    updateLocationPreview();
+    
+    // Show modal
+    modal.style.display = 'flex';
+    modal.querySelector('#locationPlaceName').focus();
+    
+    announceToScreenReader('Location modal opened');
+}
+
+/**
+ * Close location modal
+ */
+function closeLocationModal() {
+    const modal = document.getElementById('locationModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+/**
+ * Update location preview map
+ */
+function updateLocationPreview() {
+    const lat = parseFloat(document.getElementById('locationLat').value);
+    const lng = parseFloat(document.getElementById('locationLng').value);
+    const preview = document.getElementById('locationPreview');
+    const mapEl = document.getElementById('locationPreviewMap');
+    
+    if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+        // Show OpenStreetMap static tile preview
+        const zoom = 14;
+        const mapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lng-0.01},${lat-0.01},${lng+0.01},${lat+0.01}&layer=mapnik&marker=${lat},${lng}`;
+        mapEl.innerHTML = `<iframe src="${mapUrl}" width="100%" height="200" frameborder="0" style="border-radius: 8px;"></iframe>`;
+        preview.style.display = 'block';
+    } else {
+        preview.style.display = 'none';
+    }
+}
+
+/**
+ * Detect current location using browser geolocation
+ */
+function detectLocation() {
+    if (!navigator.geolocation) {
+        showToast('Geolocation not supported by your browser', 'error');
+        return;
+    }
+    
+    showToast('Detecting location...', 'info');
+    
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            document.getElementById('locationLat').value = position.coords.latitude.toFixed(6);
+            document.getElementById('locationLng').value = position.coords.longitude.toFixed(6);
+            updateLocationPreview();
+            showToast('Location detected!', 'success');
+        },
+        (error) => {
+            let msg = 'Could not detect location';
+            switch (error.code) {
+                case error.PERMISSION_DENIED:
+                    msg = 'Location access denied. Please allow location access.';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    msg = 'Location information unavailable.';
+                    break;
+                case error.TIMEOUT:
+                    msg = 'Location request timed out.';
+                    break;
+            }
+            showToast(msg, 'error');
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+}
+
+/**
+ * Handle location form submission
+ */
+async function handleLocationSubmit(event) {
+    event.preventDefault();
+    
+    const hash = document.getElementById('locationActivityHash').value;
+    const placeName = document.getElementById('locationPlaceName').value.trim();
+    const address = document.getElementById('locationAddress').value.trim();
+    const latStr = document.getElementById('locationLat').value;
+    const lngStr = document.getElementById('locationLng').value;
+    
+    // Build request body
+    const body = {};
+    if (placeName) body.placeName = placeName;
+    if (address) body.address = address;
+    if (latStr && lngStr) {
+        body.lat = parseFloat(latStr);
+        body.lng = parseFloat(lngStr);
+    }
+    
+    if (Object.keys(body).length === 0) {
+        showToast('Please enter at least a place name or coordinates', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/activities/${hash}/location`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to save location');
+        }
+        
+        // Update local activity data
+        const activity = window.allActivities?.find(a => a.hash === hash);
+        if (activity) {
+            activity.location = data.location;
+        }
+        
+        closeLocationModal();
+        showToast('📍 Location saved!', 'success');
+        
+        // Re-render activities
+        if (typeof renderActivities === 'function' && window.allActivities) {
+            renderActivities(window.allActivities);
+        }
+        
+        announceToScreenReader('Location saved successfully');
+        
+    } catch (error) {
+        console.error('Failed to save location:', error);
+        showToast(error.message || 'Failed to save location', 'error');
+    }
+}
+
+/**
+ * Remove location from activity
+ */
+async function removeActivityLocation() {
+    const hash = document.getElementById('locationActivityHash').value;
+    
+    if (!confirm('Remove location from this activity?')) return;
+    
+    try {
+        const response = await fetch(`/api/activities/${hash}/location`, {
+            method: 'DELETE'
+        });
+        
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || 'Failed to remove location');
+        }
+        
+        // Update local activity data
+        const activity = window.allActivities?.find(a => a.hash === hash);
+        if (activity) {
+            delete activity.location;
+        }
+        
+        closeLocationModal();
+        showToast('📍 Location removed', 'success');
+        
+        // Re-render activities
+        if (typeof renderActivities === 'function' && window.allActivities) {
+            renderActivities(window.allActivities);
+        }
+        
+        announceToScreenReader('Location removed');
+        
+    } catch (error) {
+        console.error('Failed to remove location:', error);
+        showToast(error.message || 'Failed to remove location', 'error');
+    }
+}
+
+// Expose location functions globally
+window.renderActivityLocation = renderActivityLocation;
+window.openLocationModal = openLocationModal;
+window.closeLocationModal = closeLocationModal;
+window.detectLocation = detectLocation;
+window.handleLocationSubmit = handleLocationSubmit;
+window.removeActivityLocation = removeActivityLocation;
+window.updateLocationPreview = updateLocationPreview;
+
+// Add to command palette
+if (typeof window.commandPaletteCommands !== 'undefined') {
+    window.commandPaletteCommands.push({
+        name: 'Set Location',
+        shortcut: 'Shift+L',
+        description: 'Add or edit location for focused activity',
+        icon: '📍',
+        action: () => {
+            const focused = document.querySelector('.activity-item:focus, .activity-item:hover');
+            const hash = focused?.dataset?.hash;
+            if (hash) {
+                openLocationModal(hash);
+            } else {
+                showToast('Focus on an activity first', 'info');
+            }
+            if (typeof hideCommandPalette === 'function') hideCommandPalette();
+        },
+        group: 'Activities'
+    });
+}

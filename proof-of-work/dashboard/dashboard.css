@@ -20469,6 +20469,332 @@ body.tour-active {
     }
 }
 
+/* ==============================================
+   ACTIVITY LOCATION TAGGING
+   ============================================== */
+
+/* Location badge on activity card */
+.activity-location {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.6rem;
+    margin: 0.5rem 0;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 6px;
+    color: var(--text-secondary, #a0a0a0);
+    font-size: 0.8rem;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.activity-location:hover {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: rgba(59, 130, 246, 0.5);
+    color: var(--text-primary, #e0e0e0);
+}
+
+.activity-location .location-icon {
+    font-size: 0.9rem;
+}
+
+.activity-location .location-text {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+a.activity-location:hover {
+    color: #3b82f6;
+}
+
+/* Location Modal */
+.location-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 10001;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    padding: 1rem;
+}
+
+.location-modal-content {
+    background: var(--card-bg, #1e1e2e);
+    border: 1px solid rgba(100, 100, 120, 0.3);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 480px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.location-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid rgba(100, 100, 120, 0.2);
+}
+
+.location-modal-header h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--text-primary, #e0e0e0);
+}
+
+.location-form {
+    padding: 1.5rem;
+}
+
+.location-form .form-group {
+    margin-bottom: 1.25rem;
+}
+
+.location-form label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-primary, #e0e0e0);
+}
+
+.location-form input[type="text"],
+.location-form input[type="number"] {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: rgba(20, 20, 35, 0.6);
+    border: 1px solid rgba(100, 100, 120, 0.3);
+    border-radius: 8px;
+    color: var(--text-primary, #e0e0e0);
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.location-form input:focus {
+    outline: none;
+    border-color: rgba(59, 130, 246, 0.6);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.location-form input::placeholder {
+    color: rgba(160, 160, 176, 0.5);
+}
+
+.location-form .form-hint {
+    display: block;
+    margin-top: 0.4rem;
+    font-size: 0.75rem;
+    color: var(--text-muted, #808080);
+}
+
+.coordinates-row {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-end;
+}
+
+.coordinates-row .form-group {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.location-detect-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.75rem 1rem;
+    background: rgba(59, 130, 246, 0.15);
+    border: 1px solid rgba(59, 130, 246, 0.4);
+    border-radius: 8px;
+    color: #3b82f6;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.location-detect-btn:hover {
+    background: rgba(59, 130, 246, 0.25);
+    border-color: rgba(59, 130, 246, 0.6);
+}
+
+/* Location preview */
+.location-preview {
+    margin: 1rem 0;
+    padding: 0.75rem;
+    background: rgba(20, 20, 35, 0.4);
+    border: 1px solid rgba(100, 100, 120, 0.2);
+    border-radius: 10px;
+}
+
+.location-preview-map {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.location-preview-map iframe {
+    display: block;
+}
+
+/* Form actions */
+.location-form .form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(100, 100, 120, 0.2);
+}
+
+.location-form .form-actions-right {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.location-cancel-btn {
+    padding: 0.65rem 1.25rem;
+    background: transparent;
+    border: 1px solid rgba(100, 100, 120, 0.3);
+    border-radius: 8px;
+    color: var(--text-secondary, #a0a0a0);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.location-cancel-btn:hover {
+    background: rgba(100, 100, 120, 0.1);
+    border-color: rgba(100, 100, 120, 0.5);
+    color: var(--text-primary, #e0e0e0);
+}
+
+.location-save-btn {
+    padding: 0.65rem 1.25rem;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.location-save-btn:hover {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.location-remove-btn {
+    padding: 0.65rem 1rem;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    color: #ef4444;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.location-remove-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.5);
+}
+
+/* Theme variants for location */
+[data-theme="light"] .activity-location {
+    background: rgba(59, 130, 246, 0.08);
+    border-color: rgba(59, 130, 246, 0.25);
+    color: #4b5563;
+}
+
+[data-theme="light"] .activity-location:hover {
+    background: rgba(59, 130, 246, 0.15);
+    color: #1f2937;
+}
+
+[data-theme="light"] .location-modal-content {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .location-form input {
+    background: #f8fafc;
+    border-color: rgba(0, 0, 0, 0.15);
+    color: #1f2937;
+}
+
+/* Ocean theme */
+[data-theme="ocean"] .activity-location {
+    background: rgba(14, 165, 233, 0.15);
+    border-color: rgba(14, 165, 233, 0.3);
+}
+
+/* Forest theme */
+[data-theme="forest"] .activity-location {
+    background: rgba(34, 197, 94, 0.15);
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+/* Sunset theme */
+[data-theme="sunset"] .activity-location {
+    background: rgba(249, 115, 22, 0.15);
+    border-color: rgba(249, 115, 22, 0.3);
+}
+
+/* Cyberpunk theme */
+[data-theme="cyberpunk"] .activity-location {
+    background: rgba(236, 72, 153, 0.15);
+    border-color: rgba(236, 72, 153, 0.3);
+}
+
+/* Mobile adjustments */
+@media (max-width: 480px) {
+    .location-modal-content {
+        max-height: 95vh;
+        border-radius: 12px;
+    }
+    
+    .coordinates-row {
+        flex-direction: column;
+    }
+    
+    .location-detect-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .location-form .form-actions {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .location-form .form-actions-right {
+        width: 100%;
+        justify-content: stretch;
+    }
+    
+    .location-cancel-btn,
+    .location-save-btn {
+        flex: 1;
+    }
+    
+    .location-remove-btn {
+        width: 100%;
+    }
+}
+
 /* Screen: hide print-only elements */
 @media screen {
     .print-only,
