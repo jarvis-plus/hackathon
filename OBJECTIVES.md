@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 20:40 PST
-**Cycle:** 163
+**Last Updated:** 2026-02-03 20:44 PST
+**Cycle:** 164
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -83,7 +83,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ### 🆕 Future Improvements (New Items)
 - [x] OpenAPI/Swagger documentation (auto-generated API docs) ✅ Cycle 162
 - [x] Activity comments/notes (add notes to activities) ✅ Cycle 163
-- [ ] Activity pinning (pin important activities to top)
+- [x] Activity pinning (pin important activities to top) ✅ Cycle 164
 - [ ] Email digest (daily/weekly summary emails)
 - [ ] Slack/Discord bot integration
 - [ ] Activity diff view (show changes between activities)
@@ -95,6 +95,26 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 164 (Activity Pinning)
+- Implemented activity pinning feature for highlighting important activities
+- **New Endpoints**:
+  - `PATCH /api/activities/:hash/pin` - Toggle or set pin status
+  - `GET /api/activities/pinned` - Get all pinned activities
+- **Implementation Details**:
+  - Pinned activities appear at the top of the feed
+  - Pin button visible on hover (similar to share button)
+  - Visual styling: gold accent border, left indicator stripe
+  - Toggle mode: call with empty body to flip pin status
+  - Set mode: pass `{"pinned": true/false}` to set explicitly
+  - Tracks `pinnedAt` timestamp for sort ordering
+- **Dashboard Updates**:
+  - Pin button on each activity card
+  - Pinned activities sorted first, then by recency
+  - 📌 badge in activity header for pinned items
+  - Light/dark theme support for pin styling
+- ~90 lines added to server.ts, ~85 lines to app.js, ~100 lines CSS
+- 415 activities, all signed on-chain
 
 ### Cycle 163 (Activity Notes/Comments API)
 - Implemented activity notes/comments feature for user annotations
@@ -170,19 +190,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - **README Updated**: Added Docker deployment section with examples
 - ~150 lines in Dockerfile, docker-compose.yml combined
 - 402 activities, all signed on-chain
-
-### Cycle 159 (Backup/Restore API)
-- Implemented backup/restore API for activity data
-- **GET /api/backup**: Exports all activities + metadata as downloadable JSON
-- **POST /api/backup/validate**: Validates backup format without importing
-- **POST /api/restore**: Import with merge/replace modes
-- **Mode Options**: `merge` (skip duplicates by hash) or `replace` (full overwrite)
-- **Dry Run**: Add `?dry_run=true` to preview changes without writing
-- **Webhook Backup**: Add `?webhooks=true` to include webhooks (secrets excluded)
-- **Validation**: Checks version, format, activity structure (timestamp, type, description)
-- Added `validateBackup()` helper function (~60 lines)
-- ~180 lines added to server.ts
-- 400 activities, all signed on-chain
 
 ---
 

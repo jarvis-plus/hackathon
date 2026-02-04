@@ -20,6 +20,8 @@
  * - GET /api/activities/:hash     - Single activity by hash
  * - PATCH /api/activities/:hash/notes - Add/update notes on activity
  * - DELETE /api/activities/:hash/notes - Remove notes from activity
+ * - PATCH /api/activities/:hash/pin - Toggle pin status on activity
+ * - GET /api/activities/pinned    - Get all pinned activities
  * - GET /api/stats                - Aggregated statistics
  * - GET /api/health               - Health check for monitoring
  * - GET /api/verify/:hash         - Verify a specific activity by hash
@@ -1268,6 +1270,98 @@ const server = Bun.serve({
       return Response.json({
         hash,
         message: hadNotes ? 'Notes removed successfully' : 'Activity had no notes'
+      }, { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: PATCH /api/activities/:hash/pin
+    // Toggle pin status on an activity
+    // Pinned activities appear at the top of the feed
+    // ==========================================
+    if (path.match(/^\/api\/activities\/[a-f0-9]{64}\/pin$/) && req.method === 'PATCH') {
+      const hash = path.split('/')[3];
+      
+      try {
+        const body = await req.json() as { pinned?: boolean };
+        
+        const activities = getActivities();
+        const activityIndex = activities.findIndex((a: any) => a.hash === hash);
+        
+        if (activityIndex === -1) {
+          return Response.json({ 
+            error: 'Activity not found' 
+          }, { status: 404, headers: corsHeaders });
+        }
+        
+        // Toggle or set explicit pin status
+        const currentPinned = !!activities[activityIndex].pinned;
+        const newPinned = body.pinned !== undefined ? body.pinned : !currentPinned;
+        
+        if (newPinned) {
+          activities[activityIndex].pinned = true;
+          activities[activityIndex].pinnedAt = new Date().toISOString();
+        } else {
+          delete activities[activityIndex].pinned;
+          delete activities[activityIndex].pinnedAt;
+        }
+        
+        saveActivities(activities);
+        
+        console.log(`📌 Activity ${hash.slice(0, 8)}... ${newPinned ? 'pinned' : 'unpinned'}`);
+        
+        return Response.json({
+          hash,
+          pinned: newPinned,
+          pinnedAt: activities[activityIndex].pinnedAt || null,
+          message: newPinned ? 'Activity pinned' : 'Activity unpinned'
+        }, { headers: corsHeaders });
+        
+      } catch (e) {
+        // Allow empty body (toggle mode)
+        const activities = getActivities();
+        const activityIndex = activities.findIndex((a: any) => a.hash === hash);
+        
+        if (activityIndex === -1) {
+          return Response.json({ error: 'Activity not found' }, { status: 404, headers: corsHeaders });
+        }
+        
+        const newPinned = !activities[activityIndex].pinned;
+        if (newPinned) {
+          activities[activityIndex].pinned = true;
+          activities[activityIndex].pinnedAt = new Date().toISOString();
+        } else {
+          delete activities[activityIndex].pinned;
+          delete activities[activityIndex].pinnedAt;
+        }
+        
+        saveActivities(activities);
+        
+        return Response.json({
+          hash,
+          pinned: newPinned,
+          message: newPinned ? 'Activity pinned' : 'Activity unpinned'
+        }, { headers: corsHeaders });
+      }
+    }
+
+    // ==========================================
+    // API: GET /api/activities/pinned
+    // Get all pinned activities
+    // ==========================================
+    if (path === '/api/activities/pinned' && req.method === 'GET') {
+      const activities = getActivities();
+      const pinned = activities
+        .filter((a: any) => a.pinned)
+        .sort((a: any, b: any) => {
+          // Sort by pinnedAt date, most recent first
+          const aTime = new Date(a.pinnedAt || 0).getTime();
+          const bTime = new Date(b.pinnedAt || 0).getTime();
+          return bTime - aTime;
+        });
+      
+      return Response.json({
+        count: pinned.length,
+        activities: pinned
       }, { headers: corsHeaders });
     }
 

@@ -240,6 +240,100 @@
         }
       }
     },
+    "/api/activities/{hash}/pin": {
+      "patch": {
+        "tags": ["Activities"],
+        "summary": "Pin or unpin activity",
+        "description": "Toggle or set pin status on an activity. Pinned activities appear at the top of the feed.",
+        "operationId": "toggleActivityPin",
+        "security": [{"bearerAuth": []}, {"apiKeyHeader": []}],
+        "parameters": [
+          {
+            "name": "hash",
+            "in": "path",
+            "required": true,
+            "description": "SHA256 hash of the activity",
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "pinned": {
+                    "type": "boolean",
+                    "description": "Set explicit pin status. Omit to toggle."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pin status updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "hash": {"type": "string"},
+                    "pinned": {"type": "boolean"},
+                    "pinnedAt": {"type": "string", "format": "date-time", "nullable": true},
+                    "message": {"type": "string"}
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Activity not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/activities/pinned": {
+      "get": {
+        "tags": ["Activities"],
+        "summary": "Get pinned activities",
+        "description": "Returns all pinned activities, sorted by most recently pinned first.",
+        "operationId": "getPinnedActivities",
+        "responses": {
+          "200": {
+            "description": "Pinned activities",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "count": {"type": "integer"},
+                    "activities": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Activity"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/stats": {
       "get": {
         "tags": ["Stats"],
@@ -929,6 +1023,15 @@
             "type": "string",
             "format": "date-time",
             "description": "Timestamp when notes were last updated"
+          },
+          "pinned": {
+            "type": "boolean",
+            "description": "Whether the activity is pinned to top of feed"
+          },
+          "pinnedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when activity was pinned"
           }
         }
       },

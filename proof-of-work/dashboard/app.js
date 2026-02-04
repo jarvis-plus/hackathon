@@ -847,7 +847,17 @@ function renderActivities(activities, highlightNew = false) {
         return;
     }
     
-    const sorted = [...activities].reverse();
+    // Separate pinned and unpinned activities
+    const pinned = activities.filter(a => a.pinned);
+    const unpinned = activities.filter(a => !a.pinned);
+    
+    // Sort pinned by pinnedAt (most recently pinned first), unpinned by timestamp (most recent first)
+    pinned.sort((a, b) => new Date(b.pinnedAt || 0) - new Date(a.pinnedAt || 0));
+    unpinned.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    // Combine: pinned first, then recent unpinned
+    const sorted = [...pinned, ...unpinned];
+    
     const newCount = sorted.length - lastRenderedCount;
     const shouldHighlight = highlightNew && newCount > 0;
     
@@ -856,25 +866,31 @@ function renderActivities(activities, highlightNew = false) {
     feed.innerHTML = sorted.map((a, i) => {
         const hash = a.hash || a.proof?.hash;
         const hashDisplay = hash ? `SHA256: ${hash.slice(0, 12)}...${hash.slice(-6)}` : '';
-        const isNew = shouldHighlight && i < newCount;
+        const isNew = shouldHighlight && i < newCount && !a.pinned;
         const tagsHtml = renderActivityTags(a.tags);
         const walletHtml = renderWalletBadge(a.wallet);
         const activityId = getActivityId(a);
+        const isPinned = !!a.pinned;
         
-        const ariaLabel = `${a.type} activity: ${escapeHtml(a.description.substring(0, 80))}${a.description.length > 80 ? '...' : ''}`;
+        const ariaLabel = `${isPinned ? 'Pinned ' : ''}${a.type} activity: ${escapeHtml(a.description.substring(0, 80))}${a.description.length > 80 ? '...' : ''}`;
         const notesHtml = renderActivityNotes(a, hash);
+        const pinButtonHtml = renderPinButton(hash, isPinned);
+        
         return `
-        <div class="activity-item ${a.type}${isNew ? ' new-activity' : ''}" 
+        <div class="activity-item ${a.type}${isNew ? ' new-activity' : ''}${isPinned ? ' pinned' : ''}" 
              style="animation-delay: ${i * 0.04}s" 
              data-wallet="${a.wallet || ''}" 
              data-activity-id="${activityId}"
              data-hash="${hash || ''}"
+             data-pinned="${isPinned}"
              tabindex="0"
              role="article"
              aria-label="${ariaLabel}">
             ${renderShareButton(activityId)}
+            ${pinButtonHtml}
             <div class="activity-header">
                 <div class="activity-badges">
+                    ${isPinned ? '<span class="pinned-badge" title="Pinned activity">📌</span>' : ''}
                     <span class="activity-type">${a.type}</span>
                     ${getProofBadge(a)}
                     ${walletHtml}
@@ -3709,6 +3725,100 @@ function renderActivityWallet(activity) {
             data-wallet="${escapeHtml(wallet)}">
         💳 ${escapeHtml(name)}
     </span>`;
+}
+
+/**
+ * Render pin button for an activity
+ * @param {string} hash - The activity hash for API calls
+ * @param {boolean} isPinned - Current pin status
+ * @returns {string} HTML string for the pin button
+ */
+function renderPinButton(hash, isPinned) {
+    if (!hash) return '';
+    
+    return `
+        <button class="pin-btn ${isPinned ? 'pinned' : ''}" 
+                onclick="togglePin('${hash}')" 
+                title="${isPinned ? 'Unpin activity' : 'Pin to top'}"
+                aria-label="${isPinned ? 'Unpin activity' : 'Pin activity to top'}">
+            📌
+        </button>
+    `;
+}
+
+/**
+ * Toggle pin status on an activity
+ * @param {string} hash - The activity hash
+ */
+async function togglePin(hash) {
+    const activityItem = document.querySelector(`[data-hash="${hash}"]`);
+    const pinBtn = activityItem?.querySelector('.pin-btn');
+    
+    if (pinBtn) {
+        pinBtn.disabled = true;
+        pinBtn.classList.add('loading');
+    }
+    
+    try {
+        const response = await fetch(`/api/activities/${hash}/pin`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to toggle pin');
+        }
+        
+        const result = await response.json();
+        
+        // Update the activity item's pin status
+        if (activityItem) {
+            activityItem.dataset.pinned = result.pinned;
+            activityItem.classList.toggle('pinned', result.pinned);
+            
+            // Update pin button
+            if (pinBtn) {
+                pinBtn.classList.toggle('pinned', result.pinned);
+                pinBtn.title = result.pinned ? 'Unpin activity' : 'Pin to top';
+                pinBtn.setAttribute('aria-label', result.pinned ? 'Unpin activity' : 'Pin activity to top');
+            }
+            
+            // Update badge
+            const badges = activityItem.querySelector('.activity-badges');
+            const existingBadge = badges?.querySelector('.pinned-badge');
+            if (result.pinned && !existingBadge) {
+                badges.insertAdjacentHTML('afterbegin', '<span class="pinned-badge" title="Pinned activity">📌</span>');
+            } else if (!result.pinned && existingBadge) {
+                existingBadge.remove();
+            }
+        }
+        
+        // Announce to screen readers
+        announceToScreenReader(result.message);
+        
+        // Re-render to move pinned items to top
+        // This triggers a full re-render with correct ordering
+        if (window.allActivities) {
+            // Update the activity in allActivities
+            const idx = window.allActivities.findIndex(a => (a.hash || a.proof?.hash) === hash);
+            if (idx !== -1) {
+                window.allActivities[idx].pinned = result.pinned;
+                window.allActivities[idx].pinnedAt = result.pinnedAt;
+            }
+            renderActivities(window.allActivities);
+        }
+        
+    } catch (error) {
+        console.error('Failed to toggle pin:', error);
+        alert(`Failed to toggle pin: ${error.message}`);
+    } finally {
+        if (pinBtn) {
+            pinBtn.disabled = false;
+            pinBtn.classList.remove('loading');
+        }
+    }
 }
 
 /**

@@ -4922,6 +4922,145 @@
     }
 }
 
+/* ======================================
+   PIN BUTTON & PINNED ACTIVITY STYLES
+   ====================================== */
+
+/* Pin button (positioned next to share button) */
+.pin-btn {
+    position: absolute;
+    top: 0.75rem;
+    right: 2.5rem; /* Positioned left of share button */
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    z-index: 5;
+    filter: grayscale(1);
+}
+
+.activity-item:hover .pin-btn {
+    opacity: 0.6;
+}
+
+.pin-btn:hover {
+    opacity: 1 !important;
+    background: var(--bg-primary);
+    border-color: var(--border);
+    color: #f59e0b; /* Amber/gold color for pin */
+    filter: grayscale(0);
+    transform: scale(1.1);
+}
+
+.pin-btn:active {
+    transform: scale(0.95);
+}
+
+/* Pinned state - always visible */
+.pin-btn.pinned {
+    opacity: 1 !important;
+    filter: grayscale(0);
+    color: #f59e0b;
+}
+
+.pin-btn.pinned:hover {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: #f59e0b;
+}
+
+/* Loading state for pin button */
+.pin-btn.loading {
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+.pin-btn.loading::after {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border: 2px solid transparent;
+    border-top-color: #f59e0b;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Pinned badge in activity header */
+.pinned-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    margin-right: 0.25rem;
+    animation: pinBounce 0.4s ease;
+}
+
+@keyframes pinBounce {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+/* Pinned activity card - elevated styling */
+.activity-item.pinned {
+    border-color: rgba(245, 158, 11, 0.4);
+    background: linear-gradient(
+        135deg,
+        rgba(245, 158, 11, 0.08) 0%,
+        var(--bg-secondary) 30%
+    );
+    box-shadow: 
+        0 0 0 1px rgba(245, 158, 11, 0.15),
+        0 4px 15px rgba(245, 158, 11, 0.1),
+        inset 0 1px 0 rgba(245, 158, 11, 0.1);
+}
+
+.activity-item.pinned:hover {
+    border-color: rgba(245, 158, 11, 0.6);
+    box-shadow: 
+        0 0 0 1px rgba(245, 158, 11, 0.2),
+        0 8px 25px rgba(245, 158, 11, 0.15),
+        inset 0 1px 0 rgba(245, 158, 11, 0.15);
+}
+
+/* Light theme adjustments for pins */
+[data-theme="light"] .activity-item.pinned {
+    background: linear-gradient(
+        135deg,
+        rgba(245, 158, 11, 0.12) 0%,
+        var(--bg-secondary) 30%
+    );
+}
+
+[data-theme="light"] .pin-btn:hover,
+[data-theme="light"] .pin-btn.pinned {
+    color: #d97706; /* Darker amber for light theme */
+}
+
+/* Mobile: always show pin button on pinned items */
+@media (max-width: 768px) {
+    .activity-item.pinned .pin-btn {
+        opacity: 1;
+    }
+    
+    .pin-btn {
+        right: 2rem;
+    }
+}
+
 /* Deep link indicator in activity header */
 .activity-id {
     display: none;
@@ -5824,4 +5963,103 @@ input[aria-invalid="true"],
     background: linear-gradient(135deg, rgba(255, 180, 0, 0.25), rgba(255, 140, 0, 0.25));
     border-color: rgba(200, 150, 0, 0.4);
     color: rgba(150, 100, 0, 0.95);
+}
+
+/* ===================================================
+   ACTIVITY PINNING
+   =================================================== */
+
+/* Pin button - appears on hover, positioned similar to share button */
+.pin-btn {
+    position: absolute;
+    top: 0.75rem;
+    right: 3rem; /* Next to share button */
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    padding: 0.35rem 0.5rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.2s ease;
+    z-index: 5;
+}
+
+.activity-item:hover .pin-btn,
+.activity-item:focus-within .pin-btn {
+    opacity: 0.7;
+}
+
+.pin-btn:hover {
+    opacity: 1 !important;
+    background: rgba(255, 200, 50, 0.2);
+    border-color: rgba(255, 200, 50, 0.5);
+    transform: scale(1.1);
+}
+
+.pin-btn.pinned {
+    opacity: 1 !important;
+    background: rgba(255, 200, 50, 0.25);
+    border-color: rgba(255, 200, 50, 0.4);
+}
+
+.pin-btn.loading {
+    opacity: 0.5;
+    cursor: wait;
+}
+
+.pin-btn:disabled {
+    cursor: wait;
+}
+
+/* Pinned activity styling */
+.activity-item.pinned {
+    border-color: rgba(255, 200, 50, 0.4);
+    background: linear-gradient(135deg, 
+        rgba(255, 200, 50, 0.08) 0%, 
+        rgba(255, 150, 50, 0.05) 100%
+    );
+}
+
+.activity-item.pinned::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, 
+        rgba(255, 200, 50, 0.8) 0%, 
+        rgba(255, 150, 50, 0.6) 100%
+    );
+    border-radius: 3px 0 0 3px;
+}
+
+.pinned-badge {
+    font-size: 0.85rem;
+    margin-right: 0.25rem;
+}
+
+/* Light theme adjustments */
+[data-theme="light"] .pin-btn {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .pin-btn:hover {
+    background: rgba(255, 200, 50, 0.3);
+    border-color: rgba(200, 150, 0, 0.5);
+}
+
+[data-theme="light"] .pin-btn.pinned {
+    background: rgba(255, 200, 50, 0.35);
+    border-color: rgba(200, 150, 0, 0.5);
+}
+
+[data-theme="light"] .activity-item.pinned {
+    border-color: rgba(200, 150, 0, 0.4);
+    background: linear-gradient(135deg, 
+        rgba(255, 200, 50, 0.12) 0%, 
+        rgba(255, 180, 50, 0.08) 100%
+    );
 }
