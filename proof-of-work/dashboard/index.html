@@ -1754,8 +1754,14 @@
             }
             .chart-card h3 { font-size: 0.75rem; }
             
-            .chart-container { height: 180px; }
-            .chart-container.small { height: 160px; }
+            .chart-container { height: 200px; }
+            .chart-container.small { height: 180px; }
+            
+            /* Doughnut chart needs more height for bottom legend */
+            .chart-container.breakdown { height: 240px; }
+            
+            /* Improve chart touch targets and readability */
+            .charts-grid { gap: 1rem; }
             
             .timeline { padding-left: 1.5rem; }
             .timeline::before { left: 6px; }
@@ -2921,7 +2927,7 @@
                 </div>
                 <div class="chart-card" id="breakdown-chart-card">
                     <h3>Activity Breakdown</h3>
-                    <div class="chart-container small" style="position: relative;">
+                    <div class="chart-container small breakdown" style="position: relative;">
                         <!-- Loading skeleton -->
                         <div class="chart-loading" id="breakdown-loading">
                             <div class="skeleton-doughnut"></div>
@@ -4577,6 +4583,28 @@
         let cumulativeChart = null;
         let dailyChart = null;
 
+        // Mobile-responsive chart configuration
+        function isMobile() {
+            return window.innerWidth <= 600;
+        }
+        
+        function getChartFontSize(base) {
+            return isMobile() ? Math.max(base + 1, 11) : base;
+        }
+        
+        function getMobileChartOptions() {
+            const mobile = isMobile();
+            return {
+                tickFont: { size: mobile ? 11 : 10 },
+                legendFont: { size: mobile ? 11 : 11 },
+                maxTicksLimit: mobile ? 4 : 8,
+                pointRadius: mobile ? 4 : 3,
+                pointHoverRadius: mobile ? 7 : 5,
+                legendPosition: mobile ? 'bottom' : 'right',
+                axisTitleDisplay: !mobile
+            };
+        }
+
         function renderCharts(activities) {
             // Hide all chart loading states
             const hideLoading = (id) => {
@@ -4623,6 +4651,8 @@
                 timelineChart.destroy();
             }
 
+            const mobileOpts = getMobileChartOptions();
+            
             timelineChart = new Chart(timelineCtx, {
                 type: 'line',
                 data: {
@@ -4636,8 +4666,8 @@
                         tension: 0.4,
                         pointBackgroundColor: '#4ecdc4',
                         pointBorderColor: '#4ecdc4',
-                        pointRadius: 3,
-                        pointHoverRadius: 5
+                        pointRadius: mobileOpts.pointRadius,
+                        pointHoverRadius: mobileOpts.pointHoverRadius
                     }]
                 },
                 options: {
@@ -4653,7 +4683,9 @@
                             beginAtZero: true,
                             ticks: {
                                 color: '#6b6b6b',
-                                stepSize: 1
+                                stepSize: 1,
+                                font: mobileOpts.tickFont,
+                                maxTicksLimit: mobileOpts.maxTicksLimit
                             },
                             grid: {
                                 color: 'rgba(255, 255, 255, 0.03)'
@@ -4662,8 +4694,9 @@
                         x: {
                             ticks: {
                                 color: '#6b6b6b',
-                                maxRotation: 45,
-                                font: { size: 10 }
+                                maxRotation: isMobile() ? 60 : 45,
+                                font: mobileOpts.tickFont,
+                                maxTicksLimit: mobileOpts.maxTicksLimit
                             },
                             grid: {
                                 display: false
@@ -4720,11 +4753,12 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            position: 'right',
+                            position: mobileOpts.legendPosition,
                             labels: {
                                 color: '#888',
-                                padding: 10,
-                                font: { size: 11 }
+                                padding: isMobile() ? 8 : 10,
+                                font: mobileOpts.legendFont,
+                                boxWidth: isMobile() ? 12 : 40
                             }
                         }
                     }
@@ -4771,8 +4805,8 @@
                         tension: 0.3,
                         pointBackgroundColor: '#9b87f5',
                         pointBorderColor: '#9b87f5',
-                        pointRadius: 3,
-                        pointHoverRadius: 6,
+                        pointRadius: mobileOpts.pointRadius,
+                        pointHoverRadius: mobileOpts.pointHoverRadius,
                         stepped: 'after'
                     }]
                 },
@@ -4794,13 +4828,15 @@
                             beginAtZero: true,
                             ticks: {
                                 color: '#6b6b6b',
-                                stepSize: 2
+                                stepSize: isMobile() ? 5 : 2,
+                                font: mobileOpts.tickFont,
+                                maxTicksLimit: mobileOpts.maxTicksLimit
                             },
                             grid: {
                                 color: 'rgba(255, 255, 255, 0.03)'
                             },
                             title: {
-                                display: true,
+                                display: mobileOpts.axisTitleDisplay,
                                 text: 'Total Proofs',
                                 color: '#6b6b6b'
                             }
@@ -4808,8 +4844,9 @@
                         x: {
                             ticks: {
                                 color: '#6b6b6b',
-                                maxRotation: 45,
-                                font: { size: 10 }
+                                maxRotation: isMobile() ? 60 : 45,
+                                font: mobileOpts.tickFont,
+                                maxTicksLimit: mobileOpts.maxTicksLimit
                             },
                             grid: {
                                 display: false
@@ -4885,10 +4922,11 @@
                             position: 'top',
                             labels: {
                                 color: '#6b6b6b',
-                                padding: 15,
-                                font: { size: 11 },
+                                padding: isMobile() ? 8 : 15,
+                                font: mobileOpts.legendFont,
                                 usePointStyle: true,
-                                pointStyle: 'rectRounded'
+                                pointStyle: 'rectRounded',
+                                boxWidth: isMobile() ? 10 : 40
                             }
                         },
                         tooltip: {
@@ -4909,13 +4947,15 @@
                             stacked: true,
                             ticks: {
                                 color: '#6b6b6b',
-                                stepSize: 5
+                                stepSize: isMobile() ? 10 : 5,
+                                font: mobileOpts.tickFont,
+                                maxTicksLimit: mobileOpts.maxTicksLimit
                             },
                             grid: {
                                 color: 'rgba(255, 255, 255, 0.03)'
                             },
                             title: {
-                                display: true,
+                                display: mobileOpts.axisTitleDisplay,
                                 text: 'Actions',
                                 color: '#6b6b6b'
                             }
@@ -4924,7 +4964,8 @@
                             stacked: true,
                             ticks: {
                                 color: '#6b6b6b',
-                                font: { size: 11 }
+                                font: mobileOpts.tickFont,
+                                maxTicksLimit: isMobile() ? 5 : 10
                             },
                             grid: {
                                 display: false
@@ -5370,6 +5411,17 @@
         
         // Connect WebSocket for real-time updates
         connectWebSocket();
+        
+        // Re-render charts on window resize (for mobile orientation changes)
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                if (cachedActivities && cachedActivities.length > 0) {
+                    renderCharts(cachedActivities);
+                }
+            }, 250);
+        });
         
         // Fallback polling every 30 seconds (only if WebSocket disconnected)
         setInterval(() => {
