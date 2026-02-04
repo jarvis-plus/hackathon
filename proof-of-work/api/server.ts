@@ -22,6 +22,7 @@
  * - GET /api/verify/:hash  - Verify a specific activity by hash
  * - GET /api/badge         - Compact summary for sharing
  * - GET /api/feed.rss      - RSS feed of recent activities
+ * - GET /metrics           - Prometheus-compatible metrics
  * - WS  /ws                - WebSocket for real-time updates
  * 
  * @author Jarvis AI Agent
@@ -1254,6 +1255,131 @@ ${items}
           ...corsHeaders, 
           'Content-Type': 'application/rss+xml; charset=utf-8',
           'Cache-Control': 'max-age=60' // Cache for 1 minute
+        }
+      });
+    }
+
+    // ==========================================
+    // API: GET /metrics or /api/metrics
+    // Prometheus-compatible metrics endpoint
+    // Enables monitoring with Prometheus/Grafana
+    // ==========================================
+    if (path === '/metrics' || path === '/api/metrics') {
+      const activities = getActivities();
+      const now = Date.now();
+      
+      // Calculate activity metrics
+      const totalActivities = activities.length;
+      const onchainCount = activities.filter((a: any) => a.signature || a.proof?.txSignature).length;
+      const unsignedCount = totalActivities - onchainCount;
+      
+      // Count by type
+      const typeCounts: Record<string, number> = {};
+      activities.forEach((a: any) => {
+        typeCounts[a.type] = (typeCounts[a.type] || 0) + 1;
+      });
+      
+      // Calculate time-based metrics
+      const oneHourAgo = now - 3600000;
+      const oneDayAgo = now - 86400000;
+      const activitiesLastHour = activities.filter((a: any) => 
+        new Date(a.timestamp).getTime() > oneHourAgo
+      ).length;
+      const activitiesLastDay = activities.filter((a: any) => 
+        new Date(a.timestamp).getTime() > oneDayAgo
+      ).length;
+      
+      // Last activity timestamp
+      const lastActivity = activities.length > 0 
+        ? new Date(activities[activities.length - 1].timestamp).getTime() / 1000 
+        : 0;
+      
+      // First activity timestamp
+      const firstActivity = activities.length > 0 
+        ? new Date(activities[0].timestamp).getTime() / 1000 
+        : 0;
+      
+      // Calculate unique active days
+      const uniqueDays = new Set(activities.map((a: any) => 
+        new Date(a.timestamp).toISOString().split('T')[0]
+      )).size;
+      
+      // Build Prometheus metrics output
+      const lines: string[] = [
+        '# HELP jarvis_pow_activities_total Total number of activities logged',
+        '# TYPE jarvis_pow_activities_total counter',
+        `jarvis_pow_activities_total ${totalActivities}`,
+        '',
+        '# HELP jarvis_pow_activities_onchain Number of activities with on-chain proofs',
+        '# TYPE jarvis_pow_activities_onchain counter',
+        `jarvis_pow_activities_onchain ${onchainCount}`,
+        '',
+        '# HELP jarvis_pow_activities_unsigned Number of activities pending signature',
+        '# TYPE jarvis_pow_activities_unsigned gauge',
+        `jarvis_pow_activities_unsigned ${unsignedCount}`,
+        '',
+        '# HELP jarvis_pow_onchain_ratio Ratio of on-chain to total activities',
+        '# TYPE jarvis_pow_onchain_ratio gauge',
+        `jarvis_pow_onchain_ratio ${totalActivities > 0 ? (onchainCount / totalActivities).toFixed(4) : 0}`,
+        '',
+        '# HELP jarvis_pow_activities_by_type Number of activities by type',
+        '# TYPE jarvis_pow_activities_by_type gauge',
+      ];
+      
+      // Add type breakdown
+      for (const [type, count] of Object.entries(typeCounts)) {
+        lines.push(`jarvis_pow_activities_by_type{type="${type}"} ${count}`);
+      }
+      
+      lines.push(
+        '',
+        '# HELP jarvis_pow_activities_last_hour Activities logged in the last hour',
+        '# TYPE jarvis_pow_activities_last_hour gauge',
+        `jarvis_pow_activities_last_hour ${activitiesLastHour}`,
+        '',
+        '# HELP jarvis_pow_activities_last_day Activities logged in the last 24 hours',
+        '# TYPE jarvis_pow_activities_last_day gauge',
+        `jarvis_pow_activities_last_day ${activitiesLastDay}`,
+        '',
+        '# HELP jarvis_pow_active_days Total number of unique days with activity',
+        '# TYPE jarvis_pow_active_days gauge',
+        `jarvis_pow_active_days ${uniqueDays}`,
+        '',
+        '# HELP jarvis_pow_last_activity_timestamp Unix timestamp of the last activity',
+        '# TYPE jarvis_pow_last_activity_timestamp gauge',
+        `jarvis_pow_last_activity_timestamp ${lastActivity}`,
+        '',
+        '# HELP jarvis_pow_first_activity_timestamp Unix timestamp of the first activity',
+        '# TYPE jarvis_pow_first_activity_timestamp gauge',
+        `jarvis_pow_first_activity_timestamp ${firstActivity}`,
+        '',
+        '# HELP jarvis_pow_websocket_clients Number of connected WebSocket clients',
+        '# TYPE jarvis_pow_websocket_clients gauge',
+        `jarvis_pow_websocket_clients ${wsClients.size}`,
+        '',
+        '# HELP jarvis_pow_webhooks_total Total number of registered webhooks',
+        '# TYPE jarvis_pow_webhooks_total gauge',
+        `jarvis_pow_webhooks_total ${getWebhooks().length}`,
+        '',
+        '# HELP jarvis_pow_webhooks_active Number of active webhooks',
+        '# TYPE jarvis_pow_webhooks_active gauge',
+        `jarvis_pow_webhooks_active ${getWebhooks().filter(w => w.active).length}`,
+        '',
+        '# HELP jarvis_pow_server_uptime_seconds Server uptime in seconds',
+        '# TYPE jarvis_pow_server_uptime_seconds counter',
+        `jarvis_pow_server_uptime_seconds ${process.uptime ? Math.floor(process.uptime()) : 0}`,
+        '',
+        '# HELP jarvis_pow_info Server information',
+        '# TYPE jarvis_pow_info gauge',
+        `jarvis_pow_info{version="1.0.0",wallet="AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX",hackathon="colosseum-2026"} 1`,
+        ''
+      );
+      
+      return new Response(lines.join('\n'), {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'text/plain; version=0.0.4; charset=utf-8',
+          'Cache-Control': 'no-cache, no-store, must-revalidate'
         }
       });
     }
