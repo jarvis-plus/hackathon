@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 18:38 PST
-**Cycle:** 144
+**Last Updated:** 2026-02-03 18:45 PST
+**Cycle:** 145
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -43,6 +43,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Add loading states for charts ✅ Cycle 126
 - [x] Better empty states for tabs with no data ✅ Cycle 127
 - [x] **Keyboard shortcuts** ✅ Cycle 142 - / for search, 1-6 for tabs, ? for help modal
+- [x] **Scroll-to-top button** ✅ Cycle 145 - Floating button with T keyboard shortcut
 
 ### ⚡ Capability
 - [x] Email activity tracking (log emails sent) ✅ Cycle 132
@@ -62,6 +63,21 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 145 (Scroll-to-Top Button)
+- Added floating scroll-to-top button that appears when scrolling past 400px
+- ↑ Button in bottom-right corner with smooth hover animation
+- Keyboard shortcut `T` for quick scroll to top
+- Throttled scroll event handler for performance (100ms debounce)
+- Smooth scroll behavior with subtle notification sound feedback
+- Mobile responsive: smaller button on screens <600px
+- Updated keyboard shortcuts modal to include new `t` shortcut
+- CSS includes dark/light mode support and hover effects
+- Button has spring-like bounce animation on appear/hover
+- ~100 lines of JavaScript for scroll handling
+- ~100 lines of CSS with animations
+- Files: app.js, dashboard.css, index.html
+- 349 activities, all signed on-chain
 
 ### Cycle 144 (Browser Notifications)
 - Added browser notification support for new activities
@@ -122,21 +138,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - Filter stats display shows date range when active
 - Mobile responsive layout for date range inputs
 - 343 activities, all signed on-chain
-
-### Cycle 140 (Multi-Wallet Support)
-- Added wallet field to Activity interface in types.ts
-- Updated sign-activity.ts with multi-wallet support:
-  - WALLET_CONFIG map for named wallets with paths and addresses
-  - --wallet flag for selecting wallet by name or path
-  - --list-wallets flag to show configured wallets
-  - Wallet address now stored in activity when signing
-- Added wallet helper functions to dashboard (shortWallet, getWalletName, getWalletColor)
-- Added renderWalletBadge() for activity cards showing wallet with Solscan link
-- Wallet filter UI in dashboard (auto-hidden when single wallet)
-- Added CSS for wallet badges and filter buttons with dynamic colors
-- Search includes wallet in query matching
-- Infrastructure ready for adding more wallets in WALLET_CONFIG
-- 339 activities, all signed on-chain
 
 ---
 

@@ -2769,5 +2769,22 @@
     "hash": "3dc8f0997e2ee01f62e50985df55aba4803407576ba3724e4867732dc55e2eaa",
     "signature": "4t6yCVEeHwttzhBooKdzJo31qfod8C5bRqHPFT5KiB6FJj4A3G8pjev6TPtJZf4zjVT5CRrffgGdEt99FN8Zaq7a",
     "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
+  },
+  {
+    "timestamp": "2026-02-04T02:42:05.359Z",
+    "type": "commit",
+    "description": "feat: Cycle 144 - Browser notifications for new activities",
+    "hash": "6db42eb68a82efc1fc9a4c8dea45934c51eb6c80133156ed452c2a2e43e485d0",
+    "signature": "4jrhcD9Zot83uUj3X6nfg1isChCdutLUgBfxkUiSuPfzZjnAoSAvyVtf1ChkaVHo8RxVJBEyKriT4wnnoc8jngpQ",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
+  },
+  {
+    "timestamp": "2026-02-04T02:43:37Z",
+    "type": "build",
+    "description": "Cycle 145: Added scroll-to-top button. Floating button appears when scrolling past 400px. Smooth scroll animation with keyboard shortcut (T). Button includes hover effects, mobile responsive styling, and integrates with keyboard shortcuts modal.",
+    "metadata": {},
+    "hash": "aad26b6fdfd4f9c6145aea03c65c723378838a11623a9b1e753374f54db80a6d",
+    "signature": "5V5Y2RyiXRftVkhvzvteSjr4kSfSE8gxgZSXLZtSYBvvrK9pWW8yUS9MqL5sx5A2pvsh1yv2ibG2TaP39zSspGMA",
+    "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
   }
 ]

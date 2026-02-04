@@ -3212,3 +3212,129 @@ function renderShareButton(activityId) {
         🔗
     </button>`;
 }
+
+// ============================================
+// SCROLL TO TOP BUTTON
+// ============================================
+
+let scrollToTopBtn = null;
+let scrollTimeout = null;
+const SCROLL_THRESHOLD = 400; // Show button after scrolling 400px
+
+/**
+ * Initialize scroll to top button
+ */
+function initScrollToTop() {
+    scrollToTopBtn = document.getElementById('scrollToTop');
+    if (!scrollToTopBtn) return;
+    
+    // Listen for scroll events with throttling
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    // Initial check
+    updateScrollButtonVisibility();
+}
+
+/**
+ * Handle scroll event with throttling
+ */
+function handleScroll() {
+    if (scrollTimeout) return;
+    
+    scrollTimeout = setTimeout(() => {
+        scrollTimeout = null;
+        updateScrollButtonVisibility();
+    }, 100);
+}
+
+/**
+ * Update scroll to top button visibility
+ */
+function updateScrollButtonVisibility() {
+    if (!scrollToTopBtn) return;
+    
+    const scrollY = window.scrollY || window.pageYOffset;
+    
+    if (scrollY > SCROLL_THRESHOLD) {
+        scrollToTopBtn.classList.add('visible');
+    } else {
+        scrollToTopBtn.classList.remove('visible');
+    }
+}
+
+/**
+ * Scroll to top of page smoothly
+ */
+function scrollToTop() {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+    
+    // Optional: play a subtle sound
+    playNotificationSound('new');
+    
+    // Focus on the header after scroll
+    setTimeout(() => {
+        const logo = document.querySelector('.logo-section');
+        if (logo) logo.focus();
+    }, 500);
+}
+
+// Add keyboard shortcut 't' for scroll to top
+const originalHandleShortcutAction = handleShortcutAction;
+handleShortcutAction = function(action) {
+    if (action === 'scrollToTop') {
+        scrollToTop();
+    } else {
+        originalHandleShortcutAction(action);
+    }
+};
+
+// Add 't' key to keyboard shortcuts
+KEYBOARD_SHORTCUTS['t'] = { action: 'scrollToTop', description: 'Scroll to top' };
+
+// Update shortcuts modal to include the new shortcut
+const originalCreateShortcutsModal = createShortcutsModal;
+createShortcutsModal = function() {
+    if (document.getElementById('shortcuts-modal')) return;
+    
+    const modal = document.createElement('div');
+    modal.id = 'shortcuts-modal';
+    modal.className = 'shortcuts-modal';
+    modal.innerHTML = `
+        <div class="shortcuts-modal-content">
+            <div class="shortcuts-header">
+                <h3>⌨️ Keyboard Shortcuts</h3>
+                <button class="shortcuts-close" onclick="hideShortcutsModal()">×</button>
+            </div>
+            <div class="shortcuts-grid">
+                <div class="shortcut-section">
+                    <h4>Navigation</h4>
+                    <div class="shortcut-row"><kbd>/</kbd> Focus search</div>
+                    <div class="shortcut-row"><kbd>Esc</kbd> Clear search / Close modal</div>
+                    <div class="shortcut-row"><kbd>r</kbd> Reset all filters</div>
+                    <div class="shortcut-row"><kbd>t</kbd> Scroll to top</div>
+                </div>
+                <div class="shortcut-section">
+                    <h4>Tabs</h4>
+                    <div class="shortcut-row"><kbd>1</kbd> Activity Feed</div>
+                    <div class="shortcut-row"><kbd>2</kbd> Milestones</div>
+                    <div class="shortcut-row"><kbd>3</kbd> Tweets</div>
+                    <div class="shortcut-row"><kbd>4</kbd> Key Decisions</div>
+                    <div class="shortcut-row"><kbd>5</kbd> Meta Story</div>
+                    <div class="shortcut-row"><kbd>6</kbd> Verify</div>
+                </div>
+                <div class="shortcut-section">
+                    <h4>Help</h4>
+                    <div class="shortcut-row"><kbd>?</kbd> Show this help</div>
+                </div>
+            </div>
+            <p class="shortcuts-tip">💡 Tip: Press <kbd>?</kbd> anytime to see shortcuts</p>
+        </div>
+    `;
+    document.body.appendChild(modal);
+};
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', initScrollToTop);

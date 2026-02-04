@@ -3721,3 +3721,107 @@
         height: 32px;
     }
 }
+
+/* ============================================
+   SCROLL TO TOP BUTTON
+   ============================================ */
+
+.scroll-to-top {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--bg-secondary);
+    border: 2px solid var(--accent-green);
+    color: var(--accent-green);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    font-family: inherit;
+    font-size: 1rem;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px) scale(0.8);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 900;
+    box-shadow: 0 4px 20px rgba(0, 255, 170, 0.15);
+}
+
+.scroll-to-top:hover {
+    background: var(--accent-green);
+    color: #000;
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 30px rgba(0, 255, 170, 0.3);
+}
+
+.scroll-to-top:active {
+    transform: translateY(0) scale(0.95);
+}
+
+.scroll-to-top.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+
+.scroll-top-icon {
+    font-size: 1.2rem;
+    line-height: 1;
+    transition: transform 0.2s ease;
+}
+
+.scroll-to-top:hover .scroll-top-icon {
+    transform: translateY(-2px);
+}
+
+.scroll-top-text {
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    line-height: 1;
+    margin-top: 2px;
+}
+
+/* Light mode */
+[data-theme="light"] .scroll-to-top {
+    background: var(--bg-secondary);
+    border-color: var(--accent-green);
+    color: var(--accent-green);
+    box-shadow: 0 4px 20px rgba(0, 199, 123, 0.15);
+}
+
+[data-theme="light"] .scroll-to-top:hover {
+    background: var(--accent-green);
+    color: #fff;
+    box-shadow: 0 8px 30px rgba(0, 199, 123, 0.25);
+}
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+    .scroll-to-top {
+        bottom: 1rem;
+        right: 1rem;
+        width: 44px;
+        height: 44px;
+    }
+    
+    .scroll-top-icon {
+        font-size: 1rem;
+    }
+    
+    .scroll-top-text {
+        font-size: 0.5rem;
+    }
+}
+
+/* Hide when shortcuts modal or other modals are open */
+.scroll-to-top.hidden-by-modal {
+    opacity: 0;
+    visibility: hidden;
+}
