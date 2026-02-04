@@ -2309,8 +2309,119 @@ const server = Bun.serve({
     // API: GET /api/activities
     // Returns all activities as a JSON array
     // ==========================================
-    if (path === '/api/activities') {
+    if (path === '/api/activities' && req.method === 'GET') {
       return Response.json(getActivities(), { headers: corsHeaders });
+    }
+
+    // ==========================================
+    // API: POST /api/activities
+    // Create a new activity (via voice input or manual entry)
+    // Activities are created unsigned; signing happens separately
+    // ==========================================
+    if (path === '/api/activities' && req.method === 'POST') {
+      try {
+        const body = await req.json() as {
+          type: string;
+          description: string;
+          metadata?: Record<string, any>;
+        };
+
+        // Validate required fields
+        if (!body.type || typeof body.type !== 'string') {
+          return Response.json({
+            error: 'type is required and must be a string'
+          }, { status: 400, headers: corsHeaders });
+        }
+
+        if (!body.description || typeof body.description !== 'string') {
+          return Response.json({
+            error: 'description is required and must be a string'
+          }, { status: 400, headers: corsHeaders });
+        }
+
+        // Validate type (must be built-in or custom)
+        const validTypes = [
+          ...BUILT_IN_TYPES,
+          ...getCustomTypes().map(t => t.id)
+        ];
+        if (!validTypes.includes(body.type)) {
+          return Response.json({
+            error: `Invalid type "${body.type}". Valid types: ${validTypes.join(', ')}`
+          }, { status: 400, headers: corsHeaders });
+        }
+
+        // Validate description length
+        if (body.description.length > 1000) {
+          return Response.json({
+            error: 'description cannot exceed 1000 characters'
+          }, { status: 400, headers: corsHeaders });
+        }
+
+        // Validate metadata
+        if (body.metadata && typeof body.metadata !== 'object') {
+          return Response.json({
+            error: 'metadata must be an object'
+          }, { status: 400, headers: corsHeaders });
+        }
+
+        // Create the activity
+        const activity: any = {
+          timestamp: new Date().toISOString(),
+          type: body.type.toLowerCase(),
+          description: body.description.trim()
+        };
+
+        // Add metadata if provided
+        if (body.metadata && Object.keys(body.metadata).length > 0) {
+          // Mark as voice-logged if specified
+          activity.metadata = body.metadata;
+        }
+
+        // Add source indicator for voice-logged activities
+        if (body.metadata?.source === 'voice') {
+          activity.metadata.voiceLogged = true;
+        }
+
+        // Load and append to activities
+        const activities = getActivities();
+        activities.push(activity);
+        saveActivities(activities);
+
+        // Calculate stats for broadcast
+        const stats = {
+          total: activities.length,
+          onchain: activities.filter((a: any) => a.signature || a.proof?.txSignature).length,
+          commits: activities.filter((a: any) => a.type === 'commit').length,
+          builds: activities.filter((a: any) => ['build', 'deploy', 'decision'].includes(a.type)).length,
+          trades: activities.filter((a: any) => ['trade', 'transfer'].includes(a.type)).length,
+          messages: activities.filter((a: any) => a.type === 'message').length,
+          tweets: activities.filter((a: any) => a.type === 'tweet').length,
+        };
+
+        // Broadcast the new activity via WebSocket
+        broadcastUpdate('new_activities', {
+          activities,
+          newItems: [activity],
+          stats
+        });
+
+        // Also broadcast to webhooks
+        broadcastToWebhooks('activity.new', activity);
+
+        console.log(`🎤 Activity logged via API: [${activity.type}] ${activity.description.slice(0, 50)}...`);
+
+        return Response.json({
+          success: true,
+          activity,
+          message: 'Activity logged successfully. It will be signed in the next signing cycle.'
+        }, { status: 201, headers: corsHeaders });
+
+      } catch (err) {
+        console.error('Error creating activity:', err);
+        return Response.json({
+          error: 'Invalid request body'
+        }, { status: 400, headers: corsHeaders });
+      }
     }
 
     // ==========================================

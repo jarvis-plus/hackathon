@@ -84,6 +84,92 @@
             "$ref": "#/components/responses/RateLimited"
           }
         }
+      },
+      "post": {
+        "tags": [
+          "Activities"
+        ],
+        "summary": "Create a new activity",
+        "description": "Log a new activity via API (e.g., from voice input). Activities are created unsigned and will be signed in the next signing cycle.",
+        "operationId": "createActivity",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["type", "description"],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "Activity type (must be a valid built-in or custom type)",
+                    "example": "build"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Activity description (max 1000 characters)",
+                    "example": "Implemented voice input feature for activity logging"
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "description": "Optional metadata object",
+                    "example": {
+                      "source": "voice",
+                      "voiceLogged": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Activity created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "activity": {
+                      "$ref": "#/components/schemas/Activity"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body or type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyHeader": []
+          }
+        ]
       }
     },
     "/api/activities/{hash}": {

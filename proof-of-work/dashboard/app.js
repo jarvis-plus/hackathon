@@ -5719,6 +5719,7 @@ function createShortcutsModal() {
                     <h4>View & Actions</h4>
                     <div class="shortcut-row"><kbd>z</kbd> Toggle focus mode</div>
                     <div class="shortcut-row"><kbd>c</kbd> Toggle compare mode</div>
+                    <div class="shortcut-row"><kbd>v</kbd> Voice activity input</div>
                     <div class="shortcut-row"><kbd>?</kbd> Show this help</div>
                 </div>
             </div>
@@ -6976,6 +6977,7 @@ createShortcutsModal = function() {
                     <h4>View & Actions</h4>
                     <div class="shortcut-row"><kbd>z</kbd> Toggle focus mode</div>
                     <div class="shortcut-row"><kbd>c</kbd> Toggle compare mode</div>
+                    <div class="shortcut-row"><kbd>v</kbd> Voice activity input</div>
                     <div class="shortcut-row"><kbd>?</kbd> Show this help</div>
                 </div>
             </div>
@@ -9860,4 +9862,385 @@ if (document.readyState === 'loading') {
             startTour();
         }
     }, 2000);
+}
+
+// ============================================
+// VOICE INPUT SYSTEM (Web Speech API)
+// ============================================
+
+/**
+ * Voice Input System for Activity Logging
+ * 
+ * Uses the Web Speech API (SpeechRecognition) to allow users to log
+ * activities by speaking. The transcript is automatically filled into
+ * the description field, and users select the activity type from a dropdown.
+ * 
+ * Features:
+ * - Real-time speech-to-text transcription
+ * - Continuous recognition for longer descriptions
+ * - Auto-stop after silence
+ * - Keyboard shortcuts (V to open, Space to record)
+ * - Full theme support
+ */
+
+// Check for browser support
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = null;
+let isVoiceRecording = false;
+let voiceModalOpen = false;
+
+/**
+ * Initialize the speech recognition system
+ */
+function initVoiceInput() {
+    if (!SpeechRecognition) {
+        // Browser doesn't support speech recognition
+        const btn = document.getElementById('voiceInputBtn');
+        if (btn) {
+            btn.style.display = 'none';
+        }
+        const warning = document.getElementById('voiceBrowserSupport');
+        if (warning) {
+            warning.style.display = 'block';
+        }
+        console.log('Speech recognition not supported in this browser');
+        return;
+    }
+
+    recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+        isVoiceRecording = true;
+        updateVoiceUI(true);
+        console.log('🎤 Voice recognition started');
+    };
+
+    recognition.onend = () => {
+        isVoiceRecording = false;
+        updateVoiceUI(false);
+        console.log('🎤 Voice recognition ended');
+    };
+
+    recognition.onerror = (event) => {
+        console.error('Voice recognition error:', event.error);
+        isVoiceRecording = false;
+        updateVoiceUI(false);
+        
+        const instruction = document.getElementById('voiceInstruction');
+        if (instruction) {
+            if (event.error === 'not-allowed') {
+                instruction.textContent = '⚠️ Microphone access denied. Please allow microphone access.';
+            } else if (event.error === 'no-speech') {
+                instruction.textContent = 'No speech detected. Click the microphone to try again.';
+            } else {
+                instruction.textContent = `Error: ${event.error}. Click the microphone to try again.`;
+            }
+        }
+    };
+
+    recognition.onresult = (event) => {
+        let finalTranscript = '';
+        let interimTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+                finalTranscript += transcript;
+            } else {
+                interimTranscript += transcript;
+            }
+        }
+
+        // Update transcript display
+        const transcriptEl = document.getElementById('voiceTranscript');
+        const descriptionEl = document.getElementById('voiceDescription');
+        
+        if (transcriptEl) {
+            const current = transcriptEl.value;
+            transcriptEl.value = current + finalTranscript + (interimTranscript ? ` (${interimTranscript}...)` : '');
+            transcriptEl.scrollTop = transcriptEl.scrollHeight;
+        }
+
+        // Also update description with final transcript
+        if (descriptionEl && finalTranscript) {
+            descriptionEl.value = (descriptionEl.value + ' ' + finalTranscript).trim();
+        }
+
+        // Enable submit button if we have content
+        updateSubmitButton();
+    };
+
+    console.log('✅ Voice input system initialized');
+}
+
+/**
+ * Toggle voice input modal
+ */
+function toggleVoiceInput() {
+    if (voiceModalOpen) {
+        closeVoiceModal();
+    } else {
+        openVoiceModal();
+    }
+}
+
+/**
+ * Open the voice input modal
+ */
+function openVoiceModal() {
+    const modal = document.getElementById('voiceInputModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        voiceModalOpen = true;
+        
+        // Reset form
+        const transcript = document.getElementById('voiceTranscript');
+        const description = document.getElementById('voiceDescription');
+        if (transcript) transcript.value = '';
+        if (description) description.value = '';
+        
+        updateSubmitButton();
+        announceToScreenReader('Voice input modal opened. Click the microphone or press Space to start recording.');
+    }
+}
+
+/**
+ * Close the voice input modal
+ */
+function closeVoiceModal() {
+    const modal = document.getElementById('voiceInputModal');
+    if (modal) {
+        modal.style.display = 'none';
+        voiceModalOpen = false;
+        
+        // Stop recording if active
+        if (isVoiceRecording && recognition) {
+            recognition.stop();
+        }
+        
+        announceToScreenReader('Voice input modal closed');
+    }
+}
+
+/**
+ * Toggle voice recording
+ */
+function toggleVoiceRecording() {
+    if (!recognition) {
+        initVoiceInput();
+        if (!recognition) return;
+    }
+
+    if (isVoiceRecording) {
+        recognition.stop();
+    } else {
+        // Clear previous transcript
+        const transcript = document.getElementById('voiceTranscript');
+        if (transcript) transcript.value = '';
+        
+        recognition.start();
+    }
+}
+
+/**
+ * Update UI based on recording state
+ */
+function updateVoiceUI(recording) {
+    const btn = document.getElementById('voiceRecordBtn');
+    const indicator = document.getElementById('voiceIndicator');
+    const instruction = document.getElementById('voiceInstruction');
+    const inputBtn = document.getElementById('voiceInputBtn');
+
+    if (btn) {
+        btn.classList.toggle('recording', recording);
+        btn.querySelector('.btn-text').textContent = recording ? 'Stop Recording' : 'Start Recording';
+        btn.querySelector('.btn-icon').textContent = recording ? '⏹️' : '🎙️';
+    }
+
+    if (indicator) {
+        indicator.classList.toggle('listening', recording);
+    }
+
+    if (instruction) {
+        instruction.textContent = recording 
+            ? '🔴 Listening... Speak now!' 
+            : 'Click the microphone to start speaking';
+    }
+
+    if (inputBtn) {
+        inputBtn.classList.toggle('recording', recording);
+    }
+}
+
+/**
+ * Update submit button state
+ */
+function updateSubmitButton() {
+    const description = document.getElementById('voiceDescription');
+    const submitBtn = document.getElementById('voiceSubmitBtn');
+    
+    if (submitBtn && description) {
+        submitBtn.disabled = !description.value.trim();
+    }
+}
+
+/**
+ * Submit the voice-logged activity
+ */
+async function submitVoiceActivity() {
+    const typeSelect = document.getElementById('voiceActivityType');
+    const descriptionEl = document.getElementById('voiceDescription');
+    const submitBtn = document.getElementById('voiceSubmitBtn');
+    
+    if (!typeSelect || !descriptionEl) return;
+    
+    const type = typeSelect.value;
+    const description = descriptionEl.value.trim();
+    
+    if (!description) {
+        announceToScreenReader('Please enter a description for the activity');
+        return;
+    }
+
+    // Disable button while submitting
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.querySelector('.btn-text').textContent = 'Logging...';
+    }
+
+    try {
+        const response = await fetch('/api/activities', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                type,
+                description,
+                metadata: {
+                    source: 'voice',
+                    voiceLogged: true
+                }
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            // Success!
+            playNotificationSound('new');
+            announceToScreenReader(`Activity logged successfully: ${type} - ${description.slice(0, 50)}`);
+            
+            // Close modal after brief delay
+            setTimeout(() => {
+                closeVoiceModal();
+            }, 500);
+            
+            console.log('✅ Voice activity logged:', result);
+        } else {
+            throw new Error(result.error || 'Failed to log activity');
+        }
+
+    } catch (error) {
+        console.error('Error submitting voice activity:', error);
+        announceToScreenReader(`Error logging activity: ${error.message}`);
+        
+        // Re-enable button
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.querySelector('.btn-text').textContent = 'Log Activity';
+        }
+    }
+}
+
+/**
+ * Handle voice modal keyboard events
+ */
+function handleVoiceModalKeyboard(event) {
+    if (!voiceModalOpen) return;
+
+    switch (event.key) {
+        case 'Escape':
+            closeVoiceModal();
+            event.preventDefault();
+            break;
+        case ' ':
+            // Only toggle recording if not focused on input
+            if (event.target.tagName !== 'INPUT' && event.target.tagName !== 'TEXTAREA' && event.target.tagName !== 'SELECT') {
+                toggleVoiceRecording();
+                event.preventDefault();
+            }
+            break;
+        case 'Enter':
+            // Submit if description is filled
+            if (event.target.tagName !== 'TEXTAREA') {
+                const submitBtn = document.getElementById('voiceSubmitBtn');
+                if (submitBtn && !submitBtn.disabled) {
+                    submitVoiceActivity();
+                    event.preventDefault();
+                }
+            }
+            break;
+    }
+}
+
+// Add V keyboard shortcut for voice input
+document.addEventListener('keydown', (event) => {
+    // V key to open/close voice modal (when not typing)
+    if (event.key === 'v' || event.key === 'V') {
+        const target = event.target;
+        if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA' && target.tagName !== 'SELECT') {
+            // Check if any other modal is open
+            const commandPalette = document.querySelector('.command-palette');
+            const shortcutsModal = document.getElementById('keyboardShortcutsModal');
+            if (commandPalette?.style.display === 'flex' || shortcutsModal?.style.display === 'flex') {
+                return;
+            }
+            
+            toggleVoiceInput();
+            event.preventDefault();
+        }
+    }
+    
+    // Handle voice modal specific shortcuts
+    handleVoiceModalKeyboard(event);
+});
+
+// Close modal when clicking outside
+document.addEventListener('click', (event) => {
+    const modal = document.getElementById('voiceInputModal');
+    if (voiceModalOpen && event.target === modal) {
+        closeVoiceModal();
+    }
+});
+
+// Add description input listener for submit button
+document.addEventListener('DOMContentLoaded', () => {
+    initVoiceInput();
+    
+    const descriptionEl = document.getElementById('voiceDescription');
+    if (descriptionEl) {
+        descriptionEl.addEventListener('input', updateSubmitButton);
+    }
+});
+
+// Add to command palette
+if (typeof PALETTE_COMMANDS !== 'undefined' && Array.isArray(PALETTE_COMMANDS)) {
+    PALETTE_COMMANDS.push({
+        id: 'voice-input',
+        title: 'Log Activity by Voice',
+        description: 'Use speech recognition to log activities',
+        icon: '🎤',
+        shortcut: 'V',
+        action: () => { toggleVoiceInput(); hideCommandPalette(); },
+        group: 'Actions'
+    });
+}
+
+// Also initialize on page load if DOM already ready
+if (document.readyState !== 'loading') {
+    initVoiceInput();
 }

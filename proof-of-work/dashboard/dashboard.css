@@ -11552,3 +11552,426 @@ body.tour-active {
     background: rgba(255, 152, 0, 0.25);
     color: #ff9800;
 }
+
+/* ============================================
+   VOICE INPUT SYSTEM
+   ============================================ */
+
+/* Voice Input Button in Filter Section */
+.voice-input-container {
+    display: flex;
+    align-items: center;
+}
+
+.voice-input-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+    border: none;
+    border-radius: 20px;
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+}
+
+.voice-input-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(255, 107, 107, 0.5);
+}
+
+.voice-input-btn:active {
+    transform: translateY(0);
+}
+
+.voice-input-btn.recording {
+    background: linear-gradient(135deg, #ff4444, #ff6666);
+    animation: recording-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes recording-pulse {
+    0%, 100% { box-shadow: 0 2px 8px rgba(255, 68, 68, 0.3); }
+    50% { box-shadow: 0 4px 20px rgba(255, 68, 68, 0.7); }
+}
+
+/* Voice Input Modal */
+.voice-input-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.2s ease;
+}
+
+.voice-input-content {
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--border);
+}
+
+.voice-input-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-card);
+}
+
+.voice-input-header h2 {
+    font-size: 1.25rem;
+    color: var(--text-primary);
+}
+
+.voice-input-body {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+/* Voice Status & Indicator */
+.voice-status {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: var(--bg-primary);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+}
+
+.voice-indicator {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.voice-indicator:hover {
+    transform: scale(1.05);
+}
+
+.voice-indicator .voice-mic {
+    font-size: 2.5rem;
+    z-index: 2;
+}
+
+.voice-indicator .voice-pulse {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: rgba(255, 107, 107, 0.2);
+    border: 2px solid rgba(255, 107, 107, 0.4);
+}
+
+.voice-indicator.listening .voice-pulse {
+    animation: pulse-ring 1.5s ease-out infinite;
+}
+
+@keyframes pulse-ring {
+    0% { transform: scale(0.9); opacity: 1; }
+    100% { transform: scale(1.5); opacity: 0; }
+}
+
+.voice-indicator.listening::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: rgba(255, 107, 107, 0.15);
+    animation: pulse-ring 1.5s ease-out infinite 0.4s;
+}
+
+.voice-instruction {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    text-align: center;
+}
+
+/* Transcript Area */
+.voice-transcript-area {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.voice-transcript-area label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+#voiceTranscript {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    font-family: inherit;
+    resize: none;
+}
+
+#voiceTranscript:focus {
+    outline: none;
+    border-color: var(--accent-green);
+}
+
+/* Voice Form */
+.voice-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.voice-form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.voice-form-row label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+#voiceActivityType {
+    padding: 0.75rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
+#voiceActivityType:focus {
+    outline: none;
+    border-color: var(--accent-green);
+}
+
+#voiceDescription {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    font-family: inherit;
+    resize: none;
+}
+
+#voiceDescription:focus {
+    outline: none;
+    border-color: var(--accent-green);
+}
+
+/* Voice Actions */
+.voice-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.voice-record-btn,
+.voice-submit-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.voice-record-btn {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+}
+
+.voice-record-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+}
+
+.voice-record-btn.recording {
+    background: linear-gradient(135deg, #ff4444, #ff6666);
+    animation: recording-glow 1s ease-in-out infinite;
+}
+
+@keyframes recording-glow {
+    0%, 100% { box-shadow: 0 4px 16px rgba(255, 68, 68, 0.4); }
+    50% { box-shadow: 0 4px 24px rgba(255, 68, 68, 0.7); }
+}
+
+.voice-submit-btn {
+    background: linear-gradient(135deg, var(--accent-green), #00cc88);
+    color: #000;
+}
+
+.voice-submit-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 255, 170, 0.4);
+}
+
+.voice-submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Voice Tips */
+.voice-tips {
+    padding: 1rem;
+    background: rgba(0, 255, 170, 0.05);
+    border: 1px solid rgba(0, 255, 170, 0.2);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.voice-tips p {
+    margin-bottom: 0.5rem;
+}
+
+.voice-tips ul {
+    margin-left: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.voice-tips kbd {
+    display: inline-block;
+    padding: 0.15rem 0.4rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-family: monospace;
+}
+
+/* Browser Support Warning */
+.voice-browser-support {
+    padding: 1rem;
+    background: rgba(255, 107, 107, 0.1);
+    border: 1px solid rgba(255, 107, 107, 0.3);
+    border-radius: 8px;
+    text-align: center;
+    color: var(--accent-red);
+}
+
+/* Light theme adjustments */
+[data-theme="light"] .voice-input-content {
+    background: #fff;
+}
+
+[data-theme="light"] .voice-status {
+    background: #f5f7fa;
+}
+
+[data-theme="light"] #voiceTranscript,
+[data-theme="light"] #voiceActivityType,
+[data-theme="light"] #voiceDescription {
+    background: #f5f7fa;
+}
+
+/* Cyberpunk theme */
+[data-theme="cyberpunk"] .voice-input-btn {
+    background: linear-gradient(135deg, #ff0066, #ff6600);
+    box-shadow: 0 0 20px rgba(255, 0, 102, 0.4);
+}
+
+[data-theme="cyberpunk"] .voice-input-btn:hover {
+    box-shadow: 0 0 30px rgba(255, 0, 102, 0.6);
+}
+
+[data-theme="cyberpunk"] .voice-input-content {
+    border: 1px solid rgba(255, 0, 102, 0.4);
+    box-shadow: 0 0 40px rgba(255, 0, 102, 0.2);
+}
+
+[data-theme="cyberpunk"] .voice-record-btn {
+    background: linear-gradient(135deg, #00ffff, #0088ff);
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+}
+
+[data-theme="cyberpunk"] .voice-record-btn:hover {
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+}
+
+[data-theme="cyberpunk"] .voice-record-btn.recording {
+    background: linear-gradient(135deg, #ff0066, #ff3300);
+    box-shadow: 0 0 30px rgba(255, 0, 102, 0.6);
+}
+
+/* Ocean theme */
+[data-theme="ocean"] .voice-input-btn {
+    background: linear-gradient(135deg, #00b4d8, #0096c7);
+}
+
+/* Forest theme */
+[data-theme="forest"] .voice-input-btn {
+    background: linear-gradient(135deg, #66bb6a, #43a047);
+}
+
+/* Sunset theme */
+[data-theme="sunset"] .voice-input-btn {
+    background: linear-gradient(135deg, #ff7043, #ff5722);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 600px) {
+    .voice-input-content {
+        width: 95%;
+        max-height: 85vh;
+    }
+    
+    .voice-input-body {
+        padding: 1rem;
+    }
+    
+    .voice-actions {
+        flex-direction: column;
+    }
+    
+    .voice-record-btn,
+    .voice-submit-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .voice-input-btn .voice-text {
+        display: none;
+    }
+}

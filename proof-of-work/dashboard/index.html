@@ -120,6 +120,76 @@
             </div>
         </div>
 
+        <!-- Voice Input Modal -->
+        <div id="voiceInputModal" class="voice-input-modal" role="dialog" aria-labelledby="voiceInputTitle" aria-modal="true" style="display: none;">
+            <div class="voice-input-content">
+                <div class="voice-input-header">
+                    <h2 id="voiceInputTitle">🎤 Voice Activity Log</h2>
+                    <button class="modal-close" onclick="closeVoiceModal()" aria-label="Close modal">&times;</button>
+                </div>
+                <div class="voice-input-body">
+                    <div class="voice-status" id="voiceStatus">
+                        <div class="voice-indicator" id="voiceIndicator">
+                            <span class="voice-pulse"></span>
+                            <span class="voice-mic">🎤</span>
+                        </div>
+                        <p class="voice-instruction" id="voiceInstruction">Click the microphone to start speaking</p>
+                    </div>
+                    
+                    <div class="voice-transcript-area">
+                        <label for="voiceTranscript">Transcript:</label>
+                        <textarea id="voiceTranscript" placeholder="Your speech will appear here..." rows="3" readonly></textarea>
+                    </div>
+                    
+                    <div class="voice-form">
+                        <div class="voice-form-row">
+                            <label for="voiceActivityType">Activity Type:</label>
+                            <select id="voiceActivityType" aria-label="Select activity type">
+                                <option value="build">🔨 Build</option>
+                                <option value="commit">📝 Commit</option>
+                                <option value="decision">🧠 Decision</option>
+                                <option value="research">🔬 Research</option>
+                                <option value="message">💬 Message</option>
+                                <option value="email">📧 Email</option>
+                                <option value="trade">💹 Trade</option>
+                                <option value="deploy">🚀 Deploy</option>
+                                <option value="session">💻 Session</option>
+                            </select>
+                        </div>
+                        <div class="voice-form-row">
+                            <label for="voiceDescription">Description:</label>
+                            <textarea id="voiceDescription" placeholder="Describe the activity..." rows="2"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="voice-actions">
+                        <button class="voice-record-btn" id="voiceRecordBtn" onclick="toggleVoiceRecording()">
+                            <span class="btn-icon">🎙️</span>
+                            <span class="btn-text">Start Recording</span>
+                        </button>
+                        <button class="voice-submit-btn" id="voiceSubmitBtn" onclick="submitVoiceActivity()" disabled>
+                            <span class="btn-icon">✅</span>
+                            <span class="btn-text">Log Activity</span>
+                        </button>
+                    </div>
+                    
+                    <div class="voice-tips">
+                        <p><strong>💡 Tips:</strong></p>
+                        <ul>
+                            <li>Speak clearly: "Built the voice input feature for the dashboard"</li>
+                            <li>The transcript auto-fills the description</li>
+                            <li>Select the activity type from the dropdown</li>
+                            <li>Keyboard: Press <kbd>V</kbd> to open, <kbd>Space</kbd> to record</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="voice-browser-support" id="voiceBrowserSupport" style="display: none;">
+                        <p>⚠️ Your browser doesn't support speech recognition. Try Chrome, Edge, or Safari.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="proof-banner">
             <div class="proof-banner-icon">🔐</div>
             <div class="proof-banner-text">
@@ -643,6 +713,15 @@
                     <label for="activitySearch" class="sr-only">Search activities</label>
                     <input type="text" id="activitySearch" placeholder="Search activities..." oninput="applyFilters()" aria-describedby="filterStats">
                     <button class="search-clear" id="searchClear" onclick="clearSearch()" title="Clear search" aria-label="Clear search">×</button>
+                </div>
+                <div class="voice-input-container">
+                    <button class="voice-input-btn" id="voiceInputBtn" onclick="toggleVoiceInput()" 
+                            title="Log activity by voice (V)" 
+                            aria-label="Voice input for activity logging"
+                            aria-pressed="false">
+                        <span class="voice-icon">🎤</span>
+                        <span class="voice-text">Voice</span>
+                    </button>
                 </div>
                 <div class="bookmark-filter-container">
                     <button class="bookmark-filter-btn" id="bookmark-filter-btn" onclick="toggleBookmarkFilter()" 
