@@ -7996,31 +7996,13 @@ function clearCompareSelections() {
 
 /**
  * Show the comparison modal with selected activities
+ * (wrapper for openComparisonModal to work with HTML button)
  */
 function showCompareModal() {
-    if (compareSelections.length !== 2 || !allActivities) return;
-    
-    const activity1 = allActivities.find(a => (a.hash || a.proof?.hash) === compareSelections[0]);
-    const activity2 = allActivities.find(a => (a.hash || a.proof?.hash) === compareSelections[1]);
-    
-    if (!activity1 || !activity2) {
-        console.error('[Compare] Could not find selected activities');
-        return;
-    }
-    
-    // Render comparison content
-    const bodyEl = document.getElementById('compare-modal-body');
-    if (bodyEl) {
-        bodyEl.innerHTML = renderComparisonContent(activity1, activity2);
-    }
-    
-    // Show modal
-    compareModal.classList.add('visible');
-    
-    // Focus close button
-    setTimeout(() => {
-        compareModal.querySelector('.compare-modal-close').focus();
-    }, 100);
+    // Use the consolidated compareSelectedActivities array
+    if (compareSelectedActivities.length !== 2) return;
+    openComparisonModal();
+}
     
     announceToScreenReader('Activity comparison modal opened');
 }

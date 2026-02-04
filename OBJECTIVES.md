@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 21:30 PST
-**Cycle:** 177
+**Last Updated:** 2026-02-03 21:35 PST
+**Cycle:** 178
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -97,7 +97,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Command palette (Cmd/Ctrl+K quick access) ✅ Cycle 174
 - [x] Focus Mode / Zen Mode (distraction-free view) ✅ Cycle 175
 - [x] Mini activity preview on hover (quick peek) ✅ Cycle 176
-- [ ] Activity comparison mode (select 2 to compare)
+- [x] Activity comparison mode (select 2 to compare) ✅ Cycle 178
 - [ ] Custom activity types (user-defined)
 - [ ] Activity attachment support (link files/images)
 - [ ] Dashboard tour/onboarding for new users
@@ -107,6 +107,47 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 178 (Activity Comparison Mode)
+- Implemented ability to select any 2 activities and compare them side-by-side
+- **New UI Components**:
+  - Compare Mode toggle button in filter section
+  - Floating selection panel showing 2 slots for selected activities
+  - Side-by-side comparison modal with analysis stats
+- **Features**:
+  - 'C' keyboard shortcut to toggle compare mode
+  - Click on activities to select (up to 2)
+  - Floating panel with activity preview in each slot
+  - Remove individual selections or clear all
+  - Compare button opens detailed comparison modal
+- **Comparison Modal**:
+  - Side-by-side layout with activity details
+  - Visual divider with "VS" indicator
+  - Analysis section with comparison stats:
+    - Time Gap (hours/days apart)
+    - Type Match (same or different)
+    - On-Chain status (both/one/neither verified)
+    - Detail Level (which is more detailed)
+    - Wallet comparison (same or different)
+    - Shared Tags (if any overlap)
+- **CSS Changes (~400 lines)**:
+  - `.compare-mode-toggle` button styling
+  - `.compare-selection-panel` floating panel with slots
+  - `.compare-modal` full comparison overlay
+  - `.compare-side-by-side` grid layout
+  - Mobile responsive (stacks vertically)
+  - Light/dark/cyberpunk theme support
+- **JS Changes (~400 lines)**:
+  - `initComparisonMode()` - sets up panel and listeners
+  - `toggleCompareMode()` - enable/disable selection mode
+  - `handleCompareClick()` - click handler for activity cards
+  - `updateCompareSelectionUI()` - refresh floating panel
+  - `openComparisonModal()` / `closeComparisonModal()`
+  - `renderCompareActivityCard()` - card renderer
+  - `calculateComparisonStats()` - stat analysis
+  - Added to command palette with 'C' shortcut
+  - Updated both keyboard shortcuts modals
+- 456 activities, all signed on-chain
 
 ### Cycle 177 (Achievement Badges System)
 - Implemented gamification through 30 achievement badges
@@ -214,50 +255,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
   - `showCommandPalette()`, `hideCommandPalette()`, `toggleCommandPalette()`
   - Updated keyboard hint to show ⌘K/Ctrl+K based on platform
 - 446 activities, all signed on-chain
-
-### Cycle 173 (Activity Bookmarking/Favorites)
-- Implemented client-side bookmarking system using localStorage
-- **Features**:
-  - Star icon (⭐/☆) on each activity card to toggle bookmark
-  - Bookmark filter button in filter section with count badge
-  - "Show Bookmarked Only" toggle to filter down to favorites
-  - Keyboard shortcuts: `b` to toggle filter, `B` to bookmark focused activity
-  - Both keyboard shortcuts modals updated with new shortcuts
-- **Implementation**:
-  - ~115 lines CSS for `.bookmark-btn`, `.bookmarked-badge`, `.bookmark-filter-btn`
-  - ~175 lines JS with functions: `getBookmarks()`, `saveBookmarks()`, `isBookmarked()`, `toggleBookmark()`, `renderBookmarkButton()`, `updateBookmarkCount()`, `toggleBookmarkFilter()`
-  - ~8 lines HTML for bookmark filter button
-- **Design Choices**:
-  - Client-side localStorage vs server-side to preserve privacy and simplicity
-  - Star icon distinct from pin (📌) which is server-side
-  - Hover/focus states with gold color for visual feedback
-  - Dark/light theme support
-- 443 activities, all signed on-chain
-
-### Cycle 172 (Activity Streak Tracking)
-- Implemented gamification through consecutive day tracking
-- **New Endpoint**: `GET /api/streaks`
-- **Streak Metrics**:
-  - `currentStreak`: Consecutive days with activity (including today if active)
-  - `longestStreak`: Highest streak ever achieved
-  - `streakDates`: Array of dates in current streak
-  - `todayActive`: Whether there's activity today
-  - `lastActiveDate`: Most recent date with activity
-  - `activeDays`: Total unique days with activity
-  - `activeDaysThisWeek`/`activeDaysThisMonth`: Weekly/monthly tracking
-  - `streakStatus`: active / at_risk / broken / none
-  - `message`: Motivational message with emoji based on streak length
-  - `nextMilestone`: Target milestone (3, 7, 14, 30, 60, 90, 180, 365, etc.)
-  - `daysUntilNextMilestone`: Days remaining to reach milestone
-- **Updated `/api/stats`**: Added `streak` summary object with current, longest, status, todayActive
-- **Implementation**:
-  - `ActivityStreak` interface for type safety
-  - `calculateStreaks()`: Analyzes activity timestamps for consecutive days
-  - `getNextMilestone()`: Returns next streak goal based on current count
-  - Streak status logic: active (today has activity), at_risk (yesterday only), broken (gap)
-- **OpenAPI Updated**: Added `Streaks` schema and `/api/streaks` endpoint docs
-- ~170 lines added to server.ts, ~80 lines to openapi.json
-- 440 activities, all signed on-chain
 
 ---
 

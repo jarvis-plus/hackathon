@@ -8985,6 +8985,12 @@ input[aria-invalid="true"],
    Select any 2 activities to compare side-by-side
    ============================================ */
 
+/* Container for compare mode toggle */
+.compare-mode-container {
+    display: inline-flex;
+    margin-left: 0.5rem;
+}
+
 /* Toggle button in filter section */
 .compare-mode-toggle {
     display: flex;
