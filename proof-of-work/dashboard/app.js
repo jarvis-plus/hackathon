@@ -17408,3 +17408,330 @@ window.generateSmartSuggestions = generateSmartSuggestions;
 window.toggleSuggestionsDropdown = toggleSuggestionsDropdown;
 window.toggleSmartSuggestions = toggleSmartSuggestions;
 window.applySuggestion = applySuggestion;
+
+// ===========================================
+// Activity Minimap Sidebar (Cycle 211)
+// ===========================================
+
+/**
+ * Minimap state
+ */
+let minimapCollapsed = localStorage.getItem('minimapCollapsed') === 'true';
+let minimapActivities = [];
+let minimapScrollTimeout = null;
+
+/**
+ * Initialize the minimap
+ */
+function initMinimap() {
+    const minimap = document.getElementById('activityMinimap');
+    if (!minimap) return;
+    
+    // Apply initial collapsed state
+    if (minimapCollapsed) {
+        minimap.classList.add('collapsed');
+    }
+    
+    // Listen for scroll events on the feed
+    const feed = document.getElementById('feed');
+    if (feed) {
+        // Use scroll on window since feed doesn't have its own scroll
+        window.addEventListener('scroll', handleMinimapScroll, { passive: true });
+    }
+    
+    // Initial render after activities load
+    setTimeout(() => {
+        renderMinimapBars();
+        updateMinimapViewport();
+    }, 1000);
+}
+
+/**
+ * Toggle minimap collapsed state
+ */
+function toggleMinimap() {
+    const minimap = document.getElementById('activityMinimap');
+    if (!minimap) return;
+    
+    minimapCollapsed = !minimapCollapsed;
+    minimap.classList.toggle('collapsed', minimapCollapsed);
+    localStorage.setItem('minimapCollapsed', minimapCollapsed);
+    
+    announceToScreenReader(`Minimap ${minimapCollapsed ? 'collapsed' : 'expanded'}`);
+}
+
+/**
+ * Render activity bars in the minimap
+ */
+function renderMinimapBars() {
+    const barsContainer = document.getElementById('minimapBars');
+    const statsEl = document.getElementById('minimapStats');
+    if (!barsContainer) return;
+    
+    // Get activities from global state
+    const activities = window.allActivities || [];
+    if (!activities.length) {
+        barsContainer.innerHTML = '<div style="text-align: center; color: var(--text-secondary); font-size: 9px; padding: 10px;">No activities</div>';
+        return;
+    }
+    
+    // Sort by timestamp (newest first, matching feed order)
+    minimapActivities = [...activities].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    // Limit bars for performance (show most recent 200)
+    const maxBars = 200;
+    const displayActivities = minimapActivities.slice(0, maxBars);
+    
+    // Render bars
+    barsContainer.innerHTML = displayActivities.map((activity, index) => {
+        const type = (activity.type || 'default').toLowerCase().replace(/[^a-z]/g, '');
+        return `<div class="minimap-bar type-${type}" 
+                     data-index="${index}" 
+                     data-hash="${activity.hash || ''}"
+                     tabindex="0"
+                     role="button"
+                     aria-label="${activity.type}: ${escapeMinimapText(activity.description?.substring(0, 50) || '')}"
+                     onmouseenter="showMinimapTooltip(event, ${index})"
+                     onmouseleave="hideMinimapTooltip()"
+                     onclick="scrollToMinimapActivity(${index})"
+                     onkeydown="handleMinimapKeydown(event, ${index})"></div>`;
+    }).join('');
+    
+    // Update stats
+    if (statsEl) {
+        const showing = displayActivities.length;
+        const total = minimapActivities.length;
+        statsEl.innerHTML = `<span class="minimap-stat-count">${showing}${total > maxBars ? '/' + total : ''} activities</span>`;
+    }
+    
+    // Update viewport after rendering
+    updateMinimapViewport();
+}
+
+/**
+ * Escape text for minimap (simple)
+ */
+function escapeMinimapText(text) {
+    return (text || '').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/**
+ * Handle scroll events to update viewport indicator
+ */
+function handleMinimapScroll() {
+    if (minimapScrollTimeout) return;
+    
+    minimapScrollTimeout = requestAnimationFrame(() => {
+        minimapScrollTimeout = null;
+        updateMinimapViewport();
+    });
+}
+
+/**
+ * Update the viewport indicator position
+ */
+function updateMinimapViewport() {
+    const viewport = document.getElementById('minimapViewport');
+    const barsContainer = document.getElementById('minimapBars');
+    const body = document.getElementById('minimapBody');
+    if (!viewport || !barsContainer || !body) return;
+    
+    const bars = barsContainer.querySelectorAll('.minimap-bar');
+    if (!bars.length) {
+        viewport.style.display = 'none';
+        return;
+    }
+    
+    // Get feed element and visible activity items
+    const feed = document.getElementById('feed');
+    if (!feed) return;
+    
+    const activityItems = feed.querySelectorAll('.activity-item');
+    if (!activityItems.length) return;
+    
+    // Calculate which activities are visible in the viewport
+    const windowTop = window.scrollY;
+    const windowBottom = windowTop + window.innerHeight;
+    
+    let firstVisibleIndex = -1;
+    let lastVisibleIndex = -1;
+    
+    activityItems.forEach((item, i) => {
+        const rect = item.getBoundingClientRect();
+        const itemTop = rect.top + windowTop;
+        const itemBottom = itemTop + rect.height;
+        
+        // Check if item overlaps with viewport
+        if (itemBottom > windowTop && itemTop < windowBottom) {
+            if (firstVisibleIndex === -1) firstVisibleIndex = i;
+            lastVisibleIndex = i;
+        }
+    });
+    
+    if (firstVisibleIndex === -1) {
+        viewport.style.display = 'none';
+        return;
+    }
+    
+    viewport.style.display = 'block';
+    
+    // Calculate viewport position in minimap
+    const totalBars = Math.min(bars.length, minimapActivities.length);
+    const barHeight = barsContainer.scrollHeight / totalBars;
+    
+    // Map activity index to bar index (they should match since both sorted by timestamp)
+    const topPercent = (firstVisibleIndex / totalBars) * 100;
+    const heightPercent = ((lastVisibleIndex - firstVisibleIndex + 1) / totalBars) * 100;
+    
+    viewport.style.top = `${Math.max(0, topPercent)}%`;
+    viewport.style.height = `${Math.max(5, Math.min(100, heightPercent))}%`;
+    
+    // Mark visible bars
+    bars.forEach((bar, i) => {
+        bar.classList.toggle('in-viewport', i >= firstVisibleIndex && i <= lastVisibleIndex);
+    });
+}
+
+/**
+ * Show tooltip for activity bar
+ */
+function showMinimapTooltip(event, index) {
+    const tooltip = document.getElementById('minimapTooltip');
+    if (!tooltip || !minimapActivities[index]) return;
+    
+    const activity = minimapActivities[index];
+    const type = activity.type || 'activity';
+    const desc = activity.description || 'No description';
+    const time = activity.timestamp ? formatTime(activity.timestamp) : '';
+    
+    // Get type badge color
+    const typeColors = {
+        commit: '#10b981',
+        build: '#f59e0b',
+        trade: '#8b5cf6',
+        message: '#3b82f6',
+        email: '#ec4899',
+        tweet: '#14b8a6',
+        decision: '#f97316',
+        heartbeat: '#ef4444',
+        browser: '#06b6d4',
+        calendar: '#a855f7',
+        deploy: '#22c55e',
+        session: '#64748b'
+    };
+    const color = typeColors[type.toLowerCase()] || '#6b7280';
+    
+    tooltip.innerHTML = `
+        <div class="minimap-tooltip-type" style="background: ${color}; color: #fff;">${type}</div>
+        <div class="minimap-tooltip-desc">${escapeMinimapText(desc.substring(0, 100))}${desc.length > 100 ? '...' : ''}</div>
+        <div class="minimap-tooltip-time">${time}</div>
+    `;
+    
+    // Position tooltip near the bar
+    const bar = event.target;
+    const barRect = bar.getBoundingClientRect();
+    
+    tooltip.style.display = 'block';
+    tooltip.style.top = `${barRect.top}px`;
+}
+
+/**
+ * Hide minimap tooltip
+ */
+function hideMinimapTooltip() {
+    const tooltip = document.getElementById('minimapTooltip');
+    if (tooltip) {
+        tooltip.style.display = 'none';
+    }
+}
+
+/**
+ * Scroll to activity when clicking a minimap bar
+ */
+function scrollToMinimapActivity(index) {
+    const activity = minimapActivities[index];
+    if (!activity) return;
+    
+    const hash = activity.hash;
+    if (!hash) return;
+    
+    // Find the activity item in the feed
+    const activityEl = document.querySelector(`.activity-item[data-hash="${hash}"]`);
+    if (activityEl) {
+        activityEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Highlight briefly
+        activityEl.classList.add('minimap-highlight');
+        setTimeout(() => activityEl.classList.remove('minimap-highlight'), 1500);
+        
+        // Focus for accessibility
+        activityEl.focus();
+    }
+}
+
+/**
+ * Handle keyboard navigation in minimap
+ */
+function handleMinimapKeydown(event, index) {
+    if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        scrollToMinimapActivity(index);
+    } else if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        const bars = document.querySelectorAll('.minimap-bar');
+        if (bars[index + 1]) bars[index + 1].focus();
+    } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        const bars = document.querySelectorAll('.minimap-bar');
+        if (bars[index - 1]) bars[index - 1].focus();
+    }
+}
+
+/**
+ * Add M keyboard shortcut for minimap toggle
+ */
+document.addEventListener('keydown', (e) => {
+    // Skip if typing in an input
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
+        return;
+    }
+    
+    if (e.key === 'm' || e.key === 'M') {
+        if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+            e.preventDefault();
+            toggleMinimap();
+        }
+    }
+});
+
+/**
+ * Hook into activity updates to refresh minimap
+ */
+const originalRenderActivitiesForMinimap = typeof renderActivities === 'function' ? renderActivities : null;
+if (originalRenderActivitiesForMinimap) {
+    renderActivities = function(activities, highlightNew = false) {
+        originalRenderActivitiesForMinimap(activities, highlightNew);
+        // Refresh minimap after activities render
+        setTimeout(renderMinimapBars, 100);
+    };
+}
+
+// Initialize on DOM ready
+document.addEventListener('DOMContentLoaded', initMinimap);
+
+// Add to command palette if available
+if (typeof window.commandPaletteCommands !== 'undefined') {
+    window.commandPaletteCommands.push({
+        name: 'Toggle Minimap',
+        shortcut: 'M',
+        action: toggleMinimap
+    });
+}
+
+// Expose functions globally
+window.toggleMinimap = toggleMinimap;
+window.renderMinimapBars = renderMinimapBars;
+window.showMinimapTooltip = showMinimapTooltip;
+window.hideMinimapTooltip = hideMinimapTooltip;
+window.scrollToMinimapActivity = scrollToMinimapActivity;
+window.handleMinimapKeydown = handleMinimapKeydown;

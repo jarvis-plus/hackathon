@@ -18463,3 +18463,294 @@ body.tour-active {
         right: -50%;
     }
 }
+
+/* ===========================================
+   Activity Minimap Sidebar (Cycle 211)
+   =========================================== */
+
+.activity-minimap {
+    position: fixed;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 60px;
+    max-height: 70vh;
+    background: var(--card-bg, #1a1a2e);
+    border: 1px solid var(--border-color, #333);
+    border-right: none;
+    border-radius: 12px 0 0 12px;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: transform 0.3s ease, width 0.3s ease, opacity 0.3s ease;
+}
+
+.activity-minimap.collapsed {
+    width: 28px;
+}
+
+.activity-minimap.collapsed .minimap-body,
+.activity-minimap.collapsed .minimap-stats {
+    display: none;
+}
+
+.activity-minimap.collapsed .minimap-title {
+    display: none;
+}
+
+.activity-minimap.collapsed .minimap-toggle {
+    transform: rotate(180deg);
+}
+
+.minimap-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 8px;
+    background: linear-gradient(135deg, var(--accent-color, #00ffaa) 0%, var(--accent-secondary, #7c3aed) 100%);
+    border-bottom: 1px solid var(--border-color, #333);
+}
+
+.minimap-title {
+    font-size: 10px;
+    font-weight: 600;
+    color: #000;
+    white-space: nowrap;
+}
+
+.minimap-toggle {
+    background: transparent;
+    border: none;
+    color: #000;
+    font-size: 10px;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: transform 0.3s ease, background 0.2s ease;
+}
+
+.minimap-toggle:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.minimap-body {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    min-height: 200px;
+    max-height: calc(70vh - 60px);
+    padding: 4px;
+}
+
+.minimap-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    height: 100%;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.minimap-bars::-webkit-scrollbar {
+    display: none;
+}
+
+.minimap-bar {
+    height: 4px;
+    min-height: 2px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: transform 0.15s ease, opacity 0.15s ease, height 0.15s ease;
+    opacity: 0.8;
+    position: relative;
+}
+
+.minimap-bar:hover {
+    transform: scaleY(1.5);
+    opacity: 1;
+}
+
+.minimap-bar.in-viewport {
+    opacity: 1;
+    transform: scaleX(1.1);
+}
+
+/* Activity type colors */
+.minimap-bar.type-commit { background: linear-gradient(90deg, #10b981, #059669); }
+.minimap-bar.type-build { background: linear-gradient(90deg, #f59e0b, #d97706); }
+.minimap-bar.type-trade { background: linear-gradient(90deg, #8b5cf6, #7c3aed); }
+.minimap-bar.type-message { background: linear-gradient(90deg, #3b82f6, #2563eb); }
+.minimap-bar.type-email { background: linear-gradient(90deg, #ec4899, #db2777); }
+.minimap-bar.type-tweet { background: linear-gradient(90deg, #14b8a6, #0d9488); }
+.minimap-bar.type-decision { background: linear-gradient(90deg, #f97316, #ea580c); }
+.minimap-bar.type-heartbeat { background: linear-gradient(90deg, #ef4444, #dc2626); }
+.minimap-bar.type-browser { background: linear-gradient(90deg, #06b6d4, #0891b2); }
+.minimap-bar.type-calendar { background: linear-gradient(90deg, #a855f7, #9333ea); }
+.minimap-bar.type-deploy { background: linear-gradient(90deg, #22c55e, #16a34a); }
+.minimap-bar.type-session { background: linear-gradient(90deg, #64748b, #475569); }
+.minimap-bar.type-default { background: linear-gradient(90deg, #6b7280, #4b5563); }
+
+/* Viewport indicator */
+.minimap-viewport {
+    position: absolute;
+    left: 2px;
+    right: 2px;
+    background: rgba(0, 255, 170, 0.15);
+    border: 1px solid var(--accent-color, #00ffaa);
+    border-radius: 4px;
+    pointer-events: none;
+    z-index: 10;
+    transition: top 0.1s ease, height 0.1s ease;
+    box-shadow: 0 0 10px rgba(0, 255, 170, 0.3);
+}
+
+/* Tooltip */
+.minimap-tooltip {
+    position: fixed;
+    right: 70px;
+    background: var(--card-bg, #1a1a2e);
+    border: 1px solid var(--accent-color, #00ffaa);
+    border-radius: 8px;
+    padding: 8px 12px;
+    max-width: 250px;
+    font-size: 11px;
+    z-index: 200;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+}
+
+.minimap-tooltip-type {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.minimap-tooltip-desc {
+    color: var(--text-primary, #e8e8e8);
+    line-height: 1.3;
+    word-break: break-word;
+}
+
+.minimap-tooltip-time {
+    color: var(--text-secondary, #888);
+    font-size: 10px;
+    margin-top: 4px;
+}
+
+/* Stats */
+.minimap-stats {
+    padding: 4px 8px;
+    font-size: 9px;
+    color: var(--text-secondary, #888);
+    text-align: center;
+    border-top: 1px solid var(--border-color, #333);
+    background: var(--header-bg, #0d0d1a);
+}
+
+.minimap-stat-count {
+    font-weight: 500;
+}
+
+/* Theme variations */
+[data-theme="light"] .activity-minimap {
+    background: #fff;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .minimap-tooltip {
+    background: #fff;
+}
+
+[data-theme="ocean"] .minimap-header {
+    background: linear-gradient(135deg, #00b4d8, #0077b6);
+}
+
+[data-theme="ocean"] .minimap-viewport {
+    background: rgba(0, 180, 216, 0.15);
+    border-color: #00b4d8;
+}
+
+[data-theme="forest"] .minimap-header {
+    background: linear-gradient(135deg, #40916c, #2d6a4f);
+}
+
+[data-theme="forest"] .minimap-viewport {
+    background: rgba(64, 145, 108, 0.15);
+    border-color: #40916c;
+}
+
+[data-theme="sunset"] .minimap-header {
+    background: linear-gradient(135deg, #ff6b35, #f7931e);
+}
+
+[data-theme="sunset"] .minimap-viewport {
+    background: rgba(255, 107, 53, 0.15);
+    border-color: #ff6b35;
+}
+
+[data-theme="cyberpunk"] .minimap-header {
+    background: linear-gradient(135deg, #ff00ff, #00ffff);
+}
+
+[data-theme="cyberpunk"] .minimap-viewport {
+    background: rgba(255, 0, 255, 0.15);
+    border-color: #ff00ff;
+}
+
+/* Mobile: hide minimap on small screens */
+@media (max-width: 900px) {
+    .activity-minimap {
+        display: none;
+    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .activity-minimap,
+    .minimap-bar,
+    .minimap-viewport,
+    .minimap-toggle {
+        transition: none;
+    }
+}
+
+/* Keyboard focus */
+.minimap-bar:focus {
+    outline: 2px solid var(--accent-color, #00ffaa);
+    outline-offset: 1px;
+}
+
+.minimap-toggle:focus {
+    outline: 2px solid var(--accent-color, #00ffaa);
+    outline-offset: 2px;
+}
+
+/* Minimap highlight animation for clicked activity */
+.activity-item.minimap-highlight {
+    animation: minimapHighlight 1.5s ease;
+}
+
+@keyframes minimapHighlight {
+    0%, 100% {
+        box-shadow: inset 0 0 0 2px transparent;
+    }
+    20%, 80% {
+        box-shadow: inset 0 0 0 2px var(--accent-color, #00ffaa),
+                    0 0 20px rgba(0, 255, 170, 0.3);
+    }
+}
+
+/* Reduced motion for highlight */
+@media (prefers-reduced-motion: reduce) {
+    .activity-item.minimap-highlight {
+        animation: none;
+        box-shadow: inset 0 0 0 2px var(--accent-color, #00ffaa);
+    }
+}

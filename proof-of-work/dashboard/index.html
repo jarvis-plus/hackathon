@@ -1933,6 +1933,26 @@
         </div>
     </div>
 
+    <!-- Activity Minimap Sidebar -->
+    <div id="activityMinimap" class="activity-minimap" role="complementary" aria-label="Activity minimap navigation">
+        <div class="minimap-header">
+            <span class="minimap-title">🗺️ Minimap</span>
+            <button class="minimap-toggle" id="minimapToggle" onclick="toggleMinimap()" title="Toggle minimap (M)" aria-label="Toggle minimap visibility">
+                ◀
+            </button>
+        </div>
+        <div class="minimap-body" id="minimapBody">
+            <div class="minimap-viewport" id="minimapViewport"></div>
+            <div class="minimap-bars" id="minimapBars">
+                <!-- Activity bars rendered by JS -->
+            </div>
+        </div>
+        <div class="minimap-tooltip" id="minimapTooltip" style="display: none;"></div>
+        <div class="minimap-stats" id="minimapStats">
+            <span class="minimap-stat-count">0 activities</span>
+        </div>
+    </div>
+
     <script src="app.js"></script>
 </body>
 </html>

@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-04 10:12 PST
-**Cycle:** 210
+**Last Updated:** 2026-02-04 10:17 PST
+**Cycle:** 211
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -131,10 +131,37 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Activity sentiment analysis (positive/negative/neutral tone) ✅ Cycle 208
 - [x] Activity AI summary (generate brief summaries using local keywords) ✅ Cycle 209
 - [x] Smart activity suggestions (pattern-based contextual recommendations) ✅ Cycle 210
+- [x] Activity Minimap Sidebar (visual scroll navigation overview) ✅ Cycle 211
 
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 211 (Activity Minimap Sidebar)
+- Implemented visual scroll navigation sidebar for activity feed
+- **Visual Features**:
+  - Fixed sidebar on right side of screen
+  - Color-coded bars for each activity type (12 types supported)
+  - Gradient backgrounds matching activity type colors
+  - Viewport indicator showing current scroll position
+  - Tooltips on hover with activity type, description, and time
+- **Navigation**:
+  - Click bar to scroll to that activity in feed
+  - Activity highlights briefly when navigated to
+  - Keyboard navigation with arrow keys when focused
+- **Controls**:
+  - Collapsible with toggle button
+  - Keyboard shortcut: M to toggle minimap
+  - State persisted in localStorage
+- **UI Features**:
+  - Activity count display in stats area
+  - Limits to 200 bars for performance
+  - Scroll indicator tracks viewport position in real-time
+- **Theme Support**: All 7 themes with matching colors
+- **Accessibility**: ARIA labels, keyboard navigation, focus states
+- **Responsive**: Hidden on mobile (<900px)
+- **Stats**: 569 activities, all signed on-chain
+- Commit: [pending]
 
 ### Cycle 210 (Smart Activity Suggestions)
 - Implemented pattern-based contextual activity recommendations
@@ -224,21 +251,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - **Theme Support**: All 7 themes with styled toggle button
 - **Stats**: 558 activities, all signed on-chain
 - Commit: 3d95d07
-
-### Cycle 206 (Activity Trend Sparklines)
-- Implemented 7-day mini SVG trend charts inline with stat cards
-- **Sparkline Features**:
-  - SVG-based sparklines (crisp, lightweight)
-  - Gradient fill effect under curve
-  - Color-coded dots showing values per day (hover to reveal)
-  - Trend arrow indicator (↗ up, ↘ down, → flat)
-  - Based on 3-day moving average comparison
-- **Stats Covered**: Total, On-Chain, Commits, Builds, Trades, Messages, Tweets
-- **Theme Support**: All 7 themes with theme-aware colors
-- **Accessibility**: ARIA labels, reduced motion support
-- **Mobile**: Responsive scaling
-- **Stats**: 556 activities, all signed on-chain
-- Commit: 649e0f6
 
 ---
 
