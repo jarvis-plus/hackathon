@@ -141,8 +141,18 @@
                 <button class="sound-toggle collections-btn" id="collectionsBtn" onclick="openCollectionsModal()" title="Manage collections (C)" aria-label="Manage activity collections">
                     📁 Collections <span class="collections-count" style="display: none;">0</span>
                 </button>
+                <button class="print-btn screen-only" id="printBtn" onclick="printDashboard()" title="Print activity report (Ctrl/Cmd+P)" aria-label="Print activity report">
+                    🖨️ Print
+                </button>
             </div>
         </header>
+        
+        <!-- Print Header (only visible when printing) -->
+        <div class="print-header print-only">
+            <h1>🤖 Jarvis Proof of Work - Activity Report</h1>
+            <div class="print-subtitle">Autonomous AI Agent | Colosseum Hackathon 2026</div>
+            <div class="print-date" id="printDate"></div>
+        </div>
         
         <!-- Collection Filter Indicator -->
         <div id="collectionFilterIndicator" class="collection-filter-indicator" style="display: none;"></div>

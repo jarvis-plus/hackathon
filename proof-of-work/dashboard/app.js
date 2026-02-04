@@ -8244,9 +8244,10 @@ function createShortcutsModal() {
                     <div class="shortcut-row"><kbd>6</kbd> Verify</div>
                 </div>
                 <div class="shortcut-section">
-                    <h4>Export & More</h4>
+                    <h4>Export & Print</h4>
                     <div class="shortcut-row"><kbd>e</kbd> Export as JSON</div>
                     <div class="shortcut-row"><kbd>Shift+e</kbd> Export as CSV</div>
+                    <div class="shortcut-row"><kbd>Ctrl+p</kbd> Print activity report</div>
                     <div class="shortcut-row"><kbd>l</kbd> Load more activities</div>
                 </div>
                 <div class="shortcut-section">
@@ -9730,9 +9731,10 @@ createShortcutsModal = function() {
                     <div class="shortcut-row"><kbd>6</kbd> Verify</div>
                 </div>
                 <div class="shortcut-section">
-                    <h4>Export & More</h4>
+                    <h4>Export & Print</h4>
                     <div class="shortcut-row"><kbd>e</kbd> Export as JSON</div>
                     <div class="shortcut-row"><kbd>Shift+e</kbd> Export as CSV</div>
+                    <div class="shortcut-row"><kbd>Ctrl+p</kbd> Print activity report</div>
                     <div class="shortcut-row"><kbd>l</kbd> Load more activities</div>
                 </div>
                 <div class="shortcut-section">
@@ -19676,3 +19678,72 @@ Object.defineProperty(window, 'currentCollectionFilter', {
     get: () => currentCollectionFilter,
     set: (v) => { currentCollectionFilter = v; }
 });
+
+// ================================================
+// Print Dashboard Functionality
+// ================================================
+
+function printDashboard() {
+    // Set the print date
+    const printDateEl = document.getElementById('printDate');
+    if (printDateEl) {
+        const now = new Date();
+        const options = { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZoneName: 'short'
+        };
+        printDateEl.textContent = 'Generated: ' + now.toLocaleDateString('en-US', options);
+    }
+    
+    // Expand all collapsed activity descriptions before printing
+    const activityDescs = document.querySelectorAll('.activity-desc');
+    activityDescs.forEach(desc => {
+        desc.style.maxHeight = 'none';
+        desc.style.overflow = 'visible';
+        desc.style.textOverflow = 'initial';
+        desc.style.whiteSpace = 'normal';
+    });
+    
+    // Collapse all day groups to show content
+    const dayGroups = document.querySelectorAll('.day-group.collapsed');
+    dayGroups.forEach(group => group.classList.remove('collapsed'));
+    
+    // Trigger print
+    window.print();
+    
+    // Announce for screen readers
+    announceToScreenReader('Print dialog opened');
+}
+
+// Keyboard shortcut for print (Ctrl/Cmd+P is handled by browser, but we add P shortcut)
+document.addEventListener('keydown', (e) => {
+    // P key (without modifiers) for print when not in input
+    if (e.key === 'p' && !e.ctrlKey && !e.metaKey && !e.altKey && 
+        !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName) &&
+        !document.activeElement.isContentEditable) {
+        // Don't interfere - let Ctrl+P work naturally
+    }
+});
+
+// Add print command to command palette
+if (typeof window.commandPaletteCommands !== 'undefined') {
+    window.commandPaletteCommands.push({
+        name: 'Print Activity Report',
+        shortcut: 'Ctrl+P',
+        description: 'Print a clean activity report',
+        icon: '🖨️',
+        action: () => {
+            printDashboard();
+            if (typeof hideCommandPalette === 'function') hideCommandPalette();
+        },
+        group: 'Tools'
+    });
+}
+
+// Expose globally
+window.printDashboard = printDashboard;

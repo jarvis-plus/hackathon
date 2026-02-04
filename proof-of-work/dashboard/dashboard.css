@@ -20057,3 +20057,423 @@ body.tour-active {
         padding: 0.5rem;
     }
 }
+
+/* ================================================
+   PRINT STYLES - Optimized for printing activity reports
+   ================================================ */
+
+/* Print button in header */
+.print-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, rgba(100, 120, 140, 0.3), rgba(60, 80, 100, 0.3));
+    border: 1px solid rgba(100, 120, 140, 0.5);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.print-btn:hover {
+    background: linear-gradient(135deg, rgba(100, 120, 140, 0.5), rgba(60, 80, 100, 0.5));
+    border-color: rgba(100, 120, 140, 0.8);
+    transform: translateY(-1px);
+}
+
+.print-btn:active {
+    transform: translateY(0);
+}
+
+@media print {
+    /* Reset colors for print */
+    :root {
+        --bg-primary: #ffffff !important;
+        --bg-secondary: #ffffff !important;
+        --bg-card: #ffffff !important;
+        --text-primary: #1a1a1a !important;
+        --text-secondary: #444444 !important;
+        --text-muted: #666666 !important;
+        --border: #dddddd !important;
+        --accent-green: #00aa77 !important;
+        --accent-blue: #0077cc !important;
+        --accent-purple: #7700aa !important;
+    }
+    
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+    
+    body {
+        background: #ffffff !important;
+        color: #1a1a1a !important;
+        font-size: 10pt !important;
+        line-height: 1.4 !important;
+    }
+    
+    /* Page setup */
+    @page {
+        size: A4;
+        margin: 1.5cm;
+    }
+    
+    @page :first {
+        margin-top: 1cm;
+    }
+    
+    /* Print header */
+    .print-header {
+        display: block !important;
+        text-align: center;
+        margin-bottom: 1cm;
+        padding-bottom: 0.5cm;
+        border-bottom: 2px solid #00aa77;
+    }
+    
+    .print-header h1 {
+        font-size: 18pt !important;
+        color: #1a1a1a !important;
+        margin: 0 0 4pt 0 !important;
+    }
+    
+    .print-header .print-subtitle {
+        font-size: 10pt !important;
+        color: #666666 !important;
+    }
+    
+    .print-header .print-date {
+        font-size: 9pt !important;
+        color: #888888 !important;
+        margin-top: 4pt;
+    }
+    
+    /* Hide non-essential elements */
+    .sound-toggle,
+    .print-btn,
+    .theme-dropdown,
+    .theme-selector-wrapper,
+    .feed-subscribe-dropdown,
+    .tour-start-btn,
+    .suggestions-wrapper,
+    .focus-timer-display,
+    .focus-timer-btn,
+    .scroll-top-btn,
+    .minimap-sidebar,
+    .command-palette,
+    .reaction-picker,
+    .context-menu,
+    .toast-container,
+    .modal,
+    [role="dialog"],
+    .widgets-modal,
+    .collections-modal,
+    .reminders-modal,
+    .relationships-modal,
+    .templates-modal,
+    .custom-types-modal,
+    .shortcuts-modal,
+    .trash-modal,
+    .diff-modal,
+    .comparison-modal,
+    .attachments-modal,
+    .tour-overlay,
+    .tour-tooltip,
+    .hackathon-badge,
+    .skip-link,
+    #sr-announcements,
+    .search-box,
+    .filter-section,
+    .date-filter,
+    .tabs,
+    .chart-card,
+    .network-graph,
+    .heatmap-container,
+    .productivity-clock,
+    .word-cloud,
+    .timeline-slider,
+    .goal-tracking,
+    .insights-panel,
+    .weekly-comparison,
+    .velocity-chart,
+    .streaks-section,
+    .achievements-section,
+    footer,
+    .proof-banner,
+    .confetti-container,
+    .collection-filter-indicator,
+    .collection-add-menu,
+    .quick-note-status,
+    .activity-quick-actions,
+    .bulk-select-controls,
+    .export-actions,
+    .pagination-controls,
+    .load-more-btn,
+    .activity-reactions,
+    .activity-collection-badges {
+        display: none !important;
+    }
+    
+    /* Header simplification */
+    header {
+        padding: 0 !important;
+        margin-bottom: 0.5cm !important;
+        border: none !important;
+        background: none !important;
+    }
+    
+    header .logo-section {
+        display: none !important;
+    }
+    
+    header .subtitle,
+    header .thesis,
+    header > div[style] {
+        display: none !important;
+    }
+    
+    h1 {
+        font-size: 16pt !important;
+        text-align: center !important;
+        background: none !important;
+        -webkit-background-clip: initial !important;
+        background-clip: initial !important;
+        -webkit-text-fill-color: initial !important;
+        color: #1a1a1a !important;
+    }
+    
+    /* Container */
+    .container {
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    
+    /* Stats section - print-friendly summary */
+    .stats-grid {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 0.3cm !important;
+        margin-bottom: 0.5cm !important;
+        page-break-inside: avoid !important;
+    }
+    
+    .stat-card {
+        background: #f8f9fa !important;
+        border: 1px solid #dddddd !important;
+        border-radius: 4px !important;
+        padding: 0.3cm !important;
+        box-shadow: none !important;
+    }
+    
+    .stat-card::before,
+    .stat-card::after {
+        display: none !important;
+    }
+    
+    .stat-label {
+        font-size: 7pt !important;
+        color: #666666 !important;
+        text-transform: uppercase !important;
+    }
+    
+    .stat-value {
+        font-size: 14pt !important;
+        font-weight: bold !important;
+        color: #1a1a1a !important;
+        background: none !important;
+        -webkit-background-clip: initial !important;
+        background-clip: initial !important;
+        -webkit-text-fill-color: initial !important;
+    }
+    
+    .stat-icon {
+        display: none !important;
+    }
+    
+    .stat-sparkline {
+        display: none !important;
+    }
+    
+    /* Activity feed */
+    .activity-feed {
+        padding: 0 !important;
+    }
+    
+    .activity-feed h2 {
+        font-size: 12pt !important;
+        margin-bottom: 0.3cm !important;
+        color: #1a1a1a !important;
+        border-bottom: 1px solid #dddddd !important;
+        padding-bottom: 2pt !important;
+        page-break-after: avoid !important;
+    }
+    
+    /* Activity items */
+    .activity-item {
+        background: #ffffff !important;
+        border: 1px solid #dddddd !important;
+        border-radius: 4px !important;
+        margin-bottom: 0.25cm !important;
+        padding: 0.3cm !important;
+        box-shadow: none !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+    
+    .activity-item::before,
+    .activity-item::after {
+        display: none !important;
+    }
+    
+    .activity-item:hover {
+        transform: none !important;
+        box-shadow: none !important;
+    }
+    
+    /* Activity header */
+    .activity-header {
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.2cm !important;
+        margin-bottom: 0.15cm !important;
+    }
+    
+    .activity-type {
+        font-size: 8pt !important;
+        padding: 1pt 4pt !important;
+        border-radius: 2px !important;
+        font-weight: bold !important;
+    }
+    
+    .activity-time {
+        font-size: 8pt !important;
+        color: #666666 !important;
+    }
+    
+    /* Activity content */
+    .activity-desc {
+        font-size: 10pt !important;
+        color: #1a1a1a !important;
+        line-height: 1.4 !important;
+        margin-bottom: 0.1cm !important;
+        /* Don't truncate for print */
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: initial !important;
+        max-height: none !important;
+    }
+    
+    /* Activity metadata */
+    .activity-meta {
+        font-size: 7pt !important;
+        color: #888888 !important;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 0.2cm !important;
+        border-top: 1px solid #eeeeee !important;
+        padding-top: 0.1cm !important;
+        margin-top: 0.1cm !important;
+    }
+    
+    .activity-hash {
+        font-family: monospace !important;
+        font-size: 6pt !important;
+        color: #999999 !important;
+    }
+    
+    .activity-signature {
+        font-size: 6pt !important;
+        color: #00aa77 !important;
+    }
+    
+    .activity-signature::before {
+        content: "✓ Signed: " !important;
+    }
+    
+    /* Hide interactive elements in activities */
+    .activity-actions,
+    .activity-expand-btn,
+    .activity-bookmark-btn,
+    .activity-pin-btn,
+    .activity-note-btn,
+    .activity-voice-btn,
+    .activity-status-indicator,
+    .activity-importance-badge,
+    .activity-sentiment-badge,
+    .activity-ai-summary,
+    .quick-note-inline {
+        display: none !important;
+    }
+    
+    /* Day group headers */
+    .day-group-header {
+        font-size: 10pt !important;
+        font-weight: bold !important;
+        color: #1a1a1a !important;
+        background: #f0f0f0 !important;
+        padding: 0.15cm 0.3cm !important;
+        margin: 0.3cm 0 0.2cm 0 !important;
+        border-radius: 2px !important;
+        page-break-after: avoid !important;
+    }
+    
+    /* Links for print - show URL */
+    a[href]::after {
+        content: " (" attr(href) ")" !important;
+        font-size: 7pt !important;
+        color: #666666 !important;
+        word-break: break-all !important;
+    }
+    
+    a[href^="#"]::after,
+    a[href^="javascript"]::after {
+        content: "" !important;
+    }
+    
+    /* Page breaks */
+    .stats-grid {
+        page-break-after: avoid !important;
+    }
+    
+    .day-group {
+        page-break-inside: avoid !important;
+    }
+    
+    /* Print footer */
+    .print-footer {
+        display: block !important;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 8pt;
+        color: #888888;
+        border-top: 1px solid #dddddd;
+        padding-top: 4pt;
+    }
+    
+    /* Force display of print-only elements */
+    .print-only {
+        display: block !important;
+    }
+    
+    /* Hide screen-only elements */
+    .screen-only {
+        display: none !important;
+    }
+}
+
+/* Screen: hide print-only elements */
+@media screen {
+    .print-only,
+    .print-header,
+    .print-footer {
+        display: none;
+    }
+}
