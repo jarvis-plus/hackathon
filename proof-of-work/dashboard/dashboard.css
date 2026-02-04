@@ -20803,3 +20803,330 @@ a.activity-location:hover {
         display: none;
     }
 }
+
+/* ============================================
+   ANALYTICS TAB STYLES
+   ============================================ */
+
+.analytics-content {
+    padding: 1rem;
+}
+
+.analytics-content h3 {
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    font-size: 1.5rem;
+}
+
+/* Summary Cards */
+.analytics-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.analytics-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.2s ease;
+}
+
+.analytics-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 20px rgba(0, 255, 170, 0.15);
+    transform: translateY(-2px);
+}
+
+.analytics-card-icon {
+    font-size: 2rem;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 255, 170, 0.1);
+    border-radius: 10px;
+}
+
+.analytics-card-content {
+    flex: 1;
+}
+
+.analytics-card-label {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+}
+
+.analytics-card-value {
+    display: block;
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    font-weight: 700;
+    font-family: 'SF Mono', 'Consolas', monospace;
+}
+
+/* Analytics Grid */
+.analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 900px) {
+    .analytics-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.analytics-section {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 1.25rem;
+}
+
+.analytics-section h4 {
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+    font-size: 1rem;
+}
+
+.analytics-description {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin-bottom: 1rem;
+}
+
+.analytics-chart-container {
+    height: 250px;
+    position: relative;
+}
+
+.analytics-full-width {
+    grid-column: 1 / -1;
+}
+
+/* Type Legend */
+.analytics-type-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    justify-content: center;
+}
+
+.analytics-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.analytics-legend-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.analytics-legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+}
+
+/* Statistics Table */
+.analytics-stats-table {
+    overflow-x: auto;
+}
+
+.analytics-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.analytics-table th,
+.analytics-table td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.analytics-table th {
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.analytics-table td {
+    color: var(--text-primary);
+}
+
+.analytics-table tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.analytics-loading {
+    color: var(--text-muted);
+    text-align: center;
+    padding: 2rem !important;
+}
+
+/* Time Comparison Cards */
+.analytics-comparison {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.comparison-card {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+}
+
+.comparison-label {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.comparison-value {
+    display: block;
+    color: var(--text-primary);
+    font-size: 2rem;
+    font-weight: 700;
+    font-family: 'SF Mono', 'Consolas', monospace;
+}
+
+.comparison-change {
+    display: inline-block;
+    font-size: 0.8rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    margin-top: 0.5rem;
+}
+
+.comparison-change.positive {
+    color: #22c55e;
+    background: rgba(34, 197, 94, 0.15);
+}
+
+.comparison-change.negative {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.15);
+}
+
+.comparison-change.neutral {
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.comparison-trend {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+}
+
+/* Theme variants for Analytics */
+[data-theme="light"] .analytics-card {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .analytics-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .analytics-card-icon {
+    background: rgba(59, 130, 246, 0.1);
+}
+
+[data-theme="light"] .analytics-section {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .analytics-table th {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .comparison-card {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+/* Ocean theme */
+[data-theme="ocean"] .analytics-card:hover {
+    box-shadow: 0 0 20px rgba(14, 165, 233, 0.2);
+}
+
+[data-theme="ocean"] .analytics-card-icon {
+    background: rgba(14, 165, 233, 0.15);
+}
+
+/* Forest theme */
+[data-theme="forest"] .analytics-card:hover {
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
+}
+
+[data-theme="forest"] .analytics-card-icon {
+    background: rgba(34, 197, 94, 0.15);
+}
+
+/* Sunset theme */
+[data-theme="sunset"] .analytics-card:hover {
+    box-shadow: 0 0 20px rgba(249, 115, 22, 0.2);
+}
+
+[data-theme="sunset"] .analytics-card-icon {
+    background: rgba(249, 115, 22, 0.15);
+}
+
+/* Cyberpunk theme */
+[data-theme="cyberpunk"] .analytics-card:hover {
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+}
+
+[data-theme="cyberpunk"] .analytics-card-icon {
+    background: rgba(168, 85, 247, 0.2);
+}
+
+/* Print styles for analytics */
+@media print {
+    .analytics-content {
+        padding: 0;
+    }
+    
+    .analytics-card:hover,
+    .analytics-section:hover {
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .analytics-chart-container {
+        height: 200px;
+    }
+}

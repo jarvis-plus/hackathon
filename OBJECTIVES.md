@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-04 11:59 PST
-**Cycle:** 216
+**Last Updated:** 2026-02-04 12:05 PST
+**Cycle:** 217
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -137,12 +137,42 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Activity Collections (group activities into named folders/collections) ✅ Cycle 214
 - [x] Activity Quick Notes (inline note editing without modal) ✅ Cycle 215
 - [x] Print-friendly view (optimized CSS for printing activity reports) ✅ Cycle 216
-- [ ] Activity Location Tagging (optional location metadata)
+- [x] Activity Location Tagging (optional location metadata) ✅ Cycle 217
 - [ ] Dashboard Analytics Tab (time breakdown, productivity insights)
 
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 217 (Activity Location Tagging)
+- Implemented optional location metadata for activities
+- **API Endpoints**:
+  - `PATCH /api/activities/:hash/location` - add/update location
+  - `DELETE /api/activities/:hash/location` - remove location
+  - `GET /api/activities/locations` - list activities with location
+- **Location Data**:
+  - Coordinates (lat/lng) with validation
+  - Place name (friendly label)
+  - Address (optional full address)
+  - Updated timestamp
+- **Dashboard Modal**:
+  - Place name, address, coordinate inputs
+  - 🎯 Detect button for browser geolocation
+  - OpenStreetMap embed preview for coordinates
+  - Remove location option for existing
+- **UI Features**:
+  - Location badge on activity cards (📍 icon + place name)
+  - Click badge to open Google Maps
+  - Context menu: "Set Location" option
+  - Keyboard shortcut: Shift+L on focused activity
+- **Integration**:
+  - Command palette: "Set Location" command
+  - WebSocket broadcasts for real-time updates
+  - Webhook notifications for location changes
+- **Theme Support**: All 7 themes with matching styles
+- **Mobile**: Responsive modal and coordinate row layout
+- **Stats**: 587 activities, all signed on-chain
+- Commit: c440f66
 
 ### Cycle 216 (Print-Friendly View)
 - Implemented comprehensive print styles for activity reports
@@ -243,26 +273,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - **Accessibility**: ARIA labels, screen reader announcements
 - **Stats**: 576 activities, all signed on-chain
 - Commit: eafd18e
-
-### Cycle 212 (Activity Quick Reactions)
-- Implemented emoji reaction system for activities
-- **Reaction Emojis**: 👍 ❤️ 🎉 🔥 🤔 👀
-- **UI Features**:
-  - Reaction badges displayed on each activity card
-  - Popup picker with animated emoji buttons
-  - Active state styling for selected reactions
-  - Sound feedback on toggle
-- **Persistence**: LocalStorage saves reactions per activity hash
-- **Keyboard Support**:
-  - E key opens reaction picker on focused activity
-  - Arrow keys navigate picker
-  - Escape closes picker
-- **Accessibility**: ARIA labels, keyboard navigation, screen reader announcements
-- **Theme Support**: All 7 themes with matching styles
-- **Mobile**: Responsive picker positioning
-- **Integration**: Command palette "Add Reaction" command
-- **Stats**: 573 activities, all signed on-chain
-- Commit: 2541e5b
 
 ---
 

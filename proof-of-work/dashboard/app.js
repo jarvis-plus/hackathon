@@ -930,7 +930,8 @@ function switchTab(tabName) {
         verify: document.getElementById('verify-feed'),
         performance: document.getElementById('performance-feed'),
         heatmap: document.getElementById('heatmap-feed'),
-        wordcloud: document.getElementById('wordcloud-feed')
+        wordcloud: document.getElementById('wordcloud-feed'),
+        analytics: document.getElementById('analytics-feed')
     };
     
     // Hide all with transition
@@ -978,6 +979,11 @@ function switchTab(tabName) {
     // Initialize word cloud when switching to wordcloud tab
     if (tabName === 'wordcloud' && window.cachedActivities) {
         renderWordCloud(window.cachedActivities);
+    }
+    
+    // Initialize analytics dashboard when switching to analytics tab
+    if (tabName === 'analytics' && window.cachedActivities) {
+        renderAnalyticsDashboard(window.cachedActivities);
     }
 }
 
@@ -20116,3 +20122,585 @@ if (typeof window.commandPaletteCommands !== 'undefined') {
         group: 'Activities'
     });
 }
+
+// ============================================
+// ANALYTICS DASHBOARD
+// ============================================
+
+// Chart instances for cleanup
+let analyticsTypeChart = null;
+let analyticsHourlyChart = null;
+let analyticsDayChart = null;
+let analyticsWeeklyChart = null;
+
+/**
+ * Render the analytics dashboard with all charts and stats
+ */
+function renderAnalyticsDashboard(activities) {
+    if (!activities || !activities.length) return;
+    
+    // Calculate all analytics data
+    const analytics = calculateAnalytics(activities);
+    
+    // Update summary cards
+    updateAnalyticsSummary(analytics);
+    
+    // Render charts
+    renderTypeDistributionChart(analytics.typeBreakdown);
+    renderHourlyDistributionChart(analytics.hourlyBreakdown);
+    renderDayDistributionChart(analytics.dayBreakdown);
+    renderWeeklyTrendChart(analytics.weeklyTrend);
+    
+    // Update statistics table
+    renderAnalyticsTable(analytics);
+    
+    // Update time comparisons
+    updateTimeComparison(analytics);
+}
+
+/**
+ * Calculate comprehensive analytics from activities
+ */
+function calculateAnalytics(activities) {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const weekStart = new Date(todayStart);
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastWeekStart = new Date(weekStart);
+    lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+    const lastMonthStart = new Date(monthStart);
+    lastMonthStart.setMonth(lastMonthStart.getMonth() - 1);
+    
+    // Type breakdown
+    const typeBreakdown = {};
+    const typeDailyMax = {};
+    
+    // Hourly breakdown (0-23)
+    const hourlyBreakdown = Array(24).fill(0);
+    
+    // Day of week breakdown (0=Sun, 6=Sat)
+    const dayBreakdown = Array(7).fill(0);
+    
+    // Activities by date for daily stats
+    const activitiesByDate = {};
+    
+    // Weekly trend (last 12 weeks)
+    const weeklyTrend = [];
+    
+    // Time period counts
+    let todayCount = 0;
+    let thisWeekCount = 0;
+    let lastWeekCount = 0;
+    let thisMonthCount = 0;
+    let lastMonthCount = 0;
+    
+    activities.forEach(activity => {
+        const timestamp = new Date(activity.timestamp);
+        const type = activity.type || 'other';
+        const hour = timestamp.getHours();
+        const day = timestamp.getDay();
+        const dateKey = timestamp.toISOString().split('T')[0];
+        
+        // Type breakdown
+        typeBreakdown[type] = (typeBreakdown[type] || 0) + 1;
+        
+        // Track daily max for each type
+        if (!typeDailyMax[type]) typeDailyMax[type] = {};
+        if (!typeDailyMax[type][dateKey]) typeDailyMax[type][dateKey] = 0;
+        typeDailyMax[type][dateKey]++;
+        
+        // Hourly
+        hourlyBreakdown[hour]++;
+        
+        // Day of week
+        dayBreakdown[day]++;
+        
+        // By date
+        if (!activitiesByDate[dateKey]) activitiesByDate[dateKey] = 0;
+        activitiesByDate[dateKey]++;
+        
+        // Time periods
+        if (timestamp >= todayStart) todayCount++;
+        if (timestamp >= weekStart) thisWeekCount++;
+        if (timestamp >= lastWeekStart && timestamp < weekStart) lastWeekCount++;
+        if (timestamp >= monthStart) thisMonthCount++;
+        if (timestamp >= lastMonthStart && timestamp < monthStart) lastMonthCount++;
+    });
+    
+    // Calculate weekly trend for last 12 weeks
+    for (let i = 11; i >= 0; i--) {
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekEnd.getDate() - (i * 7));
+        const weekStartDate = new Date(weekEnd);
+        weekStartDate.setDate(weekStartDate.getDate() - 7);
+        
+        let weekCount = 0;
+        activities.forEach(a => {
+            const ts = new Date(a.timestamp);
+            if (ts >= weekStartDate && ts < weekEnd) weekCount++;
+        });
+        
+        weeklyTrend.push({
+            label: `W${12-i}`,
+            count: weekCount,
+            startDate: weekStartDate
+        });
+    }
+    
+    // Calculate stats
+    const dates = Object.keys(activitiesByDate);
+    const totalDays = dates.length || 1;
+    const avgPerDay = (activities.length / totalDays).toFixed(1);
+    
+    // Find peak hour
+    const peakHour = hourlyBreakdown.indexOf(Math.max(...hourlyBreakdown));
+    const peakHourLabel = formatHour(peakHour);
+    
+    // Find busiest day of week
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const busiestDayIndex = dayBreakdown.indexOf(Math.max(...dayBreakdown));
+    const busiestDay = dayNames[busiestDayIndex];
+    
+    // Calculate productivity score (0-100)
+    // Based on: consistency, volume, and variety
+    const consistencyScore = Math.min(totalDays / 30, 1) * 30; // Up to 30 points for consistency
+    const volumeScore = Math.min(activities.length / 500, 1) * 40; // Up to 40 points for volume
+    const varietyScore = Math.min(Object.keys(typeBreakdown).length / 8, 1) * 30; // Up to 30 points for variety
+    const productivityScore = Math.round(consistencyScore + volumeScore + varietyScore);
+    
+    // Find peak day stats for each type
+    const typeStats = {};
+    Object.keys(typeBreakdown).forEach(type => {
+        const dailyCounts = typeDailyMax[type] || {};
+        const maxDay = Object.entries(dailyCounts).sort((a, b) => b[1] - a[1])[0];
+        typeStats[type] = {
+            count: typeBreakdown[type],
+            percentage: ((typeBreakdown[type] / activities.length) * 100).toFixed(1),
+            avgPerDay: (typeBreakdown[type] / totalDays).toFixed(2),
+            peakDay: maxDay ? maxDay[0] : 'N/A',
+            peakCount: maxDay ? maxDay[1] : 0
+        };
+    });
+    
+    return {
+        typeBreakdown,
+        hourlyBreakdown,
+        dayBreakdown,
+        weeklyTrend,
+        typeStats,
+        avgPerDay,
+        peakHour: peakHourLabel,
+        busiestDay,
+        productivityScore,
+        todayCount,
+        thisWeekCount,
+        lastWeekCount,
+        thisMonthCount,
+        lastMonthCount,
+        totalCount: activities.length,
+        totalDays
+    };
+}
+
+/**
+ * Format hour (0-23) to readable format
+ */
+function formatHour(hour) {
+    if (hour === 0) return '12 AM';
+    if (hour === 12) return '12 PM';
+    if (hour < 12) return `${hour} AM`;
+    return `${hour - 12} PM`;
+}
+
+/**
+ * Update summary cards with analytics data
+ */
+function updateAnalyticsSummary(analytics) {
+    const avgEl = document.getElementById('analyticsAvgPerDay');
+    const bestDayEl = document.getElementById('analyticsBestDay');
+    const peakHourEl = document.getElementById('analyticsPeakHour');
+    const scoreEl = document.getElementById('analyticsProductivityScore');
+    
+    if (avgEl) avgEl.textContent = analytics.avgPerDay;
+    if (bestDayEl) bestDayEl.textContent = analytics.busiestDay;
+    if (peakHourEl) peakHourEl.textContent = analytics.peakHour;
+    if (scoreEl) scoreEl.textContent = `${analytics.productivityScore}/100`;
+}
+
+/**
+ * Render type distribution pie/doughnut chart
+ */
+function renderTypeDistributionChart(typeBreakdown) {
+    const canvas = document.getElementById('analyticsTypeChart');
+    if (!canvas) return;
+    
+    // Destroy previous chart
+    if (analyticsTypeChart) {
+        analyticsTypeChart.destroy();
+    }
+    
+    const labels = Object.keys(typeBreakdown);
+    const data = Object.values(typeBreakdown);
+    
+    const typeEmojis = {
+        build: '🔨',
+        commit: '📝',
+        decision: '🧠',
+        tweet: '🐦',
+        email: '📧',
+        message: '💬',
+        trade: '💹',
+        calendar: '📅',
+        heartbeat: '💓',
+        browser: '🌐',
+        other: '📌'
+    };
+    
+    const colors = [
+        '#00ffaa', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6',
+        '#ec4899', '#10b981', '#f97316', '#06b6d4', '#84cc16',
+        '#6366f1', '#14b8a6'
+    ];
+    
+    analyticsTypeChart = new Chart(canvas, {
+        type: 'doughnut',
+        data: {
+            labels: labels.map(l => `${typeEmojis[l] || '📌'} ${l}`),
+            datasets: [{
+                data: data,
+                backgroundColor: colors.slice(0, labels.length),
+                borderColor: 'transparent',
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((context.raw / total) * 100).toFixed(1);
+                            return `${context.raw} (${percentage}%)`;
+                        }
+                    }
+                }
+            },
+            cutout: '60%'
+        }
+    });
+    
+    // Render legend
+    const legendEl = document.getElementById('analyticsTypeLegend');
+    if (legendEl) {
+        legendEl.innerHTML = labels.map((label, i) => `
+            <div class="analytics-legend-item" onclick="setTypeFilter('${label}')">
+                <span class="analytics-legend-color" style="background: ${colors[i]}"></span>
+                <span>${typeEmojis[label] || '📌'} ${label} (${data[i]})</span>
+            </div>
+        `).join('');
+    }
+}
+
+/**
+ * Render hourly distribution bar chart
+ */
+function renderHourlyDistributionChart(hourlyBreakdown) {
+    const canvas = document.getElementById('analyticsHourlyChart');
+    if (!canvas) return;
+    
+    if (analyticsHourlyChart) {
+        analyticsHourlyChart.destroy();
+    }
+    
+    const labels = Array.from({length: 24}, (_, i) => formatHour(i));
+    const maxValue = Math.max(...hourlyBreakdown);
+    
+    analyticsHourlyChart = new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Activities',
+                data: hourlyBreakdown,
+                backgroundColor: hourlyBreakdown.map(v => 
+                    v === maxValue ? '#00ffaa' : 'rgba(0, 255, 170, 0.4)'
+                ),
+                borderColor: 'transparent',
+                borderRadius: 4,
+                barThickness: 'flex'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        color: '#888',
+                        maxRotation: 45,
+                        callback: function(val, index) {
+                            return index % 3 === 0 ? this.getLabelForValue(val) : '';
+                        }
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.05)'
+                    },
+                    ticks: {
+                        color: '#888'
+                    }
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Render day of week distribution chart
+ */
+function renderDayDistributionChart(dayBreakdown) {
+    const canvas = document.getElementById('analyticsDayChart');
+    if (!canvas) return;
+    
+    if (analyticsDayChart) {
+        analyticsDayChart.destroy();
+    }
+    
+    const labels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const maxValue = Math.max(...dayBreakdown);
+    
+    analyticsDayChart = new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Activities',
+                data: dayBreakdown,
+                backgroundColor: dayBreakdown.map(v => 
+                    v === maxValue ? '#3b82f6' : 'rgba(59, 130, 246, 0.4)'
+                ),
+                borderColor: 'transparent',
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        color: '#888'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.05)'
+                    },
+                    ticks: {
+                        color: '#888'
+                    }
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Render weekly trend line chart
+ */
+function renderWeeklyTrendChart(weeklyTrend) {
+    const canvas = document.getElementById('analyticsWeeklyChart');
+    if (!canvas) return;
+    
+    if (analyticsWeeklyChart) {
+        analyticsWeeklyChart.destroy();
+    }
+    
+    const labels = weeklyTrend.map(w => w.label);
+    const data = weeklyTrend.map(w => w.count);
+    
+    analyticsWeeklyChart = new Chart(canvas, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Activities',
+                data: data,
+                borderColor: '#f59e0b',
+                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                fill: true,
+                tension: 0.4,
+                pointRadius: 4,
+                pointBackgroundColor: '#f59e0b',
+                pointBorderColor: '#1a1a1a',
+                pointBorderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        title: function(context) {
+                            const weekData = weeklyTrend[context[0].dataIndex];
+                            return `Week of ${weekData.startDate.toLocaleDateString()}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        color: '#888'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.05)'
+                    },
+                    ticks: {
+                        color: '#888'
+                    }
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Render statistics table
+ */
+function renderAnalyticsTable(analytics) {
+    const tbody = document.getElementById('analyticsStatsBody');
+    if (!tbody) return;
+    
+    const typeEmojis = {
+        build: '🔨',
+        commit: '📝',
+        decision: '🧠',
+        tweet: '🐦',
+        email: '📧',
+        message: '💬',
+        trade: '💹',
+        calendar: '📅',
+        heartbeat: '💓',
+        browser: '🌐',
+        other: '📌'
+    };
+    
+    // Sort by count descending
+    const sortedTypes = Object.entries(analytics.typeStats)
+        .sort((a, b) => b[1].count - a[1].count);
+    
+    tbody.innerHTML = sortedTypes.map(([type, stats]) => `
+        <tr>
+            <td>${typeEmojis[type] || '📌'} ${type}</td>
+            <td>${stats.count}</td>
+            <td>${stats.percentage}%</td>
+            <td>${stats.avgPerDay}</td>
+            <td title="${stats.peakDay}">${stats.peakCount} on ${formatShortDate(stats.peakDay)}</td>
+        </tr>
+    `).join('');
+}
+
+/**
+ * Format date to short format
+ */
+function formatShortDate(dateStr) {
+    if (!dateStr || dateStr === 'N/A') return 'N/A';
+    try {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    } catch {
+        return dateStr;
+    }
+}
+
+/**
+ * Update time comparison section
+ */
+function updateTimeComparison(analytics) {
+    // Today
+    const todayEl = document.getElementById('analyticsToday');
+    const todayChangeEl = document.getElementById('analyticsTodayChange');
+    if (todayEl) todayEl.textContent = analytics.todayCount;
+    
+    // This week
+    const weekEl = document.getElementById('analyticsThisWeek');
+    const weekChangeEl = document.getElementById('analyticsWeekChange');
+    if (weekEl) weekEl.textContent = analytics.thisWeekCount;
+    if (weekChangeEl && analytics.lastWeekCount > 0) {
+        const weekChange = ((analytics.thisWeekCount - analytics.lastWeekCount) / analytics.lastWeekCount * 100).toFixed(0);
+        weekChangeEl.textContent = weekChange >= 0 ? `+${weekChange}%` : `${weekChange}%`;
+        weekChangeEl.className = 'comparison-change ' + (weekChange >= 0 ? 'positive' : 'negative');
+    } else if (weekChangeEl) {
+        weekChangeEl.textContent = 'vs last week';
+        weekChangeEl.className = 'comparison-change neutral';
+    }
+    
+    // This month
+    const monthEl = document.getElementById('analyticsThisMonth');
+    const monthChangeEl = document.getElementById('analyticsMonthChange');
+    if (monthEl) monthEl.textContent = analytics.thisMonthCount;
+    if (monthChangeEl && analytics.lastMonthCount > 0) {
+        const monthChange = ((analytics.thisMonthCount - analytics.lastMonthCount) / analytics.lastMonthCount * 100).toFixed(0);
+        monthChangeEl.textContent = monthChange >= 0 ? `+${monthChange}%` : `${monthChange}%`;
+        monthChangeEl.className = 'comparison-change ' + (monthChange >= 0 ? 'positive' : 'negative');
+    } else if (monthChangeEl) {
+        monthChangeEl.textContent = 'vs last month';
+        monthChangeEl.className = 'comparison-change neutral';
+    }
+    
+    // All time
+    const allTimeEl = document.getElementById('analyticsAllTime');
+    const allTimeTrendEl = document.getElementById('analyticsAllTimeTrend');
+    if (allTimeEl) allTimeEl.textContent = analytics.totalCount;
+    if (allTimeTrendEl) {
+        allTimeTrendEl.textContent = `across ${analytics.totalDays} days`;
+    }
+}
+
+// Add keyboard shortcut for Analytics tab (number 0 or 10)
+document.addEventListener('keydown', function(e) {
+    // Only trigger if not in input/textarea
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    
+    // Use '0' for analytics tab (10th tab)
+    if (e.key === '0' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        switchTab('analytics');
+    }
+});

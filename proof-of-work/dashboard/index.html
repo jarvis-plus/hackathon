@@ -1290,6 +1290,9 @@
                     <button class="feed-tab" data-tab="wordcloud" onclick="switchTab('wordcloud')" role="tab" aria-selected="false" aria-controls="wordcloud-feed" id="tab-wordcloud">
                         ☁️ Word Cloud
                     </button>
+                    <button class="feed-tab" data-tab="analytics" onclick="switchTab('analytics')" role="tab" aria-selected="false" aria-controls="analytics-feed" id="tab-analytics">
+                        📈 Analytics
+                    </button>
                 </div>
                 <div class="export-buttons" id="export-buttons-main">
                     <button class="export-btn" id="export-json-btn" onclick="exportActivities('json')" title="Download as JSON (respects filters)">
@@ -1850,6 +1853,135 @@
                         <h4>📊 Top 10 Words</h4>
                         <div class="wordcloud-top-list" id="wordcloudTopList">
                             <p class="empty-state">Loading...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Analytics Tab -->
+            <div id="analytics-feed" data-view="analytics" style="display:none;" role="tabpanel" aria-labelledby="tab-analytics">
+                <div class="analytics-content">
+                    <h3>📈 Dashboard Analytics</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                        Deep insights into your activity patterns, time breakdown, and productivity trends.
+                    </p>
+                    
+                    <!-- Productivity Summary Cards -->
+                    <div class="analytics-summary">
+                        <div class="analytics-card">
+                            <div class="analytics-card-icon">📊</div>
+                            <div class="analytics-card-content">
+                                <span class="analytics-card-label">Avg Activities/Day</span>
+                                <span class="analytics-card-value" id="analyticsAvgPerDay">--</span>
+                            </div>
+                        </div>
+                        <div class="analytics-card">
+                            <div class="analytics-card-icon">🏆</div>
+                            <div class="analytics-card-content">
+                                <span class="analytics-card-label">Most Productive Day</span>
+                                <span class="analytics-card-value" id="analyticsBestDay">--</span>
+                            </div>
+                        </div>
+                        <div class="analytics-card">
+                            <div class="analytics-card-icon">⏰</div>
+                            <div class="analytics-card-content">
+                                <span class="analytics-card-label">Peak Hour</span>
+                                <span class="analytics-card-value" id="analyticsPeakHour">--</span>
+                            </div>
+                        </div>
+                        <div class="analytics-card">
+                            <div class="analytics-card-icon">🔥</div>
+                            <div class="analytics-card-content">
+                                <span class="analytics-card-label">Productivity Score</span>
+                                <span class="analytics-card-value" id="analyticsProductivityScore">--</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="analytics-grid">
+                        <!-- Type Distribution Chart -->
+                        <div class="analytics-section">
+                            <h4>📊 Activity Type Breakdown</h4>
+                            <p class="analytics-description">Distribution of activities by type. Click segments to filter.</p>
+                            <div class="analytics-chart-container">
+                                <canvas id="analyticsTypeChart"></canvas>
+                            </div>
+                            <div class="analytics-type-legend" id="analyticsTypeLegend"></div>
+                        </div>
+                        
+                        <!-- Hourly Distribution Chart -->
+                        <div class="analytics-section">
+                            <h4>🕐 Activity by Hour</h4>
+                            <p class="analytics-description">When you're most active throughout the day.</p>
+                            <div class="analytics-chart-container">
+                                <canvas id="analyticsHourlyChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <!-- Day of Week Distribution -->
+                        <div class="analytics-section">
+                            <h4>📅 Activity by Day of Week</h4>
+                            <p class="analytics-description">Your activity distribution across weekdays.</p>
+                            <div class="analytics-chart-container">
+                                <canvas id="analyticsDayChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <!-- Weekly Trend Chart -->
+                        <div class="analytics-section">
+                            <h4>📈 Weekly Activity Trend</h4>
+                            <p class="analytics-description">Activity volume over the past 12 weeks.</p>
+                            <div class="analytics-chart-container">
+                                <canvas id="analyticsWeeklyChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Detailed Statistics Table -->
+                    <div class="analytics-section analytics-full-width">
+                        <h4>📋 Detailed Statistics</h4>
+                        <div class="analytics-stats-table">
+                            <table class="analytics-table">
+                                <thead>
+                                    <tr>
+                                        <th>Activity Type</th>
+                                        <th>Count</th>
+                                        <th>% of Total</th>
+                                        <th>Avg/Day</th>
+                                        <th>Peak Day</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="analyticsStatsBody">
+                                    <tr><td colspan="5" class="analytics-loading">Loading analytics...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Time Range Comparison -->
+                    <div class="analytics-section analytics-full-width">
+                        <h4>⚡ Time Comparison</h4>
+                        <div class="analytics-comparison">
+                            <div class="comparison-card">
+                                <span class="comparison-label">Today</span>
+                                <span class="comparison-value" id="analyticsToday">--</span>
+                                <span class="comparison-change" id="analyticsTodayChange"></span>
+                            </div>
+                            <div class="comparison-card">
+                                <span class="comparison-label">This Week</span>
+                                <span class="comparison-value" id="analyticsThisWeek">--</span>
+                                <span class="comparison-change" id="analyticsWeekChange"></span>
+                            </div>
+                            <div class="comparison-card">
+                                <span class="comparison-label">This Month</span>
+                                <span class="comparison-value" id="analyticsThisMonth">--</span>
+                                <span class="comparison-change" id="analyticsMonthChange"></span>
+                            </div>
+                            <div class="comparison-card">
+                                <span class="comparison-label">All Time</span>
+                                <span class="comparison-value" id="analyticsAllTime">--</span>
+                                <span class="comparison-trend" id="analyticsAllTimeTrend"></span>
+                            </div>
                         </div>
                     </div>
                 </div>
