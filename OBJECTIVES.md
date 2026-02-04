@@ -1,7 +1,7 @@
 # Hackathon Build Loop - Objectives
 
-**Last Updated:** 2026-02-03 18:13 PST
-**Cycle:** 136
+**Last Updated:** 2026-02-03 18:18 PST
+**Cycle:** 137
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 
 ---
@@ -52,12 +52,23 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ### 📝 Documentation
 - [x] Add inline code comments to server.ts ✅ Cycle 133
 - [x] Document collector API in README ✅ Cycle 136
-- [ ] Add architecture diagram (Mermaid)
+- [x] Add architecture diagram (Mermaid) ✅ Cycle 137
 - [ ] CONTRIBUTING.md for open source
 
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 137 (Mermaid Architecture Diagrams)
+- Created docs/ARCHITECTURE.md with 5 interactive Mermaid diagrams
+- High-level system overview: sources → collectors → signing → on-chain → dashboard
+- Activity lifecycle sequence diagram showing full flow from source to UI
+- Collector pattern diagram showing standardized data flow
+- Signing flow diagram showing Ed25519 + Solana memo process
+- API endpoints diagram showing all routes
+- Simplified README with compact Mermaid diagram + link to full docs
+- Replaced ASCII diagram with GitHub-native rendering
+- 328 activities, all signed on-chain
 
 ### Cycle 136 (Collector API Documentation)
 - Updated README.md with comprehensive collector API documentation
@@ -105,16 +116,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - Explained WebSocket broadcasting and file change detection
 - ~200 lines of documentation added, file now ~800 lines total
 - 314 activities, all signed on-chain
-
-### Cycle 132 (Email Activity Tracking)
-- Created collectors/email-tracker.ts that polls Gmail sent folder via gog CLI
-- Added 'email' activity type to types.ts with EmailMetadata and EmailState interfaces
-- Logs email recipient, subject, threadId, messageCount as metadata
-- Deduplicates via knownThreadIds state, limits to last 100 threads
-- Added email to dashboard: orange (#e67e22) filter button, typeColors in both charts and verify
-- Added to cron-runner.sh as step 4 (runs every 15min)
-- Backfilled 4 historical emails, all signed on-chain
-- 311 activities, all signed on-chain
 
 ---
 
