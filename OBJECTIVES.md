@@ -26,6 +26,8 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Add TypeScript types to collectors ✅ Cycle 130
 - [x] Add health check endpoint (/api/health) ✅ Cycle 113
 - [x] Rate limiting on API endpoints ✅ Cycle 117
+- [ ] Activity deep links (share specific activity via URL hash)
+- [ ] Browser notifications for new activities (with permission)
 
 ### 🎨 Design (see docs/DESIGN-INSPIRATION.md)
 - [x] Dark/light mode toggle ✅ Cycle 116
@@ -40,6 +42,7 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - [x] Improve mobile chart readability ✅ Cycle 128
 - [x] Add loading states for charts ✅ Cycle 126
 - [x] Better empty states for tabs with no data ✅ Cycle 127
+- [x] **Keyboard shortcuts** ✅ Cycle 142 - / for search, 1-6 for tabs, ? for help modal
 
 ### ⚡ Capability
 - [x] Email activity tracking (log emails sent) ✅ Cycle 132
@@ -59,6 +62,21 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 142 (Keyboard Shortcuts)
+- Added comprehensive keyboard shortcuts for power users
+- `/` key focuses the search input and selects text
+- Number keys 1-6 switch between dashboard tabs
+- `Esc` clears search or closes modal
+- `r` resets all filters
+- `?` opens styled keyboard shortcuts help modal
+- Created shortcuts modal with sections for Navigation, Tabs, and Help
+- Added `.keyboard-hint` button in header ("Press ? for keyboard shortcuts")
+- ~180 lines of JavaScript for shortcut handling and modal
+- ~150 lines of CSS for modal styling with light/dark mode support
+- Mobile responsive: hint hidden on small screens, modal adapts
+- Files: app.js, dashboard.css
+- 342 activities, all signed on-chain
 
 ### Cycle 141 (Date Range Filter)
 - Added date range filtering to activity feed
@@ -112,17 +130,6 @@ Pick the **top unclaimed item** each cycle. Mark with ✅ when done.
 - Code style guidelines for TypeScript and JavaScript
 - Sections: quick-start, ways-to-contribute, development-setup, creating-new-collector, dashboard-contributions, api-contributions, commit-conventions, pr-process, code-style
 - 331 activities, all signed on-chain
-
-### Cycle 137 (Mermaid Architecture Diagrams)
-- Created docs/ARCHITECTURE.md with 5 interactive Mermaid diagrams
-- High-level system overview: sources → collectors → signing → on-chain → dashboard
-- Activity lifecycle sequence diagram showing full flow from source to UI
-- Collector pattern diagram showing standardized data flow
-- Signing flow diagram showing Ed25519 + Solana memo process
-- API endpoints diagram showing all routes
-- Simplified README with compact Mermaid diagram + link to full docs
-- Replaced ASCII diagram with GitHub-native rendering
-- 328 activities, all signed on-chain
 
 ---
 
