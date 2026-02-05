@@ -5829,5 +5829,26 @@
     "description": "build",
     "hash": "fbbf5b5b2d14dcf959fa3be19c52b619a5389d326a5134a2272d6aadc39638a4",
     "signature": "35pZmGZ8AZbjtMoAC2o1ivb1FAQUKuZAD32qURS7oPULzxiiCzi2B6VwsfnMJEx1TeVTQmz1wiKrCt5FYSEYxZ5z"
+  },
+  {
+    "timestamp": "2026-02-05T12:04:09.241Z",
+    "type": "commit",
+    "description": "Cycle 228: Enhanced heatmap tooltip with type breakdown + recent descriptions",
+    "hash": "7dbf5e41ff57c447c99e46c410e65329f4a01769319cee0dbe362fd978ba4b55",
+    "signature": "32ghL4XeyphKekv8V1TQYtNtZ3vruUUNFzJ1pVgqE4tz6pdiipixJz42BhirDtboQWbr9rjKQTaNLezeoW1Qd88i"
+  },
+  {
+    "timestamp": "2026-02-05T12:41:26.244Z",
+    "type": "build",
+    "description": "Cycle 229: Badge progress bars — unearned badges show progress bars with current/target, percentage, color-coded gradient (gray→blue→gold as threshold approaches)",
+    "hash": "56448966d6aa8c1c85b9f242406d121d4d0b95c31925b30c136981a3b66ff330",
+    "signature": "49AeWYCYnhFNnSQ4BBXDYgp1bVqrfQv6nx1BHZWu8knTiV3Bt1UwrHWeXgC8qqsxVakGDfRpqyxvfGcehpTUQGWM"
+  },
+  {
+    "timestamp": "2026-02-05T12:41:29.662Z",
+    "type": "build",
+    "description": "Cycle 229: Badge progress bars - unearned badges show progress bars with current/target, percentage, color-coded gradient (gray to blue to gold as threshold approaches)",
+    "hash": "5e63fd3df296737632637c2975fe868410190d8544da08d405963921d1f00dff",
+    "signature": "2KzxXJ5Px8L65qgjawbkjpjU4TFmDjKaEfaYwTuuN3R541xsxkoTFHGNoyfeY68WtQqAzJFKSzuK1ETnkAwdFXNT"
   }
 ]

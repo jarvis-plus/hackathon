@@ -102,6 +102,11 @@ const KNOWN_TYPES = ["commit", "build", "trade", "decision", "message", "email",
   "forum-post", "forum-reply", "moltbook-post", "moltbook-reply", "misc"];
 
 // ─── Achievement Definitions ─────────────────────────────────────────────
+interface BadgeProgress {
+  current: number;
+  target: number;
+}
+
 interface Badge {
   id: string;
   name: string;
@@ -109,29 +114,30 @@ interface Badge {
   description: string;
   category: "activity" | "streak" | "onchain" | "diversity" | "special";
   check: (stats: Stats, activities: Activity[]) => boolean;
+  progress?: (stats: Stats, activities: Activity[]) => BadgeProgress;
 }
 
 const BADGES: Badge[] = [
-  { id: "first", name: "First Step", icon: "👣", description: "Log your first activity", category: "activity", check: (s) => s.total >= 1 },
-  { id: "ten", name: "Getting Started", icon: "🌱", description: "Reach 10 activities", category: "activity", check: (s) => s.total >= 10 },
-  { id: "fifty", name: "Fifty Strong", icon: "💪", description: "Reach 50 activities", category: "activity", check: (s) => s.total >= 50 },
-  { id: "hundred", name: "100 Club", icon: "💯", description: "Reach 100 activities", category: "activity", check: (s) => s.total >= 100 },
-  { id: "twofifty", name: "Quarter K", icon: "🔥", description: "Reach 250 activities", category: "activity", check: (s) => s.total >= 250 },
-  { id: "fivehundred", name: "500 Club", icon: "🏆", description: "Reach 500 activities", category: "activity", check: (s) => s.total >= 500 },
-  { id: "thousand", name: "Thousandaire", icon: "👑", description: "Reach 1,000 activities", category: "activity", check: (s) => s.total >= 1000 },
-  { id: "streak3", name: "Hat Trick", icon: "🎩", description: "3-day activity streak", category: "streak", check: (s) => (s.streak?.longest || 0) >= 3 },
-  { id: "streak7", name: "Week Warrior", icon: "⚔️", description: "7-day activity streak", category: "streak", check: (s) => (s.streak?.longest || 0) >= 7 },
-  { id: "streak14", name: "Fortnight Force", icon: "🛡️", description: "14-day activity streak", category: "streak", check: (s) => (s.streak?.longest || 0) >= 14 },
-  { id: "streak30", name: "Monthly Master", icon: "🌟", description: "30-day activity streak", category: "streak", check: (s) => (s.streak?.longest || 0) >= 30 },
-  { id: "onchain1", name: "On-Chain Debut", icon: "⛓️", description: "First on-chain proof", category: "onchain", check: (s) => s.onchain >= 1 },
-  { id: "onchain100", name: "Chain Gang", icon: "🔗", description: "100 on-chain proofs", category: "onchain", check: (s) => s.onchain >= 100 },
-  { id: "onchain500", name: "Blockchain Native", icon: "💎", description: "500 on-chain proofs", category: "onchain", check: (s) => s.onchain >= 500 },
-  { id: "diverse3", name: "Multi-Talented", icon: "🎨", description: "Use 3+ activity types", category: "diversity", check: (s) => Object.keys(s.byType).filter(t => KNOWN_TYPES.includes(t)).length >= 3 },
-  { id: "diverse5", name: "Renaissance Agent", icon: "🎭", description: "Use 5+ activity types", category: "diversity", check: (s) => Object.keys(s.byType).filter(t => KNOWN_TYPES.includes(t)).length >= 5 },
-  { id: "diverse8", name: "Jack of All Trades", icon: "🃏", description: "Use 8+ activity types", category: "diversity", check: (s) => Object.keys(s.byType).filter(t => KNOWN_TYPES.includes(t)).length >= 8 },
-  { id: "builder50", name: "Master Builder", icon: "🏗️", description: "50 build activities", category: "special", check: (s) => (s.byType.build || 0) >= 50 },
-  { id: "committer100", name: "Commit Machine", icon: "⚙️", description: "100 commits", category: "special", check: (s) => (s.byType.commit || 0) >= 100 },
-  { id: "nightowl", name: "Night Owl", icon: "🦉", description: "50+ activities between 10pm-4am", category: "special", check: (_, acts) => acts.filter(a => { const h = new Date(a.timestamp).getHours(); return h >= 22 || h < 4; }).length >= 50 },
+  { id: "first", name: "First Step", icon: "👣", description: "Log your first activity", category: "activity", check: (s) => s.total >= 1, progress: (s) => ({ current: s.total, target: 1 }) },
+  { id: "ten", name: "Getting Started", icon: "🌱", description: "Reach 10 activities", category: "activity", check: (s) => s.total >= 10, progress: (s) => ({ current: s.total, target: 10 }) },
+  { id: "fifty", name: "Fifty Strong", icon: "💪", description: "Reach 50 activities", category: "activity", check: (s) => s.total >= 50, progress: (s) => ({ current: s.total, target: 50 }) },
+  { id: "hundred", name: "100 Club", icon: "💯", description: "Reach 100 activities", category: "activity", check: (s) => s.total >= 100, progress: (s) => ({ current: s.total, target: 100 }) },
+  { id: "twofifty", name: "Quarter K", icon: "🔥", description: "Reach 250 activities", category: "activity", check: (s) => s.total >= 250, progress: (s) => ({ current: s.total, target: 250 }) },
+  { id: "fivehundred", name: "500 Club", icon: "🏆", description: "Reach 500 activities", category: "activity", check: (s) => s.total >= 500, progress: (s) => ({ current: s.total, target: 500 }) },
+  { id: "thousand", name: "Thousandaire", icon: "👑", description: "Reach 1,000 activities", category: "activity", check: (s) => s.total >= 1000, progress: (s) => ({ current: s.total, target: 1000 }) },
+  { id: "streak3", name: "Hat Trick", icon: "🎩", description: "3-day activity streak", category: "streak", check: (s) => (s.streak?.longest || 0) >= 3, progress: (s) => ({ current: s.streak?.longest || 0, target: 3 }) },
+  { id: "streak7", name: "Week Warrior", icon: "⚔️", description: "7-day activity streak", category: "streak", check: (s) => (s.streak?.longest || 0) >= 7, progress: (s) => ({ current: s.streak?.longest || 0, target: 7 }) },
+  { id: "streak14", name: "Fortnight Force", icon: "🛡️", description: "14-day activity streak", category: "streak", check: (s) => (s.streak?.longest || 0) >= 14, progress: (s) => ({ current: s.streak?.longest || 0, target: 14 }) },
+  { id: "streak30", name: "Monthly Master", icon: "🌟", description: "30-day activity streak", category: "streak", check: (s) => (s.streak?.longest || 0) >= 30, progress: (s) => ({ current: s.streak?.longest || 0, target: 30 }) },
+  { id: "onchain1", name: "On-Chain Debut", icon: "⛓️", description: "First on-chain proof", category: "onchain", check: (s) => s.onchain >= 1, progress: (s) => ({ current: s.onchain, target: 1 }) },
+  { id: "onchain100", name: "Chain Gang", icon: "🔗", description: "100 on-chain proofs", category: "onchain", check: (s) => s.onchain >= 100, progress: (s) => ({ current: s.onchain, target: 100 }) },
+  { id: "onchain500", name: "Blockchain Native", icon: "💎", description: "500 on-chain proofs", category: "onchain", check: (s) => s.onchain >= 500, progress: (s) => ({ current: s.onchain, target: 500 }) },
+  { id: "diverse3", name: "Multi-Talented", icon: "🎨", description: "Use 3+ activity types", category: "diversity", check: (s) => Object.keys(s.byType).filter(t => KNOWN_TYPES.includes(t)).length >= 3, progress: (s) => ({ current: Object.keys(s.byType).filter(t => KNOWN_TYPES.includes(t)).length, target: 3 }) },
+  { id: "diverse5", name: "Renaissance Agent", icon: "🎭", description: "Use 5+ activity types", category: "diversity", check: (s) => Object.keys(s.byType).filter(t => KNOWN_TYPES.includes(t)).length >= 5, progress: (s) => ({ current: Object.keys(s.byType).filter(t => KNOWN_TYPES.includes(t)).length, target: 5 }) },
+  { id: "diverse8", name: "Jack of All Trades", icon: "🃏", description: "Use 8+ activity types", category: "diversity", check: (s) => Object.keys(s.byType).filter(t => KNOWN_TYPES.includes(t)).length >= 8, progress: (s) => ({ current: Object.keys(s.byType).filter(t => KNOWN_TYPES.includes(t)).length, target: 8 }) },
+  { id: "builder50", name: "Master Builder", icon: "🏗️", description: "50 build activities", category: "special", check: (s) => (s.byType.build || 0) >= 50, progress: (s) => ({ current: s.byType.build || 0, target: 50 }) },
+  { id: "committer100", name: "Commit Machine", icon: "⚙️", description: "100 commits", category: "special", check: (s) => (s.byType.commit || 0) >= 100, progress: (s) => ({ current: s.byType.commit || 0, target: 100 }) },
+  { id: "nightowl", name: "Night Owl", icon: "🦉", description: "50+ activities between 10pm-4am", category: "special", check: (_, acts) => acts.filter(a => { const h = new Date(a.timestamp).getHours(); return h >= 22 || h < 4; }).length >= 50, progress: (_, acts) => ({ current: acts.filter(a => { const h = new Date(a.timestamp).getHours(); return h >= 22 || h < 4; }).length, target: 50 }) },
 ];
 
 // ─── Utility Functions ───────────────────────────────────────────────────
@@ -922,19 +928,42 @@ function AchievementBadges({ stats, activities }: { stats: Stats; activities: Ac
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
           {filtered.map(badge => {
             const isEarned = earnedIds.has(badge.id);
+            const prog = !isEarned && badge.progress ? badge.progress(stats, activities) : null;
+            const pct = prog ? Math.min(Math.round((prog.current / prog.target) * 100), 100) : 0;
             return (
               <div key={badge.id}
                 className={`rounded-lg p-3 text-center transition-all ${
                   isEarned
                     ? "bg-zinc-800/80 border border-emerald-500/20 hover:border-emerald-500/40"
-                    : "bg-zinc-800/30 border border-white/5 opacity-40"
+                    : "bg-zinc-800/30 border border-white/5 hover:border-white/10"
                 }`}
                 title={badge.description}>
-                <div className={`text-2xl mb-1 ${!isEarned && "grayscale"}`}>{badge.icon}</div>
+                <div className={`text-2xl mb-1 ${!isEarned && "grayscale opacity-60"}`}>{badge.icon}</div>
                 <div className={`text-xs font-medium ${isEarned ? "text-white" : "text-zinc-500"}`}>
                   {badge.name}
                 </div>
                 <div className="text-[10px] text-zinc-500 mt-0.5">{badge.description}</div>
+                {isEarned ? (
+                  <div className="text-[10px] text-emerald-400 mt-1.5 font-medium">✓ Unlocked</div>
+                ) : prog ? (
+                  <div className="mt-2">
+                    <div className="w-full bg-zinc-700/50 rounded-full h-1.5 overflow-hidden">
+                      <div
+                        className="h-1.5 rounded-full transition-all duration-700 ease-out"
+                        style={{
+                          width: `${pct}%`,
+                          background: pct >= 75 ? "linear-gradient(90deg, #f59e0b, #eab308)"
+                            : pct >= 40 ? "linear-gradient(90deg, #3b82f6, #6366f1)"
+                            : "linear-gradient(90deg, #6b7280, #9ca3af)",
+                        }}
+                      />
+                    </div>
+                    <div className="text-[10px] text-zinc-500 mt-1 tabular-nums">
+                      {prog.current}/{prog.target}
+                      <span className="text-zinc-600 ml-1">({pct}%)</span>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             );
           })}

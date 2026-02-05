@@ -1,7 +1,7 @@
 # Hackathon Build Loop — V2 Objectives
 
-**Last Updated:** 2026-02-05 03:33 PST
-**Cycle:** 227
+**Last Updated:** 2026-02-05 04:03 PST
+**Cycle:** 228
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 **Stack:** React + Tailwind + shadcn/ui + Recharts
 
@@ -43,7 +43,7 @@ Goals:
 - [ ] Mini changelog showing recent v2 improvements
 
 ### 📊 Charts & Visualizations
-- [ ] Improve heatmap tooltip (show activity details, not just count)
+- [x] Improve heatmap tooltip (show activity details, not just count) ← Cycle 228
 - [x] Add sparklines in stat cards ← Cycle 226
 - [ ] Activity type pie chart with click-to-filter
 - [x] Cumulative activity growth line (total over time) ← Cycle 225
@@ -58,6 +58,13 @@ Goals:
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 228 (Enhanced Heatmap Tooltip)
+- Upgraded HeatmapCell with rich tooltip: shows date, total count, type breakdown with emoji+counts (top 5 types), and 3 most recent activity descriptions
+- New HeatmapDayInfo interface carries per-day type stats and top descriptions
+- ActivityHeatmap now computes per-day activity groupings, type counts (sorted by frequency), and truncated descriptions
+- Tooltip has min/max width constraints, divider borders between sections, and overflow handling (+N more types)
+- Self-eval: Big UX win — heatmap cells now tell a complete story on hover. Judges can understand daily activity patterns at a glance without clicking.
 
 ### Cycle 227 (Export Activities as CSV/JSON)
 - Added ExportButton dropdown component on Feed tab — positioned top-right next to "Activity Feed" header
