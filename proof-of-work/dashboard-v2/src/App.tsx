@@ -2163,6 +2163,47 @@ function LoadingSkeleton() {
   );
 }
 
+// ─── Keyboard Help Modal ─────────────────────────────────────────────────
+function KeyboardHelpModal({ onClose }: { onClose: () => void }) {
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  const shortcuts = [
+    { key: "?", desc: "Show this help" },
+    { key: "/", desc: "Focus search (go to Feed)" },
+    { key: "1-7", desc: "Switch tabs (1=Overview ... 7=Feed)" },
+    { key: "Esc", desc: "Close modal / Clear filters" },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-zinc-900 border border-white/10 rounded-xl p-6 w-full max-w-sm animate-in fade-in zoom-in-95 duration-200">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+            <span className="text-xl">⌨️</span> Keyboard Shortcuts
+          </h3>
+          <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors">✕</button>
+        </div>
+        <div className="space-y-3">
+          {shortcuts.map(({ key, desc }) => (
+            <div key={key} className="flex items-center justify-between">
+              <span className="text-zinc-400">{desc}</span>
+              <kbd className="px-2 py-1 bg-zinc-800 border border-white/10 rounded text-xs font-mono text-zinc-300">
+                {key}
+              </kbd>
+            </div>
+          ))}
+        </div>
+        <p className="text-zinc-600 text-xs mt-4 text-center">Press Esc to close</p>
+      </div>
+    </div>
+  );
+}
+
 // ─── Navigation Tabs ─────────────────────────────────────────────────────
 type TabId = "overview" | "charts" | "verify" | "achievements" | "insights" | "timeline" | "feed";
 
@@ -2207,11 +2248,60 @@ export function App() {
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [verifyHash, setVerifyHash] = useState("");
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
+  const [showHelp, setShowHelp] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Apply dark theme
   useEffect(() => {
     document.documentElement.classList.add("dark");
   }, []);
+
+  // Global keyboard shortcuts
+  useEffect(() => {
+    const TAB_ORDER: TabId[] = ["overview", "charts", "timeline", "verify", "achievements", "insights", "feed"];
+    
+    const handler = (e: KeyboardEvent) => {
+      // Ignore if typing in an input
+      const target = e.target as HTMLElement;
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
+        if (e.key === "Escape") target.blur();
+        return;
+      }
+      
+      // Ignore if modal is open (except Escape)
+      if (selectedActivity || showHelp) {
+        if (e.key === "Escape") {
+          setSelectedActivity(null);
+          setShowHelp(false);
+        }
+        return;
+      }
+      
+      switch (e.key) {
+        case "?":
+          e.preventDefault();
+          setShowHelp(true);
+          break;
+        case "/":
+          e.preventDefault();
+          setActiveTab("feed");
+          setTimeout(() => searchInputRef.current?.focus(), 100);
+          break;
+        case "1": case "2": case "3": case "4": case "5": case "6": case "7":
+          e.preventDefault();
+          const idx = parseInt(e.key) - 1;
+          if (TAB_ORDER[idx]) setActiveTab(TAB_ORDER[idx]);
+          break;
+        case "Escape":
+          setSearch("");
+          setFilter(null);
+          break;
+      }
+    };
+    
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [selectedActivity, showHelp]);
 
   // Fetch data
   useEffect(() => {
@@ -2537,7 +2627,7 @@ export function App() {
 
             {/* Search & Filters */}
             <div className="flex flex-col md:flex-row gap-3">
-              <Input placeholder="Search activities..."
+              <Input ref={searchInputRef} placeholder="Search activities... (press / to focus)"
                 value={search} onChange={(e) => setSearch(e.target.value)}
                 className="bg-zinc-900 border-white/10 text-white placeholder:text-zinc-600 flex-1" />
             </div>
@@ -2586,6 +2676,11 @@ export function App() {
             <span className="text-zinc-700">•</span>
             <a href="https://colosseum.com/agent-hackathon/projects/proof-of-work-autonomous-agent-activity-log"
               className="hover:text-white transition-colors">Vote</a>
+            <span className="text-zinc-700">•</span>
+            <button onClick={() => setShowHelp(true)} className="hover:text-white transition-colors flex items-center gap-1">
+              <kbd className="px-1 py-0.5 bg-zinc-800 border border-white/10 rounded text-[10px] font-mono">?</kbd>
+              <span>Shortcuts</span>
+            </button>
           </div>
         </div>
       </footer>
@@ -2598,6 +2693,9 @@ export function App() {
           onVerify={handleVerifyFromFeed}
         />
       )}
+
+      {/* Keyboard Help Modal */}
+      {showHelp && <KeyboardHelpModal onClose={() => setShowHelp(false)} />}
     </div>
   );
 }
