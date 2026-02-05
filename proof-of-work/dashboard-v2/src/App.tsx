@@ -497,17 +497,17 @@ function ActivityHeatmap({ activities }: { activities: Activity[] }) {
   return (
     <ChartCard title="🗓️ Activity Heatmap" subtitle="Daily activity levels (last 16 weeks)">
       <div className="overflow-x-auto">
-        <div className="flex gap-[3px] min-w-[400px]">
-          <div className="flex flex-col gap-[3px] text-[10px] text-zinc-500 mr-1 pt-0">
+        <div className="flex gap-1 w-full">
+          <div className="flex flex-col gap-1 text-[10px] text-zinc-500 mr-1 pt-0 shrink-0">
             {["Mon", "", "Wed", "", "Fri", "", "Sun"].map((d, i) => (
-              <div key={i} className="h-[14px] flex items-center">{d}</div>
+              <div key={i} className="h-[20px] flex items-center">{d}</div>
             ))}
           </div>
           {weeks.map((week, wi) => (
-            <div key={wi} className="flex flex-col gap-[3px]">
+            <div key={wi} className="flex flex-col gap-1 flex-1 min-w-0">
               {week.map((cell, di) => (
                 <div key={di}
-                  className={`w-[14px] h-[14px] rounded-[3px] ${levelColors[getLevel(cell.count)]} transition-colors`}
+                  className={`w-full h-[20px] rounded ${levelColors[getLevel(cell.count)]} transition-colors cursor-pointer hover:ring-1 hover:ring-white/30`}
                   title={`${cell.date}: ${cell.count} activities`}
                 />
               ))}
@@ -1351,11 +1351,11 @@ export function App() {
               <ActivityBreakdownChart byType={stats.byType} />
             </div>
 
-            {/* Heatmap */}
-            <ActivityHeatmap activities={cleanActivities} />
-
-            {/* AI Insights */}
-            <AIInsights stats={stats} activities={cleanActivities} />
+            {/* Heatmap + AI Insights side by side */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <ActivityHeatmap activities={cleanActivities} />
+              <AIInsights stats={stats} activities={cleanActivities} />
+            </div>
 
             {/* Quick Verification */}
             <VerificationTool />
