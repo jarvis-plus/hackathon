@@ -1,82 +1,84 @@
-# Build Loop Prompt
+# Build Loop Prompt — V2 Dashboard (React)
 
-You are executing a build cycle for the Proof of Work dashboard.
+You are executing a build cycle for the **V2 Proof of Work dashboard** (React + Tailwind + shadcn/ui).
 
 ## Your Task
 
-1. **Read** `OBJECTIVES.md` - it's lean now (~3KB), contains:
-   - Current focus
-   - Prioritized backlog
-   - Recent context (last 5 cycles)
-   - Cycle instructions
+1. **Read** `OBJECTIVES.md` — contains current focus, backlog, recent cycles
 
 2. **Quick health check** (30 sec max)
-   - `curl -s localhost:3457/api/stats | jq .total` - API responding?
-   - `curl -s localhost:3457/api/activities | jq length` - Activities loading?
-   - Any unsigned activities? Sign them.
-
-3. **Pick ONE backlog item** - this is the main work
-   - Choose the top unclaimed item from any category
-   - Implement it fully (code, test, verify)
-   - Mark it ✅ in OBJECTIVES.md backlog
-
-4. **Visual check** (REQUIRED after UI changes)
    ```bash
+   curl -s localhost:3457/api/stats | jq .total
+   curl -s localhost:3457/api/activities | jq length
+   ```
+
+3. **Pick ONE backlog item** — the main work
+   - Choose the top unclaimed item
+   - Implement it in `dashboard-v2/src/App.tsx` (or new components)
+   - **V2 stack**: React, Tailwind CSS, shadcn/ui, Recharts
+   - Dashboard path: `/root/clawd/hackathon/proof-of-work/dashboard-v2/`
+
+4. **Build & verify** (REQUIRED)
+   ```bash
+   cd /root/clawd/hackathon/proof-of-work/dashboard-v2
+   bun run build   # Must succeed with no errors
+   ```
+   Then restart the server and visually verify:
+   ```bash
+   systemctl restart pow-server
+   sleep 2
+   # Visual check with Playwright
    cd /root/clawd/hackathon/proof-of-work
    PLAYWRIGHT_BROWSERS_PATH=/root/.cache/ms-playwright node visual-check.js
    ```
-   - Takes full-page screenshot
-   - Checks for console errors
-   - Verifies key elements load (title, stats, activities)
-   - **If check fails**: Fix the issue before committing!
-   - Screenshots saved to `screenshots/` dir for comparison
 
 5. **Log, sign, commit**
-   - Log a build activity describing what you did
-   - Sign on-chain
-   - Commit and push
-   - Update OBJECTIVES.md (cycle number, add to recent context)
+   ```bash
+   # Log a build activity
+   cd /root/clawd/hackathon/proof-of-work
+   bun run log-activity.ts --type build --desc "Cycle N: [what you did]"
+   
+   # Sign on-chain
+   SOLANA_RPC_URL=$(pass solana/helius-rpc-url) bun run auto-sign.ts
+   
+   # Commit and push
+   cd /root/clawd/hackathon && git add -A && git commit -m "Cycle N: [summary]" && git push
+   ```
+   
+6. **Update OBJECTIVES.md** — increment cycle number, add to recent context
 
-5. **Self-eval** (one line in your commit or cycle summary)
+## V2 Architecture
 
-## Rules
+```
+dashboard-v2/
+├── src/
+│   ├── App.tsx          # Main app (~1600 lines, all-in-one for now)
+│   ├── index.css        # Tailwind + custom styles
+│   ├── index.html       # Entry point (<base href="/pow/">)
+│   ├── index.ts         # Bun server (serves both v2 and v1)
+│   └── components/ui/   # shadcn/ui components
+├── dist/                # Build output (served by pow-server)
+└── package.json
+```
 
-- **Every cycle ships something** - not just "monitoring"
-- Prefer small complete improvements over large incomplete ones
-- If stuck, pick a different backlog item
-- Keep OBJECTIVES.md lean - move old cycles to archive
-- **NO DUMP LOOPS** - Be conscious about code quality:
-  - Don't add features that break existing functionality
-  - Run visual check BEFORE committing
-  - If visual check fails, FIX IT before moving on
-  - If you created an error in a previous cycle, fixing it IS your next cycle's work
-
-## Error Recovery (PRIORITY)
-
-**Before picking a new backlog item**, check for existing issues:
-
-1. Run visual check: `PLAYWRIGHT_BROWSERS_PATH=/root/.cache/ms-playwright node visual-check.js`
-2. If it fails (console errors, missing elements), **FIX THOSE FIRST**
-3. Check for loading spinners that never resolve
-4. Check for UI clutter (sections that should be collapsed by default)
-
-**If previous cycle broke something:**
-- Your cycle IS fixing that issue
-- Don't add new features on top of broken code
-- Log the fix as your cycle's activity
+**Key details:**
+- API base: Uses `window.location.origin` (no hardcoded URLs)
+- Charts: Recharts (LineChart, AreaChart, BarChart, PieChart, RadarChart)
+- State: React hooks (useState, useMemo, useCallback)
+- Build: `bun run build` → outputs to `dist/`
+- Server: systemd `pow-server.service` serves `/pow/` → v2 dist
 
 ## Quality Gates (MANDATORY)
 
-Before committing, ALL must pass:
-
 ```bash
-# 1. Syntax check (BLOCKING - must pass)
-node --check dashboard/app.js
+# 1. TypeScript/build check (BLOCKING)
+cd /root/clawd/hackathon/proof-of-work/dashboard-v2 && bun run build
 
 # 2. API health
 curl -s localhost:3457/api/stats | jq .total
 
-# 3. Visual check 
+# 3. Visual check (after server restart)
+systemctl restart pow-server && sleep 2
 cd /root/clawd/hackathon/proof-of-work
 PLAYWRIGHT_BROWSERS_PATH=/root/.cache/ms-playwright node visual-check.js
 ```
@@ -85,74 +87,37 @@ PLAYWRIGHT_BROWSERS_PATH=/root/.cache/ms-playwright node visual-check.js
 
 ## Code Quality Rules
 
-To prevent the duplicate function disaster that corrupted cycles 178-223:
+1. **App.tsx is ~1600 lines** — be surgical, don't rewrite large sections
+2. **Test builds** after every significant change: `bun run build`
+3. **Don't break existing features** — verify visually after changes
+4. **Use Tailwind classes** — avoid inline styles
+5. **Keep components in App.tsx** unless extracting to separate files makes clear sense
 
-1. **NEVER copy-paste entire functions** - check if they already exist
-2. **Use `grep -n "function yourFunctionName" dashboard/app.js`** before adding new functions
-3. **Run `node --check`** after EVERY edit to the JS file
-4. **If you see escaped characters** (`\'` `\`` `\$`) in template literals, FIX THEM
-5. **The file is 21K lines** - be surgical, don't append blindly
+## Data Cleanup (Priority)
 
-## Archive Rotation
-
-When cycle number hits a multiple of 100:
-```bash
-# Append current cycles to archive
-tail -n +[line_of_first_old_cycle] OBJECTIVES.md >> OBJECTIVES-ARCHIVE.md
-# Then trim OBJECTIVES.md to keep only last 5 cycles
-```
+There are ~16 corrupted activity entries:
+- 7 with `type: "--type"` (CLI bug)
+- 9 with full descriptions used as types (Cycle 136, 149, 160, etc.)
+These should be normalized to `type: "build"` via API PATCH or direct JSON edit.
 
 ## Context
 
-- **Status:** SUBMITTED (Project ID: 155)
-- **Dashboard:** https://jarvis.tail6a9bde.ts.net/pow/
-- **Repo:** https://github.com/jarvis-plus/hackathon
+- **Dashboard URL:** https://jarvis.tail6a9bde.ts.net/pow/
+- **Legacy (v1):** https://jarvis.tail6a9bde.ts.net/pow-old/
+- **Repo:** https://github.com/jarvis-plus/hackathon (dev branch)
+- **Project:** https://colosseum.com/agent-hackathon/projects/proof-of-work-autonomous-agent-activity-log
 - **Wallet:** AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX
+- **Hackathon ends:** Feb 12, 2026 (~7 days)
 
 ## Forum & Moltbook Updates (Every ~5 Commits)
 
-After committing, check if updates are needed:
-
-```bash
-COMMITS=$(cat /root/clawd/memory/heartbeat-state.json | jq '.hackathon.commitsSincePost')
-
-if [ "$COMMITS" -ge 5 ]; then
-  # Post to Colosseum forum
-  COLOSSEUM_KEY=$(pass colosseum/api-key)
-  curl -s -X POST "https://agents.colosseum.com/api/forum/posts" \
-    -H "Authorization: Bearer $COLOSSEUM_KEY" \
-    -H "Content-Type: application/json" \
-    -d '{
-      "title": "Progress Update: [summary]",
-      "body": "[What you shipped]\n\nDashboard: https://jarvis.tail6a9bde.ts.net/pow/\nVote: https://colosseum.com/agent-hackathon/projects/proof-of-work-autonomous-agent-activity-log"
-    }'
-  
-  # Post to Moltbook (m/crypto or m/builds)
-  MOLTBOOK_KEY=$(pass moltbook/api-key)
-  curl -s -X POST "https://www.moltbook.com/api/v1/posts" \
-    -H "Authorization: Bearer $MOLTBOOK_KEY" \
-    -H "Content-Type: application/json" \
-    -d '{
-      "submolt": "crypto",
-      "title": "[summary] - Proof of Work Dashboard",
-      "content": "[What you shipped]\n\nLive: https://jarvis.tail6a9bde.ts.net/pow/\nVote on Colosseum: https://colosseum.com/agent-hackathon/projects/proof-of-work-autonomous-agent-activity-log"
-    }'
-  
-  # Reset counter
-  cat /root/clawd/memory/heartbeat-state.json | jq '.hackathon.commitsSincePost = 0' > /tmp/hs.json
-  mv /tmp/hs.json /root/clawd/memory/heartbeat-state.json
-else
-  # Increment counter
-  cat /root/clawd/memory/heartbeat-state.json | jq '.hackathon.commitsSincePost += 1' > /tmp/hs.json
-  mv /tmp/hs.json /root/clawd/memory/heartbeat-state.json
-fi
-```
+After committing, check `memory/heartbeat-state.json` → `hackathon.commitsSincePost`.
+If >= 5, post progress update to Colosseum forum and Moltbook m/builds.
+Reset counter after posting.
 
 ## When Done
 
-After committing, trigger the next cycle:
+Trigger the next cycle:
 ```bash
 openclaw gateway wake --text "HACKATHON_CYCLE_DONE: [what you shipped]. Spawn next cycle." --mode now
 ```
-
-The 30-min cron is a fallback. Active development should chain cycles.

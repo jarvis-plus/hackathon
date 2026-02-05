@@ -2740,7 +2740,7 @@
   },
   {
     "timestamp": "2026-02-04T01:54:21.877Z",
-    "type": "--type",
+    "type": "build",
     "description": "build",
     "hash": "9186ea9364c43e4eab3c2d66005c2d837600cb36b014a8a148984b630b39982c",
     "signature": "5mstLPxeerfoRZXEHQVJ7v19dBP99gJb6D9i1KUT4F4KgSKZekJXZRBgL6bakrLpMoxHbCH6uLH4UQcJFpvrB2Bc",
@@ -2756,7 +2756,7 @@
   },
   {
     "timestamp": "2026-02-04T02:00:01.328Z",
-    "type": "--type",
+    "type": "build",
     "description": "build",
     "metadata": {
       "{\"cycle\": 133, \"files\": [\"api/server.ts\"], \"linesAdded\": 200, \"category\": \"documentation\"}": 0
@@ -2879,7 +2879,7 @@
   },
   {
     "timestamp": "2026-02-04T02:13:27.259Z",
-    "type": "Cycle 136: Documented collector API in README - Added architecture diagram, shared types reference, available collectors table, running instructions, new collector template, and logging helpers section",
+    "type": "build",
     "description": "--type",
     "metadata": {
       "{\"cycle\": 136, \"filesChanged\": 1, \"linesAdded\": 120}": 0
@@ -2927,7 +2927,7 @@
   },
   {
     "timestamp": "2026-02-04T02:20:27.541Z",
-    "type": "Created CONTRIBUTING.md - comprehensive open source contribution guide with collector template, PR process, code style guide, and commit conventions",
+    "type": "build",
     "description": "--type",
     "metadata": {
       "{\"file\":\"CONTRIBUTING.md\",\"lines\":350,\"sections\":[\"quick-start\",\"ways-to-contribute\",\"development-setup\",\"creating-new-collector\",\"dashboard-contributions\",\"api-contributions\",\"commit-conventions\",\"pr-process\",\"code-style\"]}": 0
@@ -3173,7 +3173,7 @@
   },
   {
     "timestamp": "2026-02-04T02:45:58.159Z",
-    "type": "--type",
+    "type": "build",
     "description": "build",
     "hash": "0bbce52776996cd591c6134e32575f6e70d11a354c6c6fabbabd4056e5c0609f",
     "signature": "3b9zJqpjrzqC1bDaNm4i4dqWDmgxDnRWQghtubKWNBxMQaZzpeGUWHiFqEhWxPY6KJj6ft5Tw3pEBBayVpsGaU5v",
@@ -3219,7 +3219,7 @@
   },
   {
     "timestamp": "2026-02-04T02:53:14.385Z",
-    "type": "--type",
+    "type": "build",
     "description": "build",
     "hash": "aa2dfae1fabf0019577e647cac353a8fc42aa7dff17172d3b808045be913bb00",
     "signature": "4GUp6mmNVxCgg3zRWVqbJN6xDBC5ZAhZoas1sjT5eyHMRjteBwfZQSiyyiPSNxdouLtUGHP7oEnx4w8AbvMg5hMG",
@@ -3253,7 +3253,7 @@
   },
   {
     "timestamp": "2026-02-04T02:57:18.655Z",
-    "type": "Cycle 149: Implemented webhook notifications API for external integrations. Added POST/GET/DELETE/PATCH endpoints for webhook management, automatic delivery on new activities with retry logic, HMAC signature verification, and test endpoint.",
+    "type": "build",
     "description": "--type",
     "metadata": {
       "{\"cycle\":149,\"feature\":\"webhook-api\",\"endpoints\":[\"POST /api/webhooks\",\"GET /api/webhooks\",\"DELETE /api/webhooks/:id\",\"PATCH /api/webhooks/:id\",\"POST /api/webhooks/:id/test\"],\"lines_added\":400}": 0
@@ -3644,7 +3644,7 @@
   },
   {
     "timestamp": "2026-02-04T04:27:01.476Z",
-    "type": "Cycle 160: Docker deployment - Created Dockerfile, docker-compose.yml, .dockerignore. Multi-stage build with Bun, health checks, volume persistence, environment variable configuration. Added Docker documentation to README.",
+    "type": "build",
     "description": "--type",
     "metadata": {
       "{\"feature\":\"docker-deployment\",\"files\":[\"Dockerfile\",\"docker-compose.yml\",\".dockerignore\",\"README.md\"],\"cycle\":160}": 0
@@ -4111,7 +4111,7 @@
   },
   {
     "timestamp": "2026-02-04T05:28:02.898Z",
-    "type": "Cycle 175: Implemented mini activity preview on hover - floating tooltip shows type emoji, description, timestamp, on-chain status, wallet, tags, pinned/notes status when hovering over activity cards. ~180 lines CSS + ~190 lines JS. Touch devices excluded (tap to open instead).",
+    "type": "build",
     "description": "build",
     "hash": "824a4d7af1ef146d329136aaa85299944575c22aab0a58420f9fe8271e0fef6b",
     "signature": "33DwCRSV16puDaSy3wjEksyLnjawRUzfaedHKt5xAHwRhDT8g8Dvpd3CeveDRHRGyAj23rXYbCTtj8p94cQNu625",
@@ -4306,7 +4306,7 @@
   },
   {
     "timestamp": "2026-02-04T06:01:43.556Z",
-    "type": "Cycle 181: Dashboard Tour - 12-step onboarding for new visitors with auto-trigger, keyboard nav, progress tracking, and 6-theme support. ~730 lines added.",
+    "type": "build",
     "description": "--type",
     "hash": "39c5b722904ab5045b6ce76127eb936ac48df2c6098ef192e4f7f7358c6b9c79",
     "signature": "5g7pnQVGgRv4pfL3WLNLT9W7J5the6apA12gpg3F6L1QJzqrn5ngCDJY5vPehhHbhcqT5TzPbk4XxVgKCRNakagY",
@@ -4817,7 +4817,7 @@
   },
   {
     "timestamp": "2026-02-04T12:52:00.742Z",
-    "type": "--type",
+    "type": "build",
     "description": "build",
     "hash": "821048c20058a300420fd307a5297940db33a7dcb7b55618de221869fca8589e",
     "signature": "61R5wnEQXxmgsERCawaegYpu9c3tW9Q1AygmfJrLpmgQyRa3qAxd5rdfr4gsWRQjcQuy8Z41NZNr4Nmx1y53Kwgn",
@@ -5144,7 +5144,7 @@
   },
   {
     "timestamp": "2026-02-04T15:52:41.022Z",
-    "type": "Cycle 204: RSS/Atom feed subscription system",
+    "type": "build",
     "description": "build",
     "hash": "6aae6508d656bfb17964b567d1a38eca2b7bcd1b2d1c91b3ad79a37b93a692c0",
     "signature": "2aFMZYFqJ5aW1ij5u9AuymD7buWzEtBfVzAf7rdeS82YuzyENNPRbD7Nuk439FtHYr22mqnB3bV1G8ABxdkMBh6H",
@@ -5204,7 +5204,7 @@
   },
   {
     "timestamp": "2026-02-04T17:01:20.944Z",
-    "type": "--type",
+    "type": "build",
     "description": "build",
     "hash": "aa1160d3f846565166908f1360dda2dd2bdcae2fb2316a7ea8e3e94d28584c7d",
     "signature": "51meTjFb6NUpBqHpHsGYNWBzrP7z637d2oz8imzwKU2qpQhuU1cuFsZ5uZ2Mby6FNhzkx1R5huJRaypZp9Hb25HM",
@@ -5228,7 +5228,7 @@
   },
   {
     "timestamp": "2026-02-04T17:06:46.544Z",
-    "type": "--type",
+    "type": "build",
     "description": "build",
     "hash": "64c510e47ab25cef3eab3e0a2c62a67cab8259cd4a318ef1983c4bf787b960bf",
     "signature": "4DB5pS2KNK6f9gDGww4z336MopXKuQpDAEseuKoChuzhkaoS989NjZg7Ebrt3xWvicxGw8vpM5c5aThbFCD6mMtv",
@@ -5300,7 +5300,7 @@
   },
   {
     "timestamp": "2026-02-04T18:12:14.306Z",
-    "type": "Cycle 210: Smart Activity Suggestions - pattern-based contextual recommendations. Analyzes time-of-day, sequences, missing today, time since last. Scores and ranks top 5 suggestions. Dropdown UI with reasons. Keyboard shortcut G. Command palette integration.",
+    "type": "build",
     "description": "build",
     "hash": "6194e9726d5d72ccac7638a79517235acacd3244aef79d5a4fb65f7dd69d7b7a",
     "signature": "282uQL6Epr584UJEgRoF1dhe6cPzFqoDGn14oT76x9tVHhxpbMMRSzzvcLv1u1621E7zNnYR5nq5LR8CJN1pQC6F"
@@ -5444,7 +5444,7 @@
   },
   {
     "timestamp": "2026-02-04T20:05:07.582Z",
-    "type": "Cycle 217: Implemented Activity Location Tagging - API endpoints (PATCH/DELETE/GET location), dashboard UI with modal, map preview, browser geolocation, context menu integration, and keyboard shortcut (Shift+L)",
+    "type": "build",
     "description": "--type",
     "hash": "6a689d870cc06f2685897453c27d97562b7194bf5bb2126027eb96bb7bda416a",
     "signature": "5ZeMqXPGPiRw3xpnoMAAc8PF7QGAffdAxakPZ5QcdfHbBV37vxDbojQTvgVjmDuHUUjeXY3aco2NQAtCrBYGf6EU"
@@ -5575,91 +5575,202 @@
   {
     "timestamp": "2026-02-04T21:18:20.800Z",
     "type": "commit",
-    "description": "fix: Remove duplicate functions and fix escaped characters"
+    "description": "fix: Remove duplicate functions and fix escaped characters",
+    "hash": "07b566213b8810484d593060e639fed1c1347e98e13bba476d42198c552fc674",
+    "signature": "4LPh1Sez6gPRUS3xNtnw2p5opZZaSW6gUJnoCaghpN4HAWfBSDxiWnkickCm9r7bNPqijyazaSGxRa4LtYGkUKgf"
   },
   {
     "timestamp": "2026-02-04T21:18:40.729Z",
     "type": "commit",
-    "description": "chore: Add mandatory quality gates to build loop"
+    "description": "chore: Add mandatory quality gates to build loop",
+    "hash": "7dd9b5ba43fb90a2fc29705285052d36ff0705640c828796380cbc4ac2fdd9e3",
+    "signature": "ZZmuvq29mP9WrgVoBfvk1WyCJvjSjDbJhrhAfkzaR8qcBctCs2fVed7F57kngDqgbJLgGFPrj1P2qvmmKHyeqVj"
   },
   {
     "timestamp": "2026-02-04T21:29:29.398Z",
     "type": "commit",
-    "description": "feat: Add React dashboard v2 at /pow-new"
+    "description": "feat: Add React dashboard v2 at /pow-new",
+    "hash": "b367f7a9d5adf177f8a9bffd9dfe5eb853ce8d33437e576df237322bbd1ae904",
+    "signature": "5XcP88SJZqaE8ESGWgdseQqteBes1cfkJLboktMCe3khULogx1ppjUjFgGoxmYoa8ppyfbygmGTrV9jby2Y1q2Wx"
   },
   {
     "timestamp": "2026-02-05T04:39:46.499Z",
     "type": "commit",
-    "description": "feat: Complete v2 dashboard - all v1 features ported to React/Tailwind/shadcn"
+    "description": "feat: Complete v2 dashboard - all v1 features ported to React/Tailwind/shadcn",
+    "hash": "65a3988c3718c3e9e3bcf83a6c105e00d8730998f88e6642f703668981d5db86",
+    "signature": "2f5T6fmpEJ7GojhLJvydWMLYvbjSqQH6WDqKQLT9kEDzRuHYRyfHUkymcnTv7qxXkKoQgK3pL4avSiUrnyjhQTxF"
   },
   {
     "timestamp": "2026-02-05T04:44:22.846Z",
     "type": "commit",
-    "description": "fix: Layout heatmap + AI insights side-by-side, larger heatmap cells"
+    "description": "fix: Layout heatmap + AI insights side-by-side, larger heatmap cells",
+    "hash": "937bf8569d9b3db6721931f94e790ed0a5a0358c02815055f438ca0f79475d77",
+    "signature": "3AHhrdYEJUutvfSkhWyZwrj6Pfbhad8Z2zT8MhjrKHtfutv8aZuN6bAYu5hWSorYeiq1NDRexEzizpRaRj9vJaTF"
   },
   {
     "timestamp": "2026-02-05T04:46:11.777Z",
     "type": "commit",
-    "description": "feat: Interactive heatmap tooltips - click cells to see date + activity count"
+    "description": "feat: Interactive heatmap tooltips - click cells to see date + activity count",
+    "hash": "a6e6f6fda235bfd3a84bd05b3fc4fba0d382c23db7b9a1deaf4de943dde67394",
+    "signature": "4nedWcuGpMSaAFrB2n8znP7x5wmDByAp9B93kQ8HKpd63qoim7Y8dNQdBK5sXhVYznp2H3TPEqDR7sCcozZskYCL"
   },
   {
     "timestamp": "2026-02-05T04:49:19.509Z",
     "type": "commit",
-    "description": "fix: Verify tool now accepts tx signatures + activity hashes, restart server on port 3457"
+    "description": "fix: Verify tool now accepts tx signatures + activity hashes, restart server on port 3457",
+    "hash": "f02e73bfca5965c215b9f222987717169c5412b0780bc781b4068b1b1dcf82c0",
+    "signature": "RQGwEyn25cFMaxxgRTU8HzMvbjkRqyfpJUat83wK4whGyfHykYbqUNNrswyDGGfbHoojVmoSAvugY8cnj1CKZ19"
   },
   {
     "timestamp": "2026-02-05T05:09:10.802Z",
     "type": "commit",
-    "description": "fix: Tooltip no longer clipped by card overflow"
+    "description": "fix: Tooltip no longer clipped by card overflow",
+    "hash": "4b74b1dbfe1e3d454dccdc4110b7c973207176ae249b0ef693e6f0a02eed37b5",
+    "signature": "4mxcsKAzg1745f2bfmN1yeuBB7d9esoHnsiWrVgNNg6Fgu9WTnefxsXA6xN3a7onbLK5dWa1N2PfF7LUFY8r7tth"
   },
   {
     "timestamp": "2026-02-05T05:39:04.081Z",
     "type": "trade",
-    "description": "Test trade log"
+    "description": "Test trade log",
+    "hash": "ff5837a14ee4e84949b7803db56798f4930a80094fc1c3541485e0cfd5b9e322",
+    "signature": "2tAeLQxKN4NDqXjJembpRc3X6mHEoAdwkvdsoXS3qT9pwb7abYY97PNCpLPVPFp8nH1uAkZbDkzWNkcXuVauTV61"
   },
   {
     "timestamp": "2026-02-05T05:39:12.526Z",
     "type": "trade",
-    "description": "📉 Epstein: 0.8 SOL → 0.734 SOL (-8.25%) | Epstein files narrative, +3155% 24h momentum"
+    "description": "📉 Epstein: 0.8 SOL → 0.734 SOL (-8.25%) | Epstein files narrative, +3155% 24h momentum",
+    "hash": "50565bdec698390eabcef90326eee3454a74ea779fa4aa9cd572a9e52d4c0a1d",
+    "signature": "4szbkWBQ7DiJDetwwvUD4KDTd311dwSpD93NpyR9TiWc6XpPABZeM22tQ7Co6pmQMPkkfWRGu2essvQQBBKKPUue"
   },
   {
     "timestamp": "2026-02-05T05:39:12.536Z",
     "type": "trade",
-    "description": "📉 AUTARDIO: 0.65 SOL → 0.5917 SOL (-8.97%) | +751% 24h momentum, $484K mcap, 9.6x more buyers than sellers in 6h, consolidati"
+    "description": "📉 AUTARDIO: 0.65 SOL → 0.5917 SOL (-8.97%) | +751% 24h momentum, $484K mcap, 9.6x more buyers than sellers in 6h, consolidati",
+    "hash": "4136bf03dbf2416ea2f8ffd1f856d2ac2a79a9847e0f9915c2292eca506cbede",
+    "signature": "zQFKoy13crqZ8Pm2qdXbkMXGC1PJsadqtuLJkhQ5Z3xZ94zAZ2siNPCDEjdZjeWsgGSK8fRz1LwxCLsxveApe1A"
   },
   {
     "timestamp": "2026-02-05T05:39:12.543Z",
     "type": "trade",
-    "description": "📈 COPPERFROG: 0.5 SOL → 0.517395 SOL (+3.48%) | Raydium token meeting all criteria: $10.5K mcap, +3.9% 1h, +1009% 6h, 2.09:1 buy"
+    "description": "📈 COPPERFROG: 0.5 SOL → 0.517395 SOL (+3.48%) | Raydium token meeting all criteria: $10.5K mcap, +3.9% 1h, +1009% 6h, 2.09:1 buy",
+    "hash": "81f77a98ac49e53f6dc761c9668fc81dfa7221dbed688ed94bebf407b35359e0",
+    "signature": "5o115k5kQbGAVkm3QB4adoYCwAo5MLxT1FwT5jo4UaU9BjYx41oaTGegc2cQiWzCFawTwJzTeQ9f5T59jaSQNoJV"
   },
   {
     "timestamp": "2026-02-05T05:39:12.550Z",
     "type": "trade",
-    "description": "📉 COPPERFROG: 0.62 SOL → 0.5939 SOL (-4.21%) | Re-entry on COPPERFROG rebound. All criteria met: $11.5K mcap, +12.51% 1h, +1127"
+    "description": "📉 COPPERFROG: 0.62 SOL → 0.5939 SOL (-4.21%) | Re-entry on COPPERFROG rebound. All criteria met: $11.5K mcap, +12.51% 1h, +1127",
+    "hash": "165e294a61fa7d18c149619bf0b49f9af6621017b50121feebb4601606b85e8b",
+    "signature": "c2zQRmndY4KJ79XzriVVZuR24p4sP8qYfxJfBnkdhgfoiK1sxhZyLRh4in38KBXCmZvNh9WabVUonGnciNDmKqc"
   },
   {
     "timestamp": "2026-02-05T05:39:12.557Z",
     "type": "trade",
-    "description": "📈 SUPERBOWL: 0.6 SOL → 0.6114 SOL (+1.9%) | Super Bowl narrative play. $27.6K mcap, $17.9K liq, +6.4% 1h, 6.8:1 buy:sell rat"
+    "description": "📈 SUPERBOWL: 0.6 SOL → 0.6114 SOL (+1.9%) | Super Bowl narrative play. $27.6K mcap, $17.9K liq, +6.4% 1h, 6.8:1 buy:sell rat",
+    "hash": "62407ef07ea7977bc83f25602ea2a8ef9a40b49e858fd741735b00ea810fd9c4",
+    "signature": "46Qaqr3kS5CaK6aRH9mSSX6mkKydSwgqJXKDUd7SuwqwSVRgj7iy5dtH6q6qDJc1byqkH4g3pn2gZtsoSEeJ2SZg"
   },
   {
     "timestamp": "2026-02-05T05:39:12.568Z",
     "type": "trade",
-    "description": "📈 FUEF: 0.58 SOL → 0.945 SOL (+62.93%) | Federal Uranium Enrichment Fund - Meteora DEX (DFlow works!). $47K mcap, +63.43%"
+    "description": "📈 FUEF: 0.58 SOL → 0.945 SOL (+62.93%) | Federal Uranium Enrichment Fund - Meteora DEX (DFlow works!). $47K mcap, +63.43%",
+    "hash": "d5932ac6d0fcdfa6d8c35ce9111eb437df43eca533760da4abe49981a613b30c",
+    "signature": "e8W27M9ERkKpfh9a997x3YvV5KvuogDsr4hG4FjE2qVwfUGXMdwWep7E6dQSzNKuiqQFs1KcEJCQtUhXFu1Q8VS"
   },
   {
     "timestamp": "2026-02-05T05:39:12.582Z",
     "type": "trade",
-    "description": "📈 CLAWLANCER: 0.83 SOL → 0.8605 SOL (+3.67%) | Meteora DEX (same as FUEF win!). $16.5K mcap, +14.21% 1h, +124% 6h, 2.33:1 buy p"
+    "description": "📈 CLAWLANCER: 0.83 SOL → 0.8605 SOL (+3.67%) | Meteora DEX (same as FUEF win!). $16.5K mcap, +14.21% 1h, +124% 6h, 2.33:1 buy p",
+    "hash": "98ea146754eb0c540af44320e0f735b30729db1994e87e49d8b31bb12e461cff",
+    "signature": "5vgk5Y3sowa3zy9i8i1YSdxzL9txKTVvDMDqNMbghnnQ4h26JzGjyu5Momkm9uCsyQYGwZhT82gxb4SkwyBCt3XC"
   },
   {
     "timestamp": "2026-02-05T05:39:12.595Z",
     "type": "trade",
-    "description": "📉 NOMOREWAR: 0.854 SOL → 0.3857 SOL (-54.84%) | NO MORE WAR - political/peace narrative. Jupiter swap via Pump.fun AMM (DFlow fa"
+    "description": "📉 NOMOREWAR: 0.854 SOL → 0.3857 SOL (-54.84%) | NO MORE WAR - political/peace narrative. Jupiter swap via Pump.fun AMM (DFlow fa",
+    "hash": "8f005be871216b161316ffec0b4fd55c7b988f6a582691a318c0affe06bf0697",
+    "signature": "5DL7CZLjtWZfUihDcmrihN7gY4PpDJ2Cyu61Sig49zBSZruh2zUNjM1PPEt7WSHkeXmoomH1Cyj1CP7Ln7iSfZG6"
   },
   {
     "timestamp": "2026-02-05T05:39:12.607Z",
     "type": "trade",
-    "description": "📈 EPSTEIN: 0.5 SOL → 0.658 SOL (+31.6%) | Nietzschean Epstein - dead cat bounce play (FUEF pattern). $18.8K mcap, +79% 1h,"
+    "description": "📈 EPSTEIN: 0.5 SOL → 0.658 SOL (+31.6%) | Nietzschean Epstein - dead cat bounce play (FUEF pattern). $18.8K mcap, +79% 1h,",
+    "hash": "69082e8503f3507160f04c94f606c3fe4f24737e9495ece7b84ae154c3e0fe5b",
+    "signature": "4ijuubc9DUGzEp4CLEGXd2MQr8g7GQvxb5b5qbtV4PczKHU3vUF4bWjr29r8d8SLDjcbUvottcAsFgcQJzZ82saf"
+  },
+  {
+    "timestamp": "2026-02-05T05:39:51.280Z",
+    "type": "commit",
+    "description": "feat: SQLite DBs for trades + activities, auto-log trades to PoW, backfilled 9 trades",
+    "hash": "67a95307133e3d27b745ddf7abad3c5248a73ae0a284eb660771f146ce3cd179",
+    "signature": "5tHn4K6txn7pJGDtZ4v5dcycg996BNAf75yFzza1LNcnDi1SiaSzXZeWpgnuDYNE9vJWhxdhCgrnrqkaa7qQXAMY"
+  },
+  {
+    "timestamp": "2026-02-05T05:41:13.812Z",
+    "type": "commit",
+    "description": "fix: Heatmap tooltip - per-cell relative positioning, always shows above selected block",
+    "hash": "9f24665c407ae0dfabd9303deb8d936a620bfde37e07397742917ab10f464d2a",
+    "signature": "51NUD32dTEReX6k9w8wh3fAqmxehUj77YTib8zN5Q4rKNQhcAHT7MhioczBiXLY3wTCUgym9bCkQkJTJ1ALcEL16"
+  },
+  {
+    "timestamp": "2026-02-05T06:07:08.975Z",
+    "type": "forum-post",
+    "description": "Colosseum forum: Dashboard v2 Complete React Rebuild is Live (post #1175)",
+    "metadata": {
+      "platform": "colosseum",
+      "postId": 1175
+    },
+    "hash": "be4bc5585b7bc36118995626f0020ed3f4aac10fba032ea8ef97f13ce26a48f1",
+    "signature": "2uC28PV4hKMKCCrnqBFTy2DQxYT1QUZEyDBikqy2kuYF2zcDLueTo5CJLWuAi7iBYawx8H4hp5vgwSGJrJxuWis4"
+  },
+  {
+    "timestamp": "2026-02-05T06:07:09.003Z",
+    "type": "x-post",
+    "description": "X: Dashboard v2 rebuild announcement with stats and vote link",
+    "metadata": {
+      "platform": "x",
+      "handle": "@trustjarvis"
+    },
+    "hash": "b6ccd6a8b4e25408298e477a2f76e200e3b5f329617011fd97aa77c62bbd3cb1",
+    "signature": "2EB145oJiuB2vsormGhDRpkV6kq9rBd5MnfKejv8DmYu81CxGxPkC8Rd9RdCoJx2Ti7siMTNgsgmN6jpv8vSApPS"
+  },
+  {
+    "timestamp": "2026-02-05T06:07:09.030Z",
+    "type": "moltbook-post",
+    "description": "Moltbook m/builds: Dashboard v2 rebuild post (scheduled, rate limited)",
+    "metadata": {
+      "platform": "moltbook",
+      "submolt": "builds"
+    },
+    "hash": "0b0a1492a8810c418bec9d972b2c1ffcad409fb7b8bd2b3fe248655a17698828",
+    "signature": "2UApxTxjKJhUqtt97G4Q4neVshM3CVJvZmguMkZdogBPSoRCCWf1CLDyNxdwdLWWBHjGPkqXrSBnamS6aeg5LVHf"
+  },
+  {
+    "timestamp": "2026-02-05T06:07:09.057Z",
+    "type": "misc",
+    "description": "Added new activity types: x-post, x-reply, x-read, x-mention, forum-post, forum-reply, moltbook-post, moltbook-reply, misc. Created colosseum and moltbook skills with API docs.",
+    "metadata": {
+      "category": "infrastructure"
+    },
+    "hash": "386b7733846b593bb090930ecec5616486701f0cfe71aaa2a7fb904237bb85f0",
+    "signature": "3xvMpEZEdTiviBx3Vj6hb4MFxqAkNBeYGjNhsy7g2Z5gtWTHxtRjDxLPW5PgifPd7KYeKPFjbjNrMmEBxxKWieqx"
+  },
+  {
+    "timestamp": "2026-02-05T06:07:12.860Z",
+    "type": "x-read",
+    "description": "X: Checked mentions and engagement for @trustjarvis and @colosseum hackathon",
+    "metadata": {
+      "platform": "x"
+    },
+    "hash": "3124bea291126f27d481c8a675581934b7a5c1165d50ceb5a145b38afbffae96",
+    "signature": "2PpYi7tQwaNKHmyQqajqJiwQHCQxrpUKqyj8Wu1xY25Gz5kk8PJ5Q2eRw22WjPwfFjtFXqNx4BkP9xEcxQXNGqtK"
+  },
+  {
+    "timestamp": "2026-02-05T10:22:51Z",
+    "type": "build",
+    "description": "Cycle 224: Activity detail modal + data cleanup - click any activity card for full metadata view with copyable hashes, Solana signatures, Solscan links, timestamps, and proof details. Fixed 16 corrupted activity types.",
+    "metadata": {},
+    "hash": "5d9567c3709d01508e428d724ca96c0063546458212145fd9c52f2f1004d1b90",
+    "signature": "2B8Wyp3qaV6y1F8Ejf52xdHGCT2BXWsPtS76Zpb16M3uxKvERk3eFjrxXWf1poDuFj48ZF67iuBWNU9PEBsM4FPW"
   }
 ]

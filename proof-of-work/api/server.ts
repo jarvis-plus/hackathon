@@ -338,7 +338,11 @@ function processTemplatePlaceholders(text: string): string {
 const BUILT_IN_TYPES = [
   'commit', 'build', 'trade', 'message', 'email', 
   'calendar', 'tweet', 'decision', 'heartbeat', 'browser',
-  'transfer', 'deploy', 'session', 'research'
+  'transfer', 'deploy', 'session', 'research',
+  'x-post', 'x-reply', 'x-read', 'x-mention',
+  'forum-post', 'forum-reply',
+  'moltbook-post', 'moltbook-reply',
+  'misc'
 ];
 
 /**
@@ -398,7 +402,16 @@ function getBuiltInTypeEmoji(type: string): string {
     'transfer': '💸',
     'deploy': '🚀',
     'session': '🔌',
-    'research': '🔍'
+    'research': '🔍',
+    'x-post': '�✍️',
+    'x-reply': '💬',
+    'x-read': '👁️',
+    'x-mention': '🔔',
+    'forum-post': '📣',
+    'forum-reply': '💬',
+    'moltbook-post': '🦞',
+    'moltbook-reply': '💬',
+    'misc': '🔹'
   };
   return emojiMap[type] || '⚡';
 }
@@ -8913,12 +8926,29 @@ Colosseum Agent Hackathon 2026`;
     }
 
     // ==========================================
-    // DASHBOARD V2: Serve React dashboard at /pow-new
+    // DASHBOARD V1 (legacy): Serve old dashboard at /pow-old
+    // ==========================================
+    if (path.startsWith('/pow-old')) {
+      const oldPath = path.replace('/pow-old', '') || '/';
+      return serveDashboard(oldPath);
+    }
+
+    // ==========================================
+    // DASHBOARD V2 (primary): Serve React dashboard at /pow
+    // Also handles /pow-new for backwards compatibility
     // ==========================================
     if (path.startsWith('/pow-new')) {
-      const v2Path = path.replace('/pow-new', '') || '/index.html';
-      const filePath = v2Path === '/' ? '/index.html' : v2Path;
-      const fullPath = join(DASHBOARD_V2_DIR, filePath);
+      // Redirect /pow-new to /pow for canonical URL
+      const rest = path.replace('/pow-new', '');
+      return new Response(null, { status: 301, headers: { 'Location': `/pow${rest}` } });
+    }
+
+    {
+      // Default: serve v2 React dashboard
+      // Strip /pow prefix if present, fallback to /index.html for root
+      const stripped = path.startsWith('/pow') ? path.replace(/^\/pow/, '') : path;
+      const v2Path = (!stripped || stripped === '/') ? '/index.html' : stripped;
+      const fullPath = join(DASHBOARD_V2_DIR, v2Path);
       
       try {
         const file = Bun.file(fullPath);
@@ -8926,6 +8956,9 @@ Colosseum Agent Hackathon 2026`;
           const contentType = fullPath.endsWith('.html') ? 'text/html' :
                               fullPath.endsWith('.css') ? 'text/css' :
                               fullPath.endsWith('.js') ? 'application/javascript' :
+                              fullPath.endsWith('.svg') ? 'image/svg+xml' :
+                              fullPath.endsWith('.png') ? 'image/png' :
+                              fullPath.endsWith('.map') ? 'application/json' :
                               'application/octet-stream';
           return new Response(file, { 
             headers: { 
@@ -8938,15 +8971,9 @@ Colosseum Agent Hackathon 2026`;
         const indexFile = Bun.file(join(DASHBOARD_V2_DIR, 'index.html'));
         return new Response(indexFile, { headers: { 'Content-Type': 'text/html' } });
       } catch (e) {
-        return new Response('Dashboard v2 not found', { status: 404 });
+        return new Response('Dashboard not found', { status: 404 });
       }
     }
-
-    // ==========================================
-    // DASHBOARD: Serve static files
-    // Fallback for all other paths
-    // ==========================================
-    return serveDashboard(path);
   },
   
   // ==========================================

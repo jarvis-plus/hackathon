@@ -75,12 +75,20 @@ const TYPE_EMOJI: Record<string, string> = {
   commit: "📝", build: "🔧", trade: "💱", message: "💬", email: "📧",
   tweet: "🐦", decision: "🎯", heartbeat: "💓", browser: "🌐",
   calendar: "📅", deploy: "🚀", file: "📄", api: "⚡",
+  "x-post": "✍️", "x-reply": "💬", "x-read": "👁️", "x-mention": "🔔",
+  "forum-post": "📣", "forum-reply": "💬",
+  "moltbook-post": "🦞", "moltbook-reply": "💬",
+  misc: "🔹",
 };
 
 const TYPE_COLORS: Record<string, string> = {
   commit: "#3b82f6", build: "#10b981", trade: "#f59e0b", message: "#8b5cf6",
   email: "#ec4899", tweet: "#06b6d4", decision: "#f97316", heartbeat: "#ef4444",
   browser: "#6366f1", calendar: "#14b8a6", deploy: "#a855f7", file: "#64748b",
+  "x-post": "#1d9bf0", "x-reply": "#1d9bf0", "x-read": "#71767b", "x-mention": "#ffd700",
+  "forum-post": "#8b5cf6", "forum-reply": "#a78bfa",
+  "moltbook-post": "#ef4444", "moltbook-reply": "#f87171",
+  misc: "#94a3b8",
 };
 
 const CHART_COLORS = [
@@ -89,7 +97,9 @@ const CHART_COLORS = [
 ];
 
 const KNOWN_TYPES = ["commit", "build", "trade", "decision", "message", "email",
-  "tweet", "heartbeat", "browser", "calendar", "deploy"];
+  "tweet", "heartbeat", "browser", "calendar", "deploy",
+  "x-post", "x-reply", "x-read", "x-mention",
+  "forum-post", "forum-reply", "moltbook-post", "moltbook-reply", "misc"];
 
 // ─── Achievement Definitions ─────────────────────────────────────────────
 interface Badge {
@@ -463,9 +473,9 @@ function HeatmapCell({ cell, level, levelColor, formatDateStr }: {
 }) {
   const [show, setShow] = useState(false);
   return (
-    <div className="relative" onClick={() => setShow(!show)}>
+    <div className="relative" onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}>
       <div
-        className={`w-full h-[20px] rounded ${levelColor} transition-all cursor-pointer hover:ring-2 hover:ring-emerald-400/50 hover:scale-110 ${show ? "ring-2 ring-white/60 scale-110" : ""}`}
+        className={`w-full h-[20px] rounded ${levelColor} transition-all cursor-pointer hover:ring-2 hover:ring-emerald-400/50 hover:scale-110`}
       />
       {show && (
         <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 bg-zinc-800 border border-white/10 rounded-lg px-3 py-2 shadow-2xl pointer-events-none whitespace-nowrap">
@@ -1136,13 +1146,220 @@ function TypePill({ type, count, active, onClick }: {
   );
 }
 
+// ─── Activity Detail Modal ───────────────────────────────────────────────
+function ActivityDetailModal({ activity, onClose, onVerify }: {
+  activity: Activity;
+  onClose: () => void;
+  onVerify?: (hash: string) => void;
+}) {
+  const [copied, setCopied] = useState<string | null>(null);
+  const emoji = TYPE_EMOJI[cleanType(activity.type)] || "⚡";
+  const time = new Date(activity.timestamp);
+
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", handleEsc);
+    return () => document.removeEventListener("keydown", handleEsc);
+  }, [onClose]);
+
+  const copyToClipboard = useCallback((text: string, label: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(label);
+      setTimeout(() => setCopied(null), 2000);
+    });
+  }, []);
+
+  const timeSince = useMemo(() => {
+    const diff = Date.now() - time.getTime();
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(hours / 24);
+    if (days > 0) return `${days}d ${hours % 24}h ago`;
+    if (hours > 0) return `${hours}h ago`;
+    const mins = Math.floor(diff / 60000);
+    return `${mins}m ago`;
+  }, [time]);
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      onClick={onClose}>
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+
+      {/* Modal */}
+      <div className="relative bg-zinc-900 border border-white/10 rounded-2xl shadow-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto animate-in"
+        onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div className="sticky top-0 bg-zinc-900/95 backdrop-blur border-b border-white/5 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">{emoji}</span>
+            <div>
+              <span className="text-sm font-semibold capitalize text-white">{cleanType(activity.type)}</span>
+              <p className="text-xs text-zinc-500">{timeSince}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {(activity.signature || activity.onChain) && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-medium">
+                ⛓️ On-Chain
+              </span>
+            )}
+            <button onClick={onClose}
+              className="w-8 h-8 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white flex items-center justify-center transition-colors text-lg">
+              ✕
+            </button>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="px-6 py-5 space-y-5">
+          {/* Description */}
+          <div>
+            <label className="text-[11px] uppercase tracking-wider text-zinc-500 font-medium">Description</label>
+            <p className="text-sm text-zinc-200 mt-1 leading-relaxed">{activity.description}</p>
+          </div>
+
+          {/* Timestamp */}
+          <div>
+            <label className="text-[11px] uppercase tracking-wider text-zinc-500 font-medium">Timestamp</label>
+            <p className="text-sm text-zinc-300 mt-1 font-mono">
+              {time.toLocaleString("en-US", {
+                weekday: "short", year: "numeric", month: "short", day: "numeric",
+                hour: "2-digit", minute: "2-digit", second: "2-digit", timeZoneName: "short",
+              })}
+            </p>
+          </div>
+
+          {/* Hash */}
+          {activity.hash && (
+            <div>
+              <label className="text-[11px] uppercase tracking-wider text-zinc-500 font-medium">SHA-256 Hash</label>
+              <div className="flex items-center gap-2 mt-1">
+                <code className="text-xs text-blue-400 bg-zinc-800 px-3 py-2 rounded-lg font-mono break-all flex-1 select-all">
+                  {activity.hash}
+                </code>
+                <button onClick={() => copyToClipboard(activity.hash, "hash")}
+                  className="shrink-0 px-2.5 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white text-xs transition-colors">
+                  {copied === "hash" ? "✓" : "📋"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Signature / On-Chain Proof */}
+          {activity.signature && (
+            <div>
+              <label className="text-[11px] uppercase tracking-wider text-zinc-500 font-medium">Solana Signature</label>
+              <div className="flex items-center gap-2 mt-1">
+                <code className="text-xs text-emerald-400 bg-zinc-800 px-3 py-2 rounded-lg font-mono break-all flex-1 select-all">
+                  {activity.signature}
+                </code>
+                <button onClick={() => copyToClipboard(activity.signature!, "sig")}
+                  className="shrink-0 px-2.5 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white text-xs transition-colors">
+                  {copied === "sig" ? "✓" : "📋"}
+                </button>
+              </div>
+              <a href={`https://solscan.io/tx/${activity.signature}`}
+                target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 mt-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors text-xs font-medium">
+                ⛓️ View on Solscan →
+              </a>
+            </div>
+          )}
+
+          {/* Wallet */}
+          {activity.wallet && (
+            <div>
+              <label className="text-[11px] uppercase tracking-wider text-zinc-500 font-medium">Wallet</label>
+              <div className="flex items-center gap-2 mt-1">
+                <code className="text-xs text-purple-400 bg-zinc-800 px-3 py-2 rounded-lg font-mono flex-1">
+                  {activity.wallet}
+                </code>
+                <button onClick={() => copyToClipboard(activity.wallet!, "wallet")}
+                  className="shrink-0 px-2.5 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white text-xs transition-colors">
+                  {copied === "wallet" ? "✓" : "📋"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Proof Details */}
+          {activity.proof && (
+            <div>
+              <label className="text-[11px] uppercase tracking-wider text-zinc-500 font-medium">Proof Details</label>
+              <div className="bg-zinc-800/50 rounded-lg p-3 mt-1 space-y-2">
+                {activity.proof.hash && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-zinc-500">Proof Hash</span>
+                    <code className="text-blue-400 font-mono truncate max-w-[280px]">{activity.proof.hash}</code>
+                  </div>
+                )}
+                {activity.proof.signature && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-zinc-500">Proof Signature</span>
+                    <code className="text-emerald-400 font-mono truncate max-w-[280px]">{activity.proof.signature}</code>
+                  </div>
+                )}
+                {activity.proof.signedAt && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-zinc-500">Signed At</span>
+                    <span className="text-zinc-300">{new Date(activity.proof.signedAt).toLocaleString()}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Metadata */}
+          {activity.metadata && Object.keys(activity.metadata).length > 0 && (
+            <div>
+              <label className="text-[11px] uppercase tracking-wider text-zinc-500 font-medium">Metadata</label>
+              <div className="bg-zinc-800/50 rounded-lg p-3 mt-1 space-y-1.5">
+                {Object.entries(activity.metadata).map(([key, value]) => (
+                  <div key={key} className="flex justify-between text-xs">
+                    <span className="text-zinc-500 capitalize">{key.replace(/([A-Z])/g, " $1").trim()}</span>
+                    <span className="text-zinc-300 text-right max-w-[60%] truncate">
+                      {typeof value === "object" ? JSON.stringify(value) : String(value)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer Actions */}
+        <div className="sticky bottom-0 bg-zinc-900/95 backdrop-blur border-t border-white/5 px-6 py-3 flex items-center gap-2 rounded-b-2xl">
+          {activity.hash && onVerify && (
+            <Button onClick={() => { onVerify(activity.hash); onClose(); }}
+              className="bg-blue-600 hover:bg-blue-700 text-white border-0 text-xs">
+              🔍 Verify Hash
+            </Button>
+          )}
+          {activity.hash && (
+            <Button variant="outline" onClick={() => copyToClipboard(activity.hash, "hash")}
+              className="border-white/10 text-zinc-400 hover:text-white text-xs">
+              {copied === "hash" ? "✓ Copied" : "📋 Copy Hash"}
+            </Button>
+          )}
+          <div className="flex-1" />
+          <Button variant="outline" onClick={onClose}
+            className="border-white/10 text-zinc-400 hover:text-white text-xs">
+            Close
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Activity Card ───────────────────────────────────────────────────────
-function ActivityCard({ activity, onVerify }: { activity: Activity; onVerify?: (hash: string) => void }) {
+function ActivityCard({ activity, onVerify, onSelect }: { activity: Activity; onVerify?: (hash: string) => void; onSelect?: (a: Activity) => void }) {
   const emoji = TYPE_EMOJI[cleanType(activity.type)] || "⚡";
   const time = new Date(activity.timestamp).toLocaleString();
 
   return (
-    <Card className="bg-zinc-900/50 border-white/5 hover:border-white/10 hover:bg-zinc-900/70 transition-all duration-200 group">
+    <Card className="bg-zinc-900/50 border-white/5 hover:border-white/10 hover:bg-zinc-900/70 transition-all duration-200 group cursor-pointer"
+      onClick={() => onSelect?.(activity)}>
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
@@ -1150,28 +1367,28 @@ function ActivityCard({ activity, onVerify }: { activity: Activity; onVerify?: (
               <span className="text-lg">{emoji}</span>
               <span className="text-sm font-semibold capitalize text-white">{cleanType(activity.type)}</span>
               {(activity.signature || activity.onChain) && (
-                <a href={`https://solscan.io/tx/${activity.signature}`}
-                  target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-medium hover:bg-emerald-500/30 transition-colors">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-medium">
                   ⛓️ Verified
-                </a>
+                </span>
               )}
             </div>
             <p className="text-sm text-zinc-300 truncate">{activity.description}</p>
             <div className="flex items-center gap-3 mt-2">
               <p className="text-xs text-zinc-600">{time}</p>
               {onVerify && activity.hash && (
-                <button onClick={() => onVerify(activity.hash)}
+                <button onClick={(e) => { e.stopPropagation(); onVerify(activity.hash); }}
                   className="text-[10px] text-zinc-500 hover:text-blue-400 transition-colors">
                   🔍 Verify
                 </button>
               )}
             </div>
           </div>
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5">
+            <span className="text-zinc-600 text-[10px]">details</span>
             {activity.signature && (
               <a href={`https://solscan.io/tx/${activity.signature}`}
                 target="_blank" rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
                 className="text-zinc-500 hover:text-emerald-400">↗</a>
             )}
           </div>
@@ -1244,6 +1461,7 @@ export function App() {
   const [showCount, setShowCount] = useState(30);
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [verifyHash, setVerifyHash] = useState("");
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
 
   // Apply dark theme
   useEffect(() => {
@@ -1410,7 +1628,7 @@ export function App() {
               </div>
               <div className="space-y-2">
                 {filteredActivities.slice(0, 10).map(activity => (
-                  <ActivityCard key={activity.hash} activity={activity} onVerify={handleVerifyFromFeed} />
+                  <ActivityCard key={activity.hash} activity={activity} onVerify={handleVerifyFromFeed} onSelect={setSelectedActivity} />
                 ))}
               </div>
               <div className="text-center mt-4">
@@ -1550,7 +1768,7 @@ export function App() {
             {/* Activity List */}
             <div className="space-y-2">
               {filteredActivities.map(activity => (
-                <ActivityCard key={activity.hash} activity={activity} onVerify={handleVerifyFromFeed} />
+                <ActivityCard key={activity.hash} activity={activity} onVerify={handleVerifyFromFeed} onSelect={setSelectedActivity} />
               ))}
             </div>
 
@@ -1582,6 +1800,15 @@ export function App() {
           </div>
         </div>
       </footer>
+
+      {/* Activity Detail Modal */}
+      {selectedActivity && (
+        <ActivityDetailModal
+          activity={selectedActivity}
+          onClose={() => setSelectedActivity(null)}
+          onVerify={handleVerifyFromFeed}
+        />
+      )}
     </div>
   );
 }
