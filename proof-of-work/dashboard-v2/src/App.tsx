@@ -1515,6 +1515,154 @@ function ActivityCard({ activity, onVerify, onSelect }: { activity: Activity; on
   );
 }
 
+// ─── Export Utilities ─────────────────────────────────────────────────────
+function exportAsJSON(activities: Activity[], filename = "jarvis-activities.json") {
+  const data = activities.map(a => ({
+    hash: a.hash,
+    type: cleanType(a.type),
+    description: a.description,
+    timestamp: a.timestamp,
+    onChain: !!(a.signature || a.onChain),
+    signature: a.signature || null,
+    wallet: a.wallet || null,
+  }));
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  downloadBlob(blob, filename);
+}
+
+function exportAsCSV(activities: Activity[], filename = "jarvis-activities.csv") {
+  const headers = ["timestamp", "type", "description", "hash", "on_chain", "signature", "wallet"];
+  const escapeCSV = (s: string) => {
+    if (s.includes(",") || s.includes('"') || s.includes("\n")) {
+      return `"${s.replace(/"/g, '""')}"`;
+    }
+    return s;
+  };
+  const rows = activities.map(a => [
+    a.timestamp,
+    cleanType(a.type),
+    escapeCSV(a.description),
+    a.hash,
+    (a.signature || a.onChain) ? "true" : "false",
+    a.signature || "",
+    a.wallet || "",
+  ].join(","));
+  const csv = [headers.join(","), ...rows].join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  downloadBlob(blob, filename);
+}
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ─── Export Dropdown Button ──────────────────────────────────────────────
+function ExportButton({ activities, filtered }: { activities: Activity[]; filtered: Activity[] }) {
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close on click outside
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  // Close on Escape
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [open]);
+
+  const isFiltered = filtered.length < activities.length;
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <Button
+        variant="outline"
+        onClick={() => setOpen(!open)}
+        className="border-white/10 text-zinc-400 hover:text-white text-xs gap-1.5"
+      >
+        📥 Export
+      </Button>
+
+      {open && (
+        <div className="absolute right-0 top-full mt-1 z-50 bg-zinc-900 border border-white/10 rounded-lg shadow-2xl w-56 py-1 animate-in">
+          <div className="px-3 py-2 border-b border-white/5">
+            <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-wider">Export Format</p>
+          </div>
+
+          {/* JSON exports */}
+          <button
+            onClick={() => { exportAsJSON(activities); setOpen(false); }}
+            className="w-full px-3 py-2 text-left text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors flex items-center gap-2"
+          >
+            <span className="text-base">📄</span>
+            <div>
+              <div className="font-medium">JSON (All)</div>
+              <div className="text-[10px] text-zinc-500">{activities.length} activities</div>
+            </div>
+          </button>
+
+          {isFiltered && (
+            <button
+              onClick={() => { exportAsJSON(filtered, "jarvis-filtered.json"); setOpen(false); }}
+              className="w-full px-3 py-2 text-left text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors flex items-center gap-2"
+            >
+              <span className="text-base">📄</span>
+              <div>
+                <div className="font-medium">JSON (Filtered)</div>
+                <div className="text-[10px] text-zinc-500">{filtered.length} activities</div>
+              </div>
+            </button>
+          )}
+
+          <div className="border-t border-white/5 my-1" />
+
+          {/* CSV exports */}
+          <button
+            onClick={() => { exportAsCSV(activities); setOpen(false); }}
+            className="w-full px-3 py-2 text-left text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors flex items-center gap-2"
+          >
+            <span className="text-base">📊</span>
+            <div>
+              <div className="font-medium">CSV (All)</div>
+              <div className="text-[10px] text-zinc-500">{activities.length} activities</div>
+            </div>
+          </button>
+
+          {isFiltered && (
+            <button
+              onClick={() => { exportAsCSV(filtered, "jarvis-filtered.csv"); setOpen(false); }}
+              className="w-full px-3 py-2 text-left text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors flex items-center gap-2"
+            >
+              <span className="text-base">📊</span>
+              <div>
+                <div className="font-medium">CSV (Filtered)</div>
+                <div className="text-[10px] text-zinc-500">{filtered.length} activities</div>
+              </div>
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Loading Skeleton ────────────────────────────────────────────────────
 function LoadingSkeleton() {
   return (
@@ -1893,8 +2041,11 @@ export function App() {
         {/* ═══ FEED TAB ═══ */}
         {activeTab === "feed" && stats && (
           <div className="space-y-4">
-            <SectionHeader icon="📋" title="Activity Feed"
-              subtitle={`${activities.length} total activities`} />
+            <div className="flex items-start justify-between">
+              <SectionHeader icon="📋" title="Activity Feed"
+                subtitle={`${activities.length} total activities`} />
+              <ExportButton activities={activities} filtered={filteredActivities} />
+            </div>
 
             {/* Search & Filters */}
             <div className="flex flex-col md:flex-row gap-3">

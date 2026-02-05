@@ -1,7 +1,7 @@
 # Hackathon Build Loop — V2 Objectives
 
-**Last Updated:** 2026-02-05 02:56 PST
-**Cycle:** 225
+**Last Updated:** 2026-02-05 03:30 PST
+**Cycle:** 226
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 **Stack:** React + Tailwind + shadcn/ui + Recharts
 
@@ -44,7 +44,7 @@ Goals:
 
 ### 📊 Charts & Visualizations
 - [ ] Improve heatmap tooltip (show activity details, not just count)
-- [ ] Add sparklines in stat cards
+- [x] Add sparklines in stat cards ← Cycle 226
 - [ ] Activity type pie chart with click-to-filter
 - [x] Cumulative activity growth line (total over time) ← Cycle 225
 - [ ] Badge progress bars (show how close to next badge tier)
@@ -58,6 +58,13 @@ Goals:
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 226 (Sparklines in Stat Cards)
+- Added Sparkline component — tiny Recharts AreaChart with gradient fill, no axes/grid
+- All 6 stat cards on overview now show 14-day trend sparklines (Total, On-Chain, Streak, Commits, Builds, Trades)
+- Sparkline color matches card accent (blue/green/orange/purple)
+- Streak card uses cumulative sparkline; others show daily counts
+- Self-eval: Great visual density — stat cards now tell a mini trend story at a glance, judges immediately see sustained activity
 
 ### Cycle 225 (Animated Counters + Cumulative Growth Chart)
 - Count-up animation on all stat cards (ease-out cubic, 1.2s) — numbers animate from 0 to target on load
