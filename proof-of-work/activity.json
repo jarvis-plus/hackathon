@@ -5601,5 +5601,65 @@
     "timestamp": "2026-02-05T04:46:11.777Z",
     "type": "commit",
     "description": "feat: Interactive heatmap tooltips - click cells to see date + activity count"
+  },
+  {
+    "timestamp": "2026-02-05T04:49:19.509Z",
+    "type": "commit",
+    "description": "fix: Verify tool now accepts tx signatures + activity hashes, restart server on port 3457"
+  },
+  {
+    "timestamp": "2026-02-05T05:09:10.802Z",
+    "type": "commit",
+    "description": "fix: Tooltip no longer clipped by card overflow"
+  },
+  {
+    "timestamp": "2026-02-05T05:39:04.081Z",
+    "type": "trade",
+    "description": "Test trade log"
+  },
+  {
+    "timestamp": "2026-02-05T05:39:12.526Z",
+    "type": "trade",
+    "description": "📉 Epstein: 0.8 SOL → 0.734 SOL (-8.25%) | Epstein files narrative, +3155% 24h momentum"
+  },
+  {
+    "timestamp": "2026-02-05T05:39:12.536Z",
+    "type": "trade",
+    "description": "📉 AUTARDIO: 0.65 SOL → 0.5917 SOL (-8.97%) | +751% 24h momentum, $484K mcap, 9.6x more buyers than sellers in 6h, consolidati"
+  },
+  {
+    "timestamp": "2026-02-05T05:39:12.543Z",
+    "type": "trade",
+    "description": "📈 COPPERFROG: 0.5 SOL → 0.517395 SOL (+3.48%) | Raydium token meeting all criteria: $10.5K mcap, +3.9% 1h, +1009% 6h, 2.09:1 buy"
+  },
+  {
+    "timestamp": "2026-02-05T05:39:12.550Z",
+    "type": "trade",
+    "description": "📉 COPPERFROG: 0.62 SOL → 0.5939 SOL (-4.21%) | Re-entry on COPPERFROG rebound. All criteria met: $11.5K mcap, +12.51% 1h, +1127"
+  },
+  {
+    "timestamp": "2026-02-05T05:39:12.557Z",
+    "type": "trade",
+    "description": "📈 SUPERBOWL: 0.6 SOL → 0.6114 SOL (+1.9%) | Super Bowl narrative play. $27.6K mcap, $17.9K liq, +6.4% 1h, 6.8:1 buy:sell rat"
+  },
+  {
+    "timestamp": "2026-02-05T05:39:12.568Z",
+    "type": "trade",
+    "description": "📈 FUEF: 0.58 SOL → 0.945 SOL (+62.93%) | Federal Uranium Enrichment Fund - Meteora DEX (DFlow works!). $47K mcap, +63.43%"
+  },
+  {
+    "timestamp": "2026-02-05T05:39:12.582Z",
+    "type": "trade",
+    "description": "📈 CLAWLANCER: 0.83 SOL → 0.8605 SOL (+3.67%) | Meteora DEX (same as FUEF win!). $16.5K mcap, +14.21% 1h, +124% 6h, 2.33:1 buy p"
+  },
+  {
+    "timestamp": "2026-02-05T05:39:12.595Z",
+    "type": "trade",
+    "description": "📉 NOMOREWAR: 0.854 SOL → 0.3857 SOL (-54.84%) | NO MORE WAR - political/peace narrative. Jupiter swap via Pump.fun AMM (DFlow fa"
+  },
+  {
+    "timestamp": "2026-02-05T05:39:12.607Z",
+    "type": "trade",
+    "description": "📈 EPSTEIN: 0.5 SOL → 0.658 SOL (+31.6%) | Nietzschean Epstein - dead cat bounce play (FUEF pattern). $18.8K mcap, +79% 1h,"
   }
 ]
