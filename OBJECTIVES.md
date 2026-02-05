@@ -1,7 +1,7 @@
 # Hackathon Build Loop — V2 Objectives
 
-**Last Updated:** 2026-02-05 12:24 PST
-**Cycle:** 232
+**Last Updated:** 2026-02-05 12:28 PST
+**Cycle:** 233
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 **Stack:** React + Tailwind + shadcn/ui + Recharts
 
@@ -33,7 +33,7 @@ Goals:
 
 ### ⚡ New Features
 - [ ] Activity search/filter bar (search descriptions, filter by type)
-- [ ] Date range picker for filtering activities
+- [x] Date range picker for filtering activities ← Cycle 233
 - [x] Activity detail modal (click card → expanded view with full metadata) ← Cycle 224
 - [x] Keyboard shortcuts (/ for search, ? for help) ← Cycle 232
 - [x] Export activities as CSV/JSON ← Cycle 227
@@ -58,6 +58,17 @@ Goals:
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 233 (Date Range Picker)
+- Added date range picker to Feed tab for filtering activities by time period
+- Two date input fields (from/to) with dark theme styling
+- Quick preset buttons: Today, 7d, 30d, All — one-click date range selection
+- "All" button clears date filters (disabled when no dates selected)
+- Filter count indicator shows "🔍 N found" when date filter is active
+- Date filters integrate with existing type/search filters
+- Escape key now clears date filters along with search and type filters
+- When any filter is active, shows all matching results (no pagination limit)
+- Self-eval: Practical UX improvement — judges can quickly explore activity history by time period. The quick presets make it easy to see "what happened today" or "last week's progress."
 
 ### Cycle 232 (Keyboard Shortcuts)
 - Added global keyboard shortcut system for power users
@@ -100,13 +111,6 @@ Goals:
 - Earned badges show "✓ Unlocked" label; removed old opacity-40 dimming for better visibility
 - Hover effects on unearned badge cards (border-white/10) for interactivity feel
 - Self-eval: Clean gamification upgrade — judges see tangible progress toward locked achievements, making the system feel dynamic and alive rather than binary locked/unlocked
-
-### Cycle 228 (Enhanced Heatmap Tooltip)
-- Upgraded HeatmapCell with rich tooltip: shows date, total count, type breakdown with emoji+counts (top 5 types), and 3 most recent activity descriptions
-- New HeatmapDayInfo interface carries per-day type stats and top descriptions
-- ActivityHeatmap now computes per-day activity groupings, type counts (sorted by frequency), and truncated descriptions
-- Tooltip has min/max width constraints, divider borders between sections, and overflow handling (+N more types)
-- Self-eval: Big UX win — heatmap cells now tell a complete story on hover. Judges can understand daily activity patterns at a glance without clicking.
 
 ---
 
