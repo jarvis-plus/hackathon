@@ -37,9 +37,9 @@ async function visualCheck() {
     
     // Check for critical elements
     const checks = {
-      title: await page.$('h1, .title, header'),
-      stats: await page.$('.stat-card, .stats, [class*="stat"]'),
-      activities: await page.$('.activity-card, .activity-item, [class*="activity"]'),
+      title: await page.$('h1, header'),
+      stats: await page.$('text=Total Actions'),
+      activities: await page.$('text=Activity Breakdown') || await page.$('text=Recent Activity'),
       noError: errors.length === 0
     };
     

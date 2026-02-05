@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef, type RefObject } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -165,6 +165,49 @@ function cleanType(type: string): string {
   return type;
 }
 
+// ─── Count-Up Animation Hook ─────────────────────────────────────────────
+function useCountUp(target: number, duration = 1200): number {
+  const [current, setCurrent] = useState(0);
+  const rafRef = useRef<number>(0);
+  const startRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (target === 0) { setCurrent(0); return; }
+    startRef.current = performance.now();
+    const animate = (now: number) => {
+      const elapsed = now - startRef.current;
+      const progress = Math.min(elapsed / duration, 1);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCurrent(Math.round(eased * target));
+      if (progress < 1) rafRef.current = requestAnimationFrame(animate);
+    };
+    rafRef.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [target, duration]);
+
+  return current;
+}
+
+// ─── Animated Value Display ──────────────────────────────────────────────
+function AnimatedValue({ value }: { value: string | number }) {
+  // If it's a pure number, animate it
+  if (typeof value === "number") {
+    const animated = useCountUp(value);
+    return <>{animated.toLocaleString()}</>;
+  }
+  // If it's a string like "85%" or "3d", extract and animate the number part
+  const match = String(value).match(/^(\d+)(.*)$/);
+  if (match) {
+    const num = parseInt(match[1], 10);
+    const suffix = match[2];
+    const animated = useCountUp(num);
+    return <>{animated.toLocaleString()}{suffix}</>;
+  }
+  // Fallback — no animation
+  return <>{value}</>;
+}
+
 // ─── Section Header ──────────────────────────────────────────────────────
 function SectionHeader({ icon, title, subtitle }: { icon: string; title: string; subtitle?: string }) {
   return (
@@ -199,7 +242,7 @@ function StatCard({ title, value, icon, subtitle, accent = "blue" }: {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-3xl font-bold text-white">{value}</div>
+        <div className="text-3xl font-bold text-white"><AnimatedValue value={value} /></div>
         {subtitle && <p className="text-xs text-zinc-500 mt-1">{subtitle}</p>}
       </CardContent>
     </Card>
@@ -342,6 +385,48 @@ function CumulativeProofsChart({ activities }: { activities: Activity[] }) {
             <Tooltip content={<CustomTooltip />} />
             <Area type="monotone" dataKey="proofs" stroke="#10b981" strokeWidth={2}
               fill="url(#proofGrad)" name="Proofs" />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+    </ChartCard>
+  );
+}
+
+// ─── Cumulative Activity Growth ──────────────────────────────────────────
+function CumulativeGrowthChart({ activities }: { activities: Activity[] }) {
+  const data = useMemo(() => {
+    const sorted = [...activities].sort((a, b) =>
+      new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    const byDay = groupByDay(sorted);
+    const days = Object.keys(byDay).sort();
+    let cumulative = 0;
+    return days.map(day => {
+      cumulative += byDay[day].length;
+      return {
+        date: formatDate(new Date(day + "T12:00:00")),
+        total: cumulative,
+        daily: byDay[day].length,
+      };
+    });
+  }, [activities]);
+
+  return (
+    <ChartCard title="📈 Cumulative Growth" subtitle="Total activities over time — proof of sustained work">
+      <div className="h-64">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data}>
+            <defs>
+              <linearGradient id="growthGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
+            <XAxis dataKey="date" tick={{ fill: "#71717a", fontSize: 11 }} />
+            <YAxis tick={{ fill: "#71717a", fontSize: 11 }} />
+            <Tooltip content={<CustomTooltip />} />
+            <Area type="monotone" dataKey="total" stroke="#10b981" fill="url(#growthGrad)"
+              strokeWidth={2} name="Total Activities" dot={false} />
           </AreaChart>
         </ResponsiveContainer>
       </div>
@@ -1602,6 +1687,9 @@ export function App() {
               <ActivityBreakdownChart byType={stats.byType} />
             </div>
 
+            {/* Cumulative Growth */}
+            <CumulativeGrowthChart activities={cleanActivities} />
+
             {/* Heatmap + AI Insights side by side */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <ActivityHeatmap activities={cleanActivities} />
@@ -1651,6 +1739,7 @@ export function App() {
               <ActivityBreakdownChart byType={stats.byType} />
             </div>
 
+            <CumulativeGrowthChart activities={cleanActivities} />
             <CumulativeProofsChart activities={cleanActivities} />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

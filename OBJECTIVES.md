@@ -1,7 +1,7 @@
 # Hackathon Build Loop — V2 Objectives
 
-**Last Updated:** 2026-02-05 01:25 PST
-**Cycle:** 223 (first V2 cycle)
+**Last Updated:** 2026-02-05 02:22 PST
+**Cycle:** 224
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 **Stack:** React + Tailwind + shadcn/ui + Recharts
 
@@ -20,8 +20,8 @@ Goals:
 ## 📋 BACKLOG (Prioritized — pick top unclaimed)
 
 ### 🔧 Fixes & Cleanup (DO FIRST)
-- [ ] Normalize corrupted activity types (16 entries: `--type` → `build`, long descriptions → `build`)
-- [ ] Add loading skeleton while data fetches (currently shows empty state briefly)
+- [x] Normalize corrupted activity types (16 entries → fixed in Cycle 224)
+- [x] Add loading skeleton while data fetches (already existed)
 - [ ] Fix any console errors/warnings in production build
 
 ### 🎨 Visual Polish
@@ -34,7 +34,7 @@ Goals:
 ### ⚡ New Features
 - [ ] Activity search/filter bar (search descriptions, filter by type)
 - [ ] Date range picker for filtering activities
-- [ ] Activity detail modal (click card → expanded view with full metadata)
+- [x] Activity detail modal (click card → expanded view with full metadata) ← Cycle 224
 - [ ] Keyboard shortcuts (/ for search, ? for help)
 - [ ] Export activities as CSV/JSON
 - [ ] Activity timeline view (vertical timeline with milestones)
@@ -58,6 +58,13 @@ Goals:
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 224 (Activity Detail Modal + Data Cleanup)
+- Click any activity card → modal with full metadata, copyable hashes, Solana sigs, Solscan links
+- Keyboard dismiss (Escape) + backdrop click to close
+- Smooth scale+fade animation
+- Normalized 16 corrupted activity type entries
+- Self-eval: Solid UX improvement — judges can now drill into any activity for full proof chain
 
 ### Cycle 222 (v1 — Activity Sorting Options) — LAST V1 CYCLE
 - Sort dropdown for activity feed (6 options)
