@@ -1,7 +1,7 @@
 # Hackathon Build Loop — V2 Objectives
 
-**Last Updated:** 2026-02-05 03:30 PST
-**Cycle:** 226
+**Last Updated:** 2026-02-05 03:33 PST
+**Cycle:** 227
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 **Stack:** React + Tailwind + shadcn/ui + Recharts
 
@@ -36,7 +36,7 @@ Goals:
 - [ ] Date range picker for filtering activities
 - [x] Activity detail modal (click card → expanded view with full metadata) ← Cycle 224
 - [ ] Keyboard shortcuts (/ for search, ? for help)
-- [ ] Export activities as CSV/JSON
+- [x] Export activities as CSV/JSON ← Cycle 227
 - [ ] Activity timeline view (vertical timeline with milestones)
 - [ ] Live counter showing real-time activity count (polling or SSE)
 - [ ] "Verify any hash" tool — paste a hash, check it against on-chain records
@@ -58,6 +58,15 @@ Goals:
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 227 (Export Activities as CSV/JSON)
+- Added ExportButton dropdown component on Feed tab — positioned top-right next to "Activity Feed" header
+- 4 export options: JSON (All), JSON (Filtered), CSV (All), CSV (Filtered)
+- Filtered options only appear when search/type filter is active, showing count
+- Proper CSV escaping (commas, quotes, newlines), clean JSON with essential fields
+- Click-outside + Escape to close dropdown, animated entrance
+- Export includes: timestamp, type, description, hash, on_chain status, signature, wallet
+- Self-eval: Clean utility feature — judges can download and verify data independently, adds credibility to "every action is verifiable" claim
 
 ### Cycle 226 (Sparklines in Stat Cards)
 - Added Sparkline component — tiny Recharts AreaChart with gradient fill, no axes/grid

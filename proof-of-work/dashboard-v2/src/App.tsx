@@ -582,8 +582,16 @@ function ProductivityClock({ activities }: { activities: Activity[] }) {
 }
 
 // ─── Activity Heatmap ────────────────────────────────────────────────────
+interface HeatmapDayInfo {
+  date: string;
+  count: number;
+  day: number;
+  types: { type: string; count: number }[];
+  topDesc: string[];
+}
+
 function HeatmapCell({ cell, level, levelColor, formatDateStr }: {
-  cell: { date: string; count: number; day: number };
+  cell: HeatmapDayInfo;
   level: number;
   levelColor: string;
   formatDateStr: (s: string) => string;
@@ -595,11 +603,33 @@ function HeatmapCell({ cell, level, levelColor, formatDateStr }: {
         className={`w-full h-[20px] rounded ${levelColor} transition-all cursor-pointer hover:ring-2 hover:ring-emerald-400/50 hover:scale-110`}
       />
       {show && (
-        <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 bg-zinc-800 border border-white/10 rounded-lg px-3 py-2 shadow-2xl pointer-events-none whitespace-nowrap">
+        <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 bg-zinc-800 border border-white/10 rounded-lg px-3 py-2 shadow-2xl pointer-events-none min-w-[180px] max-w-[260px]">
           <div className="text-xs font-medium text-white">{formatDateStr(cell.date)}</div>
-          <div className="text-sm font-bold text-emerald-400">
+          <div className="text-sm font-bold text-emerald-400 mt-0.5">
             {cell.count} {cell.count === 1 ? "activity" : "activities"}
           </div>
+          {cell.types.length > 0 && (
+            <div className="mt-1.5 pt-1.5 border-t border-white/5 space-y-0.5">
+              {cell.types.slice(0, 5).map(({ type, count }) => (
+                <div key={type} className="flex items-center justify-between gap-3 text-[11px]">
+                  <span className="text-zinc-300 truncate">
+                    {TYPE_EMOJI[type] || "⚡"} {type}
+                  </span>
+                  <span className="text-zinc-500 tabular-nums shrink-0">{count}</span>
+                </div>
+              ))}
+              {cell.types.length > 5 && (
+                <div className="text-[10px] text-zinc-600">+{cell.types.length - 5} more types</div>
+              )}
+            </div>
+          )}
+          {cell.topDesc.length > 0 && (
+            <div className="mt-1.5 pt-1.5 border-t border-white/5 space-y-0.5">
+              {cell.topDesc.map((desc, i) => (
+                <div key={i} className="text-[10px] text-zinc-500 truncate whitespace-nowrap">{desc}</div>
+              ))}
+            </div>
+          )}
           <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-zinc-800" />
         </div>
       )}
@@ -610,21 +640,38 @@ function HeatmapCell({ cell, level, levelColor, formatDateStr }: {
 function ActivityHeatmap({ activities }: { activities: Activity[] }) {
   const { weeks, maxCount } = useMemo(() => {
     const counts: Record<string, number> = {};
+    const dayActivities: Record<string, Activity[]> = {};
     for (const a of activities) {
       const day = new Date(a.timestamp).toISOString().split("T")[0];
       counts[day] = (counts[day] || 0) + 1;
+      (dayActivities[day] ||= []).push(a);
     }
     const max = Math.max(...Object.values(counts), 1);
 
     const today = new Date();
-    const weeks: { date: string; count: number; day: number }[][] = [];
+    const weeks: HeatmapDayInfo[][] = [];
     for (let w = 15; w >= 0; w--) {
-      const week: { date: string; count: number; day: number }[] = [];
+      const week: HeatmapDayInfo[] = [];
       for (let d = 0; d < 7; d++) {
         const date = new Date(today);
         date.setDate(date.getDate() - (w * 7 + (6 - d)));
         const key = date.toISOString().split("T")[0];
-        week.push({ date: key, count: counts[key] || 0, day: date.getDay() });
+        const acts = dayActivities[key] || [];
+        // Compute type breakdown sorted by count desc
+        const typeCounts: Record<string, number> = {};
+        for (const a of acts) {
+          const t = cleanType(a.type);
+          typeCounts[t] = (typeCounts[t] || 0) + 1;
+        }
+        const types = Object.entries(typeCounts)
+          .map(([type, count]) => ({ type, count }))
+          .sort((a, b) => b.count - a.count);
+        // Top 3 most recent descriptions
+        const topDesc = acts
+          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+          .slice(0, 3)
+          .map(a => a.description.length > 50 ? a.description.slice(0, 47) + "…" : a.description);
+        week.push({ date: key, count: counts[key] || 0, day: date.getDay(), types, topDesc });
       }
       weeks.push(week);
     }

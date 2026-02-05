@@ -5815,5 +5815,19 @@
     "description": "build",
     "hash": "a145b57b64072760cf2426f0ab59a7b38a96fb35ed48b37cbdd3f9adbe84acaf",
     "signature": "5NBqvz7X5UZ9j1m4kqCGcZE7xUd2kUQTCff4SjgYAan9bdvAX9NH1jXrr34BNFy5oBSAArvdHXSrjvh6qCa5SGG3"
+  },
+  {
+    "timestamp": "2026-02-05T11:33:38.910Z",
+    "type": "commit",
+    "description": "Cycle 227: Export activities as CSV/JSON",
+    "hash": "e65886ba09111e0c8f84b1d2b3c0df160804f574b0fd39f023ca34ccde17f995",
+    "signature": "3Ms9LUn6HFV1HyEG2L7xVa5uAb8tHquNQdJE5CrK4pJp2mDxKXfe3aEk29cUCa5uCSQRmXNqkDmgtQBnQtgEg1C2"
+  },
+  {
+    "timestamp": "2026-02-05T12:03:59.474Z",
+    "type": "--type",
+    "description": "build",
+    "hash": "fbbf5b5b2d14dcf959fa3be19c52b619a5389d326a5134a2272d6aadc39638a4",
+    "signature": "35pZmGZ8AZbjtMoAC2o1ivb1FAQUKuZAD32qURS7oPULzxiiCzi2B6VwsfnMJEx1TeVTQmz1wiKrCt5FYSEYxZ5z"
   }
 ]
