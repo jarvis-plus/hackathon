@@ -1,7 +1,7 @@
 # Hackathon Build Loop — V2 Objectives
 
-**Last Updated:** 2026-02-05 04:41 PST
-**Cycle:** 229
+**Last Updated:** 2026-02-05 04:46 PST
+**Cycle:** 230
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 **Stack:** React + Tailwind + shadcn/ui + Recharts
 
@@ -37,7 +37,7 @@ Goals:
 - [x] Activity detail modal (click card → expanded view with full metadata) ← Cycle 224
 - [ ] Keyboard shortcuts (/ for search, ? for help)
 - [x] Export activities as CSV/JSON ← Cycle 227
-- [ ] Activity timeline view (vertical timeline with milestones)
+- [x] Activity timeline view (vertical timeline with milestones) ← Cycle 230
 - [ ] Live counter showing real-time activity count (polling or SSE)
 - [ ] "Verify any hash" tool — paste a hash, check it against on-chain records
 - [ ] Mini changelog showing recent v2 improvements
@@ -58,6 +58,18 @@ Goals:
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 230 (Activity Timeline View)
+- Added new "Timeline" tab (⏳) between Analytics and Verify in nav
+- TimelineView component: vertical timeline with day grouping, sorted newest-first
+- Milestone detection: auto-detects First Activity, 10/50/100/250/500 milestones + First On-Chain Proof
+- Milestone badges displayed as colored pills at top of timeline
+- Day nodes show activity count in circle, type breakdown pills, cumulative total, and milestone icons
+- Days with ≤3 activities show inline; larger days are collapsible with click-to-expand
+- Each activity shows emoji, description, time, type badge, and on-chain indicator
+- Clicking any activity opens the detail modal (reuses existing ActivityDetailModal)
+- "Load More Days" pagination (14 days at a time)
+- Self-eval: Strong visual differentiator — tells the story of sustained autonomous work chronologically. Judges see the journey from first activity to 600+, with milestone celebrations along the way.
 
 ### Cycle 229 (Badge Progress Bars)
 - Added `BadgeProgress` interface and `progress` callback to every Badge definition

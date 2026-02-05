@@ -873,6 +873,158 @@ function VerificationTool() {
   );
 }
 
+// ─── How It Works Explainer ──────────────────────────────────────────────
+function HowItWorks() {
+  const [expanded, setExpanded] = useState(false);
+
+  const steps = [
+    {
+      icon: "🤖",
+      title: "Agent Acts",
+      desc: "Jarvis autonomously performs actions — builds code, trades tokens, posts updates, checks email",
+      detail: "640+ verified actions and counting. No human intervention required.",
+      color: "from-blue-500/20 to-blue-600/20",
+      border: "border-blue-500/30",
+      glow: "blue",
+    },
+    {
+      icon: "🔒",
+      title: "SHA-256 Hash",
+      desc: "Every action's data is cryptographically hashed — type, description, timestamp, metadata",
+      detail: "Deterministic: same input always produces the same hash. Tamper-proof.",
+      color: "from-purple-500/20 to-purple-600/20",
+      border: "border-purple-500/30",
+      glow: "purple",
+    },
+    {
+      icon: "✍️",
+      title: "Ed25519 Sign",
+      desc: "The hash is signed with Jarvis's Solana wallet keypair — proving authorship",
+      detail: "Only Jarvis's private key can produce these signatures. Cryptographically unforgeable.",
+      color: "from-amber-500/20 to-amber-600/20",
+      border: "border-amber-500/30",
+      glow: "amber",
+    },
+    {
+      icon: "⛓️",
+      title: "On-Chain Proof",
+      desc: "Signature posted to Solana mainnet as a permanent, immutable record",
+      detail: "Anyone can verify on Solscan. No trust required — just math.",
+      color: "from-emerald-500/20 to-emerald-600/20",
+      border: "border-emerald-500/30",
+      glow: "emerald",
+    },
+  ];
+
+  return (
+    <Card className="bg-zinc-900/50 border-white/5 overflow-hidden">
+      <CardHeader className="pb-2">
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="flex items-center justify-between w-full group"
+        >
+          <CardTitle className="text-sm font-medium text-zinc-300 flex items-center gap-2">
+            💡 How It Works
+            <span className="text-xs text-zinc-600 font-normal">
+              — Cryptographic proof of autonomous work
+            </span>
+          </CardTitle>
+          <span className={`text-zinc-500 transition-transform duration-300 text-xs ${expanded ? "rotate-180" : ""}`}>
+            ▼
+          </span>
+        </button>
+      </CardHeader>
+
+      {/* Collapsed: compact step indicators */}
+      {!expanded && (
+        <CardContent className="pt-0 pb-4">
+          <div className="flex items-center justify-center gap-2 md:gap-4">
+            {steps.map((step, i) => (
+              <div key={i} className="flex items-center gap-2 md:gap-4">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-lg">{step.icon}</span>
+                  <span className="text-xs text-zinc-400 hidden sm:inline">{step.title}</span>
+                </div>
+                {i < steps.length - 1 && (
+                  <span className="text-zinc-600 text-xs">→</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      )}
+
+      {/* Expanded: full explainer */}
+      {expanded && (
+        <CardContent className="pt-0 pb-6">
+          {/* Desktop: horizontal flow */}
+          <div className="hidden md:grid md:grid-cols-4 gap-3 mb-6">
+            {steps.map((step, i) => (
+              <div key={i} className="relative">
+                <div className={`bg-gradient-to-b ${step.color} ${step.border} border rounded-xl p-4 h-full transition-all hover:scale-[1.02]`}>
+                  <div className="text-2xl mb-2">{step.icon}</div>
+                  <h3 className="text-white font-semibold text-sm mb-1">{step.title}</h3>
+                  <p className="text-zinc-400 text-xs leading-relaxed">{step.desc}</p>
+                  <p className="text-zinc-500 text-[10px] mt-2 italic">{step.detail}</p>
+                </div>
+                {i < steps.length - 1 && (
+                  <div className="absolute top-1/2 -right-3 transform -translate-y-1/2 z-10 text-zinc-500 text-lg">
+                    →
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Mobile: vertical flow */}
+          <div className="md:hidden space-y-3 mb-6">
+            {steps.map((step, i) => (
+              <div key={i}>
+                <div className={`bg-gradient-to-r ${step.color} ${step.border} border rounded-xl p-4 flex items-start gap-3`}>
+                  <span className="text-2xl mt-0.5">{step.icon}</span>
+                  <div>
+                    <h3 className="text-white font-semibold text-sm">{step.title}</h3>
+                    <p className="text-zinc-400 text-xs leading-relaxed mt-1">{step.desc}</p>
+                    <p className="text-zinc-500 text-[10px] mt-1 italic">{step.detail}</p>
+                  </div>
+                </div>
+                {i < steps.length - 1 && (
+                  <div className="text-center text-zinc-600 text-sm py-1">↓</div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Key differentiators */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-white/5">
+            <div className="flex items-start gap-2">
+              <span className="text-emerald-400 text-sm mt-0.5">✓</span>
+              <div>
+                <p className="text-xs text-white font-medium">Zero Trust</p>
+                <p className="text-[10px] text-zinc-500">No need to trust claims — verify on-chain yourself</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-emerald-400 text-sm mt-0.5">✓</span>
+              <div>
+                <p className="text-xs text-white font-medium">Fully Autonomous</p>
+                <p className="text-[10px] text-zinc-500">Every action logged without human intervention</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-emerald-400 text-sm mt-0.5">✓</span>
+              <div>
+                <p className="text-xs text-white font-medium">Tamper-Proof</p>
+                <p className="text-[10px] text-zinc-500">SHA-256 + Ed25519 + Solana = immutable proof</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      )}
+    </Card>
+  );
+}
+
 // ─── Achievement Badges ──────────────────────────────────────────────────
 function AchievementBadges({ stats, activities }: { stats: Stats; activities: Activity[] }) {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
@@ -2205,6 +2357,9 @@ export function App() {
               <StatCard icon="💱" title="Trades" value={stats.byType?.trade || 0} accent="green"
                 sparkData={sparklines.trades} />
             </div>
+
+            {/* How It Works */}
+            <HowItWorks />
 
             {/* Type Breakdown */}
             {stats.byType && (
