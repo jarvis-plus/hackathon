@@ -455,9 +455,32 @@ function ProductivityClock({ activities }: { activities: Activity[] }) {
 }
 
 // ─── Activity Heatmap ────────────────────────────────────────────────────
-function ActivityHeatmap({ activities }: { activities: Activity[] }) {
-  const [selected, setSelected] = useState<{ date: string; count: number; x: number; y: number } | null>(null);
+function HeatmapCell({ cell, level, levelColor, formatDateStr }: {
+  cell: { date: string; count: number; day: number };
+  level: number;
+  levelColor: string;
+  formatDateStr: (s: string) => string;
+}) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="relative" onClick={() => setShow(!show)}>
+      <div
+        className={`w-full h-[20px] rounded ${levelColor} transition-all cursor-pointer hover:ring-2 hover:ring-emerald-400/50 hover:scale-110 ${show ? "ring-2 ring-white/60 scale-110" : ""}`}
+      />
+      {show && (
+        <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 bg-zinc-800 border border-white/10 rounded-lg px-3 py-2 shadow-2xl pointer-events-none whitespace-nowrap">
+          <div className="text-xs font-medium text-white">{formatDateStr(cell.date)}</div>
+          <div className="text-sm font-bold text-emerald-400">
+            {cell.count} {cell.count === 1 ? "activity" : "activities"}
+          </div>
+          <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-zinc-800" />
+        </div>
+      )}
+    </div>
+  );
+}
 
+function ActivityHeatmap({ activities }: { activities: Activity[] }) {
   const { weeks, maxCount } = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const a of activities) {
@@ -502,7 +525,7 @@ function ActivityHeatmap({ activities }: { activities: Activity[] }) {
 
   return (
     <ChartCard title="🗓️ Activity Heatmap" subtitle="Daily activity levels (last 16 weeks)">
-      <div className="overflow-visible relative">
+      <div className="overflow-visible">
         <div className="flex gap-1 w-full">
           <div className="flex flex-col gap-1 text-[10px] text-zinc-500 mr-1 pt-0 shrink-0">
             {["Mon", "", "Wed", "", "Fri", "", "Sun"].map((d, i) => (
@@ -512,36 +535,17 @@ function ActivityHeatmap({ activities }: { activities: Activity[] }) {
           {weeks.map((week, wi) => (
             <div key={wi} className="flex flex-col gap-1 flex-1 min-w-0">
               {week.map((cell, di) => (
-                <div key={di}
-                  className={`w-full h-[20px] rounded ${levelColors[getLevel(cell.count)]} transition-all cursor-pointer hover:ring-2 hover:ring-emerald-400/50 hover:scale-110 ${selected?.date === cell.date ? "ring-2 ring-white/60 scale-110" : ""}`}
-                  onClick={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    const parent = e.currentTarget.closest(".overflow-x-auto")?.getBoundingClientRect();
-                    setSelected(selected?.date === cell.date ? null : {
-                      date: cell.date, count: cell.count,
-                      x: rect.left - (parent?.left || 0) + rect.width / 2,
-                      y: rect.top - (parent?.top || 0) - 8,
-                    });
-                  }}
+                <HeatmapCell
+                  key={di}
+                  cell={cell}
+                  level={getLevel(cell.count)}
+                  levelColor={levelColors[getLevel(cell.count)]}
+                  formatDateStr={formatDateStr}
                 />
               ))}
             </div>
           ))}
         </div>
-
-        {/* Tooltip popup */}
-        {selected && (
-          <div
-            className="absolute z-50 bg-zinc-800 border border-white/10 rounded-lg px-3 py-2 shadow-2xl pointer-events-none transform -translate-x-1/2"
-            style={{ left: Math.min(Math.max(selected.x, 60), 500), top: Math.max(selected.y - 60, -40) }}
-          >
-            <div className="text-xs font-medium text-white">{formatDateStr(selected.date)}</div>
-            <div className="text-sm font-bold text-emerald-400">
-              {selected.count} {selected.count === 1 ? "activity" : "activities"}
-            </div>
-            <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-zinc-800"></div>
-          </div>
-        )}
 
         <div className="flex items-center gap-1.5 mt-3 text-[10px] text-zinc-500 justify-end">
           <span>Less</span>
