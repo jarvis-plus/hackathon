@@ -220,13 +220,41 @@ function SectionHeader({ icon, title, subtitle }: { icon: string; title: string;
   );
 }
 
+// ─── Sparkline ───────────────────────────────────────────────────────────
+function Sparkline({ data, color = "#3b82f6", height = 32 }: {
+  data: number[];
+  color?: string;
+  height?: number;
+}) {
+  if (!data || data.length < 2) return null;
+  const chartData = data.map((v, i) => ({ v, i }));
+  return (
+    <div className="w-full opacity-60 mt-1" style={{ height }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={chartData} margin={{ top: 2, right: 0, bottom: 0, left: 0 }}>
+          <defs>
+            <linearGradient id={`spark-${color.replace("#", "")}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity={0.4} />
+              <stop offset="100%" stopColor={color} stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <Area type="monotone" dataKey="v" stroke={color} strokeWidth={1.5}
+            fill={`url(#spark-${color.replace("#", "")})`} dot={false} isAnimationActive={false} />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
 // ─── Stat Card ───────────────────────────────────────────────────────────
-function StatCard({ title, value, icon, subtitle, accent = "blue" }: {
+function StatCard({ title, value, icon, subtitle, accent = "blue", sparkData, sparkColor }: {
   title: string;
   value: string | number;
   icon: string;
   subtitle?: string;
   accent?: "blue" | "green" | "orange" | "purple";
+  sparkData?: number[];
+  sparkColor?: string;
 }) {
   const gradients = {
     blue: "from-blue-500/20 to-blue-600/5",
@@ -234,6 +262,7 @@ function StatCard({ title, value, icon, subtitle, accent = "blue" }: {
     orange: "from-orange-500/20 to-orange-600/5",
     purple: "from-purple-500/20 to-purple-600/5",
   };
+  const defaultColors = { blue: "#3b82f6", green: "#10b981", orange: "#f59e0b", purple: "#8b5cf6" };
   return (
     <Card className={`bg-gradient-to-br ${gradients[accent]} border-white/10 backdrop-blur`}>
       <CardHeader className="pb-2">
@@ -244,6 +273,9 @@ function StatCard({ title, value, icon, subtitle, accent = "blue" }: {
       <CardContent>
         <div className="text-3xl font-bold text-white"><AnimatedValue value={value} /></div>
         {subtitle && <p className="text-xs text-zinc-500 mt-1">{subtitle}</p>}
+        {sparkData && sparkData.length >= 2 && (
+          <Sparkline data={sparkData} color={sparkColor || defaultColors[accent]} height={28} />
+        )}
       </CardContent>
     </Card>
   );
@@ -1593,6 +1625,29 @@ export function App() {
 
   const onChainPercent = stats ? Math.round((stats.onchain / stats.total) * 100) : 0;
 
+  // Sparkline data — last 14 days of activity counts per type
+  const sparklines = useMemo(() => {
+    if (!activities.length) return { total: [], onchain: [], commits: [], builds: [], trades: [], streak: [] };
+    const now = new Date();
+    const days = 14;
+    const dayKeys: string[] = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      dayKeys.push(d.toISOString().split("T")[0]);
+    }
+    const byDay = groupByDay(activities);
+    const total = dayKeys.map(d => (byDay[d] || []).length);
+    const onchain = dayKeys.map(d => (byDay[d] || []).filter(a => a.onChain || a.signature).length);
+    const commits = dayKeys.map(d => (byDay[d] || []).filter(a => cleanType(a.type) === "commit").length);
+    const builds = dayKeys.map(d => (byDay[d] || []).filter(a => cleanType(a.type) === "build").length);
+    const trades = dayKeys.map(d => (byDay[d] || []).filter(a => cleanType(a.type) === "trade").length);
+    // Cumulative total per day for streak visual
+    let cum = 0;
+    const streak = dayKeys.map(d => { cum += (byDay[d] || []).length; return cum; });
+    return { total, onchain, commits, builds, trades, streak };
+  }, [activities]);
+
   const handleVerifyFromFeed = useCallback((hash: string) => {
     setVerifyHash(hash);
     setActiveTab("verify");
@@ -1659,14 +1714,20 @@ export function App() {
           <div className="space-y-6">
             {/* Stats Grid */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-              <StatCard icon="⚡" title="Total Actions" value={stats.total} accent="blue" />
+              <StatCard icon="⚡" title="Total Actions" value={stats.total} accent="blue"
+                sparkData={sparklines.total} />
               <StatCard icon="⛓️" title="On-Chain" value={`${onChainPercent}%`}
-                subtitle={`${stats.onchain} verified`} accent="green" />
+                subtitle={`${stats.onchain} verified`} accent="green"
+                sparkData={sparklines.onchain} />
               <StatCard icon="🔥" title="Streak" value={`${stats.streak?.current || 0}d`}
-                subtitle={`Best: ${stats.streak?.longest || 0}d`} accent="orange" />
-              <StatCard icon="📝" title="Commits" value={stats.byType?.commit || 0} accent="purple" />
-              <StatCard icon="🔧" title="Builds" value={stats.byType?.build || 0} accent="blue" />
-              <StatCard icon="💱" title="Trades" value={stats.byType?.trade || 0} accent="green" />
+                subtitle={`Best: ${stats.streak?.longest || 0}d`} accent="orange"
+                sparkData={sparklines.streak} />
+              <StatCard icon="📝" title="Commits" value={stats.byType?.commit || 0} accent="purple"
+                sparkData={sparklines.commits} />
+              <StatCard icon="🔧" title="Builds" value={stats.byType?.build || 0} accent="blue"
+                sparkData={sparklines.builds} />
+              <StatCard icon="💱" title="Trades" value={stats.byType?.trade || 0} accent="green"
+                sparkData={sparklines.trades} />
             </div>
 
             {/* Type Breakdown */}

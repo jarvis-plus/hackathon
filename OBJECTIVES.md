@@ -1,7 +1,7 @@
 # Hackathon Build Loop — V2 Objectives
 
-**Last Updated:** 2026-02-05 02:22 PST
-**Cycle:** 224
+**Last Updated:** 2026-02-05 02:56 PST
+**Cycle:** 225
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 **Stack:** React + Tailwind + shadcn/ui + Recharts
 
@@ -26,7 +26,7 @@ Goals:
 
 ### 🎨 Visual Polish
 - [ ] Dark/light mode toggle (currently dark only)
-- [ ] Animate stat counters on load (count-up effect)
+- [x] Animate stat counters on load (count-up effect) ← Cycle 225
 - [ ] Add subtle hover effects on activity cards
 - [ ] Improve mobile responsiveness (test on phone-width viewport)
 - [ ] Add page transition animations between tabs/sections
@@ -46,7 +46,7 @@ Goals:
 - [ ] Improve heatmap tooltip (show activity details, not just count)
 - [ ] Add sparklines in stat cards
 - [ ] Activity type pie chart with click-to-filter
-- [ ] Cumulative activity growth line (total over time)
+- [x] Cumulative activity growth line (total over time) ← Cycle 225
 - [ ] Badge progress bars (show how close to next badge tier)
 
 ### 🏆 Hackathon Differentiators
@@ -58,6 +58,13 @@ Goals:
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 225 (Animated Counters + Cumulative Growth Chart)
+- Count-up animation on all stat cards (ease-out cubic, 1.2s) — numbers animate from 0 to target on load
+- New "Cumulative Growth" area chart showing total activities over time (green gradient, both overview and charts tabs)
+- Fixed visual-check.js selectors for React/shadcn DOM (was failing on v1-era CSS class selectors)
+- Handles numeric values, percentages ("85%"), and suffixed values ("3d") in animation
+- Self-eval: Strong visual polish — the animated counters make the dashboard feel alive, cumulative chart tells the "sustained work" story at a glance
 
 ### Cycle 224 (Activity Detail Modal + Data Cleanup)
 - Click any activity card → modal with full metadata, copyable hashes, Solana sigs, Solscan links
