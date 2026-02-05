@@ -1,7 +1,7 @@
 # Hackathon Build Loop — V2 Objectives
 
-**Last Updated:** 2026-02-05 04:03 PST
-**Cycle:** 228
+**Last Updated:** 2026-02-05 04:41 PST
+**Cycle:** 229
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 **Stack:** React + Tailwind + shadcn/ui + Recharts
 
@@ -47,7 +47,7 @@ Goals:
 - [x] Add sparklines in stat cards ← Cycle 226
 - [ ] Activity type pie chart with click-to-filter
 - [x] Cumulative activity growth line (total over time) ← Cycle 225
-- [ ] Badge progress bars (show how close to next badge tier)
+- [x] Badge progress bars (show how close to next badge tier) ← Cycle 229
 
 ### 🏆 Hackathon Differentiators
 - [ ] Demo video page / embed section
@@ -58,6 +58,14 @@ Goals:
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 229 (Badge Progress Bars)
+- Added `BadgeProgress` interface and `progress` callback to every Badge definition
+- Unearned badges now show a progress bar with current/target count and percentage
+- Color-coded gradient: gray (<40%), blue (40-75%), gold (>75%) — gets warmer as you approach unlock
+- Earned badges show "✓ Unlocked" label; removed old opacity-40 dimming for better visibility
+- Hover effects on unearned badge cards (border-white/10) for interactivity feel
+- Self-eval: Clean gamification upgrade — judges see tangible progress toward locked achievements, making the system feel dynamic and alive rather than binary locked/unlocked
 
 ### Cycle 228 (Enhanced Heatmap Tooltip)
 - Upgraded HeatmapCell with rich tooltip: shows date, total count, type breakdown with emoji+counts (top 5 types), and 3 most recent activity descriptions

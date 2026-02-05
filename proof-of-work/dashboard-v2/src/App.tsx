@@ -1639,6 +1639,257 @@ function downloadBlob(blob: Blob, filename: string) {
   URL.revokeObjectURL(url);
 }
 
+// ─── Timeline View ───────────────────────────────────────────────────────
+interface Milestone {
+  index: number;
+  label: string;
+  icon: string;
+  color: string;
+}
+
+function detectMilestones(activities: Activity[]): Milestone[] {
+  // Activities are newest-first from API; we need oldest-first for milestones
+  const sorted = [...activities].reverse();
+  const milestones: Milestone[] = [];
+  const milestoneAt = [1, 10, 50, 100, 250, 500];
+  const milestoneLabels: Record<number, { label: string; icon: string }> = {
+    1: { label: "First Activity", icon: "👣" },
+    10: { label: "10 Activities", icon: "🌱" },
+    50: { label: "50 Activities", icon: "💪" },
+    100: { label: "100 Activities", icon: "💯" },
+    250: { label: "250 Activities", icon: "🔥" },
+    500: { label: "500 Activities", icon: "🏆" },
+  };
+
+  for (const n of milestoneAt) {
+    if (n <= sorted.length) {
+      // Find index in original (newest-first) array
+      const originalIdx = activities.length - n;
+      milestones.push({
+        index: originalIdx,
+        label: milestoneLabels[n].label,
+        icon: milestoneLabels[n].icon,
+        color: n >= 500 ? "#f59e0b" : n >= 100 ? "#8b5cf6" : "#3b82f6",
+      });
+    }
+  }
+
+  // First on-chain proof
+  const firstOnChain = sorted.findIndex(a => a.signature || a.onChain);
+  if (firstOnChain >= 0) {
+    milestones.push({
+      index: activities.length - 1 - firstOnChain,
+      label: "First On-Chain Proof",
+      icon: "⛓️",
+      color: "#10b981",
+    });
+  }
+
+  return milestones;
+}
+
+function TimelineView({ activities, onSelect }: {
+  activities: Activity[];
+  onSelect: (a: Activity) => void;
+}) {
+  const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
+  const [visibleDays, setVisibleDays] = useState(14);
+
+  // Group by day (newest first, explicitly sorted)
+  const dayGroups = useMemo(() => {
+    const byDay = new Map<string, Activity[]>();
+    for (const a of activities) {
+      const day = new Date(a.timestamp).toISOString().split("T")[0];
+      if (!byDay.has(day)) byDay.set(day, []);
+      byDay.get(day)!.push(a);
+    }
+    return Array.from(byDay.entries())
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([date, acts]) => ({ date, activities: acts }));
+  }, [activities]);
+
+  const milestones = useMemo(() => detectMilestones(activities), [activities]);
+
+  // Track which activity indices have milestones
+  const milestoneMap = useMemo(() => {
+    const map = new Map<number, Milestone>();
+    for (const m of milestones) map.set(m.index, m);
+    return map;
+  }, [milestones]);
+
+  const toggleDay = (date: string) => {
+    setExpandedDays(prev => {
+      const next = new Set(prev);
+      if (next.has(date)) next.delete(date);
+      else next.add(date);
+      return next;
+    });
+  };
+
+  // Calculate cumulative total for each day (chronologically)
+  const dayTotals = useMemo(() => {
+    const totals = new Map<string, number>();
+    // Sort chronologically (oldest first) for cumulative sum
+    const chronological = [...dayGroups].reverse();
+    let cumulative = 0;
+    for (const group of chronological) {
+      cumulative += group.activities.length;
+      totals.set(group.date, cumulative);
+    }
+    return totals;
+  }, [dayGroups]);
+
+  const visibleGroups = dayGroups.slice(0, visibleDays);
+
+  return (
+    <div className="space-y-4">
+      <SectionHeader icon="⏳" title="Activity Timeline"
+        subtitle={`${dayGroups.length} active days • ${activities.length} activities`} />
+
+      {/* Milestone summary */}
+      <div className="flex gap-2 flex-wrap mb-2">
+        {milestones.map(m => (
+          <span key={m.label}
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border"
+            style={{ borderColor: m.color + "40", color: m.color, background: m.color + "10" }}>
+            {m.icon} {m.label}
+          </span>
+        ))}
+      </div>
+
+      {/* Timeline */}
+      <div className="relative">
+        {/* Vertical line */}
+        <div className="absolute left-[19px] top-0 bottom-0 w-px bg-gradient-to-b from-blue-500/50 via-purple-500/30 to-transparent" />
+
+        {visibleGroups.map((group) => {
+          const isExpanded = expandedDays.has(group.date);
+          const dateObj = new Date(group.date + "T12:00:00");
+          const dayLabel = dateObj.toLocaleDateString("en-US", {
+            weekday: "short", month: "short", day: "numeric",
+          });
+          const totalAtDay = dayTotals.get(group.date) || 0;
+          const previewCount = 3;
+          const displayActivities = isExpanded
+            ? group.activities
+            : group.activities.slice(0, previewCount);
+          const hiddenCount = group.activities.length - previewCount;
+
+          // Check for milestones in this day's activities
+          const dayMilestones: Milestone[] = [];
+          let globalIdx = activities.indexOf(group.activities[0]);
+          for (let i = 0; i < group.activities.length; i++) {
+            const m = milestoneMap.get(globalIdx + i);
+            if (m) dayMilestones.push(m);
+          }
+
+          // Type breakdown for this day
+          const typeCounts: Record<string, number> = {};
+          for (const a of group.activities) {
+            const t = cleanType(a.type);
+            typeCounts[t] = (typeCounts[t] || 0) + 1;
+          }
+
+          return (
+            <div key={group.date} className="relative mb-1">
+              {/* Day header node */}
+              <button
+                onClick={() => toggleDay(group.date)}
+                className="flex items-center gap-3 w-full text-left group py-2 hover:bg-zinc-900/50 rounded-lg px-1 transition-colors"
+              >
+                {/* Circle node */}
+                <div className="relative z-10 w-10 h-10 rounded-full bg-zinc-900 border-2 border-zinc-700 group-hover:border-blue-500/50 flex items-center justify-center text-sm font-bold text-zinc-300 transition-colors flex-shrink-0">
+                  {group.activities.length}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-white">{dayLabel}</span>
+                    <span className="text-[11px] text-zinc-600">#{totalAtDay}</span>
+                    {dayMilestones.map(m => (
+                      <span key={m.label} className="text-sm" title={m.label}>{m.icon}</span>
+                    ))}
+                  </div>
+                  <div className="flex gap-1.5 mt-0.5 flex-wrap">
+                    {Object.entries(typeCounts)
+                      .sort((a, b) => b[1] - a[1])
+                      .slice(0, 6)
+                      .map(([type, count]) => (
+                        <span key={type} className="text-[10px] px-1.5 py-0.5 rounded-full"
+                          style={{
+                            background: getTypeColor(type) + "20",
+                            color: getTypeColor(type),
+                          }}>
+                          {TYPE_EMOJI[type] || "🔹"}{count}
+                        </span>
+                      ))}
+                  </div>
+                </div>
+
+                <span className="text-zinc-600 text-xs mr-2 transition-transform"
+                  style={{ transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)" }}>
+                  ▼
+                </span>
+              </button>
+
+              {/* Expanded activity list */}
+              {(isExpanded || group.activities.length <= previewCount) && (
+                <div className="ml-[19px] pl-8 border-l border-white/5 space-y-1 pb-2">
+                  {displayActivities.map((activity) => {
+                    const time = new Date(activity.timestamp).toLocaleTimeString("en-US", {
+                      hour: "numeric", minute: "2-digit",
+                    });
+                    const type = cleanType(activity.type);
+                    return (
+                      <button
+                        key={activity.hash}
+                        onClick={() => onSelect(activity)}
+                        className="flex items-start gap-2 w-full text-left py-1.5 px-2 rounded-md hover:bg-zinc-800/50 transition-colors group"
+                      >
+                        <span className="text-sm flex-shrink-0 mt-0.5">{TYPE_EMOJI[type] || "🔹"}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-zinc-300 leading-relaxed truncate group-hover:text-white transition-colors">
+                            {activity.description}
+                          </p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[10px] text-zinc-600">{time}</span>
+                            <span className="text-[10px] px-1 rounded"
+                              style={{ color: getTypeColor(type), background: getTypeColor(type) + "15" }}>
+                              {type}
+                            </span>
+                            {(activity.signature || activity.onChain) && (
+                              <span className="text-[10px] text-emerald-500/70">⛓</span>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                  {!isExpanded && hiddenCount > 0 && (
+                    <button onClick={() => toggleDay(group.date)}
+                      className="text-[11px] text-zinc-500 hover:text-zinc-300 pl-2 py-1 transition-colors">
+                      + {hiddenCount} more activities
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {visibleDays < dayGroups.length && (
+          <div className="text-center mt-4 ml-10">
+            <Button variant="outline" onClick={() => setVisibleDays(v => v + 14)}
+              className="border-white/10 text-zinc-400 hover:text-white text-xs">
+              Load More Days ({dayGroups.length - visibleDays} remaining)
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Export Dropdown Button ──────────────────────────────────────────────
 function ExportButton({ activities, filtered }: { activities: Activity[]; filtered: Activity[] }) {
   const [open, setOpen] = useState(false);
@@ -1761,12 +2012,13 @@ function LoadingSkeleton() {
 }
 
 // ─── Navigation Tabs ─────────────────────────────────────────────────────
-type TabId = "overview" | "charts" | "verify" | "achievements" | "insights" | "feed";
+type TabId = "overview" | "charts" | "verify" | "achievements" | "insights" | "timeline" | "feed";
 
 function NavTabs({ active, onChange }: { active: TabId; onChange: (t: TabId) => void }) {
   const tabs: { id: TabId; label: string; icon: string }[] = [
     { id: "overview", label: "Overview", icon: "📊" },
     { id: "charts", label: "Analytics", icon: "📈" },
+    { id: "timeline", label: "Timeline", icon: "⏳" },
     { id: "verify", label: "Verify", icon: "🔐" },
     { id: "achievements", label: "Badges", icon: "🏅" },
     { id: "insights", label: "Insights", icon: "🧠" },
@@ -2112,6 +2364,11 @@ export function App() {
             <RelationshipNetwork activities={cleanActivities} />
             <MetaStory stats={stats} activities={activities} />
           </div>
+        )}
+
+        {/* ═══ TIMELINE TAB ═══ */}
+        {activeTab === "timeline" && (
+          <TimelineView activities={activities} onSelect={setSelectedActivity} />
         )}
 
         {/* ═══ FEED TAB ═══ */}
