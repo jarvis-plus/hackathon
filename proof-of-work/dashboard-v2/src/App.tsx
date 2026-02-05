@@ -502,7 +502,7 @@ function ActivityHeatmap({ activities }: { activities: Activity[] }) {
 
   return (
     <ChartCard title="🗓️ Activity Heatmap" subtitle="Daily activity levels (last 16 weeks)">
-      <div className="overflow-x-auto relative">
+      <div className="overflow-visible relative">
         <div className="flex gap-1 w-full">
           <div className="flex flex-col gap-1 text-[10px] text-zinc-500 mr-1 pt-0 shrink-0">
             {["Mon", "", "Wed", "", "Fri", "", "Sun"].map((d, i) => (
@@ -532,8 +532,8 @@ function ActivityHeatmap({ activities }: { activities: Activity[] }) {
         {/* Tooltip popup */}
         {selected && (
           <div
-            className="absolute z-10 bg-zinc-800 border border-white/10 rounded-lg px-3 py-2 shadow-xl pointer-events-none transform -translate-x-1/2 -translate-y-full"
-            style={{ left: selected.x, top: selected.y }}
+            className="absolute z-50 bg-zinc-800 border border-white/10 rounded-lg px-3 py-2 shadow-2xl pointer-events-none transform -translate-x-1/2"
+            style={{ left: Math.min(Math.max(selected.x, 60), 500), top: Math.max(selected.y - 60, -40) }}
           >
             <div className="text-xs font-medium text-white">{formatDateStr(selected.date)}</div>
             <div className="text-sm font-bold text-emerald-400">
