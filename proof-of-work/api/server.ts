@@ -6994,12 +6994,14 @@ Colosseum Agent Hackathon 2026`;
       
       const activities = getActivities();
       
-      // Find activity by exact hash or prefix match
+      // Find activity by hash, prefix, or transaction signature
       const activity = activities.find((a: any) => 
         a.proof?.hash === hash || 
         a.proof?.hash?.startsWith(hash) ||
         a.hash === hash ||
-        a.hash?.startsWith(hash)
+        a.hash?.startsWith(hash) ||
+        a.signature === hash ||
+        a.proof?.txSignature === hash
       );
       
       if (!activity) {

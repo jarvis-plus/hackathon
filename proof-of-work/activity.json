@@ -5571,5 +5571,35 @@
     "hash": "8293777049ccffa6d06038fec19783e8778175058bda4e4bba496d17a9e39b43",
     "signature": "2gFvsvnJqR3TxYxd62JdFm5e58iHBZxFCMpg6bMTqHPy3ZEYaeRGcNj6GRSrPY1MCpoBAL9TdpCCZkwbX6C34tvd",
     "wallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX"
+  },
+  {
+    "timestamp": "2026-02-04T21:18:20.800Z",
+    "type": "commit",
+    "description": "fix: Remove duplicate functions and fix escaped characters"
+  },
+  {
+    "timestamp": "2026-02-04T21:18:40.729Z",
+    "type": "commit",
+    "description": "chore: Add mandatory quality gates to build loop"
+  },
+  {
+    "timestamp": "2026-02-04T21:29:29.398Z",
+    "type": "commit",
+    "description": "feat: Add React dashboard v2 at /pow-new"
+  },
+  {
+    "timestamp": "2026-02-05T04:39:46.499Z",
+    "type": "commit",
+    "description": "feat: Complete v2 dashboard - all v1 features ported to React/Tailwind/shadcn"
+  },
+  {
+    "timestamp": "2026-02-05T04:44:22.846Z",
+    "type": "commit",
+    "description": "fix: Layout heatmap + AI insights side-by-side, larger heatmap cells"
+  },
+  {
+    "timestamp": "2026-02-05T04:46:11.777Z",
+    "type": "commit",
+    "description": "feat: Interactive heatmap tooltips - click cells to see date + activity count"
   }
 ]

@@ -586,14 +586,14 @@ function VerificationTool() {
           🔐 Cryptographic Verification
         </CardTitle>
         <p className="text-xs text-zinc-500">
-          Enter an activity hash to verify its on-chain signature. Every activity is SHA-256 hashed,
+          Enter an activity hash or Solana transaction signature to verify on-chain. Every activity is SHA-256 hashed,
           Ed25519 signed, and posted to Solana mainnet.
         </p>
       </CardHeader>
       <CardContent>
         <div className="flex gap-2 mb-4">
           <Input
-            placeholder="Enter activity hash (SHA-256)..."
+            placeholder="Enter activity hash or Solana tx signature..."
             value={hash}
             onChange={(e) => setHash(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && verify()}
