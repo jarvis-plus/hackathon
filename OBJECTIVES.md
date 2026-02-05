@@ -1,7 +1,7 @@
 # Hackathon Build Loop — V2 Objectives
 
-**Last Updated:** 2026-02-05 05:15 PST
-**Cycle:** 231
+**Last Updated:** 2026-02-05 12:24 PST
+**Cycle:** 232
 **Status:** 🏆 SUBMITTED (Project ID: 155)
 **Stack:** React + Tailwind + shadcn/ui + Recharts
 
@@ -35,7 +35,7 @@ Goals:
 - [ ] Activity search/filter bar (search descriptions, filter by type)
 - [ ] Date range picker for filtering activities
 - [x] Activity detail modal (click card → expanded view with full metadata) ← Cycle 224
-- [ ] Keyboard shortcuts (/ for search, ? for help)
+- [x] Keyboard shortcuts (/ for search, ? for help) ← Cycle 232
 - [x] Export activities as CSV/JSON ← Cycle 227
 - [x] Activity timeline view (vertical timeline with milestones) ← Cycle 230
 - [ ] Live counter showing real-time activity count (polling or SSE)
@@ -58,6 +58,18 @@ Goals:
 ---
 
 ## 📊 RECENT CONTEXT (Last 5 Cycles)
+
+### Cycle 232 (Keyboard Shortcuts)
+- Added global keyboard shortcut system for power users
+- `?` opens help modal showing all shortcuts
+- `/` navigates to Feed tab and focuses search input (placeholder updated to show hint)
+- `1-7` switches between tabs (Overview, Analytics, Timeline, Verify, Badges, Insights, Feed)
+- `Escape` clears search/filters when not in a modal, closes modals otherwise
+- KeyboardHelpModal component: styled overlay with shortcut list, kbd elements, escape to close
+- Added clickable "? Shortcuts" button in footer for discoverability
+- Search input shows "(press / to focus)" in placeholder
+- Smart handler: ignores shortcuts when typing in inputs
+- Self-eval: Developer-friendly polish that shows attention to UX detail. Judges who know their way around dashboards will appreciate the keyboard nav.
 
 ### Cycle 231 (How It Works Explainer)
 - Added collapsible "How It Works" section to Overview tab, positioned between stats grid and Activity Breakdown
@@ -95,52 +107,6 @@ Goals:
 - ActivityHeatmap now computes per-day activity groupings, type counts (sorted by frequency), and truncated descriptions
 - Tooltip has min/max width constraints, divider borders between sections, and overflow handling (+N more types)
 - Self-eval: Big UX win — heatmap cells now tell a complete story on hover. Judges can understand daily activity patterns at a glance without clicking.
-
-### Cycle 227 (Export Activities as CSV/JSON)
-- Added ExportButton dropdown component on Feed tab — positioned top-right next to "Activity Feed" header
-- 4 export options: JSON (All), JSON (Filtered), CSV (All), CSV (Filtered)
-- Filtered options only appear when search/type filter is active, showing count
-- Proper CSV escaping (commas, quotes, newlines), clean JSON with essential fields
-- Click-outside + Escape to close dropdown, animated entrance
-- Export includes: timestamp, type, description, hash, on_chain status, signature, wallet
-- Self-eval: Clean utility feature — judges can download and verify data independently, adds credibility to "every action is verifiable" claim
-
-### Cycle 226 (Sparklines in Stat Cards)
-- Added Sparkline component — tiny Recharts AreaChart with gradient fill, no axes/grid
-- All 6 stat cards on overview now show 14-day trend sparklines (Total, On-Chain, Streak, Commits, Builds, Trades)
-- Sparkline color matches card accent (blue/green/orange/purple)
-- Streak card uses cumulative sparkline; others show daily counts
-- Self-eval: Great visual density — stat cards now tell a mini trend story at a glance, judges immediately see sustained activity
-
-### Cycle 225 (Animated Counters + Cumulative Growth Chart)
-- Count-up animation on all stat cards (ease-out cubic, 1.2s) — numbers animate from 0 to target on load
-- New "Cumulative Growth" area chart showing total activities over time (green gradient, both overview and charts tabs)
-- Fixed visual-check.js selectors for React/shadcn DOM (was failing on v1-era CSS class selectors)
-- Handles numeric values, percentages ("85%"), and suffixed values ("3d") in animation
-- Self-eval: Strong visual polish — the animated counters make the dashboard feel alive, cumulative chart tells the "sustained work" story at a glance
-
-### Cycle 224 (Activity Detail Modal + Data Cleanup)
-- Click any activity card → modal with full metadata, copyable hashes, Solana sigs, Solscan links
-- Keyboard dismiss (Escape) + backdrop click to close
-- Smooth scale+fade animation
-- Normalized 16 corrupted activity type entries
-- Self-eval: Solid UX improvement — judges can now drill into any activity for full proof chain
-
-### Cycle 222 (v1 — Activity Sorting Options) — LAST V1 CYCLE
-- Sort dropdown for activity feed (6 options)
-- Keyboard shortcut O to cycle sorts
-- This was the last cycle on v1 vanilla JS
-
-### V2 Rebuild (2026-02-04)
-- Complete React rewrite: 1,556 lines App.tsx
-- 7 Recharts visualizations
-- Verification tool (hash + Solana tx sig)
-- 20 achievement badges
-- AI insights panel
-- Word cloud + relationship network
-- GitHub-style heatmap with hover tooltips
-- Route swap: /pow/ → v2, /pow-old/ → v1
-- systemd service for reliable management
 
 ---
 

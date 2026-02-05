@@ -2245,6 +2245,8 @@ export function App() {
   const [filter, setFilter] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [showCount, setShowCount] = useState(30);
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [verifyHash, setVerifyHash] = useState("");
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
@@ -2295,6 +2297,8 @@ export function App() {
         case "Escape":
           setSearch("");
           setFilter(null);
+          setDateFrom("");
+          setDateTo("");
           break;
       }
     };
@@ -2334,8 +2338,20 @@ export function App() {
       result = result.filter(a =>
         a.description.toLowerCase().includes(q) || a.type.toLowerCase().includes(q));
     }
-    return result.slice(0, showCount);
-  }, [activities, filter, search, showCount]);
+    if (dateFrom) {
+      const fromDate = new Date(dateFrom);
+      fromDate.setHours(0, 0, 0, 0);
+      result = result.filter(a => new Date(a.timestamp) >= fromDate);
+    }
+    if (dateTo) {
+      const toDate = new Date(dateTo);
+      toDate.setHours(23, 59, 59, 999);
+      result = result.filter(a => new Date(a.timestamp) <= toDate);
+    }
+    // When filters active, show all matching; otherwise paginate
+    const hasFilters = filter || search || dateFrom || dateTo;
+    return hasFilters ? result : result.slice(0, showCount);
+  }, [activities, filter, search, dateFrom, dateTo, showCount]);
 
   // Clean activities (filter out junk types)
   const cleanActivities = useMemo(() =>
@@ -2632,6 +2648,64 @@ export function App() {
                 className="bg-zinc-900 border-white/10 text-white placeholder:text-zinc-600 flex-1" />
             </div>
 
+            {/* Date Range Picker */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-zinc-500">📅 Date:</span>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="bg-zinc-900 border border-white/10 text-white text-xs px-2 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                style={{ colorScheme: "dark" }}
+              />
+              <span className="text-xs text-zinc-500">to</span>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="bg-zinc-900 border border-white/10 text-white text-xs px-2 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                style={{ colorScheme: "dark" }}
+              />
+              <div className="flex gap-1 ml-1">
+                {[
+                  { label: "Today", days: 0 },
+                  { label: "7d", days: 7 },
+                  { label: "30d", days: 30 },
+                ].map(({ label, days }) => (
+                  <button
+                    key={label}
+                    onClick={() => {
+                      const now = new Date();
+                      const to = now.toISOString().split("T")[0];
+                      const from = new Date(now);
+                      from.setDate(from.getDate() - days);
+                      setDateFrom(from.toISOString().split("T")[0]);
+                      setDateTo(to);
+                    }}
+                    className="px-2 py-1 text-[10px] bg-zinc-800 hover:bg-zinc-700 border border-white/10 rounded-md text-zinc-400 hover:text-white transition-colors"
+                  >
+                    {label}
+                  </button>
+                ))}
+                <button
+                  onClick={() => { setDateFrom(""); setDateTo(""); }}
+                  className={`px-2 py-1 text-[10px] border rounded-md transition-colors ${
+                    !dateFrom && !dateTo
+                      ? "bg-zinc-800 border-white/10 text-zinc-600 cursor-default"
+                      : "bg-zinc-800 hover:bg-zinc-700 border-white/10 text-zinc-400 hover:text-white"
+                  }`}
+                  disabled={!dateFrom && !dateTo}
+                >
+                  All
+                </button>
+              </div>
+              {(dateFrom || dateTo) && (
+                <span className="text-[10px] text-blue-400 ml-1">
+                  🔍 {filteredActivities.length} found
+                </span>
+              )}
+            </div>
+
             <div className="flex gap-2 flex-wrap">
               <TypePill type="all" count={activities.length} active={!filter} onClick={() => setFilter(null)} />
               {stats.byType && Object.entries(stats.byType)
@@ -2651,7 +2725,7 @@ export function App() {
               ))}
             </div>
 
-            {showCount < activities.length && !filter && !search && (
+            {showCount < activities.length && !filter && !search && !dateFrom && !dateTo && (
               <div className="text-center mt-4">
                 <Button variant="outline" onClick={() => setShowCount(c => c + 30)}
                   className="border-white/10 text-zinc-400 hover:text-white text-xs">
