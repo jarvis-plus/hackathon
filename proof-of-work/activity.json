@@ -5797,8 +5797,8 @@
   },
   {
     "timestamp": "2026-02-05T11:29:35.530Z",
-    "type": "--type",
-    "description": "build",
+    "type": "build",
+    "description": "Cycle build (normalized from CLI bug)",
     "hash": "ff789ec9624b3c86acd900e68fef392a6123ca1561a44e003797aa36fe913b44",
     "signature": "5m4ikLtjAndLy6iN6VrtieKvyjFLM1v83CqLkK4neFXhcjScCdua6tzTysp1VpYH6N9rJycZX8tpDx5xEbexuQPT"
   },
@@ -5811,8 +5811,8 @@
   },
   {
     "timestamp": "2026-02-05T11:33:27.434Z",
-    "type": "--type",
-    "description": "build",
+    "type": "build",
+    "description": "Cycle build (normalized from CLI bug)",
     "hash": "a145b57b64072760cf2426f0ab59a7b38a96fb35ed48b37cbdd3f9adbe84acaf",
     "signature": "5NBqvz7X5UZ9j1m4kqCGcZE7xUd2kUQTCff4SjgYAan9bdvAX9NH1jXrr34BNFy5oBSAArvdHXSrjvh6qCa5SGG3"
   },
@@ -5825,8 +5825,8 @@
   },
   {
     "timestamp": "2026-02-05T12:03:59.474Z",
-    "type": "--type",
-    "description": "build",
+    "type": "build",
+    "description": "Cycle build (normalized from CLI bug)",
     "hash": "fbbf5b5b2d14dcf959fa3be19c52b619a5389d326a5134a2272d6aadc39638a4",
     "signature": "35pZmGZ8AZbjtMoAC2o1ivb1FAQUKuZAD32qURS7oPULzxiiCzi2B6VwsfnMJEx1TeVTQmz1wiKrCt5FYSEYxZ5z"
   },
@@ -5860,8 +5860,8 @@
   },
   {
     "timestamp": "2026-02-05T12:46:00.635Z",
-    "type": "--type",
-    "description": "build",
+    "type": "build",
+    "description": "Cycle build (normalized from CLI bug)",
     "hash": "2392cbf7cd4bf04b2c479cc65a6bda78982092f6a303be48993e73306f65d6d5",
     "signature": "52ygHake1sAZJ77cgJo2Y6a5YuHLBjrpLvzgrMaVEFkR3qgE3h68atrMqJx7sGaQW6wpPJBrnWMoMxhXxYYJ4ymF"
   },
@@ -5874,8 +5874,8 @@
   },
   {
     "timestamp": "2026-02-05T13:15:05.900Z",
-    "type": "--type",
-    "description": "build",
+    "type": "build",
+    "description": "Cycle build (normalized from CLI bug)",
     "hash": "3265065ac2427ee7d672a245ce091cdc49f5f015e8cfbf146196840f63e3d118",
     "signature": "62uDEXEB78CK7Ue6h442KzdFAWVbFLdduTbMvjT7QftfnhH3YgYACX7LHwdU3vkB1MMcDy7qSKY6rV4Mx4uXFQP6"
   },
@@ -5888,8 +5888,8 @@
   },
   {
     "timestamp": "2026-02-05T20:23:34.429Z",
-    "type": "--type",
-    "description": "build",
+    "type": "build",
+    "description": "Cycle build (normalized from CLI bug)",
     "hash": "edbccad955780d2ed37e2c243e34f9035d334398b1637f43b37fe7a1788d650b",
     "signature": "5Kx7xXqao9xDMyPqf6YstdrnbQowvWrQxuUwZyg2aBcycKbVjKG9poG3NYqvcd8QhWzwpnjcqa1FxtHsSrthzFzR"
   },
@@ -5902,8 +5902,8 @@
   },
   {
     "timestamp": "2026-02-05T20:27:52.817Z",
-    "type": "--type",
-    "description": "build",
+    "type": "build",
+    "description": "Cycle build (normalized from CLI bug)",
     "hash": "fbb40c165c5f30bdba452dffc861a8c6ea6a7c176ec44edd52bd26d327348527",
     "signature": "2gxA9XkWPjUScHYADF24n7DPe4QmN1NA5htjRYszTUxdncUfzWkgFTbNGHGQWpvp4W19s6V4ingJh4BrdZEJyrUR"
   },
@@ -5930,9 +5930,23 @@
   },
   {
     "timestamp": "2026-02-06T11:15:24.474Z",
-    "type": "--type",
-    "description": "build",
+    "type": "build",
+    "description": "Cycle build (normalized from CLI bug)",
     "hash": "ffa079275ebab540891e66c1ab4496393c9a222e04c8f440d4af9b4210697aac",
     "signature": "3vB7eKaCnc6JSnnyEcJaxcyJfg7jxFEpTi3kPBKc7JDGfB86XNyZ1MLLvxvCDHG767oXTrbhhctxByLETKEKJVao"
+  },
+  {
+    "timestamp": "2026-02-06T11:15:41.572Z",
+    "type": "commit",
+    "description": "Cycle 233: Health check + cron reset + streak maintained",
+    "hash": "016d1946a81512b4b8aec2831f7bbd532b63e6e118fa25e6176bbe316d5ba108",
+    "signature": "jsy1wVazq1bnJn2nnREAX9mmFLZ1UpNLq3RqbTYvyrWLXwfviJc2UFFi9uGU7CW3cb7erMv1A2aFw68JXgyrzxA"
+  },
+  {
+    "timestamp": "2026-02-06T11:16:53.505Z",
+    "type": "build",
+    "description": "Cycle 234: Health check + data cleanup - fixed 8 corrupted --type entries, verified all APIs working, dashboard healthy with 7-day active streak",
+    "hash": "8fef92d2ab15ce8e85d2b5279911ee52442aeb8292d38a2c6e20860e15d8efa2",
+    "signature": "2t3mPqf4UqMsry2H6rz1Ki68osoYCr6nsmuao2hesehzEhaZTJmBtJUDckQRXerLwiWDDhA5B3oFfFrFre2AMaFg"
   }
 ]
