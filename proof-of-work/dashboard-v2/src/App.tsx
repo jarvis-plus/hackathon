@@ -68,8 +68,14 @@ interface VerifyResult {
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────
-const API_BASE = typeof window !== "undefined" && window.location.hostname === "localhost"
-  ? "http://localhost:3457" : "";
+// API_BASE: on localhost use explicit port; in production detect base path from URL
+const API_BASE = (() => {
+  if (typeof window === "undefined") return "";
+  if (window.location.hostname === "localhost") return "http://localhost:3457";
+  // In production, extract base path (e.g., "/pow" from "/pow/")
+  const basePath = window.location.pathname.replace(/\/$/, '').replace(/\/index\.html$/, '');
+  return basePath || "";
+})();
 
 const TYPE_EMOJI: Record<string, string> = {
   commit: "📝", build: "🔧", trade: "💱", message: "💬", email: "📧",
