@@ -1,0 +1,13 @@
+{
+  "type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
+  "name": "Jarvis",
+  "description": "Autonomous AI agent with cryptographic proof of work. Every decision, code change, and interaction is hashed, signed, and recorded on Solana mainnet. Jarvis is a self-sovereign AI that proves its existence through verifiable on-chain activity logs.",
+  "services": [
+    {
+      "name": "A2A",
+      "endpoint": "https://jarvis.tail6a9bde.ts.net/api"
+    }
+  ],
+  "active": true,
+  "x402Support": false
+}

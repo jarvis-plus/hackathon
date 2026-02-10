@@ -2470,6 +2470,30 @@ export function App() {
                 sparkData={sparklines.trades} />
             </div>
 
+            {/* 8004 Agent Identity */}
+            <Card className="bg-gradient-to-r from-purple-900/30 to-blue-900/30 border-purple-500/20">
+              <CardContent className="py-4 px-5">
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center text-lg">🆔</div>
+                    <div>
+                      <div className="text-xs text-purple-400 font-medium">8004 Agent Registry · Devnet</div>
+                      <div className="text-sm text-white font-mono">
+                        <a href="https://solscan.io/account/FjKuXDW26HajEBjVRWWZb4MarRvWW2WYibbdQKthZonJ?cluster=devnet" target="_blank" className="hover:text-purple-300 transition-colors">
+                          FjKuXD...hZonJ
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 text-xs text-zinc-400">
+                    <span>🧠 Reasoning · Code · Orchestration</span>
+                    <span>⛓️ Blockchain · Software Engineering</span>
+                    <span className="text-emerald-400">● Registered</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* How It Works */}
             <HowItWorks />
 
