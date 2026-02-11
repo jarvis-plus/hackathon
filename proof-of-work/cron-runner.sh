@@ -4,6 +4,7 @@
 # Add to crontab: */15 * * * * /root/clawd/hackathon/proof-of-work/cron-runner.sh >> /var/log/jarvis-pow-cron.log 2>&1
 
 cd /root/clawd/hackathon/proof-of-work
+export PATH="/root/.bun/bin:/home/linuxbrew/.linuxbrew/bin:$PATH"
 
 # Get Helius RPC URL from pass
 export SOLANA_RPC_URL=$(pass solana/helius-rpc-url 2>/dev/null || echo "https://api.mainnet-beta.solana.com")

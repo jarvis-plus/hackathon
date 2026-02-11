@@ -6,6 +6,7 @@
 import { readFileSync, writeFileSync, existsSync, appendFileSync } from 'fs';
 import { join } from 'path';
 import { createHash } from 'crypto';
+import { getAllActivities, replaceAllActivities, getActivityCount, getDb } from './activities-db';
 import { 
   Connection, 
   Keypair, 
@@ -218,9 +219,20 @@ async function main() {
     process.exit(1);
   }
 
-  // Check activities exist
-  if (!existsSync(ACTIVITY_FILE)) {
-    console.log('📋 No activities file yet');
+  // Initialize SQLite
+  getDb();
+  const dbCount = getActivityCount();
+  
+  // Read from SQLite if available, fall back to JSON
+  let activities: Activity[];
+  if (dbCount > 0) {
+    console.log(`📦 Reading ${dbCount} activities from SQLite`);
+    activities = getAllActivities() as Activity[];
+  } else if (existsSync(ACTIVITY_FILE)) {
+    console.log('📋 Reading from activity.json (SQLite empty)');
+    activities = JSON.parse(readFileSync(ACTIVITY_FILE, 'utf-8'));
+  } else {
+    console.log('📋 No activities found');
     process.exit(0);
   }
 
@@ -230,8 +242,6 @@ async function main() {
   const rpcUrl = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
   const connection = new Connection(rpcUrl, 'confirmed');
   console.log(`🌐 RPC: ${rpcUrl.includes('helius') ? 'Helius' : rpcUrl.slice(0, 40)}...`);
-  
-  const activities: Activity[] = JSON.parse(readFileSync(ACTIVITY_FILE, 'utf-8'));
   
   // Find activities to sign
   let toSign = activities
@@ -292,7 +302,13 @@ async function main() {
     await sleep(500);
   }
 
-  // Save updated activities (including error tracking)
+  // Save updated activities to SQLite (primary) and JSON (backup)
+  try {
+    replaceAllActivities(activities);
+    console.log('📦 SQLite updated');
+  } catch (e) {
+    console.error('⚠️ SQLite write failed:', e);
+  }
   writeFileSync(ACTIVITY_FILE, JSON.stringify(activities, null, 2));
   
   // Summary

@@ -6104,7 +6104,7 @@ async function togglePin(hash) {
     }
     
     try {
-        const response = await fetch(`/api/activities/${hash}/pin`, {
+        const response = await fetch(`${basePath}/api/activities/${hash}/pin`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({})
@@ -6230,7 +6230,7 @@ async function cycleStatus(hash, newStatus) {
     }
     
     try {
-        const response = await fetch(`/api/activities/${hash}/status`, {
+        const response = await fetch(`${basePath}/api/activities/${hash}/status`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status: newStatus })
@@ -6541,7 +6541,7 @@ async function saveQuickNote(hash) {
     // Debounce the actual save
     const saveTimeout = setTimeout(async () => {
         try {
-            const response = await fetch(`/api/activities/${hash}/notes`, {
+            const response = await fetch(`${basePath}/api/activities/${hash}/notes`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ notes: notes || null })
@@ -6663,7 +6663,7 @@ async function saveActivityNotes(hash) {
     }
     
     try {
-        const response = await fetch(`/api/activities/${hash}/notes`, {
+        const response = await fetch(`${basePath}/api/activities/${hash}/notes`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ notes })
@@ -7313,7 +7313,7 @@ async function openLinksModal(hash) {
     // Fetch related activities from API for full details
     let relatedData = { related: [] };
     try {
-        const response = await fetch(`/api/activities/${hash}/related?depth=2`);
+        const response = await fetch(`${basePath}/api/activities/${hash}/related?depth=2`);
         if (response.ok) {
             relatedData = await response.json();
         }
@@ -7466,7 +7466,7 @@ async function createLink(sourceHash, targetHash) {
     const relationship = document.getElementById('linkRelationship')?.value || 'relates';
     
     try {
-        const response = await fetch(`/api/activities/${sourceHash}/link`, {
+        const response = await fetch(`${basePath}/api/activities/${sourceHash}/link`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ targetHash, relationship })
@@ -7515,7 +7515,7 @@ async function removeLink(sourceHash, targetHash) {
     if (!confirm('Remove this link?')) return;
     
     try {
-        const response = await fetch(`/api/activities/${sourceHash}/link/${targetHash}`, {
+        const response = await fetch(`${basePath}/api/activities/${sourceHash}/link/${targetHash}`, {
             method: 'DELETE'
         });
         
@@ -9426,7 +9426,7 @@ function showUndoToast(message, options = {}) {
             // Restore each deleted activity
             for (const hash of hashes) {
                 try {
-                    const response = await fetch(`/api/activities/${hash}/restore`, {
+                    const response = await fetch(`${basePath}/api/activities/${hash}/restore`, {
                         method: 'PATCH'
                     });
                     if (response.ok) {
@@ -9645,7 +9645,7 @@ async function showDiffModal(hash) {
     modal.addEventListener('keydown', handleDiffModalKeydown);
     
     try {
-        const response = await fetch(`/api/activities/${hash}/diff`);
+        const response = await fetch(`${basePath}/api/activities/${hash}/diff`);
         const data = await response.json();
         
         if (!response.ok) {
@@ -10288,7 +10288,7 @@ async function refreshPerformance(silent = false) {
     }
     
     try {
-        const response = await fetch('/api/performance');
+        const response = await fetch(basePath + '/api/performance');
         if (!response.ok) throw new Error('Failed to load performance data');
         
         performanceData = await response.json();
@@ -11798,7 +11798,7 @@ let activityTypesCache = null;
  */
 async function fetchActivityTypes() {
     try {
-        const response = await fetch('/api/activity-types');
+        const response = await fetch(basePath + '/api/activity-types');
         if (!response.ok) throw new Error('Failed to fetch activity types');
         activityTypesCache = await response.json();
         return activityTypesCache;
@@ -11896,7 +11896,7 @@ async function handleAddCustomType(event) {
     }
     
     try {
-        const response = await fetch('/api/activity-types', {
+        const response = await fetch(basePath + '/api/activity-types', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name, emoji, color, description })
@@ -11942,7 +11942,7 @@ async function deleteCustomType(typeId) {
     if (!confirmed) return;
     
     try {
-        const response = await fetch(`/api/activity-types/${encodeURIComponent(typeId)}`, {
+        const response = await fetch(`${basePath}/api/activity-types/${encodeURIComponent(typeId)}`, {
             method: 'DELETE'
         });
         
@@ -12007,7 +12007,7 @@ let customTypesModalVisible = false;
  */
 async function loadCustomTypes() {
     try {
-        const response = await fetch('/api/custom-types');
+        const response = await fetch(basePath + '/api/custom-types');
         if (!response.ok) throw new Error('Failed to load custom types');
         const data = await response.json();
         customTypesCache = data.custom || [];
@@ -12151,7 +12151,7 @@ async function createCustomType() {
     }
     
     try {
-        const response = await fetch('/api/custom-types', {
+        const response = await fetch(basePath + '/api/custom-types', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name, emoji, color, description })
@@ -12888,7 +12888,7 @@ async function checkForDuplicates(type, description) {
             timeWindowMinutes: '30'
         });
         
-        const response = await fetch(`/api/activities/check-duplicate?${params}`);
+        const response = await fetch(`${basePath}/api/activities/check-duplicate?${params}`);
         if (!response.ok) return null;
         
         return await response.json();
@@ -13041,7 +13041,7 @@ async function submitVoiceActivity(skipDuplicateCheck = false) {
     }
 
     try {
-        const response = await fetch('/api/activities', {
+        const response = await fetch(basePath + '/api/activities', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -13785,7 +13785,7 @@ async function bulkPin() {
     
     for (const hash of bulkSelections) {
         try {
-            const response = await fetch(`/api/activities/${hash}/pin`, {
+            const response = await fetch(`${basePath}/api/activities/${hash}/pin`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -13833,7 +13833,7 @@ async function bulkDelete() {
     }
     
     try {
-        const response = await fetch('/api/activities/bulk-delete', {
+        const response = await fetch(basePath + '/api/activities/bulk-delete', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ hashes: bulkSelections })
@@ -13899,7 +13899,7 @@ async function bulkDelete() {
  */
 async function updateTrashBadge() {
     try {
-        const response = await fetch('/api/activities/trash');
+        const response = await fetch(basePath + '/api/activities/trash');
         if (!response.ok) return;
         
         const data = await response.json();
@@ -14000,7 +14000,7 @@ async function loadTemplates() {
     listEl.innerHTML = '<p class="templates-loading">Loading templates...</p>';
     
     try {
-        const response = await fetch('/api/templates');
+        const response = await fetch(basePath + '/api/templates');
         if (!response.ok) throw new Error('Failed to load templates');
         
         templates = await response.json();
@@ -14075,7 +14075,7 @@ async function createTemplate(event) {
     }
     
     try {
-        const response = await fetch('/api/templates', {
+        const response = await fetch(basePath + '/api/templates', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -14118,7 +14118,7 @@ async function useTemplate(templateId) {
     }
     
     try {
-        const response = await fetch(`/api/templates/${templateId}/use`, {
+        const response = await fetch(`${basePath}/api/templates/${templateId}/use`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({})
@@ -14158,7 +14158,7 @@ async function deleteTemplate(templateId) {
     if (!confirm(`Delete template "${template.name}"?`)) return;
     
     try {
-        const response = await fetch(`/api/templates/${templateId}`, {
+        const response = await fetch(`${basePath}/api/templates/${templateId}`, {
             method: 'DELETE'
         });
         
@@ -14305,7 +14305,7 @@ async function loadTrashItems() {
     updateTrashSelectionUI();
     
     try {
-        const response = await fetch('/api/activities/trash');
+        const response = await fetch(basePath + '/api/activities/trash');
         const data = await response.json();
         trashItems = data.activities || [];
         
@@ -14377,7 +14377,7 @@ function renderTrashItem(item) {
 // Restore an activity from trash
 async function restoreActivity(hash) {
     try {
-        const response = await fetch(`/api/activities/${hash}/restore`, {
+        const response = await fetch(`${basePath}/api/activities/${hash}/restore`, {
             method: 'PATCH'
         });
         
@@ -14487,7 +14487,7 @@ async function bulkRestoreFromTrash() {
     const hashes = Array.from(selectedTrashItems);
     
     try {
-        const response = await fetch('/api/activities/bulk-restore', {
+        const response = await fetch(basePath + '/api/activities/bulk-restore', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ hashes })
@@ -14526,7 +14526,7 @@ async function deleteActivity(hash) {
     if (!confirm('Move this activity to trash?')) return;
     
     try {
-        const response = await fetch(`/api/activities/${hash}`, {
+        const response = await fetch(`${basePath}/api/activities/${hash}`, {
             method: 'DELETE'
         });
         
@@ -14568,7 +14568,7 @@ async function emptyTrash() {
     if (!confirm('Permanently delete all items in trash? This cannot be undone.')) return;
     
     try {
-        const response = await fetch('/api/activities/trash/empty', {
+        const response = await fetch(basePath + '/api/activities/trash/empty', {
             method: 'DELETE'
         });
         
@@ -14590,7 +14590,7 @@ async function emptyTrash() {
 // Update trash count badge
 async function updateTrashCount() {
     try {
-        const response = await fetch('/api/activities/trash');
+        const response = await fetch(basePath + '/api/activities/trash');
         const data = await response.json();
         const count = data.count || 0;
         
@@ -14626,7 +14626,7 @@ function toggleTrashSettings() {
 // Load and display trash settings
 async function loadTrashSettings() {
     try {
-        const response = await fetch('/api/settings/trash');
+        const response = await fetch(basePath + '/api/settings/trash');
         const data = await response.json();
         
         // Update retention days dropdown
@@ -14672,7 +14672,7 @@ async function loadTrashSettings() {
 // Update retention days setting
 async function updateRetentionDays(days) {
     try {
-        const response = await fetch('/api/settings/trash', {
+        const response = await fetch(basePath + '/api/settings/trash', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ retentionDays: parseInt(days, 10) })
@@ -14698,7 +14698,7 @@ async function updateRetentionDays(days) {
 // Update auto-clean on startup setting
 async function updateAutoCleanStartup(enabled) {
     try {
-        const response = await fetch('/api/settings/trash', {
+        const response = await fetch(basePath + '/api/settings/trash', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ autoCleanOnStartup: enabled })
@@ -14726,7 +14726,7 @@ async function cleanupExpiredTrash() {
     }
     
     try {
-        const response = await fetch('/api/activities/trash/cleanup', {
+        const response = await fetch(basePath + '/api/activities/trash/cleanup', {
             method: 'POST'
         });
         
@@ -15242,7 +15242,7 @@ function initReminders() {
 // Load reminders from API
 async function loadReminders() {
     try {
-        const response = await fetch('/api/reminders');
+        const response = await fetch(basePath + '/api/reminders');
         if (!response.ok) throw new Error('Failed to load reminders');
         const data = await response.json();
         remindersCache = data.reminders || [];
@@ -15278,7 +15278,7 @@ function updateReminderBadge(count) {
 // Check for due reminders and show notifications
 async function checkDueReminders() {
     try {
-        const response = await fetch('/api/reminders/due');
+        const response = await fetch(basePath + '/api/reminders/due');
         if (!response.ok) return;
         const data = await response.json();
         
@@ -15604,7 +15604,7 @@ async function handleReminderSubmit(event) {
 // Complete a reminder
 async function completeReminder(id) {
     try {
-        const response = await fetch(`/api/reminders/${id}/complete`, {
+        const response = await fetch(`${basePath}/api/reminders/${id}/complete`, {
             method: 'PATCH'
         });
         
@@ -15635,7 +15635,7 @@ async function completeReminder(id) {
 // Snooze a reminder
 async function snoozeReminder(id, minutes) {
     try {
-        const response = await fetch(`/api/reminders/${id}/snooze?minutes=${minutes}`, {
+        const response = await fetch(`${basePath}/api/reminders/${id}/snooze?minutes=${minutes}`, {
             method: 'PATCH'
         });
         
@@ -15665,7 +15665,7 @@ async function deleteReminder(id) {
     if (!confirm('Delete this reminder?')) return;
     
     try {
-        const response = await fetch(`/api/reminders/${id}`, {
+        const response = await fetch(`${basePath}/api/reminders/${id}`, {
             method: 'DELETE'
         });
         
@@ -15747,7 +15747,7 @@ let activitiesForLinking = [];
 // Load relationships from API
 async function loadRelationships() {
     try {
-        const response = await fetch('/api/relationships');
+        const response = await fetch(basePath + '/api/relationships');
         const data = await response.json();
         relationshipsCache = data.relationships || [];
         return relationshipsCache;
@@ -15800,7 +15800,7 @@ async function renderRelationshipsList() {
     // Fetch activity details for enrichment
     let activities = [];
     try {
-        const res = await fetch('/api/activities');
+        const res = await fetch(basePath + '/api/activities');
         activities = await res.json();
     } catch (e) {}
     
@@ -15844,7 +15844,7 @@ async function deleteRelationship(id) {
     if (!confirm('Delete this relationship?')) return;
     
     try {
-        const response = await fetch(`/api/relationships/${id}`, { method: 'DELETE' });
+        const response = await fetch(`${basePath}/api/relationships/${id}`, { method: 'DELETE' });
         if (response.ok) {
             relationshipsCache = relationshipsCache.filter(r => r.id !== id);
             renderRelationshipsList();
@@ -15899,7 +15899,7 @@ function closeLinkActivityModal() {
 // Load activities for linking dropdown
 async function loadActivitiesForLinking() {
     try {
-        const response = await fetch('/api/activities');
+        const response = await fetch(basePath + '/api/activities');
         activitiesForLinking = await response.json();
     } catch (e) {
         console.error('Failed to load activities for linking:', e);
@@ -15977,7 +15977,7 @@ async function handleLinkActivitySubmit(event) {
     }
     
     try {
-        const response = await fetch('/api/relationships', {
+        const response = await fetch(basePath + '/api/relationships', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -16069,7 +16069,7 @@ async function initRelationshipGraph() {
     
     try {
         // Fetch graph data
-        const response = await fetch('/api/relationships/graph');
+        const response = await fetch(basePath + '/api/relationships/graph');
         if (!response.ok) throw new Error('Failed to fetch graph data');
         
         const data = await response.json();
@@ -19914,7 +19914,7 @@ async function handleLocationSubmit(event) {
     }
     
     try {
-        const response = await fetch(`/api/activities/${hash}/location`, {
+        const response = await fetch(`${basePath}/api/activities/${hash}/location`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
@@ -19957,7 +19957,7 @@ async function removeActivityLocation() {
     if (!confirm('Remove location from this activity?')) return;
     
     try {
-        const response = await fetch(`/api/activities/${hash}/location`, {
+        const response = await fetch(`${basePath}/api/activities/${hash}/location`, {
             method: 'DELETE'
         });
         
@@ -21159,7 +21159,7 @@ async function openHistoryModal(hash) {
     
     // Fetch history from API
     try {
-        const response = await fetch(`/api/activities/${hash}/history`);
+        const response = await fetch(`${basePath}/api/activities/${hash}/history`);
         if (!response.ok) {
             throw new Error('Failed to fetch history');
         }

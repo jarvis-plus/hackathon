@@ -1,0 +1,93 @@
+{
+  "lastLinkedIndex": 708,
+  "feedbackTxs": [
+    {
+      "timestamp": "2026-02-10T07:07:44.155Z",
+      "activitiesCount": 709,
+      "summary": {
+        "period": {
+          "from": "2026-02-03T07:28:00Z",
+          "to": "2025-01-02T01:24:23.000Z"
+        },
+        "totalActivities": 709,
+        "onChainSigned": 565,
+        "types": [
+          {
+            "type": "decision",
+            "count": 6
+          },
+          {
+            "type": "build",
+            "count": 252
+          },
+          {
+            "type": "commit",
+            "count": 378
+          },
+          {
+            "type": "trade",
+            "count": 24
+          },
+          {
+            "type": "heartbeat",
+            "count": 3
+          },
+          {
+            "type": "message",
+            "count": 1
+          },
+          {
+            "type": "tweet",
+            "count": 2
+          },
+          {
+            "type": "email",
+            "count": 4
+          },
+          {
+            "type": "browser",
+            "count": 2
+          },
+          {
+            "type": "calendar",
+            "count": 4
+          },
+          {
+            "type": "forum-post",
+            "count": 1
+          },
+          {
+            "type": "x-post",
+            "count": 1
+          },
+          {
+            "type": "moltbook-post",
+            "count": 1
+          },
+          {
+            "type": "misc",
+            "count": 1
+          },
+          {
+            "type": "x-read",
+            "count": 1
+          },
+          {
+            "type": "social",
+            "count": 21
+          },
+          {
+            "type": "forum",
+            "count": 5
+          },
+          {
+            "type": "transfer",
+            "count": 2
+          }
+        ],
+        "powWallet": "AMqXw6BjW7eBWBXuyZgKaicvLF7AaVjrTfVg2JXon9zX",
+        "network": "mainnet-beta"
+      }
+    }
+  ]
+}

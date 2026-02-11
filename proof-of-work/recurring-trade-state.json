@@ -1,8 +1,8 @@
 {
-  "lastTradeTimestamp": "2026-02-03T09:09:19.037Z",
-  "totalTrades": 3,
-  "totalVolumeSOL": 0.003,
-  "totalVolumeUSDC": 0.003,
+  "lastTradeTimestamp": "2026-02-11T01:00:31.049Z",
+  "totalTrades": 14,
+  "totalVolumeSOL": 0.014000000000000005,
+  "totalVolumeUSDC": 0.014000000000000005,
   "history": [
     {
       "timestamp": "2026-02-03T09:08:27.493Z",
@@ -23,6 +23,83 @@
       "to": "USDC",
       "amount": 0.001,
       "txSignature": "5Wq8CKXEnSRaySXbM6DewfKHShzF9rooby6H5oDj6dVw6tfY6X7BKqFH7mv4B8zFwucdKvMkGbhupt8gi2krkMpe"
+    },
+    {
+      "timestamp": "2026-02-10T04:05:27.242Z",
+      "from": "SOL",
+      "to": "USDC",
+      "amount": 0.001,
+      "txSignature": "bUkB6uHFj4eTDh72DdACyAxwgUY7CXn3wRtYYk58QB7meCnnh4NDN6zRcvUn8bcgkc6ZG4Qex3oZQesBgqXonqA"
+    },
+    {
+      "timestamp": "2026-02-10T06:15:49.618Z",
+      "from": "SOL",
+      "to": "USDC",
+      "amount": 0.001,
+      "txSignature": "3Pk97v3Dc3JwHtQ2vWfvmnPoSwNEE1t8ZTVj7cCeiT1ypzcRYdqES1sdtK2iLNcRWXdF9rgZEXLPFFpV1MntkyPj"
+    },
+    {
+      "timestamp": "2026-02-10T08:30:14.957Z",
+      "from": "SOL",
+      "to": "USDC",
+      "amount": 0.001,
+      "txSignature": "5ZikgC1kHy2n8oNntWEvhQhaCJNX2GkNEyJZ4zL4i61SrLGvSSjfgMQwY1QSDKmiA7s45xYxc1awbRdEnM9URP9u"
+    },
+    {
+      "timestamp": "2026-02-10T10:30:15.980Z",
+      "from": "SOL",
+      "to": "USDC",
+      "amount": 0.001,
+      "txSignature": "4vB5DSpQiCJyYQywHEdMb5mRoDkxr2tMuBtCqJF8s1VeQ3f5YorfJbtHPTL3x7SCkjgmZosgKiETK9qPh6bnGnY7"
+    },
+    {
+      "timestamp": "2026-02-10T12:30:20.198Z",
+      "from": "SOL",
+      "to": "USDC",
+      "amount": 0.001,
+      "txSignature": "2bxy1eneAAXpVpV7KtonP82rZ7snHRozeBnUUiipNQX5frgcXQ1VNGE2xCBvFNADUR1rNRP26rdnha7FcTFRvaSt"
+    },
+    {
+      "timestamp": "2026-02-10T14:45:14.894Z",
+      "from": "SOL",
+      "to": "USDC",
+      "amount": 0.001,
+      "txSignature": "3AK8GmMDiV9wYtsd8prx5NMrBWyTwTUbiGLSug354vS47RdhEG43RR781euACftmPdPM6qs6ZPXvrrVUzMiKfuoV"
+    },
+    {
+      "timestamp": "2026-02-10T16:45:15.215Z",
+      "from": "SOL",
+      "to": "USDC",
+      "amount": 0.001,
+      "txSignature": "3WReMiQ72wjrAcCj5PUsNYznzqfCyZSkYkuTJAbDKcJFAFuJdqh4iMaE7WMzwV3ticUNw5sZ9BBYj8ecuaPg9Jc5"
+    },
+    {
+      "timestamp": "2026-02-10T19:00:17.658Z",
+      "from": "SOL",
+      "to": "USDC",
+      "amount": 0.001,
+      "txSignature": "3XHTAqAjRH5zuJyc1ZqnGXYs8HEs7h9VGuepGUm65XXdt8j3ct8cKnLQzadWmm8qTTfJDb6ciYQ6atD36vgU8hse"
+    },
+    {
+      "timestamp": "2026-02-10T21:00:17.420Z",
+      "from": "SOL",
+      "to": "USDC",
+      "amount": 0.001,
+      "txSignature": "5JokKXevrnfxPjRojATYphqL42tMZ5xtnC4MLB7fYUVvPPNkUYJeXddQ82TFt9vLCykFvyKdSTNcCrfVhLRNji3o"
+    },
+    {
+      "timestamp": "2026-02-10T23:00:22.163Z",
+      "from": "SOL",
+      "to": "USDC",
+      "amount": 0.001,
+      "txSignature": "2ukr6CHfgJEiXcaCpkuANtQSCBoJu7VrUhFYwMxpzGScJSjDM3udtiM92REq8fogFS3ZqzrRg8AXxnfxpW1RXjhU"
+    },
+    {
+      "timestamp": "2026-02-11T01:00:31.049Z",
+      "from": "SOL",
+      "to": "USDC",
+      "amount": 0.001,
+      "txSignature": "3GQ1nZ1aZGxwujKBtNd5ZYjyDtgzaenWqDxnaaYK5N415ywiATpRK4dMAYbyAwPYjP5xtk7tPhFspc2S7LGwfLNd"
     }
   ]
 }

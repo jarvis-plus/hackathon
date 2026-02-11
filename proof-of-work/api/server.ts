@@ -56,6 +56,11 @@
 import { readFileSync, writeFileSync, existsSync, watchFile, statSync } from 'fs';
 import { join } from 'path';
 import { randomUUID } from 'crypto';
+import { 
+  getDb, getAllActivities as dbGetAllActivities, upsertActivity, 
+  bulkUpsertActivities, replaceAllActivities, getActivityByHash as dbGetActivityByHash,
+  getActivityCount, migrateFromJson 
+} from '../activities-db';
 
 // ==============================================
 // CONFIGURATION
@@ -1940,24 +1945,38 @@ let lastActivityMtime = 0;
 let lastActivityCount = 0;
 
 /**
- * Load and parse all activities from the activity file.
- * Returns empty array if file doesn't exist (graceful startup).
+ * Load all activities from SQLite (primary store).
+ * Falls back to JSON file if SQLite is empty (first run).
+ * Returns activities sorted by timestamp DESC.
  * 
  * @returns Array of activity objects
  */
 function getActivities(): any[] {
-  if (!existsSync(ACTIVITY_FILE)) return [];
-  const data = readFileSync(ACTIVITY_FILE, 'utf-8');
-  return JSON.parse(data);
+  try {
+    return dbGetAllActivities();
+  } catch (e) {
+    console.error('SQLite read failed, falling back to JSON:', e);
+    if (!existsSync(ACTIVITY_FILE)) return [];
+    const data = readFileSync(ACTIVITY_FILE, 'utf-8');
+    return JSON.parse(data);
+  }
 }
 
 /**
- * Save activities to the activity file.
+ * Save activities to SQLite (primary) and JSON file (backup).
  * Updates internal state tracking for file watcher.
  * 
  * @param activities - Array of activity objects to save
  */
 function saveActivities(activities: any[]): void {
+  // Primary: SQLite
+  try {
+    replaceAllActivities(activities);
+  } catch (e) {
+    console.error('SQLite write failed:', e);
+  }
+  
+  // Secondary: JSON backup
   writeFileSync(ACTIVITY_FILE, JSON.stringify(activities, null, 2));
   lastActivityCount = activities.length;
   const stats = statSync(ACTIVITY_FILE);
@@ -2613,6 +2632,7 @@ try {
  */
 const server = Bun.serve({
   port: PORT,
+  hostname: '127.0.0.1',
   
   /**
    * Main request handler - routes all HTTP requests
@@ -2620,7 +2640,9 @@ const server = Bun.serve({
   async fetch(req, server) {
     const requestStartTime = performance.now();
     const url = new URL(req.url);
-    const path = url.pathname;
+    // Strip /pow prefix so API routes work regardless of base path
+    const rawPath = url.pathname;
+    const path = rawPath.startsWith('/pow') ? rawPath.slice(4) || '/' : rawPath;
     const clientIP = getClientIP(req, server);
     
     // Helper to wrap response with timing tracking
@@ -2662,6 +2684,28 @@ const server = Bun.serve({
       const upgraded = server.upgrade(req, { data: { ip: clientIP } });
       if (upgraded) return undefined; // Upgrade successful
       return new Response('WebSocket upgrade failed', { status: 400 });
+    }
+
+    // ==========================================
+    // CRON DASHBOARD PROXY
+    // Forwards /cron/* requests to the cron dashboard on port 3475
+    // ==========================================
+    if (path.startsWith('/cron')) {
+      const targetPath = path.replace('/cron', '') || '/';
+      const targetUrl = `http://localhost:3475${targetPath}${url.search}`;
+      try {
+        const proxyRes = await fetch(targetUrl, {
+          method: req.method,
+          headers: req.headers,
+          body: req.method !== 'GET' && req.method !== 'HEAD' ? req.body : undefined,
+        });
+        return new Response(proxyRes.body, {
+          status: proxyRes.status,
+          headers: proxyRes.headers,
+        });
+      } catch (e) {
+        return new Response('Cron dashboard unavailable', { status: 502 });
+      }
     }
 
     // ==========================================
@@ -2931,6 +2975,9 @@ const server = Bun.serve({
       if (!includeDeleted) {
         activities = activities.filter((a: any) => !a.deleted);
       }
+      
+      // Sort by timestamp, newest first
+      activities.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       
       return Response.json(activities, { headers: corsHeaders });
     }
@@ -9033,6 +9080,15 @@ Colosseum Agent Hackathon 2026`;
 // ==============================================
 // STARTUP LOGGING
 // ==============================================
+
+// Initialize SQLite and migrate from JSON if needed
+try {
+  getDb(); // Initialize connection
+  migrateFromJson(); // Import from activity.json if DB is empty
+  console.log(`📦 SQLite: ${getActivityCount()} activities in database`);
+} catch (e) {
+  console.error('⚠️ SQLite initialization failed:', e);
+}
 
 console.log(`🚀 Proof of Work server running at http://localhost:${PORT}`);
 console.log(`🔌 WebSocket endpoint: ws://localhost:${PORT}/ws`);
