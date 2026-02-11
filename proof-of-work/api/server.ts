@@ -347,6 +347,7 @@ const BUILT_IN_TYPES = [
   'x-post', 'x-reply', 'x-read', 'x-mention',
   'forum-post', 'forum-reply',
   'moltbook-post', 'moltbook-reply',
+  'cron-run',
   'misc'
 ];
 
